@@ -1,0 +1,73 @@
+/* Module lesson, quiz and written practice */
+.pm-learn-activity-title { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin: 8px 0 15px; }
+.pm-learn-activity-title p { font-size: 16px; margin-top: 4px; }
+.pm-learn-save-exit { display: flex; align-items: center; gap: 10px; color: #0963d3; font-size: 14px; white-space: nowrap; }
+.pm-learn-activity-layout { grid-template-columns: minmax(0,1fr) 292px; gap: 18px; }
+.pm-learn-steps { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin: 5px 0 14px; }
+.pm-learn-step-block { display: flex; align-items: center; flex: 1; gap: 13px; min-width: 0; }
+.pm-learn-step-line { height: 2px; flex: 1; max-width: 37px; background: #d6dfe8; }
+.pm-learn-step { display: flex; align-items: center; gap: 8px; min-width: 0; white-space: nowrap; }
+.pm-learn-step-number { display: grid; place-items: center; width: 32px; height: 32px; background: #e4e9f0; border-radius: 50%; font-weight: 700; color: #344762; flex: none; }
+.pm-learn-step.current .pm-learn-step-number, .pm-learn-step.done .pm-learn-step-number { background: var(--learn-blue); color: #fff; }
+.pm-learn-step.current .pm-learn-step-title, .pm-learn-step.done .pm-learn-step-title { color: #0759c4; font-weight: 700; }
+.pm-learn-step-title { font-size: 13px; color: #42536e; }
+.pm-learn-notice { display: flex; gap: 12px; align-items: center; padding: 11px 13px; border: 1px solid #e0e8f1; background: #f5faff; border-radius: 7px; font-size: 13px; color: #53617b; margin-bottom: 12px; }
+.pm-learn-notice svg { color: var(--learn-blue); flex: none; }
+.pm-learn-answer-panel { padding: 17px; margin-bottom: 14px; }
+.pm-learn-answer-panel h2 { font-size: 22px; }
+.pm-learn-answer-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 17px; }
+.pm-learn-answer-heading > span { color: #5d6a82; font-size: 12px; }
+.pm-learn-answer-heading i { border-right: 1px solid #bdc7d5; margin: 0 6px; }
+.pm-learn-key-idea { width: 100%; display: flex; align-items: center; gap: 13px; border: 1px solid #d7e5f4; border-radius: 7px; padding: 12px; background: #f4f9ff; text-align: left; color: #1b3361; font-size: 13px; }
+.pm-learn-key-idea > svg:first-child { color: var(--learn-blue); flex: none; }
+.pm-learn-key-idea > span { flex: 1; }
+.pm-learn-key-idea > svg:last-child { color: #1473dc; }
+.pm-learn-key-hint { padding: 8px 12px; color: #536780; font-size: 12px; }
+.pm-learn-answer-panel fieldset { min-width: 0; }
+.pm-learn-answer-panel legend { display: block; padding: 17px 0 11px; font-weight: 800; font-size: 19px; color: #0e2045; }
+.pm-learn-choices { display: grid; gap: 9px; }
+.pm-learn-choice { display: flex; align-items: center; gap: 15px; min-height: 45px; padding: 9px 12px; border: 1px solid #dbe3ed; border-radius: 7px; color: #2c3c58; font-size: 13px; cursor: pointer; }
+.pm-learn-choice.selected { background: #eef6ff; border-color: #aed3f4; }
+.pm-learn-choice input[type=radio] { appearance: none; width: 21px; height: 21px; flex: none; border: 2px solid #aab5c2; border-radius: 50%; position: relative; }
+.pm-learn-choice input[type=radio]:checked { border-color: var(--learn-blue); }
+.pm-learn-choice input[type=radio]:checked::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: var(--learn-blue); }
+.pm-learn-choice b { font-size: 13px; }
+.pm-learn-choice span { min-width: 0; }
+.pm-learn-check-actions { display: flex; gap: 9px; margin-top: 13px; flex-wrap: wrap; }
+.pm-learn-check-actions .pm-dash-btn { min-width: 210px; }
+.pm-learn-feedback { margin: 12px 0; border: 1px solid #bee3d5; background: #eafaf4; padding: 10px 13px; border-radius: 6px; font-size: 13px; }
+.pm-learn-feedback strong { display: flex; gap: 8px; align-items: center; color: #0b7758; }
+.pm-learn-feedback p { margin-top: 3px; font-size: 12px; }
+.pm-learn-feedback.incorrect { background: #fff8ed; border-color: #f6dcae; }
+.pm-learn-feedback.incorrect strong { color: #955c10; }
+.pm-learn-reminder { display: flex; align-items: center; gap: 15px; margin-bottom: 13px; }
+.pm-learn-reminder > span { display: grid; place-items: center; width: 59px; height: 59px; border-radius: 50%; background: #ebf5ff; color: var(--learn-blue); flex: none; }
+.pm-learn-reminder > div { flex: 1; min-width: 0; }
+.pm-learn-reminder h3 { font-size: 15px; }
+.pm-learn-reminder p { font-size: 13px; }
+.pm-learn-reminder a { display: flex; align-items: center; gap: 8px; color: var(--learn-blue); white-space: nowrap; font-size: 13px; }
+.pm-learn-activity-nav { display: flex; justify-content: space-between; gap: 11px; }
+.pm-learn-activity-nav .pm-dash-btn { min-width: 186px; min-height: 41px; font-size: 13px; }
+.pm-learn-checklist { display: grid; gap: 2px; }
+.pm-learn-checklist a { display: flex; align-items: center; gap: 11px; border-radius: 7px; padding: 9px 8px; color: #132445; }
+.pm-learn-checklist a.active { background: #eaf5ff; }
+.pm-learn-checklist a strong, .pm-learn-checklist a small { display: block; font-size: 13px; }
+.pm-learn-checklist a small { color: #6c7890; font-size: 12px; margin-top: 2px; }
+.pm-learn-checklist a.active small { color: #0969d6; }
+.pm-learn-check-number { width: 31px; height: 31px; display: grid; place-items: center; border-radius: 50%; background: #e6eaf0; color: #223754; font-weight: 800; flex: none; }
+.pm-learn-checklist a.active .pm-learn-check-number { border: 1px solid #267be7; background: #eef7ff; color: var(--learn-blue); }
+.pm-learn-check-number.done { background: var(--learn-blue); color: white; }
+.pm-learn-ai-help { display: flex; align-items: flex-start; gap: 12px; }
+.pm-learn-ai-help > svg { flex: none; }
+.pm-learn-ai-help strong { color: #142550; font-size: 13px; }
+.pm-learn-ai-help p { font-size: 12px; line-height: 1.4; margin: 2px 0 8px; }
+.pm-learn-ai-help small { color: #66758c; font-size: 11px; }
+.pm-learn-reading { display: flex; gap: 15px; align-items: flex-start; background: #f4f9ff; border: 1px solid #dfebfa; border-radius: 7px; padding: 18px; margin-top: 15px; }
+.pm-learn-reading p { font-size: 16px; line-height: 1.65; }
+.pm-learn-reading-icon { color: var(--learn-blue); }
+.pm-learn-answer-panel h3 { margin-top: 15px; }
+.pm-learn-learning-points { list-style: disc; padding-left: 25px; color: #4a5d76; font-size: 14px; line-height: 2; }
+.pm-learn-written-prompt { font-size: 15px; margin: 17px 0; }
+.pm-learn-answer-panel textarea { border: 1px solid #d4dfeb; border-radius: 7px; width: 100%; padding: 12px; font-size: 14px; resize: vertical; display: block; margin: 8px 0; }
+.pm-learn-answer-panel label[for=written-response] { font-weight: 700; font-size: 13px; }
+.pm-learn-error { color: #b22545 !important; font-size: 12px; }

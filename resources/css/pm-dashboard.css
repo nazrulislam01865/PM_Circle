@@ -1,0 +1,4 @@
+/* Dashboard design primitives, panels and breakpoints are separated for maintainability. */
+@import './pm-dashboard-shell.css';
+@import './pm-dashboard-panels.css';
+@import './pm-dashboard-responsive.css';

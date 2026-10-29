@@ -1,0 +1,5 @@
+/* Learning CSS split by responsibility. */
+@import './pm-learning-core.css';
+@import './pm-learning-path.css';
+@import './pm-learning-activity.css';
+@import './pm-learning-responsive.css';

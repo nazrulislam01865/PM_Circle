@@ -1,0 +1,13 @@
+/* Reuses PM Circle's centralized tokens and existing PlanCard component. */
+.pm-member-public-content { min-width: 0; }
+.pm-member-public-content .pm-container { max-width: 1480px; }
+.pm-member-settings { max-width: 1100px; }
+.pm-member-plans { max-width: 1240px; margin: 0 auto; padding: 18px 0 40px; }
+.pm-member-plans .pm-pricing-grid { margin: 18px 0; }
+.pm-member-plans-current, .pm-member-plans-note { display: flex; align-items: center; gap: 10px; padding: 13px 18px; border-radius: var(--pm-dash-radius); background: #eaf3ff; color: #123c71; margin-top: 14px; }
+.pm-member-plans-note { background: #f7faff; border: 1px solid #dbe7f5; font-size: 14px; }
+.pm-member-action { background: white; border: 1px solid var(--pm-dash-border); border-radius: var(--pm-dash-radius); padding: 20px; display: flex; align-items: center; gap: 16px; justify-content: space-between; flex-wrap: wrap; }
+.pm-member-duration { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px; }
+.pm-member-duration button { border: 1px solid #bfd4eb; border-radius: 6px; padding: 8px 10px; color: #16437d; }
+.pm-member-duration button.active { border-color: var(--pm-dash-blue); background: #eaf3ff; }
+@media (max-width: 767px) { .pm-member-plans { padding: 10px 0 25px; } .pm-member-action { align-items: stretch; flex-direction: column; } }

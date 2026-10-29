@@ -1,0 +1,56 @@
+@media(max-width:1280px) {
+    .pm-learn-content { padding-inline: 15px; }
+    .pm-learn-columns { grid-template-columns: minmax(0,1fr) 275px; }
+    .pm-learn-continue-stats { flex-basis: 32%; }
+    .pm-learn-path-icon { flex-basis: 50px; width: 50px; height: 50px; }
+    .pm-learn-step-title { font-size: 12px; }
+    .pm-learn-step-block { gap: 6px; }
+}
+@media(max-width:1060px) {
+    .pm-learn-continue { flex-wrap: wrap; }
+    .pm-learn-continue-stats { flex: 1 1 100%; padding-top: 10px; border-left: none; border-top: 1px solid #e3e9ef; }
+    .pm-learn-columns { grid-template-columns: minmax(0,1fr) 265px; }
+    .pm-learn-path-grid { grid-template-columns: 1fr; }
+    .pm-learn-practice-grid { grid-template-columns: repeat(2,1fr); }
+}
+@media(max-width:790px) {
+    .pm-learn-columns, .pm-learn-path-detail, .pm-learn-activity-layout { grid-template-columns: minmax(0,1fr); }
+    .pm-learn-path-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .pm-learn-side-col { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .pm-learn-activity-layout .pm-learn-side-col { display: grid; }
+    .pm-learn-bottom-note { flex-wrap: wrap; }
+    .pm-learn-bottom-note em { margin-left: 0; }
+}
+@media(max-width:650px) {
+    .pm-learn-page-title { align-items: flex-start; }
+    .pm-learn-page-title .pm-dash-btn { font-size: 0; min-width: 42px; padding: 9px; }
+    .pm-learn-page-title .pm-dash-btn svg { width: 20px; }
+    .pm-learn-continue-icon { width: 50px; height: 50px; }
+    .pm-learn-continue-main { min-width: 0; }
+    .pm-learn-continue > .pm-dash-btn { flex: 1 1 100%; }
+    .pm-learn-path-grid, .pm-learn-side-col { grid-template-columns: minmax(0,1fr); }
+    .pm-learn-continue-stats { grid-template-columns: repeat(3,1fr); }
+    .pm-learn-continue-stats > div { padding-inline: 6px; }
+    .pm-learn-page-title p { font-size: 13px; }
+    .pm-learn-tabs { gap: 0; justify-content: space-between; }
+    .pm-learn-tabs button { padding: 9px 7px; font-size: 12px; }
+    .pm-learn-levels { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+    .pm-learn-levels button { white-space: nowrap; }
+    .pm-learn-select { min-width: 110px; }
+    .pm-learn-footer { flex-wrap: wrap; justify-content: center; }
+    .pm-learn-footer nav { gap: 11px; }
+    .pm-learn-path-facts { gap: 9px 17px; }
+    .pm-learn-module-toggle { gap: 7px; }
+    .pm-learn-module-toggle small { display: none; }
+    .pm-learn-step-line { display: none; }
+    .pm-learn-steps { flex-wrap: wrap; justify-content: flex-start; gap: 9px; }
+    .pm-learn-step-block { flex: 0 0 auto; }
+    .pm-learn-step-number { width: 28px; height: 28px; }
+    .pm-learn-step-title { font-size: 11px; }
+    .pm-learn-reminder { flex-wrap: wrap; }
+    .pm-learn-reminder a { margin-left: 72px; }
+    .pm-learn-activity-nav .pm-dash-btn { min-width: 0; flex: 1; font-size: 11px; padding: 8px; }
+    .pm-learn-activity-title h1 { font-size: 28px; }
+    .pm-learn-save-exit { font-size: 11px; }
+    .pm-learn-save-exit svg { width: 19px; }
+}

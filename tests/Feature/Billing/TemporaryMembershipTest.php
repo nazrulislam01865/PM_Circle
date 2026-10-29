@@ -20,6 +20,23 @@ final class TemporaryMembershipTest extends TestCase
         $this->seed(PlanSeeder::class);
     }
 
+    public function test_authenticated_membership_comparison_receives_current_plan_and_catalog(): void
+    {
+        config()->set('pm-circle.temporary_paid_access_enabled', true);
+        $member = User::factory()->create(['onboarding_step' => 3]);
+        $this->actingAs($member)->get(route('membership.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('billing/Membership')
+                ->where('currentPlan', 'free')
+                ->where('temporaryAccessEnabled', true)
+                ->has('plans', 3)
+                ->where('plans.1.code', 'plus')
+                ->where('plans.1.prices.0.amount_minor', 39900)
+                ->where('plans.2.code', 'pro')
+                ->etc());
+    }
+
     public function test_guests_cannot_change_membership(): void
     {
         $this->post('/membership/temporary', ['plan' => 'pro'])->assertRedirect('/login');
@@ -66,10 +83,58 @@ final class TemporaryMembershipTest extends TestCase
         config()->set('pm-circle.temporary_paid_access_enabled', true);
         $member = User::factory()->create(['onboarding_step' => 3]);
         $this->actingAs($member)->post('/membership/temporary', ['plan' => 'pro'])->assertRedirect();
+        $previousEnvironment = app()->environment();
         app()->detectEnvironment(fn () => 'production');
-        $this->assertFalse(SetTemporaryMembership::enabled());
-        $this->assertSame('free', app(CurrentMemberPlan::class)->code($member));
-        $this->actingAs($member)->post('/membership/temporary', ['plan' => 'plus'])->assertForbidden();
+
+        try {
+            $this->assertFalse(SetTemporaryMembership::enabled());
+            $this->assertSame('free', app(CurrentMemberPlan::class)->code($member));
+
+            // Production enables CSRF protection even inside PHPUnit. Supply a valid
+            // session token so this request reaches the membership authorization guard.
+            $csrfToken = 'temporary-membership-production-test-token';
+            $this->withSession(['_token' => $csrfToken])
+                ->actingAs($member)
+                ->post('/membership/temporary', [
+                    'plan' => 'plus',
+                    '_token' => $csrfToken,
+                ])
+                ->assertForbidden();
+
+            // A rejected production request must not change the existing test grant.
+            $this->assertDatabaseHas('temporary_memberships', [
+                'user_id' => $member->getKey(),
+                'plan_code' => 'pro',
+            ]);
+        } finally {
+            app()->detectEnvironment(fn () => $previousEnvironment);
+        }
+    }
+
+    public function test_explicit_complimentary_access_can_grant_plus_in_production_without_payment(): void
+    {
+        config()->set('pm-circle.temporary_paid_access_enabled', false);
+        config()->set('pm-circle.self_service_complimentary_access_enabled', true);
+        $member = User::factory()->create(['onboarding_step' => 2]);
+        $previousEnvironment = app()->environment();
+        app()->detectEnvironment(fn () => 'production');
+
+        try {
+            $this->assertTrue(SetTemporaryMembership::enabled());
+            $csrfToken = 'complimentary-access-csrf-test-token';
+            $this->withSession(['_token' => $csrfToken])
+                ->actingAs($member)
+                ->post('/join/step/3', ['plan' => 'plus', 'months' => 3, '_token' => $csrfToken])
+                ->assertRedirect(route('dashboard'));
+            $this->assertSame('plus', app(CurrentMemberPlan::class)->code($member));
+            $this->assertSame(3, $member->fresh()->onboarding_step);
+            $this->assertDatabaseCount('subscriptions', 0);
+            $this->assertDatabaseHas('temporary_memberships', [
+                'user_id' => $member->getKey(), 'plan_code' => 'plus',
+            ]);
+        } finally {
+            app()->detectEnvironment(fn () => $previousEnvironment);
+        }
     }
 
     public function test_temporary_membership_is_specific_to_its_owner_and_validated(): void

@@ -10,7 +10,7 @@ final class CurrentMemberPlan
 {
     public function code(User $user): string
     {
-        // Development grant is checked only in explicitly permitted environments.
+        // Apply non-billed grants only while the corresponding feature flag is enabled.
         if (SetTemporaryMembership::enabled()) {
             $temporary = DB::table('temporary_memberships')
                 ->where('user_id', $user->getKey())

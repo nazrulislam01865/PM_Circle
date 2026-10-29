@@ -169,7 +169,7 @@
 .pm-feed-composer select { border: 1px solid var(--pm-line); padding: 9px; border-radius: 5px; color: var(--pm-copy); }
 .pm-pager { display: flex; justify-content: center; gap: 14px; margin: 16px; }.pm-pager a { color: var(--pm-primary); border: 1px solid #b9d3f7; border-radius: 6px; padding: 8px 24px; }
 .pm-empty { color: #6e7c98; padding: 22px; line-height: 1.6; }
-.pm-auth-shell { background: #fff; }
+.pm-auth-shell .pm-payment-summary { flex-wrap: wrap; }
 .pm-auth-header { height: 96px; display: flex; align-items: center; justify-content: space-between; padding: 0 clamp(22px, 5.8vw, 84px); border-bottom: 1px solid var(--pm-line); }
 .pm-auth-header p { color: #70809c; font-size: 16px; }.pm-auth-header p a { color: var(--pm-primary); font-weight: 750; margin-left: 6px; }
 .pm-auth-main { max-width: 620px; margin: 47px auto 20px; padding: 0 12px; }
@@ -200,6 +200,7 @@
 .pm-recommended { font-size: 11px; color: #0a7564; background: #dbf7ed; padding: 5px 10px; border-radius: 20px; margin-top: 2px; }
 .pm-plan-price { margin-left: auto; text-align: right; white-space: nowrap; }.pm-plan-price strong { font-size: 21px; }.pm-plan-price strong span { font-size: 15px; font-weight: 550; }.pm-plan-price small { display: block; color: var(--pm-muted); font-size: 12px; }
 .pm-plan-benefits { margin: 9px 0 0 46px; }.pm-plan-benefits li { color: #5e6e88; font-size: 13px; padding-block: 4px; display: flex; gap: 10px; align-items: flex-start; }.pm-plan-benefits svg { color: #0ba576; flex: none; }
+.pm-catalog-unavailable { padding: 15px; margin-bottom: 16px; border: 1px solid #f1b9c5; border-radius: 7px; background: #fff4f6; line-height: 1.6; }
 .pm-duration-title { margin: 18px 0 14px; padding-top: 18px; border-top: 1px solid #dbe7f3; font-size: 16px; font-weight: 800; }
 .pm-duration-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 11px; }
 .pm-duration { display: flex; align-items: flex-start; gap: 11px; min-height: 96px; border: 1px solid #d6dfed; border-radius: 7px; background: #fff; text-align: left; padding: 13px 12px; }.pm-duration.selected { border-color: var(--pm-primary); background: #f5faff; }

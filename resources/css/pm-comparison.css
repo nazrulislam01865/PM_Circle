@@ -1,34 +1,124 @@
-/* Approved public pricing-comparison prototype; use global PM Circle tokens. */
-.pm-compare-page{max-width:1180px;width:calc(100% - 48px);margin:0 auto;padding:36px 0 46px}
-.pm-compare-intro{text-align:center;margin:0 0 34px}
-.pm-compare-intro h1{font-weight:800;font-size:clamp(26px,3vw,39px);letter-spacing:-.9px;line-height:1.2}
-.pm-compare-intro p{font-size:17px;color:var(--pm-muted);margin-top:6px}
-.pm-compare-scroll{overflow-x:auto;border:1px solid var(--pm-line);border-radius:8px;background:#fff;box-shadow:var(--pm-shadow)}
+/* Pricing prototype: component-only overrides reuse the centralized PM Circle tokens. */
+.pm-pricing-shell{background:#f7f7f6}
+.pm-app.pm-pricing-shell .pm-container{width:min(1480px,calc(100% - 64px))}
+.pm-pricing-shell .pm-header{border-bottom:1px solid #edf0f2}
+.pm-pricing-shell .pm-header-inner{min-height:59px;gap:37px}
+.pm-pricing-shell .pm-brand-icon-monogram{width:42px;height:42px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:16px;letter-spacing:-.8px;background:linear-gradient(140deg,#0783de,#0755aa)}
+.pm-pricing-shell .pm-brand-icon-monogram::before{content:none}
+.pm-pricing-shell .pm-header .pm-brand-copy strong,.pm-pricing-shell .pm-footer .pm-brand-copy strong{font-size:18px;font-weight:800;letter-spacing:-.45px}
+.pm-pricing-shell .pm-brand-copy small{font-size:10px;letter-spacing:0;margin-top:2px;font-weight:500;color:#737b88}
+.pm-pricing-shell .pm-main-nav{gap:18px}
+.pm-pricing-shell .pm-main-nav a{font-size:12px;font-weight:600}
+.pm-pricing-shell .pm-header-actions{gap:9px}
+.pm-pricing-shell .pm-header-actions .pm-button{font-size:12px;min-height:36px;padding:8px 13px}
+.pm-pricing-shell .pm-header-actions .pm-button:not(.pm-header-login){font-size:11px}
+.pm-pricing-shell .pm-header-login{border-color:#3d87d4}
+.pm-pricing-shell .pm-footer{padding:19px 0 20px;border-top:1px solid #f0f0ef}
+.pm-pricing-shell .pm-footer-inner{justify-content:space-between}
+.pm-pricing-shell .pm-footer nav{gap:38px;margin-right:12px}
+.pm-pricing-shell .pm-footer nav a{font-size:12px;color:#6a6d75}
+.pm-compare-page{max-width:1180px;width:calc(100% - 44px);margin:0 auto;padding:37px 0 33px}
+.pm-compare-intro{text-align:center;margin:0 0 33px}
+.pm-compare-intro h1{font-weight:800;font-size:clamp(26px,3.7vw,39px);letter-spacing:-1.05px;line-height:1.23;margin:0}
+.pm-compare-intro p{font-size:17px;color:#81818a;margin:6px 0 0;font-weight:600}
+.pm-compare-scroll{overflow-x:auto;border:1px solid #dddfe3;border-radius:6px;background:#fff;box-shadow:0 1px 4px rgb(0 0 0 / 3%)}
 .pm-compare-table{border-collapse:collapse;table-layout:fixed;width:100%;min-width:710px;color:var(--pm-navy);font-size:13px}
-.pm-compare-table col.pm-compare-feature-col{width:38%}.pm-compare-table col:not(.pm-compare-feature-col){width:20.666%}
-.pm-compare-table tr> *{border-right:1px solid #e8edf3;border-bottom:1px solid #e8edf3}
+.pm-compare-table col.pm-compare-feature-col{width:38%}
+.pm-compare-table col:not(.pm-compare-feature-col){width:20.666666%}
+.pm-compare-table tr>*{border-right:1px solid #e9ebee;border-bottom:1px solid #e9ebee}
 .pm-compare-table tr>*:last-child{border-right:0}
-.pm-compare-table thead tr{height:154px}.pm-compare-table thead th{position:relative;padding:31px 6px 13px;text-align:center;vertical-align:middle}
-.pm-compare-table thead th strong{font-weight:800;font-size:20px;display:block}.pm-compare-table thead th b{font-size:18px;display:block;margin:3px 0}
-.pm-compare-table thead th span:not(.pm-compare-recommended){color:var(--pm-muted);font-size:12px;display:block}
-.pm-compare-table thead .pm-compare-header-feature{text-align:left;padding:20px 22px}
-.pm-compare-table thead .pm-compare-header-feature strong{font-size:20px}.pm-compare-table thead .pm-compare-header-feature span{font-size:13px!important}
+.pm-compare-table thead tr{height:165px}
+.pm-compare-table thead th{position:relative;padding:31px 6px 11px;text-align:center;vertical-align:top}
+.pm-compare-table thead th strong{font-weight:800;font-size:19px;display:block}
+.pm-compare-table thead th b{font-size:18px;display:block;margin:3px 0;font-weight:800;white-space:nowrap;line-height:1.25}
+.pm-compare-table thead th>span:not(.pm-compare-recommended){color:#888a91;font-size:12px;display:block}
+.pm-compare-table thead .pm-compare-header-feature{text-align:left;padding:39px 21px 15px}
+.pm-compare-table thead .pm-compare-header-feature strong{font-size:20px}
+.pm-compare-table thead .pm-compare-header-feature span{font-size:13px;color:#686f7c}
 .pm-compare-table .pm-compare-plus{background:#f0f7ff;color:#0758ba}
-.pm-compare-table thead .pm-compare-plus{padding-top:40px}.pm-compare-recommended{position:absolute;top:5px;left:50%;transform:translateX(-50%);background:var(--pm-primary);color:white;border-radius:18px;padding:3px 12px;font-size:11px;white-space:nowrap}
-.pm-compare-duration select{margin:5px auto;background:white;color:var(--pm-navy);border:1px solid #c9d9ed;border-radius:6px;padding:6px 17px;font-size:12px}
-.pm-compare-table thead th small{font-size:10px;display:block;line-height:1.4;color:#406da8;margin-top:3px}
-.pm-compare-table tbody tr.pm-compare-group{height:34px}.pm-compare-table tbody tr.pm-compare-group th{padding:8px 18px;text-align:left;background:#f2f3f5;color:#5f6878;text-transform:uppercase;font-size:12px;letter-spacing:.35px;font-weight:800}
-.pm-compare-table tbody tr:not(.pm-compare-group){height:42px}.pm-compare-table tbody tr:not(.pm-compare-group) th{padding:8px 17px;font-weight:500;text-align:left;display:flex;align-items:center;gap:14px}
-.pm-compare-table tbody tr:not(.pm-compare-group) th svg{flex:none;color:#24344f}
-.pm-compare-table td{text-align:center;padding:6px 8px}
-.pm-compare-check{color:#0761bb;display:inline-flex;align-items:center;justify-content:center}
+.pm-compare-table thead .pm-compare-plus{padding-top:32px}
+.pm-compare-recommended{position:absolute;top:5px;left:50%;transform:translateX(-50%);background:#257bcc;color:white;border-radius:18px;padding:3px 13px;font-size:11px;font-weight:600;line-height:1.35;white-space:nowrap}
+.pm-compare-table thead th b .pm-compare-per-month{display:inline;color:inherit;font-size:12px;font-weight:700}
+.pm-compare-duration select{margin:3px auto 1px;min-height:32px;max-width:100%;background:#fff;color:#344257;border:1px solid #c3d2e7;border-radius:6px;padding:5px 9px;font-size:12px;cursor:pointer}
+.pm-compare-duration select:disabled{cursor:not-allowed;opacity:.6}
+.pm-compare-table thead th small{font-size:10px;display:block;line-height:1.35;color:#426c9f;margin:2px auto 0;max-width:205px;font-weight:500}
+.pm-compare-table tbody tr.pm-compare-group{height:34px}
+.pm-compare-table tbody tr.pm-compare-group th{padding:7px 18px;text-align:left;background:#f2f3f5;color:#5f6878;text-transform:uppercase;font-size:12px;letter-spacing:.3px;font-weight:800}
+.pm-compare-table tbody tr:not(.pm-compare-group){height:36px}
+.pm-compare-table tbody:first-of-type tr:not(.pm-compare-group){height:34px}
+.pm-compare-table tbody:last-of-type tr:not(.pm-compare-group){height:35px}
+.pm-compare-table tbody:first-of-type tr:not(.pm-compare-group) td{line-height:1}
+/* Keep the th as a table-cell; only its contents use flex for icon alignment. */
+.pm-compare-table tbody tr:not(.pm-compare-group) th{display:table-cell;padding:5px 3px 5px 20px;font-weight:500;text-align:left;vertical-align:middle}
+.pm-compare-row-label{display:flex;align-items:center;gap:17px;min-height:24px}
+.pm-compare-row-label span{font-size:12.5px;letter-spacing:-.1px}
+.pm-compare-row-label svg{flex:none;color:#27334c}
+.pm-compare-table td{text-align:center;padding:5px 8px;vertical-align:middle}
+.pm-compare-check{color:#0863b6;display:inline-flex;align-items:center;justify-content:center}
 .pm-compare-value{display:inline-flex;justify-content:center;color:#142544;font-weight:500}
 .pm-compare-plus .pm-compare-value{color:#0758ba;font-weight:700}
-.pm-compare-table tfoot th{text-align:left;padding:15px 19px;font-size:14px;font-weight:750}
-.pm-compare-table tfoot td{padding:15px 9px}.pm-compare-table tfoot a{min-width:116px}
-.pm-compare-fineprint{margin:9px 14px 20px;font-size:12px;color:var(--pm-muted);line-height:1.6}
-.pm-compare-import{display:flex;align-items:center;gap:24px;padding:25px;margin-top:25px}
-.pm-compare-import-icon{position:relative;display:grid;place-items:center;background:#eaf4ff;color:var(--pm-primary);border-radius:50%;height:125px;width:125px;flex:none}
-.pm-compare-import-icon svg:last-child{position:absolute;right:9px;bottom:12px;background:#0765cb;color:white;border-radius:3px;padding:2px}
-.pm-compare-import>div:nth-child(2){flex:1}.pm-compare-import h2{font-size:20px;font-weight:800}.pm-compare-import p{margin:6px 0;color:var(--pm-copy)}.pm-compare-import small{color:var(--pm-muted)}
-@media(max-width:760px){.pm-compare-page{width:calc(100% - 28px);padding-top:28px}.pm-compare-intro{margin-bottom:23px}.pm-compare-import{align-items:flex-start;flex-wrap:wrap}.pm-compare-import-icon{height:88px;width:88px}.pm-compare-import-icon svg:first-child{width:43px}.pm-compare-import>div:nth-child(2){flex-basis:65%}}
+.pm-compare-table .pm-compare-full{color:#0758ba;font-weight:700}
+.pm-compare-table tfoot th{text-align:left;padding:15px 19px;font-size:14px;font-weight:800}
+.pm-compare-table tfoot td{padding:15px 9px}
+.pm-compare-table tfoot tr{height:72px}
+.pm-compare-table tfoot a{min-width:135px;max-width:100%;min-height:40px;border-color:#377ebc;font-size:13px;white-space:nowrap}
+.pm-compare-table tfoot .pm-compare-plus a{border-color:#0e66c3;background:#0869d8;color:#fff}
+.pm-compare-fineprint{margin:9px 12px 23px;font-size:12px;color:#85858b;line-height:1.65}
+.pm-compare-import{display:flex;align-items:center;gap:22px;padding:15px 18px;min-height:173px;border-color:#e4e4e3;background:#fff}
+.pm-compare-import-art{width:164px;height:140px;flex:none}
+.pm-compare-import-copy{flex:1;min-width:0}
+.pm-compare-import h2{font-size:19px;line-height:1.4;font-weight:800;margin:0}
+.pm-compare-import p{font-size:14px;line-height:1.52;margin:6px 0 14px;color:var(--pm-copy)}
+.pm-compare-import small{font-size:12px;color:#888b92}
+.pm-compare-import-action{flex:none;align-self:flex-end;margin:0 0 30px auto;min-height:38px;font-size:12px;border-color:#347fbe;white-space:nowrap}
+@media(max-width:960px){
+    .pm-compare-table tfoot a{min-width:0;width:100%}
+    .pm-compare-import{gap:18px}
+    .pm-compare-import-art{width:162px}
+}
+@media(max-width:760px){
+    .pm-compare-page{width:calc(100% - 28px);padding-top:28px;padding-bottom:28px}
+    .pm-compare-intro{margin-bottom:24px}
+    .pm-compare-intro h1{font-size:clamp(25px,6vw,33px)}
+    .pm-compare-intro p{font-size:14px;font-weight:500}
+    .pm-compare-import{align-items:center;flex-wrap:wrap;min-height:0;padding:17px;gap:12px}
+    .pm-compare-import-art{width:95px;height:95px}
+    .pm-compare-import-copy{flex-basis:calc(100% - 112px)}
+    .pm-compare-import h2{font-size:17px}
+    .pm-compare-import p{font-size:13px;margin-bottom:8px}
+    .pm-compare-import-break{display:none}
+    .pm-compare-import-action{align-self:auto;margin:0 0 0 auto}
+    .pm-pricing-shell .pm-footer-inner{gap:17px;flex-wrap:wrap}
+    .pm-pricing-shell .pm-footer nav{gap:19px;margin-left:auto}
+}
+@media(max-width:700px){
+    .pm-pricing-shell .pm-header-inner{min-height:62px;gap:10px}
+    .pm-app.pm-pricing-shell .pm-container{width:calc(100% - 28px)}
+    .pm-pricing-shell .pm-header-actions .pm-header-login{display:none}
+    .pm-pricing-shell .pm-header-actions{margin-left:auto}
+    .pm-pricing-shell .pm-main-nav{top:62px}
+}
+@media(max-width:420px){
+    .pm-compare-import-art{width:80px;height:80px}
+    .pm-compare-import-copy{flex-basis:calc(100% - 96px)}
+    .pm-compare-import h2{font-size:16px}
+    .pm-compare-import p{font-size:12px}
+    .pm-pricing-shell .pm-footer nav{margin-left:0;gap:16px}
+    .pm-pricing-shell .pm-header .pm-brand-copy strong{font-size:16px}
+}
+
+/* Signed-in membership page: share the public comparison, not the old plan cards. */
+.pm-membership-comparison .pm-compare-page{width:100%;padding:34px 0 35px}
+.pm-membership-notice{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:9px 16px;margin:-13px 0 22px;color:var(--pm-navy);font-size:12px}
+.pm-membership-notice p{display:inline-flex;align-items:center;gap:7px;margin:0;line-height:1.5}
+.pm-membership-current{font-weight:500}
+.pm-membership-current strong{font-weight:800}
+.pm-membership-current svg{color:#1165be;flex:none}
+.pm-membership-access{color:#6a7280}
+.pm-membership-access svg{color:#1165be;flex:none}
+.pm-compare-error{color:#a31926;background:#fff2f2;border:1px solid #e5b7bd;padding:10px 14px;border-radius:6px;margin:0 0 14px;font-size:13px}
+.pm-compare-table tfoot button.pm-button{min-width:135px;max-width:100%;min-height:40px;border-color:#377ebc;font-size:13px;white-space:nowrap}
+.pm-compare-table tfoot .pm-compare-plus button.pm-button{border-color:#0e66c3;background:#0869d8;color:#fff}
+.pm-compare-table tfoot button.pm-button:disabled{cursor:not-allowed;opacity:.65}
+@media(max-width:960px){.pm-compare-table tfoot button.pm-button{min-width:0;width:100%}}
+@media(max-width:760px){.pm-membership-comparison .pm-compare-page{padding:24px 0 30px}.pm-membership-notice{margin:-6px 0 18px;justify-content:flex-start}}

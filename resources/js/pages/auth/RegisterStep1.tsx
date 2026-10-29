@@ -16,7 +16,7 @@ export default function RegisterStep1() {
             <div className="pm-legal-row"><input id="legal" type="checkbox" checked={form.data.legal_acceptance} onChange={e => form.setData('legal_acceptance', e.target.checked)} required/><label htmlFor="legal">I agree to the <a href="/terms" target="_blank" rel="noreferrer">Terms</a> and <a href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</a>.</label></div>
             {form.errors.legal_acceptance && <p className="pm-error" role="alert">{form.errors.legal_acceptance}</p>}
             <ActionButton forward className="pm-auth-submit" type="submit" disabled={form.processing}>Continue</ActionButton>
-            <div className="pm-auth-note"><Mail size={20}/>Next, add your professional details. No email verification needed for now.</div><p className="pm-auth-footnote">Free to join. Add your professional details later.</p>
+            <div className="pm-auth-note"><Mail size={20}/>Next, add your professional details.</div><p className="pm-auth-footnote">Free to join. Add your professional details later.</p>
         </form>
     </OnboardingLayout>;
 }

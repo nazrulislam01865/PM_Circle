@@ -15,9 +15,11 @@ class PlanSeeder extends Seeder
             'pro' => ['Pro', [1 => 69900], ['Everything in Plus', 'Advanced simulations and a higher AI allowance', 'AI resume tools and interview practice']],
         ];
         foreach ($catalog as $code => [$name, $prices, $benefits]) {
-            $plan = Plan::updateOrCreate(['code' => $code], ['name' => $name, 'active' => true, 'benefits' => $benefits]);
+            // Only fill missing catalog rows. Never reset administrator-managed
+            // prices, visibility, benefits, or active states during a repair.
+            $plan = Plan::firstOrCreate(['code' => $code], ['name' => $name, 'active' => true, 'benefits' => $benefits]);
             foreach ($prices as $months => $amountMinor) {
-                $plan->prices()->updateOrCreate(['months' => $months, 'version' => 1], ['amount_minor' => $amountMinor, 'currency' => 'BDT', 'active' => true]);
+                $plan->prices()->firstOrCreate(['months' => $months, 'version' => 1], ['amount_minor' => $amountMinor, 'currency' => 'BDT', 'active' => true]);
             }
         }
     }

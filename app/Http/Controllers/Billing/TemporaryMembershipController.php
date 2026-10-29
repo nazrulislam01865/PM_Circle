@@ -29,6 +29,6 @@ final class TemporaryMembershipController extends Controller
         $data = $request->validate(['plan' => ['required', Rule::in(['free', 'plus', 'pro'])]]);
         $action->execute($request->user(), $data['plan']);
 
-        return to_route('dashboard')->with('status', 'Temporary membership updated for local testing.');
+        return to_route('dashboard')->with('status', 'Membership access updated. No payment was collected.');
     }
 }

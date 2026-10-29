@@ -60,7 +60,7 @@ class OnboardingController extends Controller
             ->where('months', $data['months'])->where('active', true)->orderByDesc('version')->first();
         if (! $price) throw ValidationException::withMessages(['months' => 'This plan duration is unavailable.']);
         if ($data['plan'] !== 'free' && ! SetTemporaryMembership::enabled()) {
-            throw ValidationException::withMessages(['plan' => 'Paid checkout is not yet configured. You can start with Free and upgrade once payments are enabled.']);
+            throw ValidationException::withMessages(['plan' => 'This plan is unavailable without checkout or complimentary access. You can start with Free.']);
         }
 
         $action->execute($request->user());
@@ -74,7 +74,9 @@ class OnboardingController extends Controller
     /** @return array<int, array<string, mixed>> */
     public function catalog(): array
     {
-        return Plan::query()->where('active', true)->with(['prices' => fn ($query) => $query->where('active', true)->orderByDesc('version')->orderBy('months')])
+        return Plan::query()->where('active', true)
+            ->orderByRaw("CASE code WHEN 'free' THEN 0 WHEN 'plus' THEN 1 WHEN 'pro' THEN 2 ELSE 3 END")
+            ->with(['prices' => fn ($query) => $query->where('active', true)->orderByDesc('version')->orderBy('months')])
             ->get()->map(fn (Plan $plan) => [
                 'code' => $plan->code, 'name' => $plan->name, 'benefits' => $plan->benefits,
                 'prices' => $plan->prices->unique('months')->values()->map(fn ($price) => [

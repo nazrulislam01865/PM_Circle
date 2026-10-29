@@ -6,13 +6,14 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-/** Grants temporary feature access ONLY in local/testing, without creating financial records. */
+/** Records a non-billed membership grant, never a paid subscription. */
 final class SetTemporaryMembership
 {
     public static function enabled(): bool
     {
-        return app()->environment(['local', 'testing'])
-            && (bool) config('pm-circle.temporary_paid_access_enabled', false);
+        return (app()->environment(['local', 'testing'])
+                && (bool) config('pm-circle.temporary_paid_access_enabled', false))
+            || (bool) config('pm-circle.self_service_complimentary_access_enabled', false);
     }
 
     public function execute(User $user, string $code): void

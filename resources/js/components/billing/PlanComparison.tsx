@@ -36,7 +36,7 @@ const groups: ComparisonGroup[] = [
 ];
 
 function Cell({ value }: { value: Benefit }) {
-    return <span className={value === true ? 'pm-compare-check' : 'pm-compare-value'}>
+    return <span className={value === true ? 'pm-compare-check' : value === 'Full access' ? 'pm-compare-value pm-compare-full' : 'pm-compare-value'}>
         {value === true ? <Check size={21} strokeWidth={3} aria-label="Included"/> : value === false ? <span aria-label="Not included">—</span> : value}
     </span>;
 }
@@ -45,7 +45,7 @@ export function PlanComparisonRows() {
         {groups.map(group => <tbody key={group.title}>
             <tr className="pm-compare-group"><th colSpan={4} scope="rowgroup">{group.title}</th></tr>
             {group.rows.map(row => { const Icon = row.icon; return <tr key={row.label}>
-                <th scope="row"><Icon size={18} strokeWidth={1.8}/><span>{row.label}</span></th>
+                <th scope="row"><span className="pm-compare-row-label"><Icon size={18} strokeWidth={1.8} aria-hidden="true"/><span>{row.label}</span></span></th>
                 <td><Cell value={row.free}/></td><td className="pm-compare-plus"><Cell value={row.plus}/></td><td><Cell value={row.pro}/></td>
             </tr>; })}
         </tbody>)}

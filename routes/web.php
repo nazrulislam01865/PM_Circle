@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\EmailVerificationCodeController;
 use App\Http\Controllers\Community\PostController;
 use App\Http\Controllers\Members\MemberDirectoryController;
 use App\Http\Controllers\Account\AccountFeatureController;
@@ -19,6 +20,8 @@ Route::get('/community', [PostController::class, 'index'])->name('community.inde
 Route::get('/posts/{post}', [PostController::class, 'show'])->name('posts.show');
 Route::get('/scenarios/{scenario:slug}', [ScenarioController::class, 'show'])->name('scenarios.show');
 Route::redirect('/join/step/1', '/register')->name('join.account');
+Route::post('/api/auth/send-verification-code', [EmailVerificationCodeController::class, 'sendCode'])->middleware('throttle:15,1');
+Route::post('/api/auth/verify-code', [EmailVerificationCodeController::class, 'verifyCode'])->middleware('throttle:30,1');
 Route::inertia('/about', 'public/About')->name('about');
 Route::inertia('/terms', 'public/Terms')->name('terms');
 Route::inertia('/privacy', 'public/Privacy')->name('privacy');

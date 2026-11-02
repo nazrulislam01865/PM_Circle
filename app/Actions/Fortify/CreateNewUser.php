@@ -3,18 +3,18 @@
 namespace App\Actions\Fortify;
 
 use App\Concerns\PasswordValidationRules;
-use App\Concerns\ProfileValidationRules;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 class CreateNewUser implements CreatesNewUsers
 {
-    use PasswordValidationRules, ProfileValidationRules;
+    use PasswordValidationRules;
 
     /** @param array<string, mixed> $input */
     public function create(array $input): User
@@ -26,17 +26,21 @@ class CreateNewUser implements CreatesNewUsers
         $input['email'] = mb_strtolower(trim((string) ($input['email'] ?? '')));
 
         Validator::make($input, [
-            ...$this->profileRules(),
+            'name' => ['nullable', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', Password::min(8), 'confirmed'],
             'legal_acceptance' => ['accepted'],
         ])->validate();
 
-        return DB::transaction(function () use ($input): User {
+        $name = ! empty($input['name']) ? trim((string) $input['name']) : explode('@', $input['email'])[0];
+
+        return DB::transaction(function () use ($input, $name): User {
             $user = User::create([
-                'name' => trim($input['name']),
+                'name' => $name,
                 'email' => $input['email'],
                 'password' => Hash::driver('bcrypt')->make($input['password']),
                 'onboarding_step' => 1,
+                'email_verified_at' => now(),
                 'accepted_terms_version' => config('pm-circle.terms_version'),
                 'accepted_privacy_version' => config('pm-circle.privacy_version'),
                 'legal_accepted_at' => now(),

@@ -12,6 +12,7 @@ class SaveProfileRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'name' => ['required', 'string', 'max:255'],
             'role' => ['nullable', 'string', 'max:80'],
             'years_experience' => ['nullable', 'integer', 'between:0,60'],
             'certifications' => ['sometimes', 'array', 'max:8'],

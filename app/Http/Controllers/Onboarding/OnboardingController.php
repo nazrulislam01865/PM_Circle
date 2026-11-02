@@ -23,6 +23,7 @@ class OnboardingController extends Controller
         if ($request->user()->onboarding_step >= 3) return to_route('dashboard');
 
         return Inertia::render('auth/RegisterStep2', [
+            'name' => $request->user()->name,
             'profile' => $request->user()->profile?->only(['role', 'years_experience', 'resume_scan_status']),
             'certifications' => $request->user()->certifications()->get(['name', 'credential_number']),
         ]);
@@ -85,3 +86,5 @@ class OnboardingController extends Controller
             ])->all();
     }
 }
+
+

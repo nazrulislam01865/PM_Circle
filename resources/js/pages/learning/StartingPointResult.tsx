@@ -377,3 +377,4 @@ export default function StartingPointResult({ shell, recommendedSlug = 'student-
         </LearningLayout>
     );
 }
+

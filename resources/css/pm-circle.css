@@ -34,7 +34,7 @@
     --pm-primary-hover: var(--primary-hover);
     --pm-navy: var(--text);
     --pm-copy: var(--text);
-    --pm-muted: var(--muted);
+    --pm-muted: #52657D;
     --pm-canvas: var(--canvas);
     --pm-surface: var(--surface);
     --pm-line: var(--divider);

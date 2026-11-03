@@ -150,5 +150,20 @@
 }
 
 /* Override starter-kit neutral defaults for all screens, including Fortify. */
-:root { --primary: #0869e5; --primary-foreground: #fff; --ring: #8bb9fb; --border: #e2e9f1; --input: #dfe7f0; --background: #fff; --foreground: #0b1533; --muted-foreground: #6e7c98; }
+:root {
+    --primary: #0A66C2;
+    --primary-foreground: #fff;
+    --ring: #8bb9fb;
+    --border: #DCE3EC;
+    --input: #8293A8;
+    --background: #fff;
+    --foreground: #172B4D;
+    --text: #172B4D;
+    --muted: #52657D;
+    --muted-foreground: #52657D;
+    --pm-primary: #0A66C2;
+    --pm-navy: #172B4D;
+    --pm-copy: #172B4D;
+    --pm-muted: #52657D;
+}
 

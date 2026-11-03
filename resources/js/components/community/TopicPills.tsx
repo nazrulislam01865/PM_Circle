@@ -1,5 +1,23 @@
 import { Link } from '@inertiajs/react';
-const topics = ['All', 'I learned', 'From my project', 'Ask the community'];
+
+const topics = ['All', 'Questions', 'I learned', 'From my project'];
+
 export function TopicPills({ active = 'All' }: { active?: string }) {
-    return <div className="pm-topic-pills" role="group" aria-label="Discussion filters">{topics.map(topic => <Link key={topic} href={topic === 'All' ? '/community' : `/community?topic=${encodeURIComponent(topic)}`} className={active === topic ? 'selected' : ''}>{topic}</Link>)}</div>;
+    return (
+        <div className="pm-topic-filters" role="group" aria-label="Discussion topics">
+            {topics.map((topic) => {
+                const isSelected = active === topic || (active === 'Ask the community' && topic === 'Questions');
+                const href = topic === 'All' ? '/community' : `/community?topic=${encodeURIComponent(topic)}`;
+                return (
+                    <Link
+                        key={topic}
+                        href={href}
+                        className={`pm-filter-pill ${isSelected ? 'active' : ''}`}
+                    >
+                        {topic}
+                    </Link>
+                );
+            })}
+        </div>
+    );
 }

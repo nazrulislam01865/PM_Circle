@@ -11,10 +11,45 @@ class Post extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['author_id', 'title', 'body', 'topic', 'visibility', 'status', 'published_at'];
-    protected function casts(): array { return ['published_at' => 'datetime', 'ai_generated' => 'boolean']; }
-    public function author(): BelongsTo { return $this->belongsTo(User::class, 'author_id'); }
-    public function comments(): HasMany { return $this->hasMany(Comment::class); }
-    public function reactions(): HasMany { return $this->hasMany(PostReaction::class); }
-    public function saves(): HasMany { return $this->hasMany(PostSave::class); }
+    protected $fillable = [
+        'author_id',
+        'title',
+        'body',
+        'topic',
+        'tags',
+        'claps_count',
+        'visibility',
+        'status',
+        'published_at',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'tags' => 'array',
+            'claps_count' => 'integer',
+            'published_at' => 'datetime',
+            'ai_generated' => 'boolean',
+        ];
+    }
+
+    public function author(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'author_id');
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    public function reactions(): HasMany
+    {
+        return $this->hasMany(PostReaction::class);
+    }
+
+    public function saves(): HasMany
+    {
+        return $this->hasMany(PostSave::class);
+    }
 }

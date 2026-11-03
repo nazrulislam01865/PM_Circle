@@ -43,3 +43,7 @@ yarn-error.log
 /boost.json
 /opencode.json
 /opencode.jsonc
+
+/storage/framework/views/*
+/storage/framework/cache/*
+/storage/framework/sessions/*

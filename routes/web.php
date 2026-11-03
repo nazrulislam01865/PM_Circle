@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use App\Http\Controllers\Auth\EmailVerificationCodeController;
 use App\Http\Controllers\Community\PostController;
@@ -47,6 +47,8 @@ Route::middleware(['auth', 'verified', 'pm.onboarded'])->group(function () {
     Route::get('/membership', [TemporaryMembershipController::class, 'index'])->name('membership.index');
     Route::post('/membership/temporary', [TemporaryMembershipController::class, 'update'])->middleware('throttle:10,1')->name('membership.temporary');
     Route::get('/learning', [LearningController::class, 'index'])->name('learning.index');
+    Route::get('/learning/skills-check', [LearningController::class, 'skillsCheck'])->name('learning.skills-check');
+    Route::get('/learning/starting-point-result', [LearningController::class, 'startingPointResult'])->name('learning.starting-point-result');
     Route::get('/learning/{path}', [LearningController::class, 'show'])->name('learning.path');
     Route::get('/learning/{path}/modules/{module}/activities/{activity}', [LearningController::class, 'activity'])->name('learning.activity');
     Route::post('/learning/{path}/save', [LearningController::class, 'save'])->middleware('throttle:30,1')->name('learning.save');

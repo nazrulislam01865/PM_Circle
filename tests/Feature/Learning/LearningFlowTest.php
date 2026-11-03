@@ -21,6 +21,17 @@ final class LearningFlowTest extends TestCase
         $this->seed(LearningDemoSeeder::class);
     }
 
+    public function test_member_can_access_skills_check_and_starting_point_result(): void
+    {
+        $member = User::factory()->create(['onboarding_step' => 3]);
+        $this->actingAs($member)->get('/learning/skills-check')->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component('learning/SkillsCheck'));
+
+        $this->actingAs($member)->get('/learning/starting-point-result?recommended=student-beginner')->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component('learning/StartingPointResult')
+                ->where('recommendedSlug', 'student-beginner'));
+    }
+
     public function test_learning_pages_require_authentication(): void
     {
         $this->get('/learning')->assertRedirect('/login');

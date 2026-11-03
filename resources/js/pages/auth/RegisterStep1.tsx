@@ -103,7 +103,7 @@ export default function RegisterStep1() {
     const canSubmit =
         emailVerified &&
         form.data.password.length >= 8 &&
-        form.data.password === form.data.confirm_password;
+        form.data.password === form.data.password_confirmation;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

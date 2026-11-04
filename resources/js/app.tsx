@@ -17,6 +17,7 @@ void createInertiaApp({
             case name.startsWith('scenarios/'):
             case name.startsWith('account/'):
             case name.startsWith('learning/'):
+            case name === 'settings/profile':
             case name === 'auth/login':
             case name.startsWith('auth/RegisterStep'):
                 return null;

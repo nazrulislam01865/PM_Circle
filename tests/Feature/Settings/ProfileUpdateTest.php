@@ -96,4 +96,78 @@ class ProfileUpdateTest extends TestCase
 
         $this->assertNotNull($user->fresh());
     }
+
+    public function test_profile_tabs_render_properly()
+    {
+        $user = User::factory()->create();
+
+        foreach (['overview', 'edit', 'imports', 'privacy'] as $tab) {
+            $response = $this->actingAs($user)->get(route('profile.edit', ['tab' => $tab]));
+            $response->assertOk();
+            $response->assertInertia(fn ($page) => $page->component('settings/profile')->where('activeTab', $tab));
+        }
+    }
+
+    public function test_profile_extended_fields_can_be_updated()
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->patch(route('profile.update'), [
+            'name' => 'Sara Ahmed Updated',
+            'email' => $user->email,
+            'headline' => 'Senior Project Manager',
+            'role' => 'Project Manager',
+            'industry' => 'Fintech',
+            'country' => 'Bangladesh',
+            'city' => 'Dhaka',
+            'about' => 'Passionate about agile product delivery.',
+            'skills' => ['Scrum', 'Risk Management'],
+            'open_to_opportunities' => true,
+            'visibility' => 'members_only',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $user->refresh();
+        $this->assertSame('Sara Ahmed Updated', $user->name);
+        $this->assertSame('Senior Project Manager', $user->profile->headline);
+        $this->assertSame(['Scrum', 'Risk Management'], $user->profile->skills);
+    }
+
+    public function test_experience_can_be_created_and_deleted()
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('profile.experiences.save'), [
+            'job_title' => 'Project Manager',
+            'organization' => 'Northstar Digital',
+            'employment_type' => 'Full-time',
+            'start_date' => 'Jan 2022',
+            'is_current' => true,
+            'responsibilities' => 'Managed sprint cycles and squad alignment.',
+        ]);
+
+        $response->assertSessionHasNoErrors()->assertRedirect(route('profile.edit', ['tab' => 'edit']));
+
+        $experience = $user->experiences()->first();
+        $this->assertNotNull($experience);
+        $this->assertSame('Northstar Digital', $experience->organization);
+
+        $deleteResponse = $this->actingAs($user)->delete(route('profile.experiences.delete', $experience));
+        $deleteResponse->assertSessionHasNoErrors();
+        $this->assertDatabaseMissing('experiences', ['id' => $experience->id]);
+    }
+
+    public function test_import_apply_updates_headline_and_skills()
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('profile.import.apply'), [
+            'updates' => ['headline', 'skills_add'],
+        ]);
+
+        $response->assertRedirect(route('profile.edit', ['tab' => 'overview']));
+        $user->refresh();
+        $this->assertSame('Lead Project Manager | Agile & Digital Transformation', $user->profile->headline);
+        $this->assertContains('Jira Advanced Roadmaps', $user->profile->skills);
+    }
 }

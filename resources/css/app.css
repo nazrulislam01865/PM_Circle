@@ -8,6 +8,7 @@
 @import './pm-member-plans.css';
 @import './pm-comparison.css';
 @import './pm-feature-pages.css';
+@import './pm-profile.css';
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -166,4 +167,3 @@
     --pm-copy: #172B4D;
     --pm-muted: #52657D;
 }
-

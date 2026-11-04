@@ -10,6 +10,14 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('settings/profile/experiences', [ProfileController::class, 'saveExperience'])->name('profile.experiences.save');
+    Route::delete('settings/profile/experiences/{experience}', [ProfileController::class, 'deleteExperience'])->name('profile.experiences.delete');
+    Route::post('settings/profile/cover', [ProfileController::class, 'uploadCover'])->name('profile.cover.upload');
+    Route::post('settings/profile/avatar', [ProfileController::class, 'uploadAvatar'])->name('profile.avatar.upload');
+    Route::post('settings/profile/resume', [ProfileController::class, 'uploadResume'])->name('profile.resume.upload');
+    Route::get('settings/profile/resume/{resume?}', [ProfileController::class, 'downloadResume'])->name('profile.resume.download');
+    Route::post('settings/profile/import/start', [ProfileController::class, 'startImport'])->name('profile.import.start');
+    Route::post('settings/profile/import/apply', [ProfileController::class, 'applyImport'])->name('profile.import.apply');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

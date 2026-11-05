@@ -1,0 +1,48 @@
+PM Circle signup prototype alignment + secure email verification
+============================================================
+Apply the ZIP contents into the existing PM Circle Laravel repository,
+preserving relative paths. Back up/commit current changes first.
+
+LOCAL ENVIRONMENT (in your existing .env):
+APP_ENV=local
+PMC_SIGNUP_EMAIL_CODE_REQUIRED=true
+MAIL_MAILER=smtp
+MAIL_HOST=<your SMTP server>
+MAIL_PORT=<your SMTP port>
+MAIL_USERNAME=<your SMTP login>
+MAIL_PASSWORD=<your SMTP password>
+MAIL_FROM_ADDRESS=<your verified sender>
+MAIL_FROM_NAME="PM Circle"
+
+Use the appropriate MAIL_SCHEME (or SMTP provider settings) for TLS.
+Never commit .env or SMTP credentials. MAIL_MAILER=log is NOT email delivery.
+APP_KEY must remain stable for verification and session security.
+
+VERIFY IN YOUR LOCAL REPOSITORY:
+php artisan config:clear
+php artisan route:clear
+php artisan migrate:status
+php artisan test --filter=SignupEmailCodeTest
+php artisan test
+npm ci
+npm run types:check
+npm run build
+php artisan serve
+
+Smoke-test: /register, /join/step/2, /join/step/3;
+email send -> verify code -> account creation -> profile -> plan.
+Test on desktop, tablet and phone widths. Clear browser cache if necessary.
+
+No new tables, migrations, external dependencies, or payment processing.
+Plan prices are sourced from the existing plan catalog in the database.
+The existing checkout/temporary membership behavior was not changed.
+
+IMPORTANT: The screenshot does not include an explicit legal-consent control;
+the project's existing legal_acceptance submission is retained unchanged.
+Before live launch, get approval for a visible Terms/Privacy consent control.
+The existing post-registration PMC_EMAIL_VERIFICATION_REQUIRED switch remains
+separate from the required pre-registration signup code verification switch.
+
+Tests/build cannot be claimed successful in this sandbox: vendor is absent,
+composer is not available, and npm dependency install timed out with an
+incompatible Node version (22.16, project expects 22.18+).

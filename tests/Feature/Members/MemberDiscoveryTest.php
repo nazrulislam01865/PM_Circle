@@ -28,6 +28,22 @@ final class MemberDiscoveryTest extends TestCase
         $this->get('/members/'.$public->id)->assertOk();
     }
 
+    public function test_member_can_preview_own_private_profile_without_exposing_it_to_others(): void
+    {
+        $owner = User::factory()->create(['onboarding_step' => 3, 'status' => 'active']);
+        $other = User::factory()->create(['onboarding_step' => 3, 'status' => 'active']);
+        $owner->profile()->create(['visibility' => 'private', 'role' => 'Private role']);
+
+        $this->get('/members/'.$owner->id)->assertNotFound();
+        $this->actingAs($other)->get('/members/'.$owner->id)->assertNotFound();
+        $this->actingAs($owner)->get('/members/'.$owner->id)
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('members/Show')
+                ->where('isOwnProfile', true)
+                ->where('member.profile.role', 'Private role'));
+    }
+
     public function test_factory_member_state_matches_database_defaults(): void
     {
         $member = User::factory()->create();

@@ -4,9 +4,11 @@ namespace App\Http\Controllers\PublicSite;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Onboarding\OnboardingController;
+use App\Models\HomePageContent;
 use App\Models\Post;
 use App\Models\Scenario;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -14,22 +16,87 @@ class HomeController extends Controller
 {
     public function index(): Response
     {
-        $scenario = Scenario::query()->where('status', 'published')->latest('published_at')->first();
+        $content = HomePageContent::query()->where('key', 'home')->first()?->content ?? [];
+        $demo = app()->environment(['local', 'testing']) && config('pm-circle.demo_content_enabled');
+        $viewerId = auth()->id();
+
+        $scenario = Scenario::query()->where('status', 'published')
+            ->select(['id', 'slug', 'title', 'summary', 'topics'])
+            ->withCount(['reactions as reactions_count' => fn ($query) => $query
+                ->whereIn('type', ['like', 'love', 'care', 'haha', 'wow', 'sad', 'angry'])])
+            ->when($viewerId, fn ($query) => $query->addSelect([
+                'viewer_reaction' => DB::table('scenario_reactions')->select('type')
+                    ->whereColumn('scenario_id', 'scenarios.id')
+                    ->where('user_id', $viewerId)
+                    ->whereIn('type', ['like', 'love', 'care', 'haha', 'wow', 'sad', 'angry'])
+                    ->limit(1),
+            ]))->latest('published_at')->first();
+
+        // Bounded homepage previews: each relationship is eager-loaded once,
+        // with no queries executed by the React cards or response loop.
+        $responses = $scenario ? $scenario->responses()
+            ->whereNull('parent_id')
+            ->when($demo, fn ($query) => $query->whereHas('user', fn ($users) => $users
+                ->whereIn('email', data_get($content, 'scenario.demo_response_emails', []))))
+            ->with([
+                'user:id,name',
+                'user.profile' => fn ($query) => $query->where('visibility', 'public')
+                    ->select('id', 'user_id', 'role', 'avatar_path'),
+            ])
+            ->select(['id', 'scenario_id', 'user_id', 'body', 'created_at'])
+            ->withCount('reactions')
+            ->when($viewerId, fn ($query) => $query->addSelect([
+                'viewer_reaction' => DB::table('scenario_response_reactions')->select('type')
+                    ->whereColumn('scenario_response_id', 'scenario_responses.id')
+                    ->where('user_id', $viewerId)->limit(1),
+            ]))
+            ->latest('created_at')->limit(2)->get() : collect();
+
+        $posts = Post::query()->where('status', 'published')->where('visibility', 'public')
+            ->select(['id', 'author_id', 'title', 'body', 'topic', 'ai_generated', 'published_at'])
+            ->when($demo, fn ($query) => $query->whereHas('author', fn ($users) => $users
+                ->whereIn('email', data_get($content, 'community.demo_post_emails', []))))
+            ->with([
+                'author:id,name',
+                'author.profile' => fn ($query) => $query->where('visibility', 'public')
+                    ->select('id', 'user_id', 'role', 'avatar_path'),
+            ])
+            ->withCount([
+                'comments',
+                'reactions as likes_count' => fn ($query) => $query->where('type', 'like'),
+                'reactions as reactions_count',
+            ])
+            ->when($viewerId, fn ($query) => $query->addSelect([
+                'viewer_reaction' => DB::table('post_reactions')->select('type')
+                    ->whereColumn('post_id', 'posts.id')->where('user_id', $viewerId)->limit(1),
+            ]))
+            ->latest('published_at')->limit(2)->get();
+
+        $members = User::query()
+            ->where('status', 'active')
+            ->when(config('pm-circle.email_verification_required'), fn ($query) => $query->whereNotNull('email_verified_at'))
+            ->whereHas('profile', fn ($query) => $query->where('visibility', 'public'))
+            ->with(['profile' => fn ($query) => $query->where('visibility', 'public')->select('id', 'user_id', 'role', 'avatar_path')])
+            ->when($demo, fn ($query) => $query->whereIn('email', data_get($content, 'members.demo_emails', [])))
+            ->latest('id')->limit(3)->get(['id', 'name', 'email']);
+
+        // Honor the screenshot's explicit demo member order, without embedding identities in React.
+        if ($demo) {
+            $order = array_flip(data_get($content, 'members.demo_emails', []));
+            $members = $members->sortBy(fn (User $member) => $order[$member->email] ?? PHP_INT_MAX)->values();
+        }
 
         return Inertia::render('public/Home', [
+            'content' => $content,
+            'isDemo' => $demo,
             'scenario' => $scenario,
-            'scenarioResponses' => $scenario ? $scenario->responses()->with('user:id,name')->oldest()->limit(2)->get() : [],
-            'posts' => Post::query()->where('status', 'published')->where('visibility', 'public')
-                ->when(app()->environment(['local', 'testing']) && config('pm-circle.demo_content_enabled'), fn ($q) => $q->whereNull('title'))
-                ->with(['author:id,name', 'author.profile' => fn ($q) => $q->where('visibility', 'public')->select('id','user_id','role')])->withCount(['comments', 'reactions'])->latest('published_at')->limit(3)->get(),
-            'members' => User::query()->where('status', 'active')->when(config('pm-circle.email_verification_required'), fn ($q) => $q->whereNotNull('email_verified_at'))->whereHas('profile', fn ($q) => $q->where('visibility', 'public'))->with('profile:id,user_id,role')->when(app()->environment(['local', 'testing']) && config('pm-circle.demo_content_enabled'), fn ($q) => $q->whereIn('name', ['Sara Ahmed', 'Daniel Chen', 'Meera Das']))
-                ->latest('id')->limit(3)->get(['id', 'name']),
-            'showDemoStatistics' => app()->environment(['local', 'testing']) && config('pm-circle.demo_content_enabled'),
-            'counts' => [
-                'members' => User::query()->where('status', 'active')->when(config('pm-circle.email_verification_required'), fn ($q) => $q->whereNotNull('email_verified_at'))->count(),
-                'discussions' => Post::query()->where('status', 'published')->where('visibility', 'public')->count(),
-                'scenarios' => Scenario::query()->where('status', 'published')->count(),
-            ],
+            'scenarioResponses' => $responses,
+            'posts' => $posts,
+            'members' => $members->map(fn (User $member) => [
+                'id' => $member->id,
+                'name' => $member->name,
+                'profile' => $member->profile,
+            ]),
         ]);
     }
 

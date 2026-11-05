@@ -1,0 +1,11 @@
+[2026-11-05 18:15:56] local.WARNING: Signup verification email delivery failed. {"exception_type":"RuntimeException"} 
+[2026-11-05 18:24:49] testing.WARNING: E2A transactional email request not accepted. {"http_status":202,"provider_status":"pending_review","error_code":null} 
+[2026-11-05 18:24:49] testing.WARNING: Signup verification email delivery failed. {"exception_type":"RuntimeException"} 
+[2026-11-05 18:24:49] testing.WARNING: E2A transactional email request not accepted. {"http_status":503,"provider_status":null,"error_code":null} 
+[2026-11-05 18:24:49] testing.WARNING: Signup verification email delivery failed. {"exception_type":"RuntimeException"} 
+[2026-11-05 18:26:03] local.WARNING: E2A transactional email request not accepted. {"http_status":422,"provider_status":null,"error_code":"invalid_request"} 
+[2026-11-05 18:26:03] local.WARNING: Signup verification email delivery failed. {"exception_type":"RuntimeException"} 
+[2026-11-05 18:31:01] testing.WARNING: E2A transactional email request not accepted. {"http_status":202,"provider_status":"pending_review","error_code":null} 
+[2026-11-05 18:31:01] testing.WARNING: Signup verification email delivery failed. {"exception_type":"RuntimeException"} 
+[2026-11-05 18:31:01] testing.WARNING: E2A transactional email request not accepted. {"http_status":503,"provider_status":null,"error_code":null} 
+[2026-11-05 18:31:01] testing.WARNING: Signup verification email delivery failed. {"exception_type":"RuntimeException"} 

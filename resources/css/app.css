@@ -3,11 +3,18 @@
 @import 'tw-animate-css';
 @import './pm-circle.css';
 @import './pm-prototype.css';
+@import './pm-home.css';
+@import './pm-engagement.css';
 @import './pm-dashboard.css';
 @import './pm-learning.css';
 @import './pm-member-plans.css';
 @import './pm-comparison.css';
 @import './pm-feature-pages.css';
+@import './pm-profile.css';
+@import './pm-profile-ux.css';
+@import './pm-resume-imports.css';
+@import './pm-signup.css';
+@import './pm-member-pages.css';
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -15,10 +22,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-    --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
+    --font-sans: var(--font);
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -150,5 +154,19 @@
 }
 
 /* Override starter-kit neutral defaults for all screens, including Fortify. */
-:root { --primary: #0869e5; --primary-foreground: #fff; --ring: #8bb9fb; --border: #e2e9f1; --input: #dfe7f0; --background: #fff; --foreground: #0b1533; --muted-foreground: #6e7c98; }
-
+:root {
+    --primary: #0A66C2;
+    --primary-foreground: #fff;
+    --ring: #8bb9fb;
+    --border: #DCE3EC;
+    --input: #8293A8;
+    --background: #fff;
+    --foreground: #172B4D;
+    --text: #172B4D;
+    --muted: #52657D;
+    --muted-foreground: #52657D;
+    --pm-primary: #0A66C2;
+    --pm-navy: #172B4D;
+    --pm-copy: #172B4D;
+    --pm-muted: #52657D;
+}

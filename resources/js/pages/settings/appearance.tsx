@@ -1,3 +1,4 @@
+import { MemberSettingsPage } from '@/components/dashboard/MemberSettingsPage';
 import { Head } from '@inertiajs/react';
 import AppearanceTabs from '@/components/appearance-tabs';
 import Heading from '@/components/heading';
@@ -5,7 +6,7 @@ import { edit as editAppearance } from '@/routes/appearance';
 
 export default function Appearance() {
     return (
-        <>
+        <MemberSettingsPage active="appearance">
             <Head title="Appearance settings" />
 
             <h1 className="sr-only">Appearance settings</h1>
@@ -18,7 +19,7 @@ export default function Appearance() {
                 />
                 <AppearanceTabs />
             </div>
-        </>
+        </MemberSettingsPage>
     );
 }
 

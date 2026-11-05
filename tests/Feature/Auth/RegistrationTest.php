@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Mail\SignupVerificationCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Laravel\Fortify\Features;
 use Tests\TestCase;
 
@@ -26,11 +28,20 @@ class RegistrationTest extends TestCase
 
     public function test_new_users_can_register()
     {
+        Mail::fake();
+        $this->postJson('/api/auth/send-verification-code', ['email' => 'test@example.com'])->assertOk();
+        $code = '';
+        Mail::assertSent(SignupVerificationCode::class, function (SignupVerificationCode $mail) use (&$code): bool {
+            $code = $mail->code;
+            return true;
+        });
+        $this->postJson('/api/auth/verify-code', ['email' => 'test@example.com', 'code' => $code])->assertOk();
+
         $response = $this->post(route('register.store'), [
             'name' => 'Test User',
             'email' => 'test@example.com',
-            'password' => 'longpassword123',
-            'password_confirmation' => 'longpassword123',
+            'password' => 'Longpassword123!',
+            'password_confirmation' => 'Longpassword123!',
             'legal_acceptance' => true,
         ]);
 

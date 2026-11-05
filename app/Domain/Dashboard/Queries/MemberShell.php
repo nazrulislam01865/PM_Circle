@@ -19,6 +19,7 @@ final class MemberShell
             'member' => [
                 'name' => $user->name,
                 'role' => $user->profile?->role,
+                'avatar_path' => $user->profile?->avatar_path,
                 'completion' => 0,
             ],
             'isDemo' => app()->environment(['local', 'testing']) && config('pm-circle.demo_content_enabled'),

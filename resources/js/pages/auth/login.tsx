@@ -1,15 +1,14 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { Eye, EyeOff, LockKeyhole } from 'lucide-react';
 import { useState } from 'react';
-import { Brand } from '@/components/pm/Brand';
+import { AuthPageFrame } from '@/layouts/pm/AuthPageFrame';
 import { FormField } from '@/components/pm/FormField';
 import { ActionButton } from '@/components/pm/ActionButton';
 
 export default function Login({ status, canResetPassword }: { status?: string; canResetPassword: boolean }) {
     const [visible, setVisible] = useState(false);
     const form = useForm({ email: '', password: '', remember: false });
-    return <div className="pm-app pm-auth-shell"><Head title="Log in"/><header className="pm-auth-header"><Brand/><p>New to PM Circle? <Link href="/register">Join free</Link></p></header>
-        <main className="pm-auth-main"><section className="pm-auth-card"><div className="pm-auth-intro"><h1>Welcome back.</h1><p>Log in to continue growing with your circle.</p></div>
+    return <AuthPageFrame headerPrompt="New to PM Circle?" headerLinkHref="/register" headerLinkLabel="Join free"><Head title="Log in"/><section className="pm-auth-card"><div className="pm-auth-intro"><h1>Welcome back.</h1><p>Log in to continue growing with your circle.</p></div>
             {status && <p className="pm-verified" role="status">{status}</p>}
             <form onSubmit={e => { e.preventDefault(); form.post('/login', { onFinish: () => form.reset('password') }); }}>
                 <FormField label="Email address" htmlFor="email" error={form.errors.email}><input autoFocus id="email" type="email" autoComplete="email" value={form.data.email} onChange={e => form.setData('email', e.target.value)} placeholder="you@example.com" required/></FormField>
@@ -19,5 +18,5 @@ export default function Login({ status, canResetPassword }: { status?: string; c
                 <p className="pm-auth-note"><LockKeyhole size={16}/>Your account is protected with secure authentication.</p>
                 <p className="pm-auth-footnote">Don't have an account? <Link href="/register" className="pm-text-link">Join the circle — free</Link></p>
             </form>
-        </section><p className="pm-auth-bottom">Learn together. Practise daily. Grow your career.</p></main></div>;
+        </section></AuthPageFrame>;
 }

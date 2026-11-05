@@ -1,3 +1,4 @@
+import { MemberSettingsPage } from '@/components/dashboard/MemberSettingsPage';
 import { Form, Head } from '@inertiajs/react';
 import { useRef } from 'react';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
@@ -23,7 +24,7 @@ export default function Security(props: Props) {
     const currentPasswordInput = useRef<HTMLInputElement>(null);
 
     return (
-        <>
+        <MemberSettingsPage active="security">
             <Head title="Security settings" />
 
             <h1 className="sr-only">Security settings</h1>
@@ -134,7 +135,7 @@ export default function Security(props: Props) {
                 canManagePasskeys={props.canManagePasskeys}
                 passkeys={props.passkeys}
             />
-        </>
+        </MemberSettingsPage>
     );
 }
 

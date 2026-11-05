@@ -39,11 +39,8 @@ final class DashboardOverview
                 'CASE WHEN posts.title = ? THEN 0 WHEN posts.title = ? THEN 1 ELSE 2 END',
                 ['How to run concise and effective status meetings', 'How do you handle unrealistic deadlines from stakeholders?']
             ))->with(['author:id,name', 'author.profile' => fn ($q) => $q
-                ->where('visibility', 'public')->select('id', 'user_id', 'role')])
-            ->withCount(['comments', 'reactions',
-                'reactions as likes_count' => fn ($q) => $q->where('type', 'like'),
-                'reactions as loves_count' => fn ($q) => $q->where('type', 'love'),
-            ])
+                ->where('visibility', 'public')->select('id', 'user_id', 'role', 'avatar_path')])
+            ->withCount(['comments', 'reactions'])
             ->latest('published_at')->limit(2)->get();
 
         $saved = $posts->isEmpty() ? [] : DB::table('post_saves')
@@ -61,7 +58,7 @@ final class DashboardOverview
                 'plan' => $plan,
                 'isDemo' => $isDemo,
                 'isPreview' => $preview,
-                'member' => ['name' => $user->name, 'role' => $profile?->role, 'completion' => $completion],
+                'member' => ['name' => $user->name, 'role' => $profile?->role, 'avatar_path' => $profile?->avatar_path, 'completion' => $completion],
                 'scenario' => $scenario,
                 'learning' => $isDemo ? [
                     'time' => $plan === 'free' ? '1h 20m' : '8h 0m',
@@ -73,9 +70,9 @@ final class DashboardOverview
                     'id' => $post->id, 'title' => $post->title, 'body' => $post->body,
                     'topic' => $post->topic, 'author' => $post->author?->name ?? 'Member',
                     'authorRole' => $post->author?->profile?->role,
+                    'authorAvatar' => $post->author?->profile?->avatar_path,
                     'publishedAt' => $post->published_at?->toIso8601String(),
-                    'likes' => $post->likes_count, 'claps' => $post->loves_count,
-                    'comments' => $post->comments_count, 'shares' => 0,
+                    'comments' => $post->comments_count, 'reactions' => $post->reactions_count,
                     'saved' => in_array($post->id, $saved, true),
                     'reaction' => $reactions[$post->id] ?? null,
                 ])->all(),

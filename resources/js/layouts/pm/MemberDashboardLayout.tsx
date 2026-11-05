@@ -19,7 +19,7 @@ export function MemberDashboardLayout({ dashboard, children, variant = 'dashboar
     return <div className={`pm-app pm-dashboard ${variant === 'learning' ? 'pm-learning-view' : ''}`}>
         <DashboardSidebar dashboard={dashboard} open={navOpen} close={() => setNavOpen(false)} collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
         <div className="pm-dash-workspace">
-            <DashboardHeader name={dashboard.member.name} isDemo={dashboard.isDemo} onMenu={() => setNavOpen(true)} />
+            <DashboardHeader name={dashboard.member.name} avatar={dashboard.member.avatar_path} isDemo={dashboard.isDemo} onMenu={() => setNavOpen(true)} />
             <main id="main-content" className="pm-dash-body">{children}</main>
         </div>
     </div>;

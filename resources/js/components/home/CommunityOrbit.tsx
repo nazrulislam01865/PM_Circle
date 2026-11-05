@@ -1,15 +1,14 @@
 import { BookOpen, BriefcaseBusiness, MessagesSquare } from 'lucide-react';
 import { Avatar } from '@/components/pm/Avatar';
+import type { HomePerson } from '@/types/home';
 
-/** Positions follow the supplied homepage orbit diagram. */
-const faces = [
-    ['Community Hero', 112], ['Community Top', 66], ['Community Right', 74],
-    ['Community Bottom', 68], ['Community Lower Right', 62],
-] as const;
-export function CommunityOrbit() {
+/** Five-position orbit matches the homepage reference; portraits arrive from stored content. */
+export function CommunityOrbit({ people }: { people: HomePerson[] }) {
     return <div className="pm-people-graphic" aria-label="Project professionals learning, discussing and growing together">
         <div className="pm-people-orbit" />
-        {faces.map(([name, size], i) => <div className={`pm-person p${i + 1}`} key={name}><Avatar name={name} size={size}/></div>)}
+        {people.slice(0, 5).map((person, i) => <div className={`pm-person p${i + 1}`} key={person.name}>
+            <Avatar name={person.name} src={person.avatar_path} size={[112, 66, 74, 68, 62][i]}/>
+        </div>)}
         <div className="pm-people-caption learn"><BookOpen/> <span>Learn<br/>&amp; practise</span></div>
         <div className="pm-people-caption discuss"><MessagesSquare/> <span>Discuss<br/>&amp; share</span></div>
         <div className="pm-people-caption career"><BriefcaseBusiness/> <span>Grow<br/>your career</span></div>

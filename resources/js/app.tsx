@@ -3,7 +3,6 @@ import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
 import AuthLayout from '@/layouts/auth-layout';
-import SettingsLayout from '@/layouts/settings/layout';
 
 const appName = import.meta.env.VITE_APP_NAME || 'PM Circle';
 
@@ -17,13 +16,12 @@ void createInertiaApp({
             case name.startsWith('scenarios/'):
             case name.startsWith('account/'):
             case name.startsWith('learning/'):
+            case name.startsWith('settings/'):
             case name === 'auth/login':
             case name.startsWith('auth/RegisterStep'):
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;
-            case name.startsWith('settings/'):
-                return SettingsLayout;
             default:
                 return null;
         }

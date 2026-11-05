@@ -1,0 +1,301 @@
+/* Shared reaction, comment and share controls. All colors and type sizes come from PM Circle tokens. */
+/* Reusable engagement controls: full 44px accessible targets and mobile-friendly picker. */
+.pm-home-reaction-root { position: relative; display: inline-flex; align-items: center; min-width: 0; }
+.pm-home-action {
+    display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+    min-height: 44px; padding: 7px var(--space-2); background: transparent; border: 0;
+    border-radius: var(--radius); color: var(--muted); font: inherit;
+    font-size: var(--type-small); line-height: 20px; cursor: pointer; text-decoration: none;
+}
+.pm-home-action:hover, .pm-home-action:focus-visible { background: var(--primary-soft); color: var(--primary); }
+.pm-home-action svg { width: 20px; height: 20px; stroke-width: 1.75; flex: none; }
+.pm-home-reaction-main.is-like { color: var(--reaction-like); }
+.pm-home-reaction-main.is-love { color: var(--reaction-love); }
+.pm-home-reaction-main.is-care { color: var(--reaction-care); }
+.pm-home-reaction-main.is-haha { color: var(--reaction-haha); }
+.pm-home-reaction-main.is-wow { color: var(--reaction-wow); }
+.pm-home-reaction-main.is-sad { color: var(--reaction-sad); }
+.pm-home-reaction-main.is-angry { color: var(--reaction-angry); }
+.pm-home-reaction-count { font-variant-numeric: tabular-nums; color: var(--muted); }
+.pm-home-reaction-options {
+    position: absolute; z-index: 30; bottom: calc(100% + 6px); left: 0;
+    display: flex; align-items: center; gap: 6px; padding: 7px;
+    border: 1px solid var(--divider); border-radius: 999px;
+    background: var(--surface); box-shadow: 0 6px 24px var(--pm-home-shadow-picker);
+    visibility: hidden; opacity: 0; pointer-events: none;
+    transition: opacity .14s ease; max-width: min(410px, calc(100vw - 42px));
+}
+.pm-home-reaction-options::after { content: ''; position: absolute; height: 10px; left: 0; right: 0; top: 100%; }
+.pm-home-reaction-root:is(:hover, :focus-within, [data-open="true"]) .pm-home-reaction-options { opacity: 1; visibility: visible; pointer-events: auto; }
+.pm-home-reaction-choice {
+    flex: 0 0 41px; width: 41px; height: 41px; border: 0; border-radius: 50%;
+    display: inline-flex; justify-content: center; align-items: center;
+    background: var(--primary-soft); transition: transform .16s ease;
+}
+.pm-home-reaction-choice:hover { transform: translateY(-5px) scale(1.08); }
+.pm-home-reaction-choice[aria-pressed="true"] { outline: 2px solid currentColor; outline-offset: 2px; }
+.pm-home-reaction-choice.is-like { color: var(--reaction-like); }
+.pm-home-reaction-choice.is-love { color: var(--reaction-love); background: var(--pm-home-reaction-bg-love); }
+.pm-home-reaction-choice.is-care { color: var(--reaction-care); background: var(--pm-home-reaction-bg-care); }
+.pm-home-reaction-choice.is-haha { color: var(--reaction-haha); background: var(--pm-home-reaction-bg-haha); }
+.pm-home-reaction-choice.is-wow { color: var(--reaction-wow); background: var(--pm-home-reaction-bg-wow); }
+.pm-home-reaction-choice.is-sad { color: var(--reaction-sad); background: var(--pm-home-reaction-bg-sad); }
+.pm-home-reaction-choice.is-angry { color: var(--reaction-angry); background: var(--pm-home-reaction-bg-angry); }
+.pm-home-reaction-error { position: absolute; z-index: 35; top: 100%; left: 0; width: max-content; max-width: 250px; padding: 5px 9px; color: var(--danger); background: var(--danger-soft); border: 1px solid var(--danger); border-radius: var(--radius); font-size: var(--type-caption); }
+.pm-home-share-wrap { position: relative; display: inline-flex; }
+
+.pm-engagement-actions { display:flex; align-items:center; gap:var(--space-3); flex-wrap:wrap; overflow:visible; }
+.pm-engagement-actions .pm-home-action { color:var(--muted); background:transparent; border:0; font:inherit; font-size:var(--type-small); min-height:44px; padding:7px var(--space-2); }
+.pm-engagement-actions .pm-home-action:hover { color:var(--primary); background:var(--primary-soft); }
+.pm-engagement-actions .pm-home-reaction-main[aria-pressed="true"].is-like {color:var(--reaction-like);}
+.pm-engagement-actions .pm-home-reaction-main[aria-pressed="true"].is-love {color:var(--reaction-love);}
+.pm-engagement-actions .pm-home-reaction-main[aria-pressed="true"].is-care {color:var(--reaction-care);}
+.pm-engagement-actions .pm-home-reaction-main[aria-pressed="true"].is-haha {color:var(--reaction-haha);}
+.pm-engagement-actions .pm-home-reaction-main[aria-pressed="true"].is-wow {color:var(--reaction-wow);}
+.pm-engagement-actions .pm-home-reaction-main[aria-pressed="true"].is-sad {color:var(--reaction-sad);}
+.pm-engagement-actions .pm-home-reaction-main[aria-pressed="true"].is-angry {color:var(--reaction-angry);}
+.pm-engagement-actions .pm-home-action:focus-visible,.pm-engagement-actions .pm-home-reaction-choice:focus-visible {outline:3px solid var(--focus);outline-offset:3px;}
+@media(max-width:640px) {
+    .pm-home-reaction-options {gap:var(--space-1);padding:var(--space-1);}
+    .pm-home-reaction-choice {width:36px;height:36px;flex-basis:36px;}
+    .pm-home-reaction-choice svg {width:19px;height:19px;}
+}
+@media(prefers-reduced-motion:reduce) {
+    .pm-home-reaction-options, .pm-home-reaction-choice {transition:none;}
+}
+/* Keep the shared picker intact inside the older dashboard/post detail action bars. */
+.pm-dash-feed-actions .pm-engagement-actions,
+.pm-member-post-actions .pm-engagement-actions,
+.pm-card-action-bar .pm-engagement-actions { display:flex; align-items:center; justify-content:flex-start; gap:var(--space-3); flex-wrap:wrap; overflow:visible; }
+.pm-dash-feed-actions .pm-engagement-actions .pm-home-action,
+.pm-member-post-actions .pm-engagement-actions .pm-home-action { min-height:44px; padding:7px var(--space-2); background:transparent; color:var(--muted); font-size:var(--type-small); border-radius:var(--radius); }
+.pm-dash-feed-actions .pm-engagement-actions .pm-home-action:hover,
+.pm-member-post-actions .pm-engagement-actions .pm-home-action:hover { color:var(--primary); background:var(--primary-soft); }
+.pm-dash-feed-actions .pm-engagement-actions button.pm-home-reaction-choice,
+.pm-member-post-actions .pm-engagement-actions button.pm-home-reaction-choice { display:inline-flex; align-items:center; justify-content:center; border-radius:50%; width:41px; height:41px; flex:0 0 41px; min-height:41px; padding:0; background:var(--primary-soft); }
+.pm-dash-feed-actions .pm-engagement-actions button.pm-home-reaction-choice.is-love,
+.pm-member-post-actions .pm-engagement-actions button.pm-home-reaction-choice.is-love { background:var(--pm-home-reaction-bg-love); }
+.pm-dash-feed-actions .pm-engagement-actions button.pm-home-reaction-choice.is-care,
+.pm-member-post-actions .pm-engagement-actions button.pm-home-reaction-choice.is-care { background:var(--pm-home-reaction-bg-care); }
+.pm-dash-feed-actions .pm-engagement-actions button.pm-home-reaction-choice.is-haha,
+.pm-member-post-actions .pm-engagement-actions button.pm-home-reaction-choice.is-haha { background:var(--pm-home-reaction-bg-haha); }
+.pm-dash-feed-actions .pm-engagement-actions button.pm-home-reaction-choice.is-wow,
+.pm-member-post-actions .pm-engagement-actions button.pm-home-reaction-choice.is-wow { background:var(--pm-home-reaction-bg-wow); }
+.pm-dash-feed-actions .pm-engagement-actions button.pm-home-reaction-choice.is-sad,
+.pm-member-post-actions .pm-engagement-actions button.pm-home-reaction-choice.is-sad { background:var(--pm-home-reaction-bg-sad); }
+.pm-dash-feed-actions .pm-engagement-actions button.pm-home-reaction-choice.is-angry,
+.pm-member-post-actions .pm-engagement-actions button.pm-home-reaction-choice.is-angry { background:var(--pm-home-reaction-bg-angry); }
+.pm-dash-feed-actions .pm-engagement-actions .pm-home-reaction-main[aria-pressed="true"],
+.pm-member-post-actions .pm-engagement-actions .pm-home-reaction-main[aria-pressed="true"] { color:var(--reaction-like); }
+.pm-dash-feed-actions .pm-engagement-actions .pm-home-reaction-main.is-love[aria-pressed="true"],
+.pm-member-post-actions .pm-engagement-actions .pm-home-reaction-main.is-love[aria-pressed="true"] { color:var(--reaction-love); }
+.pm-dash-feed-actions .pm-engagement-actions .pm-home-reaction-main.is-care[aria-pressed="true"],
+.pm-member-post-actions .pm-engagement-actions .pm-home-reaction-main.is-care[aria-pressed="true"] { color:var(--reaction-care); }
+.pm-dash-feed-actions .pm-engagement-actions .pm-home-reaction-main.is-haha[aria-pressed="true"],
+.pm-member-post-actions .pm-engagement-actions .pm-home-reaction-main.is-haha[aria-pressed="true"] { color:var(--reaction-haha); }
+.pm-dash-feed-actions .pm-engagement-actions .pm-home-reaction-main.is-wow[aria-pressed="true"],
+.pm-member-post-actions .pm-engagement-actions .pm-home-reaction-main.is-wow[aria-pressed="true"] { color:var(--reaction-wow); }
+.pm-dash-feed-actions .pm-engagement-actions .pm-home-reaction-main.is-sad[aria-pressed="true"],
+.pm-member-post-actions .pm-engagement-actions .pm-home-reaction-main.is-sad[aria-pressed="true"] { color:var(--reaction-sad); }
+.pm-dash-feed-actions .pm-engagement-actions .pm-home-reaction-main.is-angry[aria-pressed="true"],
+.pm-member-post-actions .pm-engagement-actions .pm-home-reaction-main.is-angry[aria-pressed="true"] { color:var(--reaction-angry); }
+
+.pm-dash-feed-actions .pm-engagement-actions,
+.pm-member-post-actions .pm-engagement-actions { width:100%; }
+.pm-dash-feed-actions .pm-engagement-actions > button:last-child,
+.pm-member-post-actions .pm-engagement-actions > button:last-child { margin-left:auto; }
+
+.pm-dash-feed-actions .pm-engagement-actions button.pm-home-reaction-choice.is-like:hover,
+.pm-member-post-actions .pm-engagement-actions button.pm-home-reaction-choice.is-like:hover { color:var(--reaction-like); }
+
+.pm-dash-feed-actions .pm-engagement-actions button.pm-home-reaction-choice.is-love:hover,
+.pm-member-post-actions .pm-engagement-actions button.pm-home-reaction-choice.is-love:hover { color:var(--reaction-love); }
+
+.pm-dash-feed-actions .pm-engagement-actions button.pm-home-reaction-choice.is-care:hover,
+.pm-member-post-actions .pm-engagement-actions button.pm-home-reaction-choice.is-care:hover { color:var(--reaction-care); }
+
+.pm-dash-feed-actions .pm-engagement-actions button.pm-home-reaction-choice.is-haha:hover,
+.pm-member-post-actions .pm-engagement-actions button.pm-home-reaction-choice.is-haha:hover { color:var(--reaction-haha); }
+
+.pm-dash-feed-actions .pm-engagement-actions button.pm-home-reaction-choice.is-wow:hover,
+.pm-member-post-actions .pm-engagement-actions button.pm-home-reaction-choice.is-wow:hover { color:var(--reaction-wow); }
+
+.pm-dash-feed-actions .pm-engagement-actions button.pm-home-reaction-choice.is-sad:hover,
+.pm-member-post-actions .pm-engagement-actions button.pm-home-reaction-choice.is-sad:hover { color:var(--reaction-sad); }
+
+.pm-dash-feed-actions .pm-engagement-actions button.pm-home-reaction-choice.is-angry:hover,
+.pm-member-post-actions .pm-engagement-actions button.pm-home-reaction-choice.is-angry:hover { color:var(--reaction-angry); }
+
+/* Shared typography scale for the redesigned member feed, not custom pixel sizes. */
+.pm-dash-feed-heading h2 { font-size:var(--type-h3); }
+.pm-dash-feed-card .pm-dash-feed-author-text strong { font-size:var(--type-body); }
+.pm-dash-feed-card .pm-dash-feed-title { font-size:var(--type-h4); }
+.pm-dash-feed-card .pm-dash-feed-body { font-size:var(--type-body); }
+.pm-dash-feed-card .pm-dash-feed-author-text small { font-size:var(--type-small); }
+
+/* Shared, on-demand LinkedIn-style comment preview for all post cards. */
+.pm-engagement-shell { min-width: 0; width: 100%; }
+.pm-engagement-shell > .pm-engagement-actions { width: 100%; }
+.pm-inline-comments { width: 100%; min-width: 0; margin-top: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--divider); font-family: var(--font); color: var(--text); }
+.pm-inline-comments-head, .pm-inline-comments-head > div { display: flex; align-items: center; gap: var(--space-3); }
+.pm-inline-comments-head { justify-content: space-between; margin-bottom: var(--space-3); }
+.pm-inline-comments-head strong { font-size: var(--type-body); }
+.pm-inline-comments-head select { min-height: 40px; padding: 6px 30px 6px 10px; border: 1px solid var(--divider); border-radius: var(--radius); background: var(--surface); font: inherit; font-size: var(--type-small); }
+.pm-inline-close { background: transparent; border: none; color: var(--muted); min-height: 44px; font-size: var(--type-small); }
+.pm-inline-comments-compose { display: flex; align-items: flex-start; gap: var(--space-3); margin-bottom: var(--space-4); }
+.pm-inline-comments-compose > .pm-avatar, .pm-inline-comment-item > .pm-avatar { flex: none; }
+.pm-inline-compose-field { flex: 1; min-width: 0; border: 1px solid var(--border); background: var(--surface); border-radius: var(--card-radius); overflow: hidden; }
+.pm-inline-compose-field:focus-within { border-color: var(--primary); }
+.pm-inline-compose-field textarea { display: block; width: 100%; min-height: 58px; resize: vertical; border: none; box-shadow: none; outline: none; padding: var(--space-3); font: inherit; font-size: var(--type-body); line-height: 1.5; background: transparent; color: var(--text); }
+.pm-inline-compose-field textarea:focus { outline: none; box-shadow: none; }
+.pm-inline-compose-actions { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); padding: 0 var(--space-2) var(--space-2) var(--space-3); }
+.pm-inline-compose-actions span { color: var(--muted); font-size: var(--type-caption); }
+.pm-inline-compose-actions .pm-button { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 40px; font-size: var(--type-small); padding: 7px 14px; }
+.pm-inline-compose-actions .pm-button:disabled { background: var(--disabled-bg); border-color: var(--divider); color: var(--disabled-text); cursor: not-allowed; }
+.pm-inline-reply-note { background: var(--primary-soft); padding: var(--space-2) var(--space-3); color: var(--text); font-size: var(--type-small); }
+.pm-inline-reply-note button { color: var(--primary); margin-left: var(--space-2); text-decoration: underline; }
+.pm-inline-comments-list { display: flex; flex-direction: column; gap: var(--space-4); }
+.pm-inline-comment-item { display: flex; align-items: flex-start; gap: var(--space-3); min-width: 0; }
+.pm-inline-comment-content { flex: 1; min-width: 0; }
+.pm-inline-comment-bubble { background: var(--canvas); padding: var(--space-3); border-radius: var(--card-radius); }
+.pm-inline-comment-author { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); font-size: var(--type-small); }
+.pm-inline-comment-author span { color: var(--muted); font-size: var(--type-caption); }
+.pm-inline-comment-bubble p { margin: var(--space-1) 0 0; color: var(--text); font-size: var(--type-small); white-space: pre-wrap; overflow-wrap: anywhere; }
+.pm-inline-comment-actions { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-1) var(--space-2); }
+.pm-inline-comment-actions button { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--muted); font-size: var(--type-caption); background: transparent; border: 0; min-height: 32px; }
+.pm-inline-comment-actions button:hover, .pm-inline-comment-actions button[aria-pressed="true"] { color: var(--primary); }
+.pm-inline-comment-branch { padding: 0; margin: 0; border: 0; }
+.pm-inline-comment-branch > .pm-inline-comment-item { margin: var(--space-2) 0 0 var(--space-4); }
+/* Reply count is a plain text disclosure, never a filled action button. */
+.pm-engagement-shell .pm-inline-comments .pm-inline-comment-replies-toggle {
+    appearance: none; display: inline; padding: 0; margin: 0;
+    min-height: 0; height: auto; border: 0; border-radius: 0;
+    box-shadow: none; background: transparent; color: var(--primary);
+    font: inherit; font-size: var(--type-small); line-height: 1.5; font-weight: 600;
+    cursor: pointer;
+}
+.pm-engagement-shell .pm-inline-comments .pm-inline-comment-replies-toggle:hover { background: transparent; color: var(--primary-hover); text-decoration: underline; text-underline-offset: 3px; }
+.pm-engagement-shell .pm-inline-comments .pm-inline-comment-replies-toggle:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.pm-inline-comments-more { display: inline-flex; min-height: 40px; align-items: center; margin-top: var(--space-2); color: var(--primary); font-weight: 700; font-size: var(--type-small); }
+.pm-inline-comment-error { color: var(--danger); background: var(--danger-soft); padding: var(--space-3); border-radius: var(--radius); font-size: var(--type-small); }
+.pm-inline-comments-status { margin: var(--space-4) 0; color: var(--muted); font-size: var(--type-small); }
+.pm-card-action-bar:has(.pm-inline-comments) { flex-direction: column; align-items: stretch; }
+.pm-card-action-bar:has(.pm-inline-comments) .pm-read-discussion-link { align-self: flex-end; }
+@media (max-width: 560px) { .pm-inline-comments-head { flex-wrap: wrap; } .pm-inline-comments-head > div { flex: 1; justify-content: flex-end; } }
+
+/* Preserve the existing card's Read discussion link beside actions until expanded. */
+.pm-card-action-bar { flex-wrap: wrap; gap: var(--space-2); }
+.pm-card-action-bar .pm-engagement-shell { flex: 1 1 auto; width: auto; }
+.pm-card-action-bar .pm-engagement-shell:has(.pm-inline-comments) { flex-basis: 100%; width: 100%; }
+.pm-card-action-bar .pm-read-discussion-link { margin-left: auto; }
+
+/* Prototype comment sorting: an unboxed text label and chevron, not a form field. */
+.pm-engagement-shell .pm-inline-sort-control {
+    display: inline-flex;
+    position: relative;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 44px;
+    padding: 0 var(--space-2);
+    border-radius: var(--radius);
+    color: var(--text);
+    cursor: pointer;
+}
+.pm-engagement-shell .pm-inline-sort-control select {
+    appearance: none;
+    -webkit-appearance: none;
+    width: auto;
+    min-width: 0;
+    min-height: 44px;
+    height: 44px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: inherit;
+    font-family: var(--font);
+    font-size: var(--type-body);
+    line-height: 24px;
+    cursor: pointer;
+}
+.pm-engagement-shell .pm-inline-sort-control svg { flex: none; pointer-events: none; }
+.pm-engagement-shell .pm-inline-sort-control:hover,
+.pm-engagement-shell .pm-inline-sort-control:focus-within {
+    background: var(--primary-soft);
+}
+.pm-engagement-shell .pm-inline-sort-control select:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
+    border-radius: var(--radius);
+}
+
+/* Shared comment actions: visible backgrounds that darken slightly on hover. */
+.pm-engagement-shell .pm-inline-comments .pm-inline-comment-actions { gap: var(--space-2); }
+.pm-engagement-shell .pm-inline-comments .pm-inline-comment-actions button,
+.pm-engagement-shell .pm-inline-comments .pm-inline-close {
+    min-height: 44px;
+    padding: 8px var(--space-3);
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    background: var(--primary-soft);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: var(--type-small);
+    font-weight: 600;
+    transition: background-color 150ms ease, border-color 150ms ease;
+}
+.pm-engagement-shell .pm-inline-comments .pm-inline-comment-actions button:hover:not(:disabled),
+.pm-engagement-shell .pm-inline-comments .pm-inline-close:hover {
+    background: color-mix(in srgb, var(--primary-soft) 80%, var(--primary) 20%);
+    color: var(--text);
+}
+.pm-engagement-shell .pm-inline-comments .pm-inline-comment-actions button[aria-pressed="true"] {
+    color: var(--primary);
+    border-color: var(--primary);
+}
+.pm-engagement-shell .pm-inline-comments .pm-inline-comment-actions button:disabled {
+    color: var(--disabled-text);
+    background: var(--disabled-bg);
+    cursor: not-allowed;
+}
+.pm-engagement-shell .pm-inline-comments :is(.pm-inline-comment-actions button, .pm-inline-close):focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
+}
+.pm-engagement-shell .pm-inline-comments .pm-inline-compose-actions .pm-button:not(:disabled) {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--surface);
+}
+.pm-engagement-shell .pm-inline-comments .pm-inline-compose-actions .pm-button:hover:not(:disabled) {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+}
+.pm-engagement-shell .pm-inline-comments .pm-inline-compose-actions .pm-button:disabled {
+    background: var(--disabled-bg);
+    border-color: var(--divider);
+    color: var(--disabled-text);
+}
+@media (prefers-reduced-motion: reduce) {
+    .pm-engagement-shell .pm-inline-comments .pm-inline-comment-actions button,
+    .pm-engagement-shell .pm-inline-comments .pm-inline-close { transition: none; }
+}
+.pm-engagement-shell .pm-inline-comments-sort-row {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin: 0 0 var(--space-3);
+}
+.pm-engagement-shell .pm-inline-sort-control { background: transparent; }
+.pm-engagement-shell .pm-inline-sort-control svg { color: var(--text); }
+.pm-engagement-shell .pm-inline-reply-note button {
+    border-radius: var(--radius);
+    padding: var(--space-1) var(--space-2);
+    background: var(--surface);
+    color: var(--primary);
+}
+.pm-engagement-shell .pm-inline-reply-note button:hover {
+    background: color-mix(in srgb, var(--primary-soft) 80%, var(--primary) 20%);
+}

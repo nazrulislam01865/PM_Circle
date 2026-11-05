@@ -37,12 +37,19 @@ final class MemberDirectoryController extends Controller
         if (config('pm-circle.email_verification_required')) {
             abort_unless($member->email_verified_at !== null, 404);
         }
-        $profile = $member->profile()->where('visibility', 'public')->firstOrFail(['id', 'user_id', 'role', 'headline', 'bio']);
         $viewer = $request->user();
+        $isOwnProfile = $viewer?->id === $member->id;
+        // Owners may preview their own member-facing projection without making a
+        // private profile discoverable or allowing others to view it.
+        $profileQuery = $member->profile();
+        if (! $isOwnProfile) {
+            $profileQuery->where('visibility', 'public');
+        }
+        $profile = $profileQuery->firstOrFail(['id', 'user_id', 'role', 'headline', 'bio']);
 
         return Inertia::render('members/Show', [
             'member' => ['id' => $member->id, 'name' => $member->name, 'profile' => $profile],
-            'isOwnProfile' => $viewer?->id === $member->id,
+            'isOwnProfile' => $isOwnProfile,
             'following' => $viewer ? DB::table('member_follows')->where('follower_id', $viewer->id)->where('followed_id', $member->id)->exists() : false,
             'posts' => $member->posts()->where('status', 'published')->where('visibility', 'public')
                 ->withCount(['comments', 'reactions'])->latest('published_at')->limit(8)->get(['id', 'author_id', 'title', 'body', 'topic', 'published_at', 'ai_generated']),

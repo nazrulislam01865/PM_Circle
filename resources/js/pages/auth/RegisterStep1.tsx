@@ -1,22 +1,98 @@
 import { Head, useForm } from '@inertiajs/react';
-import { Eye, EyeOff, Mail } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
+import { SignupButton, SignupField, SignupInput, SignupSectionTitle } from '@/components/onboarding/SignupControls';
 import { OnboardingLayout } from '@/layouts/pm/OnboardingLayout';
-import { FormField } from '@/components/pm/FormField';
-import { ActionButton } from '@/components/pm/ActionButton';
 
-export default function RegisterStep1() {
-    const [visible, setVisible] = useState(false);
-    const form = useForm({ name: '', email: '', password: '', password_confirmation: '', legal_acceptance: false });
-    return <OnboardingLayout title="Join the circle" subtitle="Start with the basics. It takes about a minute." step={1}><Head title="Join the circle"/>
-        <form onSubmit={e => { e.preventDefault(); form.post('/register', { onFinish: () => form.reset('password', 'password_confirmation') }); }}>
-            <FormField label="Full name" htmlFor="name" error={form.errors.name}><input id="name" autoComplete="name" name="name" value={form.data.name} onChange={e => form.setData('name', e.target.value)} required maxLength={255} autoFocus placeholder="Your full name"/></FormField>
-            <FormField label="Email address" htmlFor="email" error={form.errors.email}><input id="email" type="email" name="email" autoComplete="email" value={form.data.email} onChange={e => form.setData('email', e.target.value)} required placeholder="you@example.com"/></FormField>
-            <FormField label="Password" htmlFor="password" error={form.errors.password} hint="Use at least 8 characters."><div className="pm-password-wrap"><input id="password" name="password" type={visible ? 'text' : 'password'} autoComplete="new-password" value={form.data.password} onChange={e => form.setData(d => ({ ...d, password: e.target.value, password_confirmation: e.target.value }))} minLength={8} required placeholder="Create a secure password"/><button type="button" onClick={() => setVisible(!visible)} aria-label={visible ? 'Hide password' : 'Show password'}>{visible ? <EyeOff size={21}/> : <Eye size={21}/>}</button></div></FormField>
-            <div className="pm-legal-row"><input id="legal" type="checkbox" checked={form.data.legal_acceptance} onChange={e => form.setData('legal_acceptance', e.target.checked)} required/><label htmlFor="legal">I agree to the <a href="/terms" target="_blank" rel="noreferrer">Terms</a> and <a href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</a>.</label></div>
-            {form.errors.legal_acceptance && <p className="pm-error" role="alert">{form.errors.legal_acceptance}</p>}
-            <ActionButton forward className="pm-auth-submit" type="submit" disabled={form.processing}>Continue</ActionButton>
-            <div className="pm-auth-note"><Mail size={20}/>Next, add your professional details.</div><p className="pm-auth-footnote">Free to join. Add your professional details later.</p>
+type ApiResult = { message?: string; verified?: boolean; development_code?: string };
+type SignupMode = 'email' | 'fixed' | 'off';
+
+async function verificationRequest(url: string, values: Record<string, string>): Promise<ApiResult> {
+    const token = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+    const response = await fetch(url, {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': token },
+        body: JSON.stringify(values),
+    });
+    const result = await response.json().catch(() => ({})) as ApiResult;
+    if (!response.ok) throw new Error(result.message || 'Please try again.');
+    return result;
+}
+
+export default function RegisterStep1({ signupVerificationMode = 'email' }: { signupVerificationMode?: SignupMode }) {
+    const codeRequired = signupVerificationMode !== 'off';
+    const form = useForm({ email: '' });
+    const [codeSent, setCodeSent] = useState(false);
+    const [code, setCode] = useState('');
+    const [verified, setVerified] = useState(false);
+    const [busy, setBusy] = useState<'send' | 'verify' | null>(null);
+    const [feedback, setFeedback] = useState('');
+    const [error, setError] = useState('');
+
+    async function sendCode() {
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.data.email.trim())) {
+            setError('Enter a valid email address.'); return;
+        }
+        setBusy('send'); setError(''); setFeedback('');
+        try {
+            const result = await verificationRequest('/api/auth/send-verification-code', { email: form.data.email.trim() });
+            setCodeSent(true); setCode('');
+            setFeedback(`${result.message || 'Verification code sent.'}${result.development_code ? ` Local test code: ${result.development_code}` : ''}`);
+        } catch (reason) { setError(reason instanceof Error ? reason.message : 'Unable to send verification code.'); }
+        finally { setBusy(null); }
+    }
+
+    async function verifyCode() {
+        if (!/^\d{6}$/.test(code)) { setError('Enter the six-digit verification code.'); return; }
+        setBusy('verify'); setError('');
+        try {
+            await verificationRequest('/api/auth/verify-code', { email: form.data.email.trim(), code });
+            setVerified(true); setFeedback('Your email is verified. Continue to your professional details.');
+        } catch (reason) { setError(reason instanceof Error ? reason.message : 'Invalid verification code.'); }
+        finally { setBusy(null); }
+    }
+
+    function continueToDetails(event: FormEvent) {
+        event.preventDefault();
+        if (form.processing || (codeRequired && !verified)) return;
+        form.post('/join/email');
+    }
+
+    return <OnboardingLayout step={1} title="Create your account" subtitle="Verify your email to get started.">
+        <Head title="Create your account" />
+        <form className="signup-form" onSubmit={continueToDetails}>
+            <SignupSectionTitle number={1} title={codeRequired ? 'Verify your email' : 'Enter your email'} verified={verified} />
+            <SignupField id="signup-email" label="Email address" required error={form.errors.email}>
+                <div className="signup-row">
+                    <SignupInput id="signup-email" type="email" autoComplete="email" required placeholder="you@example.com"
+                        value={form.data.email} disabled={busy !== null || verified}
+                        invalid={!!form.errors.email || !!error}
+                        onChange={event => {
+                            form.setData('email', event.target.value); setVerified(false); setCodeSent(false);
+                            setCode(''); setFeedback(''); setError('');
+                        }} />
+                    {codeRequired && <SignupButton type="button" variant="outline" disabled={!form.data.email.trim() || busy !== null || verified} onClick={() => void sendCode()}>
+                        {busy === 'send' ? 'Sending...' : 'Get code'}
+                    </SignupButton>}
+                </div>
+            </SignupField>
+            {codeRequired && codeSent && !verified && <SignupField id="signup-code" label="Verification code" required>
+                <div className="signup-row">
+                    <SignupInput id="signup-code" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6}
+                        value={code} placeholder="6-digit code" onChange={event => { setCode(event.target.value.replace(/\D/g, '')); setError(''); }} />
+                    <SignupButton type="button" disabled={code.length !== 6 || busy !== null} onClick={() => void verifyCode()}>
+                        {busy === 'verify' ? 'Verifying...' : 'Verify'}
+                    </SignupButton>
+                </div>
+                <SignupButton type="button" variant="link" disabled={busy !== null} onClick={() => void sendCode()}>Resend code</SignupButton>
+            </SignupField>}
+            {feedback && <p role="status" className="signup-hint">{feedback}</p>}
+            {error && <p role="alert" className="signup-error">{error}</p>}
+            <div className="signup-form-actions">
+                <SignupButton type="submit" forward disabled={!form.data.email.trim() || (codeRequired && !verified) || form.processing} className="signup-button--full">
+                    {form.processing ? 'Continuing...' : 'Continue'}
+                </SignupButton>
+                <p className="signup-footline">Next: Password and professional details</p>
+            </div>
         </form>
     </OnboardingLayout>;
 }

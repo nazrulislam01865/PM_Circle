@@ -1,6 +1,6 @@
 @media(max-width:1280px) {
-    .pm-learn-content { padding-inline: 15px; }
-    .pm-learn-columns { grid-template-columns: minmax(0,1fr) 275px; }
+    .pm-learn-content { padding-inline: var(--pm-member-content-inset); }
+    .pm-learn-columns { grid-template-columns: minmax(0,1fr) 300px; }
     .pm-learn-continue-stats { flex-basis: 32%; }
     .pm-learn-path-icon { flex-basis: 50px; width: 50px; height: 50px; }
     .pm-learn-step-title { font-size: 12px; }
@@ -22,6 +22,7 @@
     .pm-learn-bottom-note em { margin-left: 0; }
 }
 @media(max-width:650px) {
+    .pm-learn-content { padding-inline: 12px; }
     .pm-learn-page-title { align-items: flex-start; }
     .pm-learn-page-title .pm-dash-btn { font-size: 0; min-width: 42px; padding: 9px; }
     .pm-learn-page-title .pm-dash-btn svg { width: 20px; }

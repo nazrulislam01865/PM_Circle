@@ -1,4 +1,4 @@
-import { useForm } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 import { LockKeyhole, MessageSquareText, Pencil, VenetianMask, X } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
@@ -7,6 +7,7 @@ import type { DashboardPlan } from '@/types/dashboard';
 
 type ComposerTopic = 'From my project' | 'Ask the community';
 export function DashboardComposer({ name, plan, demo }: { name: string; plan: DashboardPlan; demo: boolean }) {
+    const { auth } = usePage<{ auth?: { user?: { avatar_path?: string | null } | null } }>().props;
     const [expanded, setExpanded] = useState(false);
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const { data, setData, post, processing, errors, reset } = useForm<{ body: string; topic: ComposerTopic }>({ body: '', topic: 'From my project' });
@@ -19,7 +20,7 @@ export function DashboardComposer({ name, plan, demo }: { name: string; plan: Da
         post('/posts', { preserveScroll: true, onSuccess: () => { reset(); setExpanded(false); } });
     };
     return <form className="pm-dash-card pm-dash-composer" onSubmit={submit}>
-        <div className="pm-dash-composer-top"><DashboardAvatar name={name} size={54} demo={demo}/>
+        <div className="pm-dash-composer-top"><DashboardAvatar name={name} size={54} demo={demo} src={auth?.user?.avatar_path}/>
             {expanded ? <textarea ref={inputRef} rows={3} maxLength={5000} required minLength={2} placeholder="Share a lesson, ask a question..." aria-label="Your community post" value={data.body} onChange={e => setData('body', e.target.value)} /> : <button type="button" className="pm-dash-composer-input" onClick={() => open('From my project')}>Share a lesson, ask a question...</button>}
         </div>
         <div className="pm-dash-composer-buttons"><button type="button" onClick={() => open('From my project')} className="pm-dash-btn pm-dash-btn-primary"><Pencil size={21}/> Post</button>

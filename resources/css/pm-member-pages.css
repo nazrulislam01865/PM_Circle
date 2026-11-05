@@ -1,0 +1,214 @@
+/*
+ * Authenticated content alignment.
+ * One design layer for feature pages, discussions and membership.
+ * Guest prototypes and the existing Dashboard / Learning shells are unchanged.
+ */
+.pm-dashboard .pm-member-public-content {
+    width: 100%;
+    max-width: var(--pm-member-page-max-width);
+    margin-inline: auto;
+    min-width: 0;
+}
+
+/* A member page is already inside the shell's padded main region. */
+.pm-dashboard .pm-member-public-content > .pm-container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 8px 0 30px;
+}
+.pm-dashboard .pm-member-public-content .pm-feature-page {
+    min-height: 0;
+}
+.pm-dashboard .pm-member-public-content .pm-feature-heading {
+    gap: var(--pm-member-page-gap);
+    margin-bottom: 20px;
+    align-items: flex-start;
+}
+.pm-dashboard .pm-member-public-content .pm-feature-heading h1,
+.pm-dashboard .pm-membership-comparison .pm-compare-intro h1 {
+    font-family: var(--pm-member-font);
+    font-size: var(--pm-member-page-heading-size);
+    line-height: 1.25;
+    font-weight: 800;
+    letter-spacing: -.7px;
+    color: var(--pm-dash-deep);
+}
+.pm-dashboard .pm-member-public-content .pm-feature-heading p,
+.pm-dashboard .pm-membership-comparison .pm-compare-intro p {
+    margin-top: 5px;
+    font-size: var(--pm-member-font-body);
+    line-height: 1.5;
+    font-weight: 400;
+    color: var(--pm-dash-muted);
+}
+.pm-dashboard .pm-member-public-content .pm-panel {
+    border-color: var(--pm-dash-border);
+    border-radius: var(--pm-member-card-radius);
+}
+.pm-dashboard .pm-member-public-content .pm-feature-section {
+    padding: 20px 22px;
+    margin-top: var(--pm-member-page-gap);
+}
+.pm-dashboard .pm-member-public-content .pm-feature-section h2 {
+    font-size: var(--pm-member-font-section);
+    font-weight: 750;
+    line-height: 1.35;
+}
+.pm-dashboard .pm-member-public-content .pm-feature-section > p {
+    font-size: var(--pm-member-font-body);
+    line-height: 1.55;
+}
+.pm-dashboard .pm-member-public-content .pm-feature-empty {
+    padding: 28px 20px;
+}
+.pm-dashboard .pm-member-public-content .pm-feature-empty strong {
+    font-size: var(--pm-member-font-section);
+}
+.pm-dashboard .pm-member-public-content .pm-feature-empty p {
+    font-size: var(--pm-member-font-body);
+    line-height: 1.55;
+}
+.pm-dashboard .pm-member-public-content .pm-feature-progress-grid {
+    gap: var(--pm-member-page-gap);
+}
+.pm-dashboard .pm-member-public-content .pm-feature-progress-card {
+    min-width: 0;
+    border-color: var(--pm-dash-border);
+    border-radius: var(--pm-member-card-radius);
+}
+.pm-dashboard .pm-member-public-content .pm-feature-jobs {
+    gap: var(--pm-member-page-gap);
+    margin: 16px 0;
+}
+.pm-dashboard .pm-member-public-content .pm-feature-job {
+    padding: 18px;
+    min-width: 0;
+}
+.pm-dashboard .pm-member-public-content .pm-feature-job > span {
+    align-self: flex-start;
+}
+.pm-dashboard .pm-member-public-content .pm-feature-privacy {
+    font-size: var(--pm-member-font-xs);
+    line-height: 1.5;
+    margin-top: 15px;
+}
+
+/* Use the same controls as the dashboard without changing button behavior. */
+.pm-dashboard .pm-member-public-content .pm-button.pm-button-sm,
+.pm-dashboard .pm-membership-comparison .pm-button.pm-button-sm {
+    min-height: 40px;
+    padding: 8px 15px;
+    border-radius: var(--pm-member-control-radius);
+    font-size: var(--pm-member-font-sm);
+    line-height: 1.3;
+}
+
+/* The discussion hero is a content section, not an independent public-page frame. */
+.pm-dashboard .pm-member-public-content .pm-crumbs {
+    margin: 0 0 15px;
+    font-size: var(--pm-member-font-xs);
+}
+.pm-dashboard .pm-member-public-content .pm-feed-hero {
+    padding: 22px 26px;
+    margin-bottom: var(--pm-member-page-gap);
+    gap: 18px;
+    border-color: var(--pm-dash-border);
+    border-radius: var(--pm-member-card-radius);
+}
+.pm-dashboard .pm-member-public-content .pm-feed-hero-content h1 {
+    font-family: var(--pm-member-font);
+    color: var(--pm-dash-deep);
+    font-size: var(--pm-member-page-heading-size);
+    letter-spacing: -.7px;
+    line-height: 1.25;
+    margin-bottom: 8px;
+}
+.pm-dashboard .pm-member-public-content .pm-feed-hero-content p {
+    font-size: var(--pm-member-font-body);
+    color: var(--pm-dash-muted);
+    margin-bottom: 12px;
+}
+.pm-dashboard .pm-member-public-content .pm-two-column {
+    gap: var(--pm-member-page-gap);
+}
+.pm-dashboard .pm-member-public-content .pm-feed-toolbar {
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.pm-dashboard .pm-member-public-content .pm-feed-search-input,
+.pm-dashboard .pm-member-public-content .pm-sort-dropdown {
+    height: var(--pm-member-control-height);
+    border-color: var(--pm-dash-border);
+    border-radius: var(--pm-member-control-radius);
+    font-size: var(--pm-member-font-body);
+}
+.pm-dashboard .pm-member-public-content .pm-feed-search-input:focus {
+    box-shadow: none;
+    outline: 2px solid #8ab8ef;
+    outline-offset: 1px;
+}
+
+/* Authenticated pricing is a member screen; public pricing retains its layout. */
+.pm-dashboard .pm-membership-comparison {
+    max-width: var(--pm-member-page-max-width);
+    margin-inline: auto;
+    min-width: 0;
+}
+.pm-dashboard .pm-membership-comparison .pm-compare-page {
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    padding: 8px 0 30px;
+}
+.pm-dashboard .pm-membership-comparison .pm-compare-intro {
+    text-align: left;
+    margin: 0 0 18px;
+}
+.pm-dashboard .pm-membership-comparison .pm-membership-notice {
+    justify-content: flex-start;
+    margin: 0 0 18px;
+    gap: 8px 18px;
+}
+.pm-dashboard .pm-membership-comparison .pm-compare-scroll {
+    border-color: var(--pm-dash-border);
+    border-radius: var(--pm-member-card-radius);
+}
+.pm-dashboard .pm-membership-comparison .pm-compare-table {
+    font-family: var(--pm-member-font);
+}
+
+@media (max-width: 760px) {
+    .pm-dashboard .pm-member-public-content > .pm-container,
+    .pm-dashboard .pm-membership-comparison .pm-compare-page {
+        padding-top: 2px;
+        padding-bottom: 22px;
+    }
+    .pm-dashboard .pm-member-public-content .pm-feed-hero {
+        padding: 18px;
+    }
+    .pm-dashboard .pm-member-public-content .pm-feature-heading {
+        margin-bottom: 16px;
+    }
+    .pm-dashboard .pm-member-public-content .pm-feature-section {
+        padding: 17px;
+    }
+    .pm-dashboard .pm-membership-comparison .pm-membership-notice {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+@media (max-width: 500px) {
+    .pm-dashboard .pm-member-public-content .pm-feed-hero {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .pm-dashboard .pm-member-public-content .pm-feed-hero-illustration {
+        display: none;
+    }
+    .pm-dashboard .pm-member-public-content .pm-feature-job {
+        flex-wrap: wrap;
+    }
+    .pm-dashboard .pm-member-public-content .pm-feature-job > span {
+        margin-left: 38px;
+    }
+}

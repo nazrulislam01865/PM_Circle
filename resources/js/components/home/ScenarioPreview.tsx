@@ -1,22 +1,65 @@
 import { Link } from '@inertiajs/react';
-import { Heart, MessageCircle, Reply, Share2 } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowRight } from 'lucide-react';
 import { Avatar } from '@/components/pm/Avatar';
+import { homeRelativeDate } from '@/lib/home-date';
+import { HomeCommentAction, HomeShareAction, ReactionPicker, type ReactionType, type RequestToJoin } from './HomeEngagement';
+import type { HomeContent } from '@/types/home';
 
-export type ScenarioSummary = { slug: string; title: string; summary: string; topics: string[] };
-type ScenarioResponse = { id: number; body: string; created_at: string; user: { name: string } };
-export function ScenarioPreview({ scenario, responses, demo }: { scenario: ScenarioSummary | null; responses: ScenarioResponse[]; demo: boolean }) {
-    const [copied, setCopied] = useState(false);
-    return <section className="pm-panel pm-scenario-teaser">
-        <div className="pm-scenario-eyebrow"><span className="pm-upper-label">Today's scenario</span><span className="pm-open-status">● Open for discussion</span></div>
-        <h3>{scenario?.title ?? 'Sharpen your project management judgment.'}</h3>
-        <p>{scenario?.summary ?? 'Practical scenarios are being prepared for the community.'}</p>
-        <div className="pm-tags">{(scenario?.topics ?? []).map(topic => <span key={topic}>{topic}</span>)}</div>
-        <div className="pm-scenario-cta">{scenario && <Link href={`/scenarios/${scenario.slug}`} className="pm-button">Read scenario &amp; join discussion</Link>}<small>Read freely. Sign in to respond.</small></div>
-        {scenario && <div className="pm-scenario-social"><span><Heart size={17}/> {demo ? 42 : '—'}</span><button type="button" onClick={() => { void navigator.clipboard?.writeText(`${window.location.origin}/scenarios/${scenario.slug}`).then(() => setCopied(true)); }}><Share2 size={16}/> {copied ? 'Copied' : 'Share'}</button><Link href={`/scenarios/${scenario.slug}`}><MessageCircle size={17}/> {demo ? 128 : responses.length} responses</Link></div>}
-        {responses.map((response, index) => <article className="pm-teaser-response" key={response.id}>
-            <Avatar name={response.user.name} size={37}/><div className="pm-teaser-response-main"><div className="pm-post-author-meta"><strong>{response.user.name}</strong><small>{response.user.name === 'Priya Nair' ? 'Senior Project Manager' : 'Agile Coach'} · 2 days ago</small></div><p>{response.body}</p><div className="pm-teaser-reaction"><Link href={scenario ? `/scenarios/${scenario.slug}` : '/community'}><Heart size={14}/> {demo ? (index === 0 ? 18 : 12) : 'Respond'}</Link><Link href={scenario ? `/scenarios/${scenario.slug}` : '/community'}><Reply size={14}/> Reply</Link></div></div>
-            {demo && <div className="pm-sample-score"><small>Sample AI reasoning score</small><strong>8/10</strong><Link href={scenario ? `/scenarios/${scenario.slug}` : '/community'}>Read assessment⌄</Link></div>}
-        </article>)}
+export type ScenarioSummary = {
+    id: number; slug: string; title: string; summary: string; topics: string[];
+    reactions_count?: number; viewer_reaction?: ReactionType | null;
+};
+export type ScenarioResponsePreview = {
+    id: number; body: string; created_at: string;
+    reactions_count?: number; viewer_reaction?: ReactionType | null;
+    user: { name: string; profile?: { role?: string | null; avatar_path?: string | null } | null };
+};
+
+export function ScenarioPreview({ scenario, responses, content, canInteract, onJoin }: {
+    scenario: ScenarioSummary | null;
+    responses: ScenarioResponsePreview[];
+    content?: HomeContent['scenario'];
+    canInteract: boolean; onJoin: RequestToJoin;
+}) {
+    const url = scenario ? `/scenarios/${encodeURIComponent(scenario.slug)}` : '/community';
+
+    return <section className="pm-panel pm-home-scenario-card" aria-label={content?.heading}>
+        <div className="pm-home-scenario-highlight">
+            <div className="pm-home-scenario-topline">
+                <span className="pm-home-scenario-eyebrow">{content?.heading}</span>
+                {scenario && <span className="pm-home-scenario-status"><span className="pm-home-status-dot" aria-hidden="true"/>{content?.status_label}</span>}
+            </div>
+            {scenario ? <>
+                <h2>{scenario.title}</h2>
+                <p>{scenario.summary}</p>
+                <div className="pm-home-scenario-tags">{(scenario.topics ?? []).map(topic => <span key={topic}>{topic}</span>)}</div>
+                <div className="pm-home-scenario-cta">
+                    <Link href={url} className="pm-button">{content?.read_button_label ?? content?.button_label}<ArrowRight size={18} aria-hidden="true"/></Link>
+                    <HomeCommentAction label={content?.discussion_button_label ?? 'Join discussion'} href={url} canInteract={canInteract} onJoin={onJoin}/>
+                    <span className="pm-home-scenario-hint">{content?.hint}</span>
+                </div>
+            </> : <p className="pm-empty">Practical scenarios are being prepared for the community.</p>}
+        </div>
+        {scenario && <>
+            <div className="pm-home-scenario-social">
+                <ReactionPicker endpoint={`/scenarios/${scenario.id}/reactions`} initial={scenario.viewer_reaction} total={scenario.reactions_count} canInteract={canInteract} onJoin={onJoin} label="scenario"/>
+                <HomeShareAction href={url} canInteract={canInteract} onJoin={onJoin}/>
+                <HomeCommentAction label={responses.length === 1 ? 'response' : 'responses'} count={responses.length} href={url} canInteract={canInteract} onJoin={onJoin}/>
+            </div>
+            <div className="pm-home-responses-heading">{content?.responses_heading ?? 'Community responses'}</div>
+            {responses.length === 0 && <p className="pm-empty">Be the first to share your approach.</p>}
+            {responses.map(response => <article className="pm-home-response" key={response.id}>
+                <Avatar name={response.user.name} src={response.user.profile?.avatar_path} size={34}/>
+                <div className="pm-home-response-main">
+                    <div className="pm-home-response-author"><strong>{response.user.name}</strong>
+                        <small>{response.user.profile?.role || 'Community member'} · {homeRelativeDate(response.created_at)}</small></div>
+                    <p>{response.body}</p>
+                    <div className="pm-home-response-actions">
+                        <ReactionPicker endpoint={`/scenarios/${scenario.id}/responses/${response.id}/reactions`} initial={response.viewer_reaction} total={response.reactions_count} canInteract={canInteract} onJoin={onJoin} label="response"/>
+                        <HomeCommentAction label="Reply" href={url} canInteract={canInteract} onJoin={onJoin}/>
+                    </div>
+                </div>
+            </article>)}
+        </>}
     </section>;
 }

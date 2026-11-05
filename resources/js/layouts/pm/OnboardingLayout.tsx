@@ -1,14 +1,34 @@
-import { Link } from '@inertiajs/react';
 import type { ReactNode } from 'react';
-import { Brand } from '@/components/pm/Brand';
+import { AuthPageFrame } from '@/layouts/pm/AuthPageFrame';
 
-export function OnboardingLayout({ children, step, title, subtitle }: { children: ReactNode; step?: number; title: string; subtitle: string }) {
-    return <div className="pm-app pm-auth-shell">
-        <header className="pm-auth-header"><Brand /><p>Already a member? <Link href="/login">Log in</Link></p></header>
-        <main className="pm-auth-main"><section className="pm-auth-card" aria-label={title}>
-            {step && <div className="pm-stepper"><p>Step {step} of 3</p><div className="pm-step-bars" aria-label={`Step ${step} of 3`}>{[1,2,3].map(n => <span key={n} className={n <= step ? 'active' : ''} />)}</div></div>}
-            <div className="pm-auth-intro"><h1>{title}</h1><p>{subtitle}</p></div>
-            {children}
-        </section><p className="pm-auth-bottom">Learn together. Practise daily. Grow your career.</p></main>
-    </div>;
+export function OnboardingLayout({ children, step, title, subtitle }: {
+    children: ReactNode;
+    step?: 1 | 2 | 3;
+    title: string;
+    subtitle?: string;
+}) {
+    return (
+        <AuthPageFrame
+            className={`pm-signup signup-step-${step ?? 1}`}
+            headerPrompt="Already a member?"
+            headerLinkHref="/login"
+            headerLinkLabel="Log in"
+        >
+            <section className="pm-auth-card signup-card" aria-label={title}>
+                {step && (
+                    <div className="signup-stepper" aria-label={`Step ${step} of 3`}>
+                        <span>Step {step} of 3</span>
+                        <div className="signup-step-bars" aria-hidden="true">
+                            {[1, 2, 3].map((n) => <span key={n} className={n <= step ? 'is-active' : ''} />)}
+                        </div>
+                    </div>
+                )}
+                <div className="signup-intro">
+                    <h1>{title}</h1>
+                    {subtitle && <p>{subtitle}</p>}
+                </div>
+                {children}
+            </section>
+        </AuthPageFrame>
+    );
 }

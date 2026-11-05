@@ -1,24 +1,301 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { MessageCircle, Users } from 'lucide-react';
-import { PublicLayout } from '@/layouts/pm/PublicLayout';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import {
+    AlertTriangle,
+    ArrowUpDown,
+    Briefcase,
+    ChevronDown,
+    ChevronRight,
+    FileText,
+    Lock,
+    RefreshCw,
+    Search,
+    Users,
+} from 'lucide-react';
+import { useState } from 'react';
 import { PostCard, type PostPreview } from '@/components/community/PostCard';
+import { JoinCommunityDialog } from '@/components/home/HomeEngagement';
 import { TopicPills } from '@/components/community/TopicPills';
+import { PublicLayout } from '@/layouts/pm/PublicLayout';
 
-type Props = { posts: { data: PostPreview[]; next_page_url: string | null; prev_page_url: string | null }; activeTopic: string; search?: string | null };
-function Composer() {
-    const { data, setData, post, processing, errors, reset } = useForm({ body: '', topic: 'From my project' });
-    return <form className="pm-panel pm-feed-composer" onSubmit={e => { e.preventDefault(); post('/posts', { onSuccess: () => reset() }); }}>
-        <label htmlFor="community-post">Share what you learned with the community</label><textarea id="community-post" value={data.body} maxLength={5000} onChange={e => setData('body', e.target.value)} placeholder="Share a practical lesson, ask a question or describe a project experience..." required />
-        {errors.body && <p className="pm-error" role="alert">{errors.body}</p>}
-        <div><select value={data.topic} aria-label="Post topic" onChange={e => setData('topic', e.target.value)}><option>I learned</option><option>From my project</option><option>Ask the community</option></select><button type="submit" className="pm-button pm-button-sm" disabled={processing}>Publish post</button></div>
-    </form>;
-}
-export default function Feed({ posts, activeTopic, search }: Props) {
-    const { auth, emailVerificationRequired } = usePage<{ emailVerificationRequired: boolean; auth: { user: { onboarding_step: number; email_verified_at: string | null } | null } }>().props;
-    const canPost = Boolean(auth?.user && (!emailVerificationRequired || auth.user.email_verified_at) && auth.user.onboarding_step >= 3);
-    return <PublicLayout active="/community"><Head title="Community discussions"/><div className="pm-container pm-page"><div className="pm-crumbs">Home / Discussions</div><h1 className="pm-feed-title">{search ? `Results for “${search}”` : "Conversations from the circle"}</h1>
-        <div className="pm-two-column"><div><TopicPills active={activeTopic} />{canPost ? <Composer/> : <div className="pm-panel pm-feed-composer"><strong>Have a lesson worth sharing?</strong><p className="pm-empty">Join the circle to post, respond and learn with other professionals.</p><Link href="/register" className="pm-button pm-button-sm">Join the community — free</Link></div>}
-        <section className="pm-panel pm-community-panel">{posts.data.length ? posts.data.map(p => <PostCard key={p.id} post={p}/>) : <p className="pm-empty">No discussions in this category yet. Start the first conversation.</p>}</section>
-        <nav className="pm-pager">{posts.prev_page_url && <Link href={posts.prev_page_url}>Previous</Link>}{posts.next_page_url && <Link href={posts.next_page_url}>Load more discussions</Link>}</nav></div>
-        <aside className="pm-stack"><section className="pm-sidebar-detail pm-panel"><Users color="var(--pm-primary)" size={30}/><h3>Real conversations. Useful insights.</h3><p>Exchange practical lessons, ask project management questions and build relationships with people who understand your work.</p></section><section className="pm-sidebar-detail pm-panel"><MessageCircle color="var(--pm-primary)" size={27}/><h3>Today's scenario</h3><p>Try a situation with no perfect answer, and compare approaches from the community.</p><Link className="pm-text-link" href="/">See latest scenario →</Link></section></aside></div></div></PublicLayout>;
+type Props = {
+    posts: {
+        data: PostPreview[];
+        next_page_url: string | null;
+        prev_page_url: string | null;
+    };
+    activeTopic: string;
+    search?: string | null;
+    todayScenario?: {
+        id: number;
+        slug: string;
+        title: string;
+        summary: string;
+    } | null;
+};
+
+export default function Feed({ posts, activeTopic, search, todayScenario }: Props) {
+    const { auth, emailVerificationRequired } = usePage<{
+        emailVerificationRequired?: boolean;
+        auth: {
+            user: {
+                id: number;
+                name: string;
+                onboarding_step: number;
+                email_verified_at: string | null;
+            } | null;
+        };
+    }>().props;
+
+    const isGuest = !auth?.user || auth.user.onboarding_step < 3 || (emailVerificationRequired && !auth.user.email_verified_at);
+    const [joinAction, setJoinAction] = useState<string | null>(null);
+    const [searchTerm, setSearchTerm] = useState(search ?? '');
+
+    const handleSearchSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        router.get(
+            '/community',
+            { search: searchTerm, topic: activeTopic !== 'All' ? activeTopic : undefined },
+            { preserveState: true }
+        );
+    };
+
+    return (
+        <PublicLayout active="/community" joinLabel="Join free">
+            <Head title="Discussions · PM Circle" />
+
+            <div className="pm-container pm-page">
+                {/* Breadcrumbs */}
+                <nav className="pm-crumbs" aria-label="Breadcrumb">
+                    <Link href="/">Home</Link> &nbsp;/&nbsp; <span>Discussions</span>
+                </nav>
+
+                {/* Hero Banner (pm1.png) */}
+                <section className="pm-feed-hero">
+                    <div className="pm-feed-hero-content">
+                        <h1>Better projects start with better conversations.</h1>
+                        <p>Explore real project challenges, practical lessons and ideas from the PM community.</p>
+                        <span className="pm-badge-public">
+                            <Users size={14} /> Public discussions · Read freely
+                        </span>
+                    </div>
+
+                    <div className="pm-feed-hero-illustration" aria-hidden="true">
+                        <svg width="220" height="130" viewBox="0 0 220 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            {/* Dialogue bubble 1 */}
+                            <rect x="30" y="10" width="150" height="60" rx="12" fill="#EAF3FC" stroke="#0A66C2" strokeWidth="1.5" />
+                            <line x1="45" y1="26" x2="110" y2="26" stroke="#0A66C2" strokeWidth="2.5" strokeLinecap="round" />
+                            <line x1="45" y1="36" x2="150" y2="36" stroke="#8293A8" strokeWidth="2" strokeLinecap="round" />
+                            <line x1="45" y1="46" x2="130" y2="46" stroke="#8293A8" strokeWidth="2" strokeLinecap="round" />
+                            <path d="M50 70L40 82L60 70H50Z" fill="#EAF3FC" stroke="#0A66C2" strokeWidth="1.5" />
+
+                            {/* Dialogue bubble 2 */}
+                            <rect x="70" y="55" width="140" height="55" rx="12" fill="#FFFFFF" stroke="#0A66C2" strokeWidth="1.5" />
+                            <line x1="85" y1="72" x2="175" y2="72" stroke="#8293A8" strokeWidth="2" strokeLinecap="round" />
+                            <line x1="85" y1="82" x2="150" y2="82" stroke="#8293A8" strokeWidth="2" strokeLinecap="round" />
+                            <path d="M185 110L195 122L175 110H185Z" fill="#FFFFFF" stroke="#0A66C2" strokeWidth="1.5" />
+
+                            {/* Little spark / avatar accents */}
+                            <circle cx="15" cy="50" r="14" fill="#EAF3FC" />
+                            <circle cx="205" cy="30" r="12" fill="#EAF3FC" />
+                            <line x1="12" y1="20" x2="20" y2="28" stroke="#0A66C2" strokeWidth="2" strokeLinecap="round" />
+                            <line x1="200" y1="75" x2="208" y2="83" stroke="#0A66C2" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                    </div>
+                </section>
+
+                {/* Main Two Column Grid */}
+                <div className="pm-two-column">
+                    <div className="pm-feed-main-col">
+                        {/* Search & Sort Bar */}
+                        <div className="pm-feed-toolbar">
+                            <form className="pm-feed-search-wrap" onSubmit={handleSearchSubmit}>
+                                <Search size={18} className="pm-feed-search-icon" />
+                                <input
+                                    type="text"
+                                    className="pm-feed-search-input"
+                                    placeholder="Search discussions or topics..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </form>
+
+                            <button type="button" className="pm-sort-dropdown">
+                                <ArrowUpDown size={15} /> Latest <ChevronDown size={14} />
+                            </button>
+                        </div>
+
+                        {/* Filter pills */}
+                        <TopicPills active={activeTopic} />
+
+                        {/* Guest Join Callout Banner */}
+                        {isGuest && (
+                            <section className="pm-guest-banner-card">
+                                <div className="pm-guest-banner-left">
+                                    <div className="pm-guest-lock-icon">
+                                        <Lock size={20} />
+                                    </div>
+                                    <div className="pm-guest-banner-text">
+                                        <strong>Have a question or an experience to share?</strong>
+                                        <p>Join free to post, like, clap and comment.</p>
+                                    </div>
+                                </div>
+                                <Link href="/register" className="pm-button pm-button-sm">
+                                    Join the conversation
+                                </Link>
+                            </section>
+                        )}
+
+                        {/* Post List */}
+                        <div className="pm-feed-posts-list">
+                            {posts.data.length > 0 ? (
+                                posts.data.map((post, index) => (
+                                    <div key={post.id}>
+                                        <PostCard post={post} isGuest={isGuest} onJoin={setJoinAction} />
+
+                                        {/* Inline locked response box directly under the first post for guests (pm1.png) */}
+                                        {index === 0 && isGuest && (
+                                            <div className="pm-inline-guest-prompt">
+                                                <div className="pm-inline-guest-header">
+                                                    <Lock size={16} /> Join the community to add your response
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    className="pm-inline-guest-textarea"
+                                                    placeholder="Share your thoughts, experience or advice..."
+                                                    disabled
+                                                />
+                                                <div className="pm-inline-guest-actions">
+                                                    <Link href="/register" className="pm-button pm-button-sm">
+                                                        Create free account
+                                                    </Link>
+                                                    <span className="pm-inline-guest-login">
+                                                        Already a member? <Link href="/login">Log in</Link>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="pm-panel pm-empty">
+                                    <p>No discussions found in this topic. Try another search or category.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Pagination / Load more */}
+                        {posts.next_page_url ? (
+                            <div className="pm-load-more-center">
+                                <Link href={posts.next_page_url} className="pm-btn-load-more">
+                                    Load more discussions <ChevronDown size={16} />
+                                </Link>
+                            </div>
+                        ) : (
+                            <div className="pm-load-more-center">
+                                <button type="button" className="pm-btn-load-more" disabled>
+                                    All discussions loaded
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Right Sidebar */}
+                    <aside className="pm-sidebar-col">
+                        {/* 1. Practise your judgement card */}
+                        <section className="pm-sidebar-card">
+                            <div className="pm-sidebar-kicker">PRACTISE YOUR JUDGEMENT</div>
+                            <FileText size={40} className="pm-sidebar-doc-icon" />
+                            <h3>{todayScenario?.title ?? 'The deadline stays. The scope grows.'}</h3>
+                            <p>
+                                {todayScenario?.summary ??
+                                    'A sponsor adds a must-have feature two weeks before launch. What would you do next?'}
+                            </p>
+                            <Link
+                                href={
+                                    todayScenario
+                                        ? `/scenarios/${todayScenario.slug}`
+                                        : '/scenarios/a-late-change-a-fixed-deadline'
+                                }
+                                className="pm-button pm-btn-full"
+                            >
+                                Read scenario & responses →
+                            </Link>
+                        </section>
+
+                        {/* 2. Find your next conversation */}
+                        <section className="pm-sidebar-card">
+                            <h3>Find your next conversation</h3>
+                            <p style={{ margin: 0, fontSize: '13px' }}>Explore popular topics from the community.</p>
+
+                            <nav className="pm-topics-nav-list" aria-label="Popular topics">
+                                <Link
+                                    href="/community?topic=Questions&search=stakeholder"
+                                    className="pm-topic-nav-item"
+                                >
+                                    <div className="pm-topic-nav-left">
+                                        <Users size={18} />
+                                        <span>Stakeholder management</span>
+                                    </div>
+                                    <ChevronRight size={16} color="var(--muted)" />
+                                </Link>
+
+                                <Link
+                                    href="/community?topic=I+learned&search=agile"
+                                    className="pm-topic-nav-item"
+                                >
+                                    <div className="pm-topic-nav-left">
+                                        <RefreshCw size={18} />
+                                        <span>Agile & Scrum</span>
+                                    </div>
+                                    <ChevronRight size={16} color="var(--muted)" />
+                                </Link>
+
+                                <Link
+                                    href="/community?topic=From+my+project&search=risk"
+                                    className="pm-topic-nav-item"
+                                >
+                                    <div className="pm-topic-nav-left">
+                                        <AlertTriangle size={18} />
+                                        <span>Risk & change</span>
+                                    </div>
+                                    <ChevronRight size={16} color="var(--muted)" />
+                                </Link>
+
+                                <Link
+                                    href="/community?topic=Questions&search=career"
+                                    className="pm-topic-nav-item"
+                                >
+                                    <div className="pm-topic-nav-left">
+                                        <Briefcase size={18} />
+                                        <span>Careers in PM</span>
+                                    </div>
+                                    <ChevronRight size={16} color="var(--muted)" />
+                                </Link>
+                            </nav>
+                        </section>
+
+                        {/* 3. Your experience can help someone */}
+                        <section className="pm-cta-guest-card">
+                            <Users size={32} className="pm-cta-guest-icon" />
+                            <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '0 0 8px' }}>
+                                Your experience can help someone.
+                            </h3>
+                            <p style={{ fontSize: '14px', color: 'var(--muted)', margin: '0 0 16px' }}>
+                                Ask questions. Share lessons. Learn with project professionals.
+                            </p>
+                            <Link href="/register" className="pm-button pm-btn-full">
+                                Join PM Circle — free
+                            </Link>
+                            {isGuest && (
+                                <span className="pm-cta-guest-login">
+                                    Already a member? <Link href="/login">Log in</Link>
+                                </span>
+                            )}
+                        </section>
+                    </aside>
+                </div>
+            </div>
+            <JoinCommunityDialog action={joinAction} onClose={() => setJoinAction(null)} hasAccount={Boolean(auth?.user)} />
+        </PublicLayout>
+    );
 }

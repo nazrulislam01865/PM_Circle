@@ -1,5 +1,6 @@
 /* Responsive layout changes only at narrower widths, preserving reference desktop columns. */
 @media (max-width: 1240px) {
+    .pm-dashboard { --pm-member-content-inset: 14px; }
     .pm-dash-nav-link { gap: 12px; padding-left: 17px; font-size: 13px; }
     .pm-dash-columns { grid-template-columns: minmax(0, 1fr) 294px; }
     .pm-dash-body { padding: 16px 14px; }
@@ -29,6 +30,7 @@
     .pm-dash-practice-actions { flex-wrap: nowrap; }
 }
 @media (max-width: 650px) {
+    .pm-dashboard { --pm-member-content-inset: 12px; }
     .pm-dash-sidebar { position: fixed; width: var(--pm-member-sidebar-expanded-width); flex-basis: var(--pm-member-sidebar-expanded-width); height: 100dvh; top: 0; left: 0; transform: none; visibility: hidden; pointer-events: none; transition: none; box-shadow: 8px 0 25px #001e4b12; }
     .pm-dash-sidebar.is-open { transform: none; visibility: visible; pointer-events: auto; width: var(--pm-member-sidebar-expanded-width); flex-basis: var(--pm-member-sidebar-expanded-width); }
     .pm-dash-sidebar.is-open .pm-brand-copy, .pm-dash-sidebar.is-open .pm-dash-nav-link span { display: initial; }

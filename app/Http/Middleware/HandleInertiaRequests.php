@@ -40,7 +40,11 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'emailVerificationRequired' => config('pm-circle.email_verification_required'),
             'auth' => [
-                'user' => $request->user() ? $request->user()->only(['id', 'name', 'email', 'email_verified_at', 'onboarding_step', 'created_at', 'updated_at']) : null,
+                'user' => $request->user() ? [
+                    ...$request->user()->only(['id', 'name', 'email', 'email_verified_at', 'onboarding_step', 'created_at', 'updated_at']),
+                    'avatar_path' => $request->user()->loadMissing('profile')->profile?->avatar_path,
+                    'avatar' => $request->user()->profile?->avatar_path,
+                ] : null,
             ],
             'memberShell' => fn () => $request->user() ? app(\App\Domain\Dashboard\Queries\MemberShell::class)->forMember($request->user()) : null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',

@@ -21,9 +21,17 @@ class CompleteProfessionalProfile
                 ]);
                 $user->certifications()->delete();
                 foreach ($data['certifications'] ?? [] as $certification) {
-                    $user->certifications()->create($certification);
+                    if (! empty($certification['name'])) {
+                        $user->certifications()->create([
+                            'name' => $certification['name'],
+                            'credential_number' => $certification['credential_number'] ?? null,
+                        ]);
+                    }
                 }
-                $user->update(['onboarding_step' => 2]);
+                $user->update([
+                    'name' => ! empty($data['name']) ? trim($data['name']) : $user->name,
+                    'onboarding_step' => 2,
+                ]);
             });
         } catch (\Throwable $exception) {
             if ($newResume) Storage::disk('local')->delete($newResume);

@@ -5,7 +5,7 @@ import { Avatar } from '@/components/pm/Avatar';
 
 export type CommunityCommentData = {
     id: number; body: string; created_at: string; likes_count: number;
-    author: { name: string }; replies: CommunityCommentData[];
+    author: { name: string; profile?: { avatar_path?: string | null } | null }; replies: CommunityCommentData[];
 };
 const relativeTime = (created: string) => {
     const elapsed = Date.now() - Date.parse(created);
@@ -24,7 +24,7 @@ export function CommunityComment({ comment, postId, postAuthor, canInteract, lik
     const displayedLikes = comment.likes_count + (demo ? sampleLikes[comment.author.name] ?? 0 : 0);
     const like = () => canInteract ? router.post(`/posts/${postId}/comments/${comment.id}/like`, {}, { preserveScroll: true }) : router.visit('/login');
     return <div className={nested ? 'pm-thread-reply' : 'pm-thread-comment'}>
-        <div className="pm-thread-portrait"><Avatar name={comment.author.name} size={nested ? 39 : 47}/></div>
+        <div className="pm-thread-portrait"><Avatar name={comment.author.name} src={comment.author.profile?.avatar_path} size={nested ? 39 : 47}/></div>
         <div className="pm-thread-body"><div className="pm-thread-author"><strong>{comment.author.name}</strong>{comment.author.name === postAuthor && <span className="pm-author-chip">Author</span>}<span>· &nbsp;{demo ? nested ? '2 hours ago' : '3 hours ago' : relativeTime(comment.created_at)}</span><span className="pm-thread-menu" aria-hidden="true">···</span></div>
             <p>{comment.body}</p><div className="pm-thread-actions"><button type="button" onClick={like} aria-pressed={liked}><ThumbsUp size={17} fill={liked ? 'currentColor' : 'none'}/> Like {displayedLikes || ''}</button>
                 <button type="button" onClick={() => canInteract ? setReply(!reply) : router.visit('/login')}><MessageCircle size={16}/> Reply</button></div>

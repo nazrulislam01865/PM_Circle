@@ -26,6 +26,22 @@ final class LearningController extends Controller
         ]);
     }
 
+    public function skillsCheck(Request $request, LearningOverview $overview): Response
+    {
+        return Inertia::render('learning/SkillsCheck', [
+            'shell' => $overview->shell($request->user()),
+        ]);
+    }
+
+    public function startingPointResult(Request $request, LearningOverview $overview): Response
+    {
+        $slug = $request->query('recommended', 'student-beginner');
+        return Inertia::render('learning/StartingPointResult', [
+            'shell' => $overview->shell($request->user()),
+            'recommendedSlug' => $slug,
+        ]);
+    }
+
     public function show(Request $request, string $path, LearningOverview $overview, CurrentMemberPlan $plans): Response
     {
         $record = $this->path($path, $request, $plans);

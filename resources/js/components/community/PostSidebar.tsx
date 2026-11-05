@@ -13,7 +13,7 @@ export function PostSidebar({ name, role, relatedPosts, demo, loggedIn }: {
             { icon: Users, title: 'Respect different views', desc: 'Be constructive and keep it professional.' },
             { icon: ShieldCheck, title: 'Protect confidential details', desc: 'Avoid sharing sensitive client, company or personal information.' },
         ].map(rule => <div className="pm-guideline" key={rule.title}><div className="pm-guideline-icon"><rule.icon size={24}/></div><div><strong>{rule.title}</strong><p>{rule.desc}</p></div></div>)}</section>
-        <section className="pm-panel pm-sidebar-detail"><h3>More from the community</h3>{relatedPosts.map((post, index) => <Link className="pm-related-post" key={post.id} href={`/posts/${post.id}`}><span>{post.title || post.body.slice(0, 85)}<small><MessageSquare size={15}/>{demo ? (index === 0 ? 28 : 16) : post.comments_count} comments</small></span><ChevronRight size={18}/></Link>)}
+        <section className="pm-panel pm-sidebar-detail"><h3>More from the community</h3>{relatedPosts.map((post) => <Link className="pm-related-post" key={post.id} href={`/posts/${post.id}`}><span>{post.title || post.body.slice(0, 85)}<small><MessageSquare size={15}/>{post.comments_count} comments</small></span><ChevronRight size={18}/></Link>)}
             {!relatedPosts.length && <p>New discussions will appear here.</p>}
         </section>
     </aside>;

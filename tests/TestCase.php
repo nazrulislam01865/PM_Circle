@@ -23,6 +23,19 @@ abstract class TestCase extends BaseTestCase
         return $app;
     }
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Feature tests render Inertia's Blade root without needing compiled Vite assets.
+        // Keep asset compilation enabled in real application environments.
+        $this->withoutVite();
+
+        // Ignore local development shortcuts in ordinary feature tests.
+        // Tests of fixed/off modes explicitly select their mode after setUp().
+        config()->set('pm-circle.signup_verification_mode', 'email');
+    }
+
     protected function skipUnlessFortifyHas(string $feature, ?string $message = null): void
     {
         if (! Features::enabled($feature)) {

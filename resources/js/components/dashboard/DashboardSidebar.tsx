@@ -19,7 +19,7 @@ const secondaryItems: Item[] = [
     { label: 'Saved posts', href: '/saved-posts', icon: Bookmark },
     { label: 'Jobs & resume', href: '/careers', icon: BriefcaseBusiness },
     { label: 'Profile insights', href: '/dashboard/features/insights', icon: ChartNoAxesColumnIncreasing },
-    { label: 'Settings', href: '/settings/profile', icon: Settings },
+    { label: 'Settings', href: '/settings/security', icon: Settings },
 ];
 
 export function DashboardSidebar({ dashboard, open, close, collapsed, onToggle }: { dashboard: DashboardShellData; open: boolean; close: () => void; collapsed: boolean; onToggle: () => void }) {
@@ -28,7 +28,8 @@ export function DashboardSidebar({ dashboard, open, close, collapsed, onToggle }
     const label = dashboard.plan === 'free' ? 'Free member' : `${dashboard.plan === 'premium' ? 'Premium' : 'Pro'} member`;
     const isCurrent = (href: string) => href === '/dashboard' ? activePath === href
         : href === '/learning' ? activePath.startsWith(href)
-        : href === '/settings/profile' ? activePath.startsWith('/settings')
+        : href === '/settings/profile' ? activePath === '/settings/profile'
+        : href === '/settings/security' ? activePath === '/settings/security' || activePath === '/settings/appearance'
         : href === '/community' ? activePath === href || activePath.startsWith('/posts/') || activePath.startsWith('/scenarios/')
         : activePath === href;
     const items = (list: Item[]) => list.map(item => {
@@ -47,7 +48,7 @@ export function DashboardSidebar({ dashboard, open, close, collapsed, onToggle }
             <div className="pm-dash-side-logo"><Brand /><button className="pm-dash-sidebar-close" type="button" onClick={onToggle} aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}>{collapsed ? <ChevronsRight size={22}/> : <ChevronsLeft size={22}/>}</button><button className="pm-dash-drawer-close" type="button" onClick={close} aria-label="Close navigation">×</button></div>
             <nav className="pm-dash-sidebar-links" aria-label="Dashboard sections">{items(primaryItems)}<div className="pm-dash-nav-divider" />{items(secondaryItems)}</nav>
             <div className="pm-dash-side-bottom">
-                <Link href="/settings/profile" className="pm-dash-side-member" onClick={close}><DashboardAvatar name={dashboard.member.name} size={54} demo={dashboard.isDemo}/><span><strong>{dashboard.member.name}</strong><small>{paid && <Crown size={13} fill="#ffb428" color="#ffb428"/>}{label}</small></span><ChevronRight size={19}/></Link>
+                <Link href="/settings/profile" className="pm-dash-side-member" onClick={close}><DashboardAvatar name={dashboard.member.name} size={46} demo={dashboard.isDemo} src={dashboard.member.avatar_path}/><span className="pm-dash-member-details"><strong>{dashboard.member.name}</strong><small className="pm-dash-member-tier">{paid && <Crown size={13} fill="currentColor" aria-hidden="true"/>}<span>{label}</span></small></span><ChevronRight className="pm-dash-member-chevron" size={17} aria-hidden="true"/></Link>
                 <Link className="pm-dash-plan-link" href="/membership" onClick={close}>{paid ? <Settings size={21}/> : <Crown size={21}/>} {paid ? 'Manage plan' : 'Compare plans'}</Link>
             </div>
         </aside>

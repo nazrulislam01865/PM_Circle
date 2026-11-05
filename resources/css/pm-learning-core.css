@@ -1,11 +1,11 @@
 /* Learn & practice: scoped to member workspace, reusing the approved dashboard tokens. */
 .pm-learning-view { --learn-blue: var(--pm-dash-blue); --learn-border: var(--pm-dash-border); --learn-muted: #637088; --learn-bg: #f5f9fd; }
 .pm-learning-view .pm-dash-body { padding: 0; }
-.pm-learn-content { padding: 18px 22px 20px; max-width: 1810px; margin: 0 auto; }
+.pm-learn-content { padding: var(--pm-member-content-block) var(--pm-member-content-inset) 20px; max-width: 1700px; margin: 0 auto; min-width: 0; }
 .pm-learn-content h1, .pm-learn-content h2, .pm-learn-content h3 { color: var(--pm-dash-deep); font-weight: 800; letter-spacing: -.45px; }
-.pm-learn-content h1 { font-size: clamp(28px,2.8vw,36px); line-height: 1.15; }
+.pm-learn-content h1 { font-size: clamp(28px,2.8vw,var(--pm-member-font-heading)); line-height: 1.15; }
 .pm-learn-content h2 { font-size: 21px; }
-.pm-learn-content h3 { font-size: 17px; line-height: 1.22; }
+.pm-learn-content h3 { font-size: var(--pm-member-font-section); line-height: 1.22; }
 .pm-learn-content p { color: #52627e; }
 .pm-learn-content a:hover { color: var(--pm-primary-hover); }
 .pm-learn-page-title { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 14px; }
@@ -43,7 +43,7 @@
 .pm-learn-search input { flex: 1; outline: none; background: transparent; min-width: 0; font-size: 13px; }
 .pm-learn-select { border: 1px solid var(--learn-border); background: white; border-radius: 6px; min-width: 137px; display: flex; }
 .pm-learn-select select { background: none; outline: none; width: 100%; padding: 0 10px; color: #263653; font-size: 12px; }
-.pm-learn-columns { display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 14px; align-items: start; }
+.pm-learn-columns { display: grid; grid-template-columns: minmax(0,1fr) 340px; gap: var(--pm-member-section-gap); align-items: start; }
 .pm-learn-main-col, .pm-learn-side-col { min-width: 0; }
 .pm-learn-side-col { display: flex; flex-direction: column; gap: 12px; }
 .pm-learn-side-col .pm-learn-panel { padding: 16px; }

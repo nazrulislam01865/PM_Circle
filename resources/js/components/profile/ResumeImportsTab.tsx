@@ -65,6 +65,8 @@ export const ResumeImportsTab = forwardRef<ResumeImportsHandle, Props>(function 
     const [working, setWorking] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<number | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [statusError, setStatusError] = useState<string | null>(null);
+    const [canRetry, setCanRetry] = useState(false);
     const [historyOpen, setHistoryOpen] = useState(false);
     const [decisions, setDecisions] = useState<Record<string, ImportAction>>({});
     const [markedFields, setMarkedFields] = useState<string[]>([]);
@@ -75,6 +77,8 @@ export const ResumeImportsTab = forwardRef<ResumeImportsHandle, Props>(function 
     }, [importData.id, importData.status, importData.comparisons]);
 
     useEffect(() => {
+        setStatusError(null);
+        setCanRetry(false);
         if (!importData.id || importData.status !== 'processing') return;
         let stopped = false;
         let busy = false;
@@ -83,16 +87,34 @@ export const ResumeImportsTab = forwardRef<ResumeImportsHandle, Props>(function 
             busy = true;
             try {
                 const response = await fetch(`/settings/profile/import/${importData.id}/status`, {
-                    headers: { Accept: 'application/json' }, credentials: 'same-origin',
+                    headers: { Accept: 'application/json' }, credentials: 'same-origin', cache: 'no-store',
                 });
-                if (!response.ok) return;
-                const data: { status?: string } = await response.json();
-                if (!stopped && data.status && data.status !== 'processing') {
+                if (stopped) return;
+                if (response.status === 401 || response.status === 419 || response.redirected) {
+                    setStatusError('Your session needs refreshing. Sign in again to check the import.');
+                    stopped = true;
+                    return;
+                }
+                if (!response.ok) {
+                    setStatusError('Unable to check the resume processing status. Please refresh this page.');
+                    return;
+                }
+                const data: { status?: string; stalled?: boolean; can_retry?: boolean } = await response.json();
+                if (stopped) return;
+                if (data.status && data.status !== 'processing') {
                     stopped = true;
                     router.reload({ only: ['profileData'] });
+                    return;
+                }
+                if (data.stalled) {
+                    setStatusError('Processing is taking longer than expected. Check that the resume worker is running, then retry this file.');
+                    setCanRetry(Boolean(data.can_retry));
+                } else {
+                    setStatusError(null);
+                    setCanRetry(false);
                 }
             } catch {
-                // A transient connection failure must not stop later status checks.
+                if (!stopped) setStatusError('Unable to reach the resume processing service. Please check your connection and refresh.');
             } finally {
                 busy = false;
             }
@@ -170,6 +192,18 @@ export const ResumeImportsTab = forwardRef<ResumeImportsHandle, Props>(function 
     const toggleAction = (row: ImportComparison, checked: boolean) => {
         setDecisions((current) => ({ ...current, [row.field_key]: checked ? recommendedAction(row) : 'keep' }));
         setMarkedFields((current) => checked ? [...new Set([...current, row.field_key])] : current.filter((key) => key !== row.field_key));
+    };
+
+    const retryImport = () => {
+        if (!importData.id || working) return;
+        setWorking(true);
+        setError(null);
+        setStatusError(null);
+        router.post(`/settings/profile/import/${importData.id}/retry`, {}, {
+            preserveScroll: true,
+            onError: (messages) => setError(Object.values(messages)[0] ?? 'Unable to restart analysis.'),
+            onFinish: () => setWorking(false),
+        });
     };
 
     const cancelImport = () => {
@@ -259,9 +293,14 @@ export const ResumeImportsTab = forwardRef<ResumeImportsHandle, Props>(function 
                 <p className="pm-resume-muted">{importData.filename ? `Source: ${importData.filename}` : 'Upload a PDF or DOCX to see extracted information.'}</p>
                 {importData.status === 'ready' && importData.comparisons.length > 0 && <span className="pm-resume-source-notice">Some details may need correction.</span>}
             </div>
-            {importData.status === 'processing' && <p className="pm-resume-alert" role="status">Analysing your resume. The review will appear here when processing finishes.</p>}
+            {importData.status === 'processing' && <div role="status">
+                <p className="pm-resume-alert">Analysing your resume. The review will appear here when processing finishes.</p>
+                {statusError && <p className="pm-resume-alert pm-resume-alert-warning">{statusError}</p>}
+                {canRetry && <button type="button" className="pm-btn pm-btn-secondary" disabled={working} onClick={retryImport}>Retry analysis</button>}
+            </div>}
             {importData.status === 'failed' && <div className="pm-resume-alert pm-resume-alert-error" role="alert">
-                {importData.warnings[0] ?? 'Unable to extract text from this document.'} Replace the file with a readable PDF or DOCX.
+                <p>{importData.warnings[0] ?? 'Unable to extract text from this document.'}</p>
+                <button type="button" className="pm-btn pm-btn-secondary" disabled={working} onClick={retryImport}>Retry analysis</button>
             </div>}
             {importData.status === 'empty' && <p className="pm-resume-empty">No document reviewed yet. Your existing profile information will not change until you approve an import.</p>}
             {importData.status === 'cancelled' && <p className="pm-resume-empty">Import cancelled. Your uploaded file is still private and available for a new review.</p>}

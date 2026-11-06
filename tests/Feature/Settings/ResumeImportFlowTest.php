@@ -279,6 +279,130 @@ RESUME);
         $this->actingAs($user)->post(route('profile.import.cancel'), ['import_id' => $import->id])->assertNotFound();
     }
 
+    public function test_stalled_import_is_reported_without_exposing_resume_data(): void
+    {
+        $user = User::factory()->create();
+        $import = ProfileImportSession::create([
+            'user_id' => $user->id,
+            'source_filename' => 'private.pdf',
+            'status' => 'processing',
+            'extracted_data' => ['fields' => ['name' => 'Private Person']],
+        ]);
+        $import->forceFill(['updated_at' => now()->subMinutes(10)])->save();
+
+        $response = $this->actingAs($user)->get(route('profile.import.status', $import));
+        $response->assertOk()->assertJsonPath('status', 'processing')
+            ->assertJsonPath('stalled', true)->assertJsonPath('can_retry', true)
+            ->assertDontSee('Private Person');
+        $cacheDirectives = array_map('trim', explode(',', (string) $response->headers->get('Cache-Control')));
+        $this->assertContains('private', $cacheDirectives);
+        $this->assertContains('no-store', $cacheDirectives);
+    }
+
+    public function test_active_import_cannot_be_retried_while_a_worker_may_be_running(): void
+    {
+        \Illuminate\Support\Facades\Queue::fake();
+        $user = User::factory()->create();
+        $import = ProfileImportSession::create([
+            'user_id' => $user->id,
+            'source_filename' => 'resume.pdf',
+            'status' => 'processing',
+            'extracted_data' => ['fields' => []],
+        ]);
+
+        $this->actingAs($user)->post(route('profile.import.retry', $import))
+            ->assertSessionHasErrors('import');
+        $this->assertDatabaseCount('profile_import_sessions', 1);
+        \Illuminate\Support\Facades\Queue::assertNothingPushed();
+    }
+
+    public function test_member_can_retry_own_stalled_import_without_duplicate_retries(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+        \Illuminate\Support\Facades\Queue::fake();
+        $user = User::factory()->create();
+        $path = 'resumes/'.$user->id.'/cv.pdf';
+        \Illuminate\Support\Facades\Storage::disk('local')->put($path, 'private resume content');
+        $resume = ProfileResume::create([
+            'user_id' => $user->id,
+            'original_name' => 'cv.pdf',
+            'storage_path' => $path,
+            'mime_type' => 'application/pdf',
+            'file_size' => 100,
+        ]);
+        $original = ProfileImportSession::create([
+            'user_id' => $user->id,
+            'profile_resume_id' => $resume->id,
+            'source_filename' => 'cv.pdf',
+            'status' => 'processing',
+            'extracted_data' => ['fields' => []],
+        ]);
+        $original->forceFill(['updated_at' => now()->subMinutes(10)])->save();
+
+        $this->actingAs($user)->post(route('profile.import.retry', $original))
+            ->assertRedirect(route('profile.edit', ['tab' => 'imports']));
+
+        $this->assertSame('cancelled', $original->fresh()->status);
+        $this->assertDatabaseCount('profile_resumes', 1);
+        $this->assertDatabaseCount('profile_import_sessions', 2);
+        $latest = $user->importSessions()->first();
+        $this->assertSame('processing', $latest->status);
+        $this->assertSame($resume->id, $latest->profile_resume_id);
+        \Illuminate\Support\Facades\Queue::assertPushed(AnalyzeProfileResume::class, 1);
+
+        $this->actingAs($user)->post(route('profile.import.retry', $original))
+            ->assertSessionHasErrors('import');
+        $this->assertDatabaseCount('profile_import_sessions', 2);
+        \Illuminate\Support\Facades\Queue::assertPushed(AnalyzeProfileResume::class, 1);
+    }
+
+    public function test_failed_import_can_be_retried_without_uploading_the_private_file_again(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+        \Illuminate\Support\Facades\Queue::fake();
+        $user = User::factory()->create();
+        $path = 'resumes/'.$user->id.'/resume.docx';
+        \Illuminate\Support\Facades\Storage::disk('local')->put($path, 'private resume content');
+        $resume = ProfileResume::create([
+            'user_id' => $user->id,
+            'original_name' => 'resume.docx',
+            'storage_path' => $path,
+            'mime_type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'file_size' => 100,
+        ]);
+        $failed = ProfileImportSession::create([
+            'user_id' => $user->id,
+            'profile_resume_id' => $resume->id,
+            'source_filename' => 'resume.docx',
+            'status' => 'failed',
+            'extracted_data' => ['fields' => [], 'warnings' => ['Old failure']],
+        ]);
+
+        $this->actingAs($user)->post(route('profile.import.retry', $failed))
+            ->assertRedirect(route('profile.edit', ['tab' => 'imports']));
+        $this->assertSame('cancelled', $failed->fresh()->status);
+        $this->assertDatabaseCount('profile_import_sessions', 2);
+        $this->assertSame('processing', $user->importSessions()->first()->status);
+        \Illuminate\Support\Facades\Queue::assertPushed(AnalyzeProfileResume::class, 1);
+    }
+
+    public function test_retry_does_not_expose_another_members_import(): void
+    {
+        \Illuminate\Support\Facades\Queue::fake();
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        $import = ProfileImportSession::create([
+            'user_id' => $owner->id,
+            'source_filename' => 'private.pdf',
+            'status' => 'failed',
+            'extracted_data' => ['fields' => []],
+        ]);
+
+        $this->actingAs($other)->post(route('profile.import.retry', $import))->assertNotFound();
+        $this->assertSame('failed', $import->fresh()->status);
+        \Illuminate\Support\Facades\Queue::assertNothingPushed();
+    }
+
     public function test_presenter_does_not_run_per_row_database_queries(): void
     {
         $user = User::factory()->create();

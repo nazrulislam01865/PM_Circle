@@ -29,6 +29,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('settings/profile/resume/{resume?}', [ProfileController::class, 'downloadResume'])->name('profile.resume.download');
     Route::post('settings/profile/import/start', [ProfileController::class, 'startImport'])->name('profile.import.start');
     Route::get('settings/profile/import/{import}/status', [ProfileController::class, 'importStatus'])->name('profile.import.status');
+    Route::post('settings/profile/import/{import}/retry', [ProfileController::class, 'retryImport'])
+        ->middleware('throttle:3,10')->name('profile.import.retry');
     Route::post('settings/profile/import/apply', [ProfileController::class, 'applyImport'])->name('profile.import.apply');
     Route::post('settings/profile/import/cancel', [ProfileController::class, 'cancelImport'])->name('profile.import.cancel');
 });

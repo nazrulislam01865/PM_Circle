@@ -41,6 +41,9 @@ class HomePageContentTest extends TestCase
 
     public function test_demo_seed_is_idempotent_and_homepage_shows_real_seeded_records(): void
     {
+        // The public homepage must work with verification required.
+        config(['pm-circle.email_verification_required' => true]);
+
         $this->seed([HomePageContentSeeder::class, DemoScenarioSeeder::class, DemoHomePageSeeder::class]);
         $this->seed(DemoHomePageSeeder::class);
 
@@ -64,6 +67,9 @@ class HomePageContentTest extends TestCase
 
     public function test_homepage_preview_queries_are_bounded_and_relationships_are_eager_loaded(): void
     {
+        // The public homepage must work with verification required.
+        config(['pm-circle.email_verification_required' => true]);
+
         $this->seed([HomePageContentSeeder::class, DemoScenarioSeeder::class, DemoHomePageSeeder::class]);
 
         $selects = 0;

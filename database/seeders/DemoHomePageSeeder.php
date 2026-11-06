@@ -39,6 +39,13 @@ final class DemoHomePageSeeder extends Seeder
                 'status' => 'active',
                 'onboarding_step' => 3,
             ]);
+            // The public member preview requires verified email addresses when
+            // email verification is enabled. These are reserved fictional
+            // accounts seeded only in local/testing, never real user accounts.
+            if ($user->email_verified_at === null) {
+                $user->forceFill(['email_verified_at' => now()])->save();
+            }
+
             $profile = $user->profile()->firstOrCreate([], ['role' => $role, 'visibility' => 'public']);
             if (! $profile->avatar_path) {
                 $profile->update(['avatar_path' => $avatar]);

@@ -21,6 +21,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -402,9 +404,14 @@ class ProfileController extends Controller
 
         try {
             AnalyzeProfileResume::dispatch($import->id);
-        } catch (\Throwable) {
+        } catch (\Throwable $error) {
+            Log::warning('Resume analysis dispatch failed.', [
+                'import_id' => $import->id,
+                'exception' => $error::class,
+            ]);
             $import->update(['status' => 'failed', 'extracted_data' => ['fields' => [],
-                'warnings' => ['The analysis queue is unavailable. Please contact support or upload the resume again.']]]);
+                'warnings' => ['Analysis could not be started. The uploaded file is safe; please retry after the queue is restored.']]]);
+            return redirect()->route('profile.edit', ['tab' => 'imports']);
         }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Resume uploaded. Extraction has started; review before applying any changes.')]);
@@ -476,11 +483,68 @@ class ProfileController extends Controller
         return redirect()->route('profile.edit', ['tab' => 'imports']);
     }
 
-    /** Tiny, authorization-checked polling endpoint: exactly one database read. */
+    /** An owner-only polling response; do not expose extracted personal information. */
     public function importStatus(Request $request, ProfileImportSession $import): JsonResponse
     {
         abort_unless($import->user_id === $request->user()->id, 403);
-        return response()->json(['status' => $import->status]);
+
+        $stalled = $import->status === 'processing'
+            && $import->updated_at?->lt(now()->subMinutes(5));
+
+        return response()->json([
+            'status' => $import->status,
+            'stalled' => (bool) $stalled,
+            'can_retry' => $import->status === 'failed' || (bool) $stalled,
+        ])->header('Cache-Control', 'private, no-store');
+    }
+
+    /** Retry only a failed or long-stalled, owned import without reuploading a private file. */
+    public function retryImport(Request $request, ProfileImportSession $import): RedirectResponse
+    {
+        $replacement = DB::transaction(function () use ($request, $import): ProfileImportSession {
+            $original = ProfileImportSession::query()
+                ->where('user_id', $request->user()->id)
+                ->lockForUpdate()
+                ->findOrFail($import->id);
+
+            $retryAllowed = $original->status === 'failed'
+                || ($original->status === 'processing'
+                    && $original->updated_at?->lt(now()->subMinutes(5)));
+            if (! $retryAllowed) {
+                throw ValidationException::withMessages(['import' => 'The import is still being processed or has already been reviewed.']);
+            }
+
+            $resume = $original->resume;
+            if (! $resume || $resume->user_id !== $request->user()->id
+                || ! Storage::disk('local')->exists($resume->storage_path)) {
+                throw ValidationException::withMessages(['import' => 'The original resume is unavailable. Please upload a new file.']);
+            }
+
+            // Cancel the prior attempt so any delayed worker cannot publish its result.
+            $original->update(['status' => 'cancelled']);
+
+            return ProfileImportSession::create([
+                'user_id' => $request->user()->id,
+                'profile_resume_id' => $resume->id,
+                'source_filename' => $resume->original_name,
+                'extracted_data' => ['fields' => [], 'warnings' => []],
+                'status' => 'processing',
+            ]);
+        });
+
+        try {
+            AnalyzeProfileResume::dispatch($replacement->id);
+        } catch (\Throwable $error) {
+            Log::warning('Resume analysis retry dispatch failed.', [
+                'import_id' => $replacement->id,
+                'exception' => $error::class,
+            ]);
+            $replacement->update(['status' => 'failed', 'extracted_data' => ['fields' => [],
+                'warnings' => ['Analysis could not be started. Please retry after the queue is restored.']]]);
+            throw ValidationException::withMessages(['import' => 'The queue is unavailable. Your uploaded file has been preserved.']);
+        }
+
+        return redirect()->route('profile.edit', ['tab' => 'imports']);
     }
 
     /** Cancel a pending review without deleting the privately stored source file. */

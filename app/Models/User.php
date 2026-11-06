@@ -53,5 +53,5 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function profileProjects(): HasMany { return $this->hasMany(ProfileProject::class); }
     public function educations(): HasMany { return $this->hasMany(Education::class); }
     public function resumes(): HasMany { return $this->hasMany(ProfileResume::class)->latest()->latest('id'); }
-    public function importSessions(): HasMany { return $this->hasMany(ProfileImportSession::class)->latest(); }
+    public function importSessions(): HasMany { return $this->hasMany(ProfileImportSession::class)->latest()->latest('id'); }
 }

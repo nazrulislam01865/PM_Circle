@@ -21,18 +21,20 @@ export function ScenarioPreview({ scenario, responses, content, canInteract, onJ
     content?: HomeContent['scenario'];
     canInteract: boolean; onJoin: RequestToJoin;
 }) {
-    const url = scenario ? `/scenarios/${encodeURIComponent(scenario.slug)}` : '/community';
+    const url = scenario ? `/scenarios/${encodeURIComponent(scenario.slug)}` : '/daily-challenge';
 
     return <section className="pm-panel pm-home-scenario-card" aria-label={content?.heading}>
         <div className="pm-home-scenario-highlight">
             <div className="pm-home-scenario-topline">
                 <span className="pm-home-scenario-eyebrow">{content?.heading}</span>
-                {scenario && <span className="pm-home-scenario-status"><span className="pm-home-status-dot" aria-hidden="true"/>{content?.status_label}</span>}
+                <div className="pm-home-scenario-top-actions">
+                    {scenario && <span className="pm-home-scenario-status"><span className="pm-home-status-dot" aria-hidden="true"/>{content?.status_label}</span>}
+                    <Link href="/daily-challenge" className="pm-button pm-button-outline pm-button-sm pm-home-scenario-view-all">View all <ArrowRight size={16} aria-hidden="true"/></Link>
+                </div>
             </div>
             {scenario ? <>
                 <h2>{scenario.title}</h2>
                 <p>{scenario.summary}</p>
-                <div className="pm-home-scenario-tags">{(scenario.topics ?? []).map(topic => <span key={topic}>{topic}</span>)}</div>
                 <div className="pm-home-scenario-cta">
                     <Link href={url} className="pm-button">{content?.read_button_label ?? content?.button_label}<ArrowRight size={18} aria-hidden="true"/></Link>
                     <HomeCommentAction label={content?.discussion_button_label ?? 'Join discussion'} href={url} canInteract={canInteract} onJoin={onJoin}/>

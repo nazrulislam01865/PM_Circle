@@ -7,6 +7,7 @@ import { Avatar } from '@/components/pm/Avatar';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
 import { CommunityComment, type CommunityCommentData } from '@/components/community/CommunityComment';
 import { PostSidebar } from '@/components/community/PostSidebar';
+import { PostContent } from '@/components/community/PostContent';
 import type { PostPreview } from '@/components/community/PostCard';
 
 type Post = PostPreview & { reactions_count: number; likes_count: number; loves_count: number; author: { name: string; profile?: { role?: string; avatar_path?: string | null } | null } };
@@ -34,7 +35,7 @@ export default function PostShow({ post, comments, viewerReaction, viewerSaved, 
             <div className="pm-two-column"><div className="pm-stack">
                 <article className="pm-panel pm-content-panel pm-member-post"><div className="pm-post-author pm-post-author-large"><Avatar name={post.author.name} src={post.author.profile?.avatar_path} size={49}/><div><strong>{post.author.name}</strong><p>{post.author.profile?.role || 'Community member'} &nbsp;·&nbsp; {post.published_at ? new Date(post.published_at).toLocaleDateString() : 'Recently'}</p></div><span className="pm-thread-menu" aria-hidden="true">···</span></div>
                     <div className="pm-post-category"><span>{post.topic}</span></div>
-                    {post.title && <h1>{post.title}</h1>}<p className="pm-post-body">{post.body}</p>
+                    {post.title && <h1>{post.title}</h1>}<PostContent className="pm-post-body" body={post.body} image={post.image_path}/>
                     <div className="pm-tags"><span>{post.topic}</span></div>
                     {post.ai_generated && <p className="pm-ai-disclosure">AI-generated · editorially reviewed</p>}
                     <div className="pm-member-post-actions">

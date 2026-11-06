@@ -2,9 +2,10 @@ import { Link } from '@inertiajs/react';
 import { Avatar } from '@/components/pm/Avatar';
 import type { ReactionType, RequestToJoin } from './HomeEngagement';
 import { PostEngagementActions } from '@/components/community/PostEngagementActions';
+import { PostContent } from '@/components/community/PostContent';
 
 export type HomePost = {
-    id: number; body: string; title?: string | null; topic: string;
+    id: number; body: string; image_path?: string | null; title?: string | null; topic: string;
     likes_count: number; reactions_count?: number; viewer_reaction?: ReactionType | null;
     comments_count: number; ai_generated?: boolean; published_at: string | null;
     author: { name: string; profile?: { role?: string | null; avatar_path?: string | null } | null };
@@ -27,7 +28,7 @@ export function HomePostPreview({ post, canInteract, onJoin }: {
             <span className="pm-topic-label">{post.topic === 'Questions' ? 'Ask the community' : post.topic}</span>
         </div>
         {post.title && <Link href={link} className="pm-home-post-title">{post.title}</Link>}
-        <Link href={link} className="pm-post-text">{post.body}</Link>
+        <Link href={link} className="pm-post-text"><PostContent body={post.body} image={post.image_path}/></Link>
         {post.ai_generated && <span className="pm-ai-disclosure">AI-generated community content</span>}
         <div className="pm-post-actions">
             <PostEngagementActions postId={post.id} initial={post.viewer_reaction} total={post.reactions_count ?? post.likes_count}

@@ -1,7 +1,7 @@
 export type DashboardPlan = 'free' | 'premium' | 'pro';
-export type DashboardTab = 'for-you' | 'following';
+export type DashboardTab = 'all' | 'following' | 'mine';
 export type DashboardPost = {
-    id: number; title: string | null; body: string; topic: string;
+    id: number; title: string | null; body: string; image_path?: string | null; topic: string;
     author: string; authorRole: string | null; authorAvatar?: string | null; publishedAt: string | null;
     comments: number; reactions: number;
     saved: boolean; reaction: import('@/components/home/HomeEngagement').ReactionType | null;

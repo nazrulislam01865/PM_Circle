@@ -14,8 +14,8 @@ export const pathIcon: Record<string, LucideIcon> = {
 export const activityIcon: Record<string, LucideIcon> = {
     lesson: Play, mcq: ClipboardList, short_answer: Pencil, scenario: Brain,
 };
-export function LearningLayout({ shell, children }: { shell: LearningShell; children: ReactNode }) {
-    return <MemberDashboardLayout dashboard={shell} variant="learning"><div className="pm-learn-content">{children}</div><LearningFooter /></MemberDashboardLayout>;
+export function LearningLayout({ shell, children, catalog = false }: { shell: LearningShell; children: ReactNode; catalog?: boolean }) {
+    return <MemberDashboardLayout dashboard={shell} variant={catalog ? 'learning-catalog' : 'learning'}><div className="pm-learn-content">{children}</div><LearningFooter /></MemberDashboardLayout>;
 }
 export function LearningFooter() {
     return <footer className="pm-learn-footer" aria-label="Footer"><div className="pm-learn-footer-logo"><span className="pm-learn-footer-symbol">◉</span><span><strong>PM Circle</strong><small>by ITQAN</small></span></div>

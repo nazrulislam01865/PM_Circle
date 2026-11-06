@@ -1,0 +1,51 @@
+/* PM Circle community post editor: use shared member typography, surfaces and actions. */
+.pm-dashboard .pm-dash-composer { padding: var(--pm-member-section-gap, 16px); }
+.pm-dashboard .pm-dash-composer-buttons { margin-top: 10px; }
+.pm-dashboard .pm-dash-composer-note, .pm-dashboard .pm-dash-composer-submit { display: none; }
+.pm-compose-dialog[data-slot='dialog-content'] { display: flex; flex-direction: column; gap: 0; width: min(94vw, 720px); max-width: 720px; height: min(88dvh, 760px); max-height: 88dvh; padding: 0; overflow: hidden; border: 1px solid var(--pm-line); background: var(--pm-surface); border-radius: var(--pm-radius); color: var(--pm-navy); font-family: var(--pm-font-family); }
+.pm-compose-dialog [data-slot='dialog-title'] { font-size: 20px; font-weight: 700; line-height: 1.3; padding: 20px 24px 13px; margin: 0; border-bottom: 1px solid var(--pm-line); }
+.pm-compose-dialog [data-slot='dialog-close'] { top: 14px; right: 17px; width: 36px; height: 36px; display: grid; place-items: center; border-radius: var(--pm-radius, 8px); color: var(--pm-navy); background: transparent; opacity: 1; }
+.pm-compose-dialog [data-slot='dialog-close']:hover { background: var(--pm-canvas); }
+.pm-compose-sr-description { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+.pm-compose-identity { display: flex; align-items: center; gap: 12px; padding: 18px 24px 12px; }
+.pm-compose-identity > div { min-width: 0; }
+.pm-compose-identity strong { display: block; font-size: 18px; font-weight: 700; }
+.pm-compose-identity span { display: block; margin-top: 3px; font-size: 14px; color: var(--pm-muted); }
+.pm-compose-form { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+.pm-compose-editor { outline: none; flex: 1; min-height: 140px; overflow: auto; padding: 18px 24px; font-size: 18px; line-height: 1.6; font-family: var(--pm-font-family); color: var(--pm-navy); overflow-wrap: anywhere; white-space: pre-wrap; }
+.pm-compose-editor:empty::before { content: attr(data-placeholder); pointer-events: none; color: var(--pm-muted); }
+.pm-app .pm-compose-editor:is(:focus, :focus-visible) { outline: none; box-shadow: none; }
+.pm-compose-editor ul { list-style: disc; padding-left: 26px; }
+.pm-compose-editor ol { list-style: decimal; padding-left: 26px; }
+.pm-compose-file { display: none; }
+.pm-compose-image { position: relative; max-width: 100%; max-height: 220px; padding: 0 24px 12px; }
+.pm-compose-image img { display: block; max-height: 200px; max-width: 100%; object-fit: contain; border-radius: var(--pm-radius, 8px); border: 1px solid var(--pm-line); }
+.pm-compose-image button { position: absolute; top: 8px; right: 32px; padding: 6px; border: 1px solid #dce3ec; background: white; color: var(--pm-navy); border-radius: 50%; }
+.pm-compose-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; padding: 11px 20px; border-top: 1px solid var(--pm-line); }
+.pm-compose-toolbar > button { display: inline-grid; place-items: center; width: 43px; height: 43px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--pm-navy); }
+.pm-compose-toolbar > button:hover, .pm-compose-toolbar > button:focus-visible { background: var(--pm-soft-blue); color: var(--pm-primary); }
+.pm-compose-tool-divider { width: 1px; height: 26px; background: var(--pm-line); margin: 0 6px; }
+.pm-compose-emojis { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 24px; border-top: 1px solid var(--pm-line); }
+.pm-compose-emojis button { width: 39px; height: 39px; background: transparent; border: 0; border-radius: 8px; font-size: 22px; }
+.pm-compose-emojis button:hover { background: var(--pm-soft-blue); }
+.pm-compose-error { padding: 7px 24px; margin: 0; }
+.pm-compose-footer { display: flex; align-items: center; justify-content: flex-end; gap: 18px; border-top: 1px solid var(--pm-line); padding: 14px 24px; }
+.pm-compose-footer span { margin-right: auto; font-size: 13px; color: var(--pm-muted); }
+.pm-compose-footer .pm-button { min-width: 98px; min-height: var(--pm-member-control-height, 44px); }
+.pm-compose-footer button:disabled { background: var(--disabled-bg); border-color: var(--pm-line); color: var(--disabled-text); cursor: not-allowed; }
+.pm-post-content { white-space: normal; overflow-wrap: anywhere; }
+.pm-post-content p { margin: 0; white-space: pre-wrap; }
+.pm-post-content p + p { margin-top: 4px; }
+.pm-post-content ul { list-style: disc; padding-left: 23px; margin: 3px 0; }
+.pm-post-content ol { list-style: decimal; padding-left: 23px; margin: 3px 0; }
+.pm-post-empty-line { display: block; height: 12px; }
+.pm-feature-post .pm-post-content-image { max-height: 180px; }
+.pm-post-content-image { display: block; max-width: 100%; max-height: 480px; width: auto; height: auto; margin-top: 12px; object-fit: contain; border: 1px solid var(--pm-line); border-radius: 8px; }
+.pm-dash-feed-body.pm-post-content, .pm-card-body.pm-post-content, .pm-post-body.pm-post-content { display: block; }
+@media(max-width: 650px) {
+    .pm-compose-dialog[data-slot='dialog-content'] { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; border-radius: 0; }
+    .pm-compose-identity, .pm-compose-editor { padding-inline: 16px; }
+    .pm-compose-toolbar { padding-inline: 10px; }
+    .pm-compose-footer { padding-inline: 16px; }
+    .pm-compose-dialog [data-slot='dialog-title'] { padding-inline: 16px; }
+}

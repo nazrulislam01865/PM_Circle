@@ -65,10 +65,10 @@
 .pm-home .pm-pathway-steps { padding: 15px 26px 19px; }
 .pm-home .pm-pathway-steps > h2 {
     margin: 0 0 15px;
-    font-size: var(--type-h2);
+    font-size: var(--type-h3);
     line-height: 1.25;
-    letter-spacing: -.6px;
-    font-weight: 700;
+    letter-spacing: normal;
+    font-weight: 750;
     color: var(--text);
 }
 .pm-home .pm-pathway-steps-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
@@ -82,14 +82,13 @@
 .pm-home .pm-pathway-step:last-child { padding-right: 0; }
 .pm-home .pm-pathway-step > svg { display: block; width: 36px; height: 36px; margin-bottom: 11px; color: var(--primary); }
 .pm-home .pm-pathway-step h3 {
-    margin: 0 0 9px;
-    font-size: var(--type-lead);
-    line-height: 1.15;
-    letter-spacing: -.5px;
+    margin: 0 0 3px;
+    font-size: var(--type-small);
+    line-height: 1.35;
     font-weight: 700;
     color: var(--text);
 }
-.pm-home .pm-pathway-step p { margin: 0; color: var(--text); font-size: var(--type-body); line-height: 1.23; }
+.pm-home .pm-pathway-step p { margin: 0; color: var(--muted); font-size: var(--type-caption); line-height: 1.4; }
 .pm-home .pm-pathway-exams { margin-top: 38px; }
 .pm-home .pm-pathway-exams-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 0 27px; }
 .pm-home .pm-pathway-exams-heading h2 {
@@ -152,8 +151,6 @@
 .pm-home .pm-pathway-banner-button { flex: none; font-size: var(--type-small); min-height: 40px; white-space: nowrap; color: var(--primary); border-color: var(--primary); background: transparent; }
 @media (max-width: 1000px) {
     .pm-home .pm-pathway-step { padding-inline: 14px; }
-    .pm-home .pm-pathway-step h3 { font-size: var(--type-body); }
-    .pm-home .pm-pathway-step p { font-size: var(--type-small); }
     .pm-home .pm-pathway-exam-card { flex-basis: calc((100% - 15px) / 1.75); }
     .pm-home .pm-pathway-banner-copy h2 { font-size: var(--type-h3); }
 }
@@ -229,7 +226,7 @@
     padding: 13px 16px 17px;
     min-height: 230px;
     border-radius: var(--radius);
-    background: linear-gradient(114deg, var(--pm-home-surface-blue-d) 0%, var(--pm-home-surface-blue-e) 43%, var(--pm-home-surface-blue-d) 100%);
+    background: var(--surface);
     border-left: 3px solid var(--primary);
 }
 .pm-home .pm-home-scenario-topline {
@@ -276,23 +273,6 @@
     font-size: var(--type-body);
     line-height: 1.5;
     color: var(--text);
-}
-.pm-home .pm-home-scenario-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 11px;
-}
-.pm-home .pm-home-scenario-tags span {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 9px;
-    border-radius: var(--radius);
-    border: 1px solid var(--primary);
-    background: transparent;
-    color: var(--primary);
-    font-size: var(--type-caption);
-    line-height: 17px;
 }
 .pm-home .pm-home-scenario-cta {
     display: flex;
@@ -473,9 +453,8 @@
 .pm-home .pm-scenario-teaser h2,
 .pm-home .pm-home-scenario-highlight h2,
 .pm-home .pm-home-community-card .pm-section-head h2,
-.pm-home .pm-pathway-exams-heading h2,
-.pm-home .pm-pathway-steps > h2 { font-size: var(--type-h2); line-height: 1.25; }
-.pm-home :is(.pm-sidebar-panel > h3, .pm-pathway-step h3, .pm-pathway-exam-intro h3) { font-size: var(--type-h3); }
+.pm-home .pm-pathway-exams-heading h2 { font-size: var(--type-h2); line-height: 1.25; }
+.pm-home :is(.pm-sidebar-panel > h3, .pm-pathway-exam-intro h3) { font-size: var(--type-h3); }
 .pm-home :is(.pm-home-scenario-highlight > p, .pm-home-post .pm-post-text) { font-size: var(--type-body); line-height: 1.5; }
 .pm-home :is(.pm-home-response-main > p, .pm-home-response-author strong, .pm-home-post .pm-post-author-meta strong) { font-size: var(--type-small); }
 .pm-home :is(.pm-home-response-author small, .pm-home-post .pm-post-author-meta small) { font-size: var(--type-caption); }
@@ -511,7 +490,6 @@
 @media (max-width: 760px) {
     .pm-home .pm-hero h1 { font-size: var(--type-h1-mobile); }
     .pm-home .pm-pathway-exams-heading h2,
-    .pm-home .pm-pathway-steps > h2,
     .pm-home .pm-home-scenario-highlight h2,
     .pm-home .pm-home-community-card .pm-section-head h2 { font-size: var(--type-h2-mobile); }
     .pm-home .pm-home-sidebar { grid-template-columns: minmax(0, 1fr); }

@@ -51,8 +51,8 @@ final class MemberDirectoryController extends Controller
             'member' => ['id' => $member->id, 'name' => $member->name, 'profile' => $profile],
             'isOwnProfile' => $isOwnProfile,
             'following' => $viewer ? DB::table('member_follows')->where('follower_id', $viewer->id)->where('followed_id', $member->id)->exists() : false,
-            'posts' => $member->posts()->where('status', 'published')->where('visibility', 'public')
-                ->withCount(['comments', 'reactions'])->latest('published_at')->limit(8)->get(['id', 'author_id', 'title', 'body', 'topic', 'published_at', 'ai_generated']),
+            'posts' => $member->posts()->where('status', 'published')->where('visibility', 'public')->where('is_anonymous', false)
+                ->withCount(['comments', 'reactions'])->latest('published_at')->limit(8)->get(['id', 'author_id', 'title', 'body', 'image_path', 'topic', 'published_at', 'ai_generated']),
         ]);
     }
 

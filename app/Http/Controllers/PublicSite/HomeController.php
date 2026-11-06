@@ -53,7 +53,7 @@ class HomeController extends Controller
             ->latest('created_at')->limit(2)->get() : collect();
 
         $posts = Post::query()->where('status', 'published')->where('visibility', 'public')
-            ->select(['id', 'author_id', 'title', 'body', 'topic', 'ai_generated', 'published_at'])
+            ->select(['id', 'author_id', 'title', 'body', 'image_path', 'is_anonymous', 'topic', 'ai_generated', 'published_at'])
             ->when($demo, fn ($query) => $query->whereHas('author', fn ($users) => $users
                 ->whereIn('email', data_get($content, 'community.demo_post_emails', []))))
             ->with([
@@ -71,6 +71,7 @@ class HomeController extends Controller
                     ->whereColumn('post_id', 'posts.id')->where('user_id', $viewerId)->limit(1),
             ]))
             ->latest('published_at')->limit(2)->get();
+        $posts->each(fn (Post $post) => $post->anonymizeForPublic());
 
         $members = User::query()
             ->where('status', 'active')

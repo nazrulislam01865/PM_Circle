@@ -2,11 +2,13 @@ import { Link } from '@inertiajs/react';
 import { PostEngagementActions } from '@/components/community/PostEngagementActions';
 import type { ReactionType, RequestToJoin } from '@/components/home/HomeEngagement';
 import { Avatar } from '@/components/pm/Avatar';
+import { PostContent } from '@/components/community/PostContent';
 
 export type PostPreview = {
     id: number;
     title?: string | null;
     body: string;
+    image_path?: string | null;
     topic: string;
     tags?: string[] | null;
     claps_count?: number;
@@ -70,7 +72,7 @@ export function PostCard({
                 </h3>
             )}
 
-            <p className="pm-card-body">{post.body}</p>
+            <PostContent className="pm-card-body" body={post.body} image={post.image_path} />
 
             {post.tags && post.tags.length > 0 && (
                 <div className="pm-tag-pills-row">

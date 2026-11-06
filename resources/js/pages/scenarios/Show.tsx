@@ -73,6 +73,7 @@ type Scenario = {
     focus: string;
     minutes: number;
     published_at: string;
+    status: 'published' | 'closed';
     ai_generated: boolean;
 };
 
@@ -105,7 +106,7 @@ export default function Show({ scenario, responses, related }: Props) {
     }>().props;
 
     const isGuest = !auth?.user;
-    const canRespond = Boolean(auth?.user && auth.user.onboarding_step >= 3);
+    const canRespond = Boolean(auth?.user && auth.user.onboarding_step >= 3 && scenario.status === 'published');
 
     // Form for submitting top-level response
     const form = useForm({ body: '', parent_id: null as number | null });
@@ -152,19 +153,19 @@ export default function Show({ scenario, responses, related }: Props) {
     };
 
     return (
-        <PublicLayout active="/community" joinLabel="Join the community">
+        <PublicLayout active="/daily-challenge" joinLabel="Join the community">
             <Head title={`${scenario.title} · PM Circle`} />
 
             <div className="pm-container pm-page">
                 {/* Breadcrumbs & back navigation */}
                 <nav className="pm-crumbs" aria-label="Breadcrumb">
-                    <Link href="/">Home</Link> &nbsp;/&nbsp; <Link href="/community">Discussions</Link> &nbsp;/&nbsp;{' '}
-                    <span>Today's scenario</span>
+                    <Link href="/">Home</Link> &nbsp;/&nbsp; <Link href="/daily-challenge">Daily Challenge</Link> &nbsp;/&nbsp;{' '}
+                    <span>Scenario</span>
                 </nav>
 
                 <div style={{ marginBottom: '18px' }}>
-                    <Link href="/community" className="pm-back" style={{ fontWeight: 600 }}>
-                        ← All discussions
+                    <Link href="/daily-challenge" className="pm-back" style={{ fontWeight: 600 }}>
+                        ← All challenges
                     </Link>
                 </div>
 
@@ -175,7 +176,7 @@ export default function Show({ scenario, responses, related }: Props) {
                         <article className="pm-panel" style={{ padding: '32px', marginBottom: '24px' }}>
                             <div className="pm-scenario-header-badges">
                                 <span className="pm-badge-scenario">TODAY'S SCENARIO</span>
-                                <span className="pm-badge-open">Open for discussion</span>
+                                <span className="pm-badge-open">{scenario.status === 'closed' ? 'Discussion closed' : 'Open for discussion'}</span>
                             </div>
 
                             <h1 className="pm-scenario-h1">{scenario.title}</h1>
@@ -276,7 +277,9 @@ export default function Show({ scenario, responses, related }: Props) {
                                     </p>
                                 )}
 
-                                {isGuest ? (
+                                {scenario.status === 'closed' ? (
+                                    <p className="pm-submit-lock-notice">This discussion is closed. You can still read previous responses.</p>
+                                ) : isGuest ? (
                                     <div>
                                         <div className="pm-submit-lock-notice">
                                             <Lock size={14} /> Sign in to submit your response and receive AI feedback.
@@ -452,7 +455,7 @@ export default function Show({ scenario, responses, related }: Props) {
                                                     <button type="button" className="pm-action-item">
                                                         <Heart size={14} /> Love {resp.loves_count ?? 7}
                                                     </button>
-                                                    <button
+                                                    {scenario.status === 'published' && <button
                                                         type="button"
                                                         className="pm-action-item"
                                                         onClick={() =>
@@ -462,7 +465,7 @@ export default function Show({ scenario, responses, related }: Props) {
                                                         }
                                                     >
                                                         <MessageCircle size={14} /> Reply
-                                                    </button>
+                                                    </button>}
                                                     <button type="button" className="pm-action-item">
                                                         <Share2 size={14} /> Share
                                                     </button>

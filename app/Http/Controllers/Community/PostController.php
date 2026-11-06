@@ -9,6 +9,8 @@ use App\Models\Post;
 use App\Models\Scenario;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -17,10 +19,13 @@ class PostController extends Controller
     public function index(Request $request): Response
     {
         $topic = $request->query('topic', 'All');
-        $search = $request->validate(['search' => ['nullable', 'string', 'max:80']])['search'] ?? null;
-        $posts = Post::query()
-            ->where('status', 'published')
-            ->where('visibility', 'public')
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:80'],
+            'tab' => ['nullable', 'in:all,following,mine'],
+        ]);
+        $search = $validated['search'] ?? null;
+        $feedTab = $validated['tab'] ?? 'all';
+        $posts = Post::query()->forFeed($feedTab, $request->user()?->id)
             ->when(in_array($topic, ['Questions', 'I learned', 'From my project', 'Ask the community']), function ($q) use ($topic) {
                 if ($topic === 'Questions') {
                     $q->whereIn('topic', ['Questions', 'Ask the community']);
@@ -40,7 +45,7 @@ class PostController extends Controller
                 'reactions',
                 'reactions as likes_count' => fn ($query) => $query->where('type', 'like'),
             ])
-            ->latest('published_at')
+            ->latest('published_at')->orderByDesc('posts.id')
             ->cursorPaginate(12)
             ->withQueryString();
 
@@ -53,6 +58,7 @@ class PostController extends Controller
             : collect();
         $posts->getCollection()->each(function (Post $post) use ($viewerReactions): void {
             $post->setAttribute('viewer_reaction', $viewerReactions->get($post->id));
+            $post->anonymizeForPublic();
         });
 
         $todayScenario = Scenario::query()
@@ -63,6 +69,7 @@ class PostController extends Controller
         return Inertia::render('community/Feed', [
             'posts' => $posts,
             'activeTopic' => $topic,
+            'feedTab' => $feedTab,
             'search' => $search,
             'todayScenario' => $todayScenario,
         ]);
@@ -89,6 +96,8 @@ class PostController extends Controller
             ->oldest()
             ->paginate(12);
 
+        $post->anonymizeForPublic();
+
         return Inertia::render('community/PostShow', [
             'post' => $post,
             'comments' => $comments,
@@ -111,9 +120,35 @@ class PostController extends Controller
         ]);
     }
 
+    /** Public post media is served without requiring a storage symlink. */
+    public function media(string $filename): BinaryFileResponse
+    {
+        abort_unless(preg_match('/\A[a-zA-Z0-9_-]+\.(?:jpg|jpeg|png|webp)\z/iD', $filename), 404);
+        $path = 'post-images/'.$filename;
+        $disk = Storage::disk('public');
+        abort_unless($disk->exists($path), 404);
+
+        // Use the same binary-file response as the working profile-image endpoint.
+        // This preserves the exact image bytes and avoids a streamed response being modified.
+        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+        return response()->file($disk->path($path), [
+            'Content-Type' => match ($extension) {
+                'png' => 'image/png',
+                'webp' => 'image/webp',
+                default => 'image/jpeg',
+            },
+            'Content-Disposition' => 'inline',
+            'Cache-Control' => 'public, max-age=3600',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
     public function store(StorePostRequest $request, PublishPost $action): RedirectResponse
     {
         $post = $action->execute($request->user(), $request->validated());
-        return to_route('posts.show', $post);
+        return ($request->validated('return_to') === 'dashboard')
+            ? to_route('dashboard')
+            : to_route('posts.show', $post);
     }
 }

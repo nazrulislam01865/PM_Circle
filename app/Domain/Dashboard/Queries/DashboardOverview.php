@@ -11,7 +11,7 @@ use App\Domain\Billing\Queries\CurrentMemberPlan;
 /** Read-only, privacy-limited projection. Demo figures never grant entitlements. */
 final class DashboardOverview
 {
-    public function forMember(User $user, ?string $previewPlan = null, string $feedTab = 'for-you'): array
+    public function forMember(User $user, ?string $previewPlan = null, string $feedTab = 'all'): array
     {
         $user->loadMissing('profile');
 
@@ -29,13 +29,9 @@ final class DashboardOverview
         ])->filter()->count();
         $completion = $isDemo ? ($plan === 'free' ? 45 : 80) : $filled * 20;
 
-        $query = Post::query()->where('status', 'published')->where('visibility', 'public');
-        // Following has no relationship table in the current project: never invent followed posts.
-        if ($feedTab === 'following') {
-            $query->whereRaw('1 = 0');
-        }
+        $query = Post::query()->forFeed($feedTab, $user->id);
 
-        $posts = $query->when($isDemo && $preview && $feedTab === 'for-you', fn ($q) => $q->orderByRaw(
+        $posts = $query->when($isDemo && $preview && $feedTab === 'all', fn ($q) => $q->orderByRaw(
                 'CASE WHEN posts.title = ? THEN 0 WHEN posts.title = ? THEN 1 ELSE 2 END',
                 ['How to run concise and effective status meetings', 'How do you handle unrealistic deadlines from stakeholders?']
             ))->with(['author:id,name', 'author.profile' => fn ($q) => $q
@@ -68,9 +64,10 @@ final class DashboardOverview
                 ] : ['time' => '0h 0m', 'scenarios' => 0, 'level' => 1, 'lessonProgress' => '0 / 0'],
                 'posts' => $posts->map(fn (Post $post) => [
                     'id' => $post->id, 'title' => $post->title, 'body' => $post->body,
-                    'topic' => $post->topic, 'author' => $post->author?->name ?? 'Member',
-                    'authorRole' => $post->author?->profile?->role,
-                    'authorAvatar' => $post->author?->profile?->avatar_path,
+                    'image_path' => $post->image_path,
+                    'topic' => $post->topic, 'author' => $post->is_anonymous ? 'Anonymous member' : ($post->author?->name ?? 'Member'),
+                    'authorRole' => $post->is_anonymous ? null : $post->author?->profile?->role,
+                    'authorAvatar' => $post->is_anonymous ? null : $post->author?->profile?->avatar_path,
                     'publishedAt' => $post->published_at?->toIso8601String(),
                     'comments' => $post->comments_count, 'reactions' => $post->reactions_count,
                     'saved' => in_array($post->id, $saved, true),

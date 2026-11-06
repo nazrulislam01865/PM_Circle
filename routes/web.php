@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use App\Http\Controllers\Auth\EmailVerificationCodeController;
 use App\Http\Controllers\Community\PostController;
@@ -6,6 +6,7 @@ use App\Http\Controllers\Members\MemberDirectoryController;
 use App\Http\Controllers\Account\AccountFeatureController;
 use App\Http\Controllers\Account\SavedPostsController;
 use App\Http\Controllers\Learning\LearningController;
+use App\Http\Controllers\Learning\DemoCourseController;
 use App\Http\Controllers\Billing\TemporaryMembershipController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Community\PostInteractionController;
@@ -19,10 +20,14 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/pricing', [HomeController::class, 'pricing'])->name('pricing');
 Route::get('/community', [PostController::class, 'index'])->name('community.index');
+Route::get('/learning', [LearningController::class, 'index'])->name('learning.index');
+Route::get('/learning/courses/{course}', [DemoCourseController::class, 'show'])->name('learning.courses.show');
 Route::get('/profile-media/{kind}/{filename}', [SettingsProfileController::class, 'showProfileImage'])
     ->where(['kind' => 'avatar|cover', 'filename' => '[a-zA-Z0-9._-]+'])->name('profile-media.show');
+Route::get('/post-media/{filename}', [PostController::class, 'media'])->where('filename', '[a-zA-Z0-9._-]+')->name('posts.media');
 Route::get('/posts/{post}', [PostController::class, 'show'])->name('posts.show');
 Route::get('/posts/{post}/comments/preview', [PostInteractionController::class, 'previewComments'])->middleware('throttle:60,1')->name('posts.comments.preview');
+Route::get('/daily-challenge', [ScenarioController::class, 'index'])->name('scenarios.index');
 Route::get('/scenarios/{scenario:slug}', [ScenarioController::class, 'show'])->name('scenarios.show');
 Route::redirect('/join/step/1', '/register')->name('join.account');
 Route::post('/join/email', [OnboardingController::class, 'beginRegistration'])->middleware('throttle:15,1')->name('join.email');
@@ -52,7 +57,9 @@ Route::middleware(['auth', 'verified', 'pm.onboarded'])->group(function () {
     Route::delete('/members/{member}/follow', [MemberDirectoryController::class, 'unfollow'])->whereNumber('member')->name('members.unfollow');
     Route::get('/membership', [TemporaryMembershipController::class, 'index'])->name('membership.index');
     Route::post('/membership/temporary', [TemporaryMembershipController::class, 'update'])->middleware('throttle:10,1')->name('membership.temporary');
-    Route::get('/learning', [LearningController::class, 'index'])->name('learning.index');
+    Route::post('/learning/courses/{course}/enroll', [DemoCourseController::class, 'enroll'])->middleware('throttle:20,1')->name('learning.courses.enroll');
+    Route::post('/learning/courses/{course}/save', [DemoCourseController::class, 'save'])->middleware('throttle:30,1')->name('learning.courses.save');
+    Route::delete('/learning/courses/{course}/save', [DemoCourseController::class, 'unsave'])->name('learning.courses.unsave');
     Route::get('/learning/skills-check', [LearningController::class, 'skillsCheck'])->name('learning.skills-check');
     Route::get('/learning/starting-point-result', [LearningController::class, 'startingPointResult'])->name('learning.starting-point-result');
     Route::get('/learning/{path}', [LearningController::class, 'show'])->name('learning.path');
@@ -70,6 +77,8 @@ Route::middleware(['auth', 'verified', 'pm.onboarded'])->group(function () {
     Route::post('/posts/{post}/save', [PostInteractionController::class, 'save'])->name('posts.save');
     Route::delete('/posts/{post}/save', [PostInteractionController::class, 'unsave'])->name('posts.unsave');
     Route::post('/scenarios/{scenario}/responses', [ScenarioController::class, 'respond'])->middleware('throttle:10,1')->name('scenarios.responses');
+    Route::post('/scenarios/{scenario}/bookmark', [ScenarioReactionController::class, 'bookmark'])->name('scenarios.bookmark');
+    Route::delete('/scenarios/{scenario}/bookmark', [ScenarioReactionController::class, 'unbookmark'])->name('scenarios.bookmark.remove');
     Route::post('/scenarios/{scenario}/reactions', [ScenarioReactionController::class, 'reactToScenario'])->middleware('throttle:60,1')->name('scenarios.reactions');
     Route::delete('/scenarios/{scenario}/reactions', [ScenarioReactionController::class, 'unreactToScenario'])->middleware('throttle:60,1')->name('scenarios.reactions.remove');
     Route::post('/scenarios/{scenario}/responses/{response}/reactions', [ScenarioReactionController::class, 'reactToResponse'])->middleware('throttle:60,1')->name('scenarios.responses.reactions');

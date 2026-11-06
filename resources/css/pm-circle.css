@@ -78,6 +78,31 @@
     --type-h1: 36px;
     --type-h2-mobile: 24px;
     --type-h1-mobile: 28px;
+    --type-h5: 16px;
+    --type-h6: 14px;
+    --type-label: var(--type-small);
+    --type-field: var(--type-body);
+    --type-button: var(--type-body);
+    --type-button-compact: var(--type-small);
+    --type-h1-responsive: var(--type-h1);
+    --type-h2-responsive: var(--type-h2);
+    /* Typography metrics from the approved PM Circle design system. */
+    --type-weight-normal: 400;
+    --type-weight-semibold: 600;
+    --type-weight-bold: 700;
+    --type-line-h1: 1.2;
+    --type-line-h2: 1.25;
+    --type-line-h3: 1.35;
+    --type-line-h4: 1.4;
+    --type-line-h5: 1.5;
+    --type-line-h6: 1.5;
+    --type-line-lead: 1.5;
+    --type-line-body: 1.5;
+    --type-line-small: 1.4285714286;
+    --type-line-caption: 1.5;
+    --type-line-button: 1.5;
+    --type-line-button-compact: 1.4285714286;
+    --type-line-field: 1.5;
     /* Reactions use semantic accents, not the brand action colour. */
     --reaction-like: #0A66C2;
     --reaction-love: #e62956;
@@ -259,13 +284,20 @@
 .pm-auth-header { height: 96px; display: flex; align-items: center; justify-content: space-between; padding: 0 clamp(22px, 5.8vw, 84px); border-bottom: 1px solid var(--pm-line); }
 .pm-auth-header p { color: #70809c; font-size: 16px; }.pm-auth-header p a { color: var(--pm-primary); font-weight: 750; margin-left: 6px; }
 .pm-auth-main { max-width: 620px; margin: 47px auto 20px; padding: 0 12px; }
-.pm-auth-card { border: 1px solid #d9e1ea; border-radius: 11px; padding: 30px 44px 29px; box-shadow: 0 2px 5px #254a8310; }
+.pm-auth-card { background: var(--surface); border: 1px solid var(--divider); border-radius: var(--card-radius); padding: 30px 44px 29px; box-shadow: 0 2px 5px #254a8310; }
 .pm-stepper { text-align: center; color: var(--pm-muted); font-size: 16px; }.pm-step-bars { display: flex; justify-content: center; gap: 7px; margin: 12px 0 42px; }
 .pm-step-bars span { height: 6px; border-radius: 5px; width: 63px; background: #e2e7ef; }.pm-step-bars span.active { background: var(--pm-primary); }
 .pm-auth-intro { text-align: center; margin-bottom: 31px; }.pm-auth-intro h1 { font-size: clamp(29px, 3vw, 40px); line-height: 1.15; font-weight: 800; letter-spacing: -1.3px; }
 .pm-auth-intro p { margin-top: 6px; color: #7888a6; font-size: 18px; }.pm-verified { display: inline-flex; margin-top: 15px; background: #dff9f0; color: #0a7761; border-radius: 40px; padding: 5px 13px; font-size: 13px; }
 .pm-field { margin-bottom: 23px; }.pm-field label { display: block; font-size: 15px; font-weight: 700; margin-bottom: 7px; }
-.pm-field input, .pm-field select { width: 100%; min-height: 54px; background: #fff; border: 1px solid #d7dfeb; border-radius: 7px; padding: 0 17px; color: var(--pm-copy); font-size: 16px; outline-color: #5199ee; }
+.pm-field input, .pm-field select { width: 100%; min-height: 54px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0 17px; color: var(--text); font-size: 16px; outline-color: #5199ee; }
+/* Keep browser-autofilled login and signup fields on the same form surface. */
+.pm-auth-shell .pm-field input:-webkit-autofill,
+.pm-auth-shell .signup-input:-webkit-autofill:not(:disabled) {
+    -webkit-box-shadow: 0 0 0 1000px var(--surface) inset;
+    -webkit-text-fill-color: var(--text);
+    caret-color: var(--text);
+}
 .pm-field input::placeholder { color: #9aa6ba; }.pm-field small { display: block; color: var(--pm-muted); margin-top: 6px; font-size: 13px; }
 .pm-error { color: #be123c !important; margin-top: 6px; font-size: 12px !important; }
 .pm-field-grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 20px; }
@@ -1046,4 +1078,12 @@
     align-items: center;
     gap: 4px;
     cursor: pointer;
+}
+
+/* Responsive typography is defined centrally, not repeated on each page. */
+@media (max-width: 640px) {
+    :root {
+        --type-h1-responsive: var(--type-h1-mobile);
+        --type-h2-responsive: var(--type-h2-mobile);
+    }
 }

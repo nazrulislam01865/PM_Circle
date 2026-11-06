@@ -1,0 +1,152 @@
+/* Site-wide header contract. Shared by homepage, public content, auth and member layouts. */
+.pm-app .pm-site-header {
+    position: relative;
+    z-index: 26;
+    background: var(--surface);
+    border-bottom: 1px solid var(--divider);
+}
+.pm-app .pm-site-header .pm-header-inner {
+    width: min(1480px, calc(100% - 64px));
+    min-height: 65px;
+    gap: clamp(18px, 3.4vw, 55px);
+}
+.pm-app .pm-site-header .pm-brand-copy strong {
+    font-family: var(--font);
+    font-size: var(--type-h4);
+    font-weight: 750;
+}
+.pm-app .pm-site-header .pm-main-nav {
+    gap: clamp(14px, 1.8vw, 28px);
+    align-self: stretch;
+}
+.pm-app .pm-site-header .pm-main-nav a {
+    display: inline-flex;
+    align-items: center;
+    border: 0;
+    padding: 0;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: var(--type-small);
+    font-weight: 600;
+    line-height: 1.4;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.pm-app .pm-site-header .pm-main-nav a:hover,
+.pm-app .pm-site-header .pm-main-nav a.active,
+.pm-app .pm-site-header .pm-main-nav a:focus-visible {
+    color: var(--primary);
+    border-color: transparent;
+    text-decoration: none;
+}
+.pm-app .pm-site-header .pm-header-actions { gap: var(--space-4); }
+.pm-app .pm-site-header .pm-header-actions .pm-button {
+    min-height: 40px;
+    padding: 8px 15px;
+    border-radius: var(--radius);
+    font-family: var(--font);
+    font-size: var(--type-small);
+    font-weight: 700;
+}
+.pm-app .pm-site-header .pm-header-actions .pm-text-link {
+    font-size: var(--type-small);
+    white-space: nowrap;
+}
+.pm-app .pm-site-header .pm-header-actions .pm-text-link:hover {
+    color: var(--primary-hover);
+    text-decoration: none;
+}
+.pm-home .pm-home-scenario-top-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+}
+.pm-home .pm-home-scenario-view-all {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-height: 40px;
+    padding: 8px 12px;
+    background: var(--surface);
+    border: 1px solid var(--primary);
+    border-radius: var(--radius);
+    color: var(--primary);
+    font-size: var(--type-small);
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.pm-home .pm-home-scenario-view-all:hover { color: var(--primary); background: var(--primary-soft); text-decoration: none; }
+
+/* Member shell is still a two-column dashboard beneath the shared full-width header. */
+.pm-dashboard.pm-dashboard-shared-header { flex-direction: column; }
+.pm-dashboard .pm-dashboard-layout { display: flex; flex: 1; min-height: 0; }
+.pm-dashboard-shared-header .pm-dash-sidebar {
+    height: calc(100vh - 65px);
+    top: 0;
+}
+.pm-dashboard-shared-header .pm-dash-workspace { min-width: 0; }
+.pm-dashboard-shared-header .pm-dash-header-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+.pm-dashboard-shared-header .pm-dash-header-right { gap: var(--space-4); }
+.pm-dashboard-shared-header .pm-site-member-search { position: relative; }
+.pm-dashboard-shared-header .pm-site-member-search > button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    color: var(--text);
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius);
+}
+.pm-dashboard-shared-header .pm-site-member-search > button:hover { color: var(--primary); background: var(--primary-soft); }
+.pm-dashboard-shared-header .pm-site-member-search input {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 11px);
+    z-index: 32;
+    width: min(320px, calc(100vw - 40px));
+    height: var(--field-height);
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 20px #172b4d15;
+}
+.pm-dashboard-shared-header .pm-site-member-search.is-open input { display: block; }
+.pm-dashboard-shared-header .pm-dash-account-menu { top: calc(100% + 10px); }
+@media (max-width: 1080px) {
+    .pm-app .pm-site-header .pm-header-inner { gap: var(--space-4); }
+    .pm-app .pm-site-header .pm-main-nav { gap: var(--space-3); }
+    .pm-app .pm-site-header .pm-main-nav a { font-size: var(--type-caption); }
+}
+@media (max-width: 880px) {
+    .pm-app .pm-site-header .pm-header-inner { width: min(100% - 32px, 1480px); min-height: 60px; }
+    .pm-app .pm-site-header .pm-mobile-toggle { display: inline-flex; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; }
+    .pm-app .pm-site-header .pm-main-nav { display: none; position: absolute; top: 100%; left: 0; right: 0; flex-direction: column; align-items: stretch; gap: 0; padding: var(--space-3) var(--space-6); background: var(--surface); border-bottom: 1px solid var(--divider); box-shadow: 0 10px 20px #182c4e22; }
+    .pm-app .pm-site-header .pm-main-nav.is-open { display: flex; }
+    .pm-app .pm-site-header .pm-main-nav a { min-height: 44px; font-size: var(--type-small); padding: var(--space-2); }
+    .pm-dashboard-shared-header .pm-dash-sidebar { top: 0; height: calc(100vh - 60px); }
+}
+@media (max-width: 650px) {
+    .pm-dashboard-shared-header .pm-dash-sidebar { top: 0; height: 100dvh; }
+    .pm-app .pm-site-header .pm-header-actions { margin-left: auto; }
+    .pm-app .pm-site-header .pm-header-actions .pm-button { padding: 7px 10px; font-size: var(--type-caption); }
+    .pm-app .pm-site-header .pm-site-member-actions { margin-left: auto; }
+    .pm-dashboard-shared-header .pm-dash-header-controls { gap: var(--space-2); }
+    .pm-dashboard-shared-header .pm-dash-header-right { gap: var(--space-2); }
+    .pm-dashboard-shared-header .pm-dash-account-button > svg { display: none; }
+    .pm-home .pm-home-scenario-topline { align-items: flex-start; flex-wrap: wrap; }
+}
+@media (max-width: 650px) {
+    /* Retain the brand mark while fitting both member and site navigation controls. */
+    .pm-dashboard-shared-header .pm-site-header .pm-brand-copy { display: none; }
+}

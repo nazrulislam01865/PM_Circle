@@ -32,9 +32,11 @@ final class LearningFlowTest extends TestCase
                 ->where('recommendedSlug', 'student-beginner'));
     }
 
-    public function test_learning_pages_require_authentication(): void
+    public function test_catalog_is_public_but_learning_activities_still_require_authentication(): void
     {
-        $this->get('/learning')->assertRedirect('/login');
+        $this->get('/learning')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->component('learning/Catalog')->has('courses', 12)->has('paths', 5)
+            ->where('shell', null)->where('isMember', false));
         $this->get('/learning/student-beginner')->assertRedirect('/login');
     }
 
@@ -45,6 +47,29 @@ final class LearningFlowTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page->component('learning/Catalog')->has('paths', 5));
         $this->actingAs($member)->get('/learning/student-beginner')->assertOk()
             ->assertInertia(fn (Assert $page) => $page->component('learning/PathShow')->has('path.modules', 6));
+    }
+
+    public function test_catalog_uses_demo_course_cards_without_prices_or_fabricated_ratings(): void
+    {
+        $member = User::factory()->create(['onboarding_step' => 3]);
+
+        $this->actingAs($member)->get('/learning')->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component('learning/Catalog')
+                ->has('paths', 5)
+                ->has('courses', 12)
+                ->has('practiceModules', 32)
+                ->where('courses.0.title', 'PMP Exam Preparation (Complete Course)')
+                ->where('courses.0.slug', 'pmp-exam-preparation')
+                ->where('courses.0.accessTier', 'paid')
+                ->where('courses.0.enrolled', false)
+                ->where('courses.0.saved', false)
+                ->missing('courses.0.price')
+                ->missing('courses.0.rating'));
+
+        $this->actingAs($member)->post('/learning/student-beginner/save')->assertRedirect();
+        $this->actingAs($member)->get('/learning')->assertInertia(fn (Assert $page) => $page
+            ->where('paths.0.saved', true)
+            ->where('courses.0.saved', false));
     }
 
     public function test_question_key_is_hidden_until_answer_submitted_and_scored_on_server(): void
@@ -92,7 +117,8 @@ final class LearningFlowTest extends TestCase
     public function test_member_must_finish_onboarding_before_learning(): void
     {
         $member = User::factory()->create(['onboarding_step' => 1]);
-        $this->actingAs($member)->get('/learning')->assertRedirect(route('join.profile'));
+        $this->actingAs($member)->get('/learning')->assertOk();
+        $this->actingAs($member)->get('/learning/skills-check')->assertRedirect(route('join.profile'));
     }
 
     public function test_lesson_and_scenario_completions_are_saved_once(): void

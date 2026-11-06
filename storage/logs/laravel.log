@@ -1,4 +1,0 @@
-[2026-11-05 18:54:07] testing.WARNING: E2A transactional email request not accepted. {"http_status":202,"provider_status":"pending_review","error_code":null} 
-[2026-11-05 18:54:07] testing.WARNING: Signup verification email delivery failed. {"exception_type":"RuntimeException"} 
-[2026-11-05 18:54:07] testing.WARNING: E2A transactional email request not accepted. {"http_status":503,"provider_status":null,"error_code":null} 
-[2026-11-05 18:54:07] testing.WARNING: Signup verification email delivery failed. {"exception_type":"RuntimeException"} 

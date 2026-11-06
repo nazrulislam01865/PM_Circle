@@ -1,8 +1,6 @@
 .pm-dash-feed-heading h2 { font-size: 23px; font-weight: 800; line-height: 1.4; letter-spacing: -.5px; }
 .pm-dash-feed-tabs { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; border-bottom: 1px solid #e4eaf1; }
-.pm-dash-feed-tabs [role='tablist'] { display: flex; gap: 18px; }
-.pm-dash-feed-tabs [role='tab'] { padding: 7px 15px 9px; color: #3b4964; font-size: 15px; border-bottom: 2px solid transparent; }
-.pm-dash-feed-tabs [role='tab'].active { color: #005dcf; border-color: var(--pm-dash-blue); font-weight: 750; }
+
 .pm-dash-view-all { color: #0761d0; display: flex; align-items: center; gap: 5px; font-size: 14px; }
 .pm-dash-posts { display: flex; flex-direction: column; gap: 11px; margin-top: 11px; }
 .pm-dash-feed-card { padding: 12px 15px 11px; }

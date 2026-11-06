@@ -5,6 +5,7 @@ namespace Tests\Feature\Dashboard;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -57,6 +58,70 @@ final class MemberDashboardTest extends TestCase
         ]);
         $this->actingAs($member)->get('/dashboard')->assertInertia(
             fn (Assert $page) => $page->where('dashboard.plan', 'free')
+        );
+    }
+
+    public function test_all_following_and_my_posts_only_include_authorized_public_posts(): void
+    {
+        config()->set('pm-circle.demo_content_enabled', false);
+        $viewer = User::factory()->create(['onboarding_step' => 3]);
+        $followed = User::factory()->create(['onboarding_step' => 3]);
+        $follower = User::factory()->create(['onboarding_step' => 3]);
+        $stranger = User::factory()->create(['onboarding_step' => 3]);
+
+        DB::table('member_follows')->insert([
+            ['follower_id' => $viewer->id, 'followed_id' => $followed->id, 'created_at' => now(), 'updated_at' => now()],
+            ['follower_id' => $follower->id, 'followed_id' => $viewer->id, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $makePost = static fn (User $author, string $body, string $visibility = 'public') => Post::query()->create([
+            'author_id' => $author->id, 'body' => $body, 'topic' => 'From my project',
+            'visibility' => $visibility, 'status' => 'published', 'published_at' => now(),
+        ]);
+        $own = $makePost($viewer, 'My own post');
+        $fromFollowed = $makePost($followed, 'Followed member');
+        $fromFollower = $makePost($follower, 'Follower member');
+        $makePost($stranger, 'Unrelated member');
+        $makePost($followed, 'Private post', 'private');
+
+        // The dashboard previews two rows per tab; use the full community endpoint
+        // to assert the complete filter, independent of display bounds.
+        $this->actingAs($viewer)->get('/dashboard?tab=mine')->assertInertia(
+            fn (Assert $page) => $page->where('dashboard.feedTab', 'mine')
+                ->has('dashboard.posts', 1)->where('dashboard.posts.0.id', $own->id)->etc()
+        );
+        $this->get('/dashboard?tab=following')->assertInertia(
+            fn (Assert $page) => $page->where('dashboard.feedTab', 'following')
+                ->has('dashboard.posts', 2)->etc()
+        );
+        $this->get('/community?tab=following')->assertInertia(
+            fn (Assert $page) => $page->where('feedTab', 'following')
+                ->has('posts.data', 2)
+                ->where('posts.data.0.id', $fromFollower->id)
+                ->where('posts.data.1.id', $fromFollowed->id)
+                ->etc()
+        );
+        $this->get('/community?tab=mine')->assertInertia(
+            fn (Assert $page) => $page->has('posts.data', 1)
+                ->where('posts.data.0.id', $own->id)->etc()
+        );
+        $this->get('/community?tab=all')->assertInertia(
+            fn (Assert $page) => $page->has('posts.data', 4)->etc()
+        );
+    }
+
+    public function test_guest_following_or_my_posts_cannot_expose_private_feed(): void
+    {
+        $author = User::factory()->create(['onboarding_step' => 3]);
+        Post::query()->create([
+            'author_id' => $author->id, 'body' => 'Public example',
+            'visibility' => 'public', 'status' => 'published', 'published_at' => now(),
+        ]);
+        $this->get('/community?tab=following')->assertInertia(
+            fn (Assert $page) => $page->has('posts.data', 0)->etc()
+        );
+        $this->get('/community?tab=mine')->assertInertia(
+            fn (Assert $page) => $page->has('posts.data', 0)->etc()
         );
     }
 

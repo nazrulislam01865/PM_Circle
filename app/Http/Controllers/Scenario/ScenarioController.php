@@ -4,17 +4,103 @@ namespace App\Http\Controllers\Scenario;
 
 use App\Http\Controllers\Controller;
 use App\Models\Scenario;
-use App\Models\ScenarioResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ScenarioController extends Controller
 {
+    /** Public, paginated scenario library. Facets are calculated in two grouped queries. */
+    public function index(Request $request): Response
+    {
+        $filters = $request->validate([
+            'tab' => ['nullable', 'in:library,open,discussed,mine'],
+            'search' => ['nullable', 'string', 'max:80'],
+            'topic' => ['nullable', 'string', 'max:100'],
+            'status' => ['nullable', 'in:all,open,closed'],
+            'time' => ['nullable', 'in:all,30d,3m,year'],
+            'sort' => ['nullable', 'in:latest,oldest,discussed'],
+            'page' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        $tab = $filters['tab'] ?? 'library';
+        $status = $filters['status'] ?? 'all';
+        $time = $filters['time'] ?? 'all';
+        $sort = $filters['sort'] ?? 'latest';
+        $search = trim($filters['search'] ?? '');
+        $topic = $filters['topic'] ?? '';
+        $viewerId = $request->user()?->id;
+
+        $query = Scenario::query()->whereIn('status', ['published', 'closed'])
+            ->whereNotNull('published_at')->where('published_at', '<=', now())
+            ->select(['id', 'slug', 'title', 'summary', 'topics', 'status', 'published_at'])
+            ->withCount([
+                'responses as responses_count' => fn ($q) => $q->whereNull('parent_id'),
+                'reactions as likes_count' => fn ($q) => $q->where('type', 'like'),
+            ])
+            ->when($search !== '', fn ($q) => $q->where(fn ($inner) => $inner
+                ->whereRaw('LOWER(title) LIKE ?', ['%'.mb_strtolower($search).'%'])
+                ->orWhereRaw('LOWER(summary) LIKE ?', ['%'.mb_strtolower($search).'%'])))
+            ->when($topic !== '', fn ($q) => $q->whereJsonContains('topics', $topic))
+            ->when($tab === 'open' || $status === 'open', fn ($q) => $q->where('status', 'published'))
+            ->when($status === 'closed', fn ($q) => $q->where('status', 'closed'))
+            ->when($tab === 'mine', function ($q) use ($viewerId) {
+                $q->when($viewerId, fn ($items) => $items->whereHas('responses', fn ($responses) => $responses->where('user_id', $viewerId)),
+                    fn ($items) => $items->whereRaw('1 = 0'));
+            })
+            ->when($time === '30d', fn ($q) => $q->where('published_at', '>=', now()->subDays(30)))
+            ->when($time === '3m', fn ($q) => $q->where('published_at', '>=', now()->subMonths(3)))
+            ->when($time === 'year', fn ($q) => $q->where('published_at', '>=', now()->startOfYear()));
+
+        if ($viewerId) {
+            $query->withExists([
+                'reactions as viewer_liked' => fn ($q) => $q->where('user_id', $viewerId)->where('type', 'like'),
+                'reactions as viewer_bookmarked' => fn ($q) => $q->where('user_id', $viewerId)->where('type', 'save'),
+            ]);
+        }
+
+        $scenarios = ($tab === 'discussed' || $sort === 'discussed'
+            ? $query->orderByDesc('responses_count')->orderByDesc('published_at')
+            : ($sort === 'oldest' ? $query->orderBy('published_at') : $query->orderByDesc('published_at')))
+            ->orderByDesc('id')->paginate(10)->withQueryString();
+
+        // JSON arrays are expanded by the database, not loaded into PHP or queried per row.
+        $topicSource = DB::getDriverName() === 'pgsql'
+            ? 'LATERAL json_array_elements_text(s.topics) AS topic(value)'
+            : 'json_each(s.topics) AS topic';
+        $topics = DB::table('scenarios as s')->crossJoin(DB::raw($topicSource))
+            ->whereIn('s.status', ['published', 'closed'])
+            ->where('s.published_at', '<=', now())
+            ->selectRaw('topic.value AS name, COUNT(*) AS total')
+            ->groupBy('topic.value')->orderByDesc('total')->orderBy('name')->get();
+        $statusCounts = Scenario::query()->whereIn('status', ['published', 'closed'])
+            ->where('published_at', '<=', now())
+            ->selectRaw('status, COUNT(*) AS total')->groupBy('status')->pluck('total', 'status');
+        $latestSlug = Scenario::query()->where('status', 'published')
+            ->where('published_at', '<=', now())->orderByDesc('published_at')->value('slug');
+
+        return Inertia::render('scenarios/Index', [
+            'scenarios' => $scenarios,
+            'topics' => $topics,
+            'statusCounts' => [
+                'open' => (int) ($statusCounts['published'] ?? 0),
+                'closed' => (int) ($statusCounts['closed'] ?? 0),
+            ],
+            'todaySlug' => $latestSlug,
+            'filters' => [
+                'tab' => $tab, 'search' => $search, 'topic' => $topic,
+                'status' => $status, 'time' => $time, 'sort' => $sort,
+            ],
+            'canInteract' => (bool) ($request->user()?->onboarding_step >= 3
+                && (!config('pm-circle.email_verification_required') || $request->user()?->hasVerifiedEmail())),
+        ]);
+    }
+
     public function show(Scenario $scenario, Request $request): Response
     {
-        abort_unless($scenario->status === 'published', 404);
+        abort_unless(in_array($scenario->status, ['published', 'closed'], true), 404);
 
         $responses = $scenario->responses()
             ->whereNull('parent_id')

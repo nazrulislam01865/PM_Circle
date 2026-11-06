@@ -16,7 +16,11 @@ final class SavedPostsController extends Controller
             'posts' => Post::query()->where('status', 'published')->where('visibility', 'public')
                 ->whereHas('saves', fn ($query) => $query->where('user_id', $request->user()->id))
                 ->with(['author:id,name', 'author.profile' => fn ($query) => $query->where('visibility', 'public')->select('id', 'user_id', 'role')])
-                ->withCount(['comments', 'reactions'])->latest('published_at')->paginate(12),
+                ->withCount(['comments', 'reactions'])->latest('published_at')->paginate(12)
+                ->through(function (Post $post): Post {
+                    $post->anonymizeForPublic();
+                    return $post;
+                }),
         ]);
     }
 }

@@ -19,13 +19,13 @@ final class DashboardController extends Controller
 
         $validated = $request->validate([
             'demo_plan' => ['nullable', 'in:free,premium,pro'],
-            'tab' => ['nullable', 'in:for-you,following'],
+            'tab' => ['nullable', 'in:all,for-you,following,mine'],
         ]);
 
         return Inertia::render('account/Dashboard', $overview->forMember(
             $request->user(),
             $validated['demo_plan'] ?? null,
-            $validated['tab'] ?? 'for-you',
+            ($validated['tab'] ?? 'all') === 'for-you' ? 'all' : ($validated['tab'] ?? 'all'),
         ));
     }
 }

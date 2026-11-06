@@ -15,9 +15,32 @@ class ScenarioReactionController extends Controller
 {
     private const TYPES = ['like', 'love', 'care', 'haha', 'wow', 'sad', 'angry'];
 
+    /** The existing save reaction is independent of emoji reactions. */
+    public function bookmark(Request $request, Scenario $scenario): RedirectResponse
+    {
+        abort_unless(in_array($scenario->status, ['published', 'closed'], true), 404);
+        DB::table('scenario_reactions')->insertOrIgnore([
+            'scenario_id' => $scenario->id,
+            'user_id' => $request->user()->id,
+            'type' => 'save',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return back();
+    }
+
+    public function unbookmark(Request $request, Scenario $scenario): RedirectResponse
+    {
+        abort_unless(in_array($scenario->status, ['published', 'closed'], true), 404);
+        $scenario->reactions()->where('user_id', $request->user()->id)->where('type', 'save')->delete();
+
+        return back();
+    }
+
     public function reactToScenario(Request $request, Scenario $scenario): JsonResponse|RedirectResponse
     {
-        abort_unless($scenario->status === 'published', 404);
+        abort_unless(in_array($scenario->status, ['published', 'closed'], true), 404);
         $type = $request->validate(['type' => ['required', Rule::in(self::TYPES)]])['type'];
 
         // Existing scenario_reactions supports multiple types and 'save'. Locking
@@ -38,7 +61,7 @@ class ScenarioReactionController extends Controller
 
     public function unreactToScenario(Request $request, Scenario $scenario): JsonResponse|RedirectResponse
     {
-        abort_unless($scenario->status === 'published', 404);
+        abort_unless(in_array($scenario->status, ['published', 'closed'], true), 404);
         $scenario->reactions()->where('user_id', $request->user()->id)
             ->whereIn('type', self::TYPES)->delete();
 

@@ -15,6 +15,7 @@ import { useState } from 'react';
 import { PostCard, type PostPreview } from '@/components/community/PostCard';
 import { JoinCommunityDialog } from '@/components/home/HomeEngagement';
 import { TopicPills } from '@/components/community/TopicPills';
+import { FeedScopeTabs, type FeedScope } from '@/components/community/FeedScopeTabs';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
 
 type Props = {
@@ -24,6 +25,7 @@ type Props = {
         prev_page_url: string | null;
     };
     activeTopic: string;
+    feedTab: FeedScope;
     search?: string | null;
     todayScenario?: {
         id: number;
@@ -33,7 +35,7 @@ type Props = {
     } | null;
 };
 
-export default function Feed({ posts, activeTopic, search, todayScenario }: Props) {
+export default function Feed({ posts, activeTopic, feedTab, search, todayScenario }: Props) {
     const { auth, emailVerificationRequired } = usePage<{
         emailVerificationRequired?: boolean;
         auth: {
@@ -54,7 +56,7 @@ export default function Feed({ posts, activeTopic, search, todayScenario }: Prop
         e.preventDefault();
         router.get(
             '/community',
-            { search: searchTerm, topic: activeTopic !== 'All' ? activeTopic : undefined },
+            { search: searchTerm, topic: activeTopic !== 'All' ? activeTopic : undefined, tab: feedTab },
             { preserveState: true }
         );
     };
@@ -124,8 +126,18 @@ export default function Feed({ posts, activeTopic, search, todayScenario }: Prop
                             </button>
                         </div>
 
+                        <div className="pm-community-feed-tabs">
+                            {isGuest ? (
+                                <nav className="pm-feed-scope-tabs" aria-label="Filter community posts">
+                                    <Link className="pm-feed-scope-tab active" href="/community" aria-current="page">All</Link>
+                                    <Link className="pm-feed-scope-tab" href="/login">Following</Link>
+                                    <Link className="pm-feed-scope-tab" href="/login">My posts</Link>
+                                </nav>
+                            ) : <FeedScopeTabs active={feedTab} hrefFor={(tab) => `/community?${new URLSearchParams({ tab, ...(activeTopic !== 'All' ? { topic: activeTopic } : {}), ...(search ? { search } : {}) })}`} />}
+                        </div>
+
                         {/* Filter pills */}
-                        <TopicPills active={activeTopic} />
+                        <TopicPills active={activeTopic} feedTab={feedTab} />
 
                         {/* Guest Join Callout Banner */}
                         {isGuest && (

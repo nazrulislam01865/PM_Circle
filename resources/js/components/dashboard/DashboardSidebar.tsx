@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Bookmark, BookOpen, BriefcaseBusiness, ChartNoAxesColumnIncreasing, ChevronsLeft, ChevronsRight, ChevronRight, Crown, Home, LockKeyhole, Settings, Trophy, UserRound, UsersRound, RefreshCcw, ClipboardList } from 'lucide-react';
+import { Bookmark, BookOpen, BriefcaseBusiness, ChartNoAxesColumnIncreasing, ChevronsLeft, ChevronsRight, ChevronRight, Crown, Home, LockKeyhole, Settings, Trophy, UserRound, UsersRound, RefreshCcw, ClipboardList, CalendarDays } from 'lucide-react';
 import { Brand } from '@/components/pm/Brand';
 import { DashboardAvatar } from '@/components/dashboard/DashboardAvatar';
 import type { DashboardShellData } from '@/types/dashboard';
@@ -15,7 +15,8 @@ const primaryItems: Item[] = [
 ];
 const secondaryItems: Item[] = [
     { label: 'Achievements', href: '/dashboard/features/achievements', icon: Trophy },
-    { label: 'Community', href: '/community', icon: UsersRound },
+    { label: 'Daily Challenge', href: '/daily-challenge', icon: CalendarDays },
+    { label: 'Community Feed', href: '/community', icon: UsersRound },
     { label: 'Saved posts', href: '/saved-posts', icon: Bookmark },
     { label: 'Jobs & resume', href: '/careers', icon: BriefcaseBusiness },
     { label: 'Profile insights', href: '/dashboard/features/insights', icon: ChartNoAxesColumnIncreasing },
@@ -30,7 +31,8 @@ export function DashboardSidebar({ dashboard, open, close, collapsed, onToggle }
         : href === '/learning' ? activePath.startsWith(href)
         : href === '/settings/profile' ? activePath === '/settings/profile'
         : href === '/settings/security' ? activePath === '/settings/security' || activePath === '/settings/appearance'
-        : href === '/community' ? activePath === href || activePath.startsWith('/posts/') || activePath.startsWith('/scenarios/')
+        : href === '/daily-challenge' ? activePath === href || activePath.startsWith('/scenarios/')
+        : href === '/community' ? activePath === href || activePath.startsWith('/posts/')
         : activePath === href;
     const items = (list: Item[]) => list.map(item => {
         const Icon = item.icon;

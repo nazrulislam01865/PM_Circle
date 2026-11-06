@@ -17,7 +17,7 @@ export default function Dashboard({ dashboard }: { dashboard: DashboardData }) {
             <div className="pm-dash-welcome"><h1>Good morning, {firstName}. <span className={`pm-dash-member-badge ${dashboard.plan === 'free' ? 'is-free' : ''}`}>{dashboard.plan !== 'free' && <Crown size={17} fill="currentColor"/>}{badge}</span></h1>
                 <p>Keep learning, stay curious, and grow your project management skills.</p>
             </div>
-            <DashboardComposer name={dashboard.member.name} plan={dashboard.plan} demo={dashboard.isDemo} />
+            <DashboardComposer name={dashboard.member.name} plan={dashboard.isPreview ? 'free' : dashboard.plan} demo={dashboard.isDemo} />
             <DashboardPracticeCard dashboard={dashboard} />
             <DashboardFeed dashboard={dashboard} />
         </div><aside className="pm-dash-right" aria-label="Member overview">

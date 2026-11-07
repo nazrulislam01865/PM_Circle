@@ -19,22 +19,63 @@ export default function Dashboard({ dashboard }: { dashboard: DashboardData }) {
         const overview = overviewRef.current;
         if (!overview) return;
 
-        const updateStickyOffset = () => {
-            // Allow a tall overview to move upward with the page before it sticks.
-            // This keeps its lower cards reachable without creating another scroll area.
-            const headerHeight = parseFloat(getComputedStyle(overview).getPropertyValue('--pm-member-header-height')) || 67;
-            const offset = Math.min(headerHeight + 16, window.innerHeight - overview.getBoundingClientRect().height - 16);
-            overview.style.setProperty('--pm-dash-right-sticky-top', `${Math.round(offset)}px`);
+        const header = document.querySelector<HTMLElement>('.pm-site-header');
+        const cards = Array.from(overview.children).filter((node): node is HTMLElement => node instanceof HTMLElement);
+        let previousScrollY = window.scrollY;
+        let stickyTop = 0;
+        let upperBound = 0;
+        let lowerBound = 0;
+        let overflowing = false;
+        let frame: number | null = null;
+
+        const updateStickyLayout = () => {
+            const headerHeight = header?.getBoundingClientRect().height ?? 67;
+            const gap = parseFloat(getComputedStyle(overview).rowGap) || 0;
+            const contentHeight = cards.reduce((height, card) => height + card.getBoundingClientRect().height, 0)
+                + Math.max(0, cards.length - 1) * gap;
+            const onDesktop = window.innerWidth > 830;
+            const wasOverflowing = overflowing;
+            upperBound = Math.ceil(headerHeight + 16);
+            lowerBound = Math.min(upperBound, Math.floor(window.innerHeight - contentHeight - 16));
+            overflowing = onDesktop && contentHeight > window.innerHeight - upperBound - 16;
+
+            // Stick the whole overview, not just the profile. On shorter screens,
+            // the group follows the main page scroll until its lower cards are
+            // reachable, then holds position. There is no nested scroll container.
+            if (!onDesktop || !overflowing || !wasOverflowing) stickyTop = upperBound;
+            else stickyTop = Math.max(lowerBound, Math.min(upperBound, stickyTop));
+            overview.style.setProperty('--pm-dash-right-sticky-top', `${stickyTop}px`);
+            previousScrollY = window.scrollY;
         };
 
-        const observer = new ResizeObserver(updateStickyOffset);
-        observer.observe(overview);
-        window.addEventListener('resize', updateStickyOffset);
-        updateStickyOffset();
+        const onScroll = () => {
+            const scrollY = window.scrollY;
+            const movement = scrollY - previousScrollY;
+            previousScrollY = scrollY;
+            if (!overflowing || movement === 0) return;
+
+            const nextTop = Math.max(lowerBound, Math.min(upperBound, stickyTop - movement));
+            if (nextTop === stickyTop) return;
+            stickyTop = nextTop;
+            if (frame !== null) return;
+            frame = window.requestAnimationFrame(() => {
+                overview.style.setProperty('--pm-dash-right-sticky-top', `${stickyTop}px`);
+                frame = null;
+            });
+        };
+
+        const observer = new ResizeObserver(updateStickyLayout);
+        cards.forEach(card => observer.observe(card));
+        if (header) observer.observe(header);
+        window.addEventListener('resize', updateStickyLayout);
+        window.addEventListener('scroll', onScroll, { passive: true });
+        updateStickyLayout();
 
         return () => {
             observer.disconnect();
-            window.removeEventListener('resize', updateStickyOffset);
+            window.removeEventListener('resize', updateStickyLayout);
+            window.removeEventListener('scroll', onScroll);
+            if (frame !== null) window.cancelAnimationFrame(frame);
         };
     }, []);
 

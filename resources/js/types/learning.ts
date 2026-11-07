@@ -24,6 +24,12 @@ export type DemoCourseData = {
     enrolled: boolean;
     saved: boolean;
 };
+export type DemoCourseDetailData = Omit<DemoCourseData, 'enrolled' | 'saved'> & {
+    lessons: { title: string; body: string | null }[];
+    overview?: string;
+    objectives?: string[];
+    outline?: { title: string; topics: string[] }[];
+};
 export const demoCourseHref = (slug: string) => `/learning/courses/${encodeURIComponent(slug)}`;
 export type LearningActivityData = {
     position: number; type: 'lesson' | 'mcq' | 'short_answer' | 'scenario';

@@ -7,6 +7,7 @@ use App\Http\Controllers\Account\AccountFeatureController;
 use App\Http\Controllers\Account\SavedPostsController;
 use App\Http\Controllers\Learning\LearningController;
 use App\Http\Controllers\Learning\DemoCourseController;
+use App\Http\Controllers\Exam\PmpExamController;
 use App\Http\Controllers\Billing\TemporaryMembershipController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Community\PostInteractionController;
@@ -20,6 +21,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/pricing', [HomeController::class, 'pricing'])->name('pricing');
 Route::get('/community', [PostController::class, 'index'])->name('community.index');
+Route::get('/community/feed-page', [PostController::class, 'feedPage'])->middleware('throttle:90,1')->name('community.feed-page');
 Route::get('/learning', [LearningController::class, 'index'])->name('learning.index');
 Route::get('/learning/courses/{course}', [DemoCourseController::class, 'show'])->name('learning.courses.show');
 Route::get('/profile-media/{kind}/{filename}', [SettingsProfileController::class, 'showProfileImage'])
@@ -52,6 +54,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified', 'pm.onboarded'])->group(function () {
+    Route::get('/exams/pmp', [PmpExamController::class, 'index'])->name('exams.pmp.index');
+    Route::post('/exams/pmp/start', [PmpExamController::class, 'start'])->middleware('throttle:6,1')->name('exams.pmp.start');
+    Route::get('/exams/pmp/attempts/{attempt}', [PmpExamController::class, 'take'])->whereNumber('attempt')->name('exams.pmp.take');
+    Route::put('/exams/pmp/attempts/{attempt}/answer', [PmpExamController::class, 'answer'])->middleware('throttle:120,1')->whereNumber('attempt')->name('exams.pmp.answer');
+    Route::post('/exams/pmp/attempts/{attempt}/submit', [PmpExamController::class, 'submit'])->middleware('throttle:10,1')->whereNumber('attempt')->name('exams.pmp.submit');
+    Route::get('/exams/pmp/attempts/{attempt}/result', [PmpExamController::class, 'result'])->whereNumber('attempt')->name('exams.pmp.result');
+    Route::get('/exams/pmp/attempts/{attempt}/review', [PmpExamController::class, 'review'])->whereNumber('attempt')->name('exams.pmp.review');
+    // Member workspace aliases reuse the public page queries and React components.
+    // The public routes remain available to visitors and members.
+    Route::get('/dashboard/learning', [LearningController::class, 'index'])->name('dashboard.learning.index');
+    Route::get('/dashboard/learning/courses/{course}', [DemoCourseController::class, 'show'])->name('dashboard.learning.courses.show');
+    Route::post('/dashboard/learning/courses/{course}/enroll', [DemoCourseController::class, 'enroll'])->middleware('throttle:20,1')->name('dashboard.learning.courses.enroll');
+    Route::get('/dashboard/daily-challenge', [ScenarioController::class, 'index'])->name('dashboard.scenarios.index');
+    Route::get('/dashboard/daily-challenge/{scenario:slug}', [ScenarioController::class, 'show'])->name('dashboard.scenarios.show');
     Route::get('/saved-posts', SavedPostsController::class)->name('saved-posts.index');
     Route::post('/members/{member}/follow', [MemberDirectoryController::class, 'follow'])->middleware('throttle:30,1')->whereNumber('member')->name('members.follow');
     Route::delete('/members/{member}/follow', [MemberDirectoryController::class, 'unfollow'])->whereNumber('member')->name('members.unfollow');

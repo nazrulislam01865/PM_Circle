@@ -27,7 +27,7 @@ export default function Home({ content, isDemo, scenario, scenarioResponses, pos
     const hero = content.hero;
     const people = hero?.people ?? [];
 
-    return <PublicLayout><Head title="Learn together. Practise daily. Grow your career"/>
+    return <PublicLayout siteLayout><Head title="Learn together. Practise daily. Grow your career"/>
         <div className="pm-home">
             <section className="pm-hero"><div className="pm-container pm-hero-inner"><div className="pm-hero-copy">
                 <p className="pm-kicker">{hero?.eyebrow}</p><h1>{hero?.title}</h1>

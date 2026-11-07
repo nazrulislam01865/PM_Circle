@@ -10,7 +10,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([PlanSeeder::class, HomePageContentSeeder::class]);
         if (app()->environment(['local', 'testing'])) {
-            $this->call(LearningDemoSeeder::class);
+            $this->call([LearningDemoSeeder::class, PmpExamQuestionSeeder::class]);
             $this->call([DemoScenarioSeeder::class, DemoProfileAndDiscussionsSeeder::class, DemoHomePageSeeder::class]);
         }
     }

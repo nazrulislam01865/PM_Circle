@@ -177,45 +177,6 @@
 /* Shared public/demo catalog access states; keep existing catalog components intact. */
 .pm-learning-catalog-public { width: 100%; max-width: none; padding: 0; }
 .pm-learning-catalog-public .pm-course-catalog { min-height: calc(100vh - 82px); }
-.pm-demo-course-detail { background: var(--canvas); color: var(--text); min-height: 70vh; padding: var(--space-6) var(--space-4) 64px; }
-.pm-demo-course-detail-inner { max-width: 1200px; margin: 0 auto; }
-.pm-demo-course-back { display: inline-flex; gap: 8px; align-items: center; margin-bottom: var(--space-6); color: var(--primary); text-decoration: none; font-size: var(--type-body); line-height: var(--type-line-body); font-weight: var(--type-weight-semibold); }
-.pm-demo-course-back:hover { text-decoration: none; color: var(--primary-hover); }
-.pm-demo-course-detail-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(270px, 1fr); gap: var(--space-6); align-items: start; }
-.pm-demo-course-panel, .pm-demo-course-enrollment { background: var(--surface); border: 1px solid var(--divider); border-radius: var(--card-radius); overflow: hidden; }
-.pm-demo-course-cover { height: 240px; position: relative; background: var(--primary-soft); }
-.pm-demo-course-cover > img { width: 100%; height: 100%; object-fit: cover; }
-.pm-demo-course-text { padding: var(--space-6); }
-.pm-demo-course-eyebrow { color: var(--primary); font-weight: var(--type-weight-bold); font-size: var(--type-caption); line-height: var(--type-line-caption); }
-.pm-demo-course-text h1 { font-size: var(--type-h1-responsive); line-height: var(--type-line-h1); font-weight: var(--type-weight-bold); margin: 8px 0 var(--space-3); }
-.pm-demo-course-summary { font-size: var(--type-body); line-height: var(--type-line-body); color: var(--muted); margin: 0 0 var(--space-4); }
-.pm-demo-course-stats { display: flex; flex-wrap: wrap; gap: 18px; color: var(--muted); padding-bottom: var(--space-6); border-bottom: 1px solid var(--divider); }
-.pm-demo-course-stats > span { display: inline-flex; align-items: center; gap: 6px; font-size: var(--type-small); line-height: var(--type-line-small); }
-.pm-demo-course-text h2 { font-size: var(--type-h2-responsive); line-height: var(--type-line-h2); font-weight: var(--type-weight-bold); margin: var(--space-6) 0 5px; }
-.pm-demo-course-hint { font-size: var(--type-small); line-height: var(--type-line-small); color: var(--muted); }
-.pm-demo-course-lessons { list-style: none; padding: 0; margin: var(--space-4) 0 0; }
-.pm-demo-course-lessons > li { padding: 14px 0; border-top: 1px solid var(--divider); }
-.pm-demo-course-lesson-heading { display: flex; align-items: center; gap: 12px; font-size: var(--type-body); line-height: var(--type-line-body); }
-.pm-demo-course-lesson-heading > span { flex: 0 0 32px; height: 32px; display: grid; place-items: center; background: var(--primary-soft); color: var(--primary); font-weight: var(--type-weight-bold); border-radius: var(--radius); }
-.pm-demo-course-lesson-heading > svg { margin-left: auto; color: var(--muted); }
-.pm-demo-course-lessons > li > p { margin: 10px 0 0 44px; font-size: var(--type-body); line-height: var(--type-line-body); }
-.pm-demo-course-enrollment { padding: var(--space-6); }
-.pm-demo-course-enrollment h2 { font-size: var(--type-h2-responsive); line-height: var(--type-line-h2); font-weight: var(--type-weight-bold); margin: 0 0 var(--space-3); }
-.pm-demo-course-enrollment > p { font-size: var(--type-body); line-height: var(--type-line-body); color: var(--muted); margin: 0 0 var(--space-4); }
-.pm-demo-course-enrollment > p svg { vertical-align: middle; color: var(--success); }
-.pm-demo-course-enrollment .pm-catalog-course-action { width: 100%; font-size: var(--type-button); line-height: var(--type-line-button); min-height: var(--field-height); }
-.pm-demo-course-enrollment .pm-catalog-course-action:disabled { background: var(--disabled-bg); color: var(--disabled-text); border-color: var(--divider); }
-.pm-demo-course-enrollment small { display: block; margin-top: var(--space-3); color: var(--muted); font-size: var(--type-small); line-height: var(--type-line-small); }
-.pm-demo-course-assurance { display: flex; align-items: flex-start; gap: 10px; border-top: 1px solid var(--divider); padding-top: var(--space-4); margin-top: var(--space-6); font-size: var(--type-small); color: var(--muted); line-height: var(--type-line-small); }
-.pm-demo-course-assurance svg { flex: none; color: var(--success); }
-.pm-demo-course-access-status { background: var(--success-soft); color: var(--success); border-radius: var(--radius); padding: var(--space-3); font-size: var(--type-small); line-height: var(--type-line-small); }
-@media (max-width: 770px) {
-    .pm-demo-course-detail-grid { grid-template-columns: minmax(0, 1fr); }
-    .pm-demo-course-detail { padding: var(--space-4) var(--space-3) 40px; }
-    .pm-demo-course-cover { height: 170px; }
-    .pm-demo-course-text { padding: var(--space-4); }
-}
-
 /* Typography inherits shared PM Circle tokens from pm-circle.css.
    Content can wrap naturally as cards narrow, avoiding clipped controls. */
 .pm-course-catalog .pm-catalog-tabs button,
@@ -226,7 +187,6 @@
 }
 .pm-catalog-filter-choice span { min-width: 0; overflow-wrap: anywhere; }
 .pm-catalog-course-action svg { flex: 0 0 auto; }
-.pm-demo-course-detail { font-family: var(--font); font-size: var(--type-body); line-height: var(--type-line-body); }
 @media (max-width: 700px) {
     .pm-catalog-sidebar-heading { align-items: baseline; }
     .pm-catalog-filter-section { width: 100%; border-bottom: 1px solid var(--catalog-line); }

@@ -8,7 +8,7 @@ export function DashboardLearningPanel({ dashboard }: { dashboard: DashboardData
         <div className="pm-dash-learning-stat"><Clock3 size={32}/><div><strong>{learning.time}</strong><span>Total learning time</span></div></div>
         <div className="pm-dash-learning-stat"><ClipboardList size={32}/><div><strong>{learning.scenarios} scenarios</strong><span>Completed</span></div></div>
         <div className="pm-dash-learning-stat"><ChartNoAxesColumnIncreasing size={32}/><div><strong>Level {learning.level}</strong><div className="pm-dash-stars" role="img" aria-label={`${learning.level} out of 5 stars`}>{[1,2,3,4,5].map(n => <span key={n} className={n <= learning.level ? 'filled' : ''}>★</span>)}</div></div></div>
-        <div className="pm-dash-learning-action"><Link href="/learning" className="pm-dash-btn pm-dash-btn-primary">{plan === 'free' ? 'Continue foundations' : 'Continue learning'}<ArrowRight size={22}/></Link><small>{learning.lessonProgress}</small></div>
+        <div className="pm-dash-learning-action"><Link href="/dashboard/learning" className="pm-dash-btn pm-dash-btn-primary">{plan === 'free' ? 'Continue foundations' : 'Continue learning'}<ArrowRight size={22}/></Link><small>{learning.lessonProgress}</small></div>
         {plan === 'premium' && <p className="pm-dash-learning-topic">Stakeholder communication</p>}
     </section>;
 }

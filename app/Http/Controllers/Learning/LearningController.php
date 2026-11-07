@@ -19,22 +19,20 @@ use Inertia\Response;
 
 final class LearningController extends Controller
 {
-    public function index(Request $request, LearningOverview $overview, DemoCourseCatalog $catalog): Response
+    public function index(Request $request, LearningOverview $overview, DemoCourseCatalog $catalog, CurrentMemberPlan $plans): Response
     {
         $user = $request->user();
         $joined = $user && (int) $user->onboarding_step >= 3 && $user->hasVerifiedEmail();
-        $shell = $joined ? $overview->shell($user) : null;
         $learning = $joined ? $overview->paths($user) : ['paths' => $overview->publicPaths(), 'courses' => $overview->publicPracticeModules()];
 
         return Inertia::render('learning/Catalog', [
-            'shell' => $shell,
+            // The catalog shares the homepage shell; do not build a dashboard shell.
+            'shell' => null,
             'paths' => $learning['paths'],
             'practiceModules' => $learning['courses'],
             'courses' => $catalog->all($joined ? $user : null),
             'isMember' => (bool) $joined,
-            'memberTier' => match ($shell['plan'] ?? 'free') {
-                'premium' => 'plus', 'pro' => 'pro', default => 'free',
-            },
+            'memberTier' => $joined ? $plans->code($user) : 'free',
         ]);
     }
 

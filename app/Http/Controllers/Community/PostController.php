@@ -16,63 +16,52 @@ use Inertia\Response;
 
 class PostController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request, \App\Domain\Community\Queries\FeedQuery $feed): Response
     {
-        $topic = $request->query('topic', 'All');
         $validated = $request->validate([
+            'topic' => ['nullable', 'in:All,Questions,I learned,From my project,Ask the community'],
             'search' => ['nullable', 'string', 'max:80'],
             'tab' => ['nullable', 'in:all,following,mine'],
         ]);
+        $topic = $validated['topic'] ?? 'All';
+        $tab = $validated['tab'] ?? 'all';
         $search = $validated['search'] ?? null;
-        $feedTab = $validated['tab'] ?? 'all';
-        $posts = Post::query()->forFeed($feedTab, $request->user()?->id)
-            ->when(in_array($topic, ['Questions', 'I learned', 'From my project', 'Ask the community']), function ($q) use ($topic) {
-                if ($topic === 'Questions') {
-                    $q->whereIn('topic', ['Questions', 'Ask the community']);
-                } else {
-                    $q->where('topic', $topic);
-                }
-            })
-            ->when(filled($search), fn ($q) => $q->where(fn ($inner) => $inner
-                ->whereRaw('LOWER(title) LIKE ?', ['%'.mb_strtolower($search).'%'])
-                ->orWhereRaw('LOWER(body) LIKE ?', ['%'.mb_strtolower($search).'%'])))
-            ->with([
-                'author:id,name',
-                'author.profile' => fn ($q) => $q->where('visibility', 'public')->select('id', 'user_id', 'role', 'avatar_path')
-            ])
-            ->withCount([
-                'comments',
-                'reactions',
-                'reactions as likes_count' => fn ($query) => $query->where('type', 'like'),
-            ])
-            ->latest('published_at')->orderByDesc('posts.id')
-            ->cursorPaginate(12)
-            ->withQueryString();
 
-        // One batched lookup for the current user's selection across the visible page.
-        $viewerReactions = $request->user() && $posts->getCollection()->isNotEmpty()
-            ? \Illuminate\Support\Facades\DB::table('post_reactions')
-                ->where('user_id', $request->user()->id)
-                ->whereIn('post_id', $posts->getCollection()->pluck('id'))
-                ->pluck('type', 'post_id')
-            : collect();
-        $posts->getCollection()->each(function (Post $post) use ($viewerReactions): void {
-            $post->setAttribute('viewer_reaction', $viewerReactions->get($post->id));
-            $post->anonymizeForPublic();
-        });
-
-        $todayScenario = Scenario::query()
-            ->where('status', 'published')
-            ->latest('published_at')
-            ->first(['id', 'slug', 'title', 'summary']);
+        $todayScenario = Scenario::query()->where('status', 'published')
+            ->latest('published_at')->first(['id', 'slug', 'title', 'summary']);
 
         return Inertia::render('community/Feed', [
-            'posts' => $posts,
+            'posts' => $feed->page($tab, $topic, $search, $request->user()),
             'activeTopic' => $topic,
-            'feedTab' => $feedTab,
+            'feedTab' => $tab,
             'search' => $search,
             'todayScenario' => $todayScenario,
+            'virtualFeedEnabled' => (bool) config('pm-circle.virtual_feed_enabled', true),
         ]);
+    }
+
+    /** 12-item JSON cursor pages; no Inertia shell or extra scenario query. */
+    public function feedPage(Request $request, \App\Domain\Community\Queries\FeedQuery $feed): \Illuminate\Http\JsonResponse
+    {
+        $validated = $request->validate([
+            'tab' => ['nullable', 'in:all,following,mine'],
+            'topic' => ['nullable', 'in:All,Questions,I learned,From my project,Ask the community'],
+            'search' => ['nullable', 'string', 'max:80'],
+            'cursor' => ['required', 'string', 'max:4096'],
+            'context' => ['nullable', 'in:community,dashboard'],
+        ]);
+        $dashboard = ($validated['context'] ?? 'community') === 'dashboard';
+        if ($dashboard) {
+            abort_unless($request->user() && $request->user()->onboarding_step >= 3, 403);
+        }
+
+        $page = $feed->page($validated['tab'] ?? 'all', $validated['topic'] ?? 'All',
+            $validated['search'] ?? null, $request->user(), $validated['cursor'], $dashboard);
+        if ($dashboard) {
+            $page['data'] = $feed->dashboardPosts($page['data']);
+        }
+
+        return response()->json($page)->header('Cache-Control', 'private, no-store');
     }
 
     public function show(Post $post, Request $request): Response

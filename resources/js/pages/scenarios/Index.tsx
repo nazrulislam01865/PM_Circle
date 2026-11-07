@@ -38,14 +38,17 @@ function visiblePages(current: number, last: number): (number | '…')[] {
 }
 
 export default function Index({ scenarios, topics, statusCounts, todaySlug, filters, canInteract }: Props) {
-    const { auth } = usePage<{ auth: { user: { id: number } | null } }>().props;
+    const page = usePage<{ auth: { user: { id: number } | null } }>();
+    const memberView = page.url.split('?')[0] === '/dashboard/daily-challenge';
+    const libraryRoot = memberView ? '/dashboard/daily-challenge' : '/daily-challenge';
+    const { auth } = page.props;
     const [search, setSearch] = useState(filters.search);
     const [joinAction, setJoinAction] = useState<string | null>(null);
     useEffect(() => setSearch(filters.search), [filters.search]);
 
     const navigate = (changes: Partial<ChallengeFilters>, page?: number) => {
         const next = { ...filters, ...changes };
-        router.get('/daily-challenge', {
+        router.get(libraryRoot, {
             ...Object.fromEntries(Object.entries(next).filter(([key, value]) => value !== '' && value !== 'all' && !(key === 'tab' && value === 'library') && !(key === 'sort' && value === 'latest'))),
             ...(page && page > 1 ? { page } : {}),
         }, { preserveState: true, preserveScroll: true, replace: true });
@@ -56,13 +59,13 @@ export default function Index({ scenarios, topics, statusCounts, todaySlug, filt
         navigate({ search: search.trim() });
     };
 
-    return <PublicLayout active="/daily-challenge" joinLabel="Join free">
+    return <PublicLayout siteLayout={!memberView} active="/daily-challenge" joinLabel="Join free">
         <Head title="Daily Challenge · PM Circle" />
         <div className="pm-challenge-page">
             <div className="pm-container pm-challenge-container">
                 <div className="pm-challenge-heading-row">
                     <div><h1>Daily Challenge</h1><p>Real project scenarios to think, decide, and learn together.</p></div>
-                    {todaySlug && <Link className="pm-button pm-challenge-hero-button" href={`/scenarios/${encodeURIComponent(todaySlug)}`}>Today's Scenario <ArrowRight size={18} /></Link>}
+                    {todaySlug && <Link className="pm-button pm-challenge-hero-button" href={`${memberView ? libraryRoot : '/scenarios'}/${encodeURIComponent(todaySlug)}`}>Today's Scenario <ArrowRight size={18} /></Link>}
                 </div>
                 <div className="pm-challenge-tabs" role="group" aria-label="Scenario views">
                     {tabs.map(({ id, label, icon: Icon }) => <button key={id} type="button" className={`pm-challenge-tab ${filters.tab === id ? 'is-active' : ''}`} aria-pressed={filters.tab === id} onClick={() => navigate({ tab: id, status: 'all' })}>
@@ -84,7 +87,7 @@ export default function Index({ scenarios, topics, statusCounts, todaySlug, filt
                             </select><ChevronDown size={19} aria-hidden="true" /></div>
                         </div>
                         <div className="pm-challenge-results-list">
-                            {scenarios.data.map(scenario => <ScenarioLibraryCard key={scenario.id} scenario={scenario} featured={scenario.slug === todaySlug && scenario.status === 'published'} canInteract={canInteract} onJoin={() => setJoinAction('like or save this scenario')} />)}
+                            {scenarios.data.map(scenario => <ScenarioLibraryCard key={scenario.id} scenario={scenario} featured={scenario.slug === todaySlug && scenario.status === 'published'} canInteract={canInteract} onJoin={() => setJoinAction('like or save this scenario')} hrefBase={memberView ? libraryRoot : '/scenarios'} />)}
                             {scenarios.data.length === 0 && <div className="pm-challenge-empty">
                                 <h2>{filters.tab === 'mine' && !auth?.user ? 'Sign in to see your participation' : 'No matching scenarios'}</h2>
                                 <p>{filters.tab === 'mine' && !auth?.user ? 'Create an account or log in to track the challenges you respond to.' : 'Try a different topic, search, or time filter.'}</p>

@@ -16,8 +16,8 @@ export function MemberDashboardLayout({ dashboard, children, variant = 'dashboar
         try { window.localStorage.setItem('pm-sidebar-collapsed', String(next)); } catch { /* Optional preference. */ }
         return next;
     });
-    return <div className={`pm-app pm-dashboard pm-dashboard-shared-header ${variant !== 'dashboard' ? 'pm-learning-view' : ''} ${variant === 'learning-catalog' ? 'pm-learning-catalog-view' : ''}`}>
-        <SiteHeader actions={<DashboardHeader name={dashboard.member.name} avatar={dashboard.member.avatar_path} isDemo={dashboard.isDemo} onMenu={() => setNavOpen(true)}/>}/>
+    return <div className={`pm-app pm-dashboard pm-dashboard-shared-header ${sidebarCollapsed ? 'is-sidebar-collapsed ' : ''}${variant !== 'dashboard' ? 'pm-learning-view' : ''} ${variant === 'learning-catalog' ? 'pm-learning-catalog-view' : ''}`}>
+        <SiteHeader brandPlacement={variant === 'learning-catalog' ? 'always' : 'mobile'} actions={<DashboardHeader name={dashboard.member.name} avatar={dashboard.member.avatar_path} isDemo={dashboard.isDemo} onMenu={() => setNavOpen(true)}/>}/>
         <div className="pm-dashboard-layout">
             <DashboardSidebar dashboard={dashboard} open={navOpen} close={() => setNavOpen(false)} collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
             <div className="pm-dash-workspace">

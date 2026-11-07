@@ -1,0 +1,7 @@
+/* Shared, window-scrolling feed wrapper; preserve the existing cards and their margins. */
+.pm-virtual-feed { position: relative; width: 100%; min-width: 0; overflow-anchor: none; }
+.pm-virtual-feed-item { display: flow-root; min-width: 0; }
+.pm-virtual-feed-item:focus-within { position: relative; z-index: 1; }
+.pm-virtual-feed.pm-dash-posts { display: block; margin-top: 11px; }
+.pm-virtual-feed.pm-dash-posts > .pm-virtual-feed-item { padding-bottom: 11px; }
+.pm-virtual-feed.pm-dash-posts .pm-dash-feed-card { margin: 0; }

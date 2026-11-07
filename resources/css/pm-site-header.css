@@ -150,3 +150,129 @@
     /* Retain the brand mark while fitting both member and site navigation controls. */
     .pm-dashboard-shared-header .pm-site-header .pm-brand-copy { display: none; }
 }
+
+
+/* Member navigation is one continuous shell: the sidebar owns the desktop
+   identity, while the public site header keeps its original branding. */
+.pm-dashboard-shared-header {
+    display: grid;
+    grid-template-columns: var(--pm-member-sidebar-width) minmax(0, 1fr);
+    grid-template-rows: var(--pm-member-header-height) minmax(0, 1fr);
+    align-items: start;
+}
+.pm-dashboard-shared-header.is-sidebar-collapsed {
+    --pm-member-sidebar-width: var(--pm-member-sidebar-collapsed-width);
+}
+.pm-dashboard-shared-header .pm-dashboard-layout { display: contents; }
+.pm-dashboard-shared-header > .pm-site-header {
+    grid-column: 2;
+    grid-row: 1;
+    position: sticky;
+    top: 0;
+    z-index: 35;
+    min-width: 0;
+    height: var(--pm-member-header-height);
+}
+.pm-dashboard-shared-header .pm-site-header .pm-header-inner {
+    width: 100%;
+    max-width: none;
+    min-height: var(--pm-member-header-height);
+    height: 100%;
+    margin: 0;
+    padding-inline: var(--pm-member-content-inset);
+}
+.pm-dashboard-shared-header .pm-dash-sidebar {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: start;
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    z-index: 36;
+}
+.pm-dashboard-shared-header .pm-dash-workspace {
+    grid-column: 2;
+    grid-row: 2;
+    width: 100%;
+    min-width: 0;
+    align-self: stretch;
+}
+.pm-dashboard-shared-header .pm-member-mobile-brand { display: none; }
+/* The feed stays in the normal page scroller, with a compact sticky section
+   navigator beneath the fixed member header. No second scroll container. */
+.pm-dashboard-shared-header .pm-dash-feed-sticky-controls {
+    position: sticky;
+    top: var(--pm-member-header-height);
+    z-index: 10;
+    background: var(--pm-dash-bg);
+    padding-top: var(--space-2);
+}
+.pm-dashboard-shared-header .pm-dash-feed-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+.pm-dashboard-shared-header .pm-dash-feed-to-top {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+    min-height: 40px;
+    border: 0;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--primary);
+    font-family: var(--font);
+    font-size: var(--type-small);
+    font-weight: 700;
+    padding: 8px 10px;
+}
+.pm-dashboard-shared-header .pm-dash-feed-to-top:hover { background: var(--primary-soft); }
+.pm-dashboard-shared-header #main-content { scroll-margin-top: var(--pm-member-header-height); }
+@media (max-width: 880px) {
+    .pm-dashboard-shared-header { --pm-member-header-height: 60px; }
+}
+@media (max-width: 650px) {
+    .pm-dashboard-shared-header {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .pm-dashboard-shared-header > .pm-site-header {
+        grid-column: 1;
+    }
+    .pm-dashboard-shared-header .pm-dash-workspace {
+        grid-column: 1;
+    }
+    .pm-dashboard-shared-header .pm-dash-sidebar {
+        grid-column: 1;
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100dvh;
+        width: var(--pm-member-sidebar-expanded-width);
+        z-index: 38;
+    }
+    .pm-dashboard-shared-header .pm-member-mobile-brand {
+        display: inline-flex;
+        align-items: center;
+        min-width: 0;
+    }
+    .pm-dashboard-shared-header .pm-member-mobile-brand .pm-brand-copy { display: none; }
+    .pm-dashboard-shared-header .pm-site-header .pm-header-inner { gap: var(--space-2); }
+    .pm-dashboard-shared-header .pm-dash-feed-to-top { font-size: var(--type-caption); }
+}
+
+/* The full-width learning catalog intentionally hides the member sidebar.
+   Preserve its existing public-style brand and full-width workspace. */
+.pm-dashboard-shared-header.pm-learning-catalog-view {
+    grid-template-columns: minmax(0, 1fr);
+}
+.pm-dashboard-shared-header.pm-learning-catalog-view > .pm-site-header,
+.pm-dashboard-shared-header.pm-learning-catalog-view .pm-dash-workspace {
+    grid-column: 1;
+}
+.pm-dashboard-shared-header.pm-learning-catalog-view .pm-dash-sidebar { display: none; }
+@media (max-width: 650px) {
+    .pm-dashboard-shared-header .pm-dash-scrim { z-index: 37; }
+    .pm-dashboard-shared-header.pm-learning-catalog-view .pm-dash-sidebar.is-open { display: flex; }
+}

@@ -9,6 +9,7 @@
 @import './pm-dashboard.css';
 @import './pm-post-composer.css';
 @import './pm-feed-scope.css';
+@import './pm-virtual-feed.css';
 @import './pm-learning.css';
 @import './pm-member-plans.css';
 @import './pm-comparison.css';
@@ -19,6 +20,7 @@
 @import './pm-signup.css';
 @import './pm-member-pages.css';
 @import './pm-site-header.css';
+@import './pm-exam-simulator.css';
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';

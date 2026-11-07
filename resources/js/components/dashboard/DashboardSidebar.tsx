@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Bookmark, BookOpen, BriefcaseBusiness, ChartNoAxesColumnIncreasing, ChevronsLeft, ChevronsRight, ChevronRight, Crown, Home, LockKeyhole, Settings, Trophy, UserRound, UsersRound, RefreshCcw, ClipboardList, CalendarDays } from 'lucide-react';
+import { Bookmark, BookOpen, BriefcaseBusiness, ChartNoAxesColumnIncreasing, ChevronsLeft, ChevronsRight, ChevronRight, Crown, Home, LockKeyhole, Settings, Trophy, UserRound, RefreshCcw, ClipboardList, CalendarDays } from 'lucide-react';
 import { Brand } from '@/components/pm/Brand';
 import { DashboardAvatar } from '@/components/dashboard/DashboardAvatar';
 import type { DashboardShellData } from '@/types/dashboard';
@@ -8,15 +8,14 @@ type Item = { label: string; href: string; icon: typeof Home; requires?: 'plus' 
 const primaryItems: Item[] = [
     { label: 'Home', href: '/dashboard', icon: Home },
     { label: 'My profile', href: '/settings/profile', icon: UserRound },
-    { label: 'Learn & practice', href: '/learning', icon: BookOpen },
-    { label: 'PMP Exam Simulator', href: '/dashboard/features/pmp', icon: ClipboardList, requires: 'plus' },
+    { label: 'Learn & practice', href: '/dashboard/learning', icon: BookOpen },
+    { label: 'PMP Exam Simulator', href: '/exams/pmp', icon: ClipboardList, requires: 'plus' },
     { label: 'Scrum / CSM Simulator', href: '/dashboard/features/scrum', icon: RefreshCcw, requires: 'plus' },
     { label: 'Project Simulator', href: '/dashboard/features/simulations', icon: ChartNoAxesColumnIncreasing, requires: 'pro' },
 ];
 const secondaryItems: Item[] = [
     { label: 'Achievements', href: '/dashboard/features/achievements', icon: Trophy },
-    { label: 'Daily Challenge', href: '/daily-challenge', icon: CalendarDays },
-    { label: 'Community Feed', href: '/community', icon: UsersRound },
+    { label: 'Daily Challenge', href: '/dashboard/daily-challenge', icon: CalendarDays },
     { label: 'Saved posts', href: '/saved-posts', icon: Bookmark },
     { label: 'Jobs & resume', href: '/careers', icon: BriefcaseBusiness },
     { label: 'Profile insights', href: '/dashboard/features/insights', icon: ChartNoAxesColumnIncreasing },
@@ -27,12 +26,12 @@ export function DashboardSidebar({ dashboard, open, close, collapsed, onToggle }
     const activePath = usePage().url.split('?')[0];
     const paid = dashboard.plan !== 'free';
     const label = dashboard.plan === 'free' ? 'Free member' : `${dashboard.plan === 'premium' ? 'Premium' : 'Pro'} member`;
-    const isCurrent = (href: string) => href === '/dashboard' ? activePath === href
-        : href === '/learning' ? activePath.startsWith(href)
+    const isCurrent = (href: string) => href === '/exams/pmp' ? activePath.startsWith('/exams/pmp')
+        : href === '/dashboard' ? activePath === href
+        : href === '/dashboard/learning' ? activePath.startsWith('/dashboard/learning') || activePath.startsWith('/learning/')
         : href === '/settings/profile' ? activePath === '/settings/profile'
         : href === '/settings/security' ? activePath === '/settings/security' || activePath === '/settings/appearance'
-        : href === '/daily-challenge' ? activePath === href || activePath.startsWith('/scenarios/')
-        : href === '/community' ? activePath === href || activePath.startsWith('/posts/')
+        : href === '/dashboard/daily-challenge' ? activePath.startsWith(href)
         : activePath === href;
     const items = (list: Item[]) => list.map(item => {
         const Icon = item.icon;

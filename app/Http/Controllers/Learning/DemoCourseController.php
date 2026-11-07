@@ -23,6 +23,8 @@ final class DemoCourseController extends Controller
         $eligible = $record['accessTier'] === 'free' || in_array($tier, ['plus', 'pro'], true);
         $enrolled = $joined && DB::table('learning_demo_course_enrollments')
             ->where('user_id', $member->id)->where('course_slug', $course)->exists();
+        $saved = $joined && DB::table('learning_demo_course_saves')
+            ->where('user_id', $member->id)->where('course_slug', $course)->exists();
 
         return Inertia::render('learning/CourseShow', [
             'course' => [
@@ -37,6 +39,7 @@ final class DemoCourseController extends Controller
             'isAuthenticated' => (bool) $member,
             'eligible' => $eligible,
             'enrolled' => (bool) $enrolled,
+            'saved' => (bool) $saved,
             'memberTier' => $tier,
         ]);
     }
@@ -55,7 +58,7 @@ final class DemoCourseController extends Controller
             'updated_at' => now(),
         ]);
 
-        return redirect()->route('learning.courses.show', $course);
+        return redirect()->route($request->routeIs('dashboard.learning.courses.enroll') ? 'dashboard.learning.courses.show' : 'learning.courses.show', $course);
     }
 
     public function save(Request $request, string $course, DemoCourseCatalog $catalog): RedirectResponse

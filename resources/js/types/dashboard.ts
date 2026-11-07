@@ -8,10 +8,12 @@ export type DashboardPost = {
 };
 export type DashboardData = {
     plan: DashboardPlan; isDemo: boolean; isPreview: boolean;
-    member: { name: string; role: string | null; avatar_path?: string | null; completion: number };
+    member: { id: number; name: string; role: string | null; avatar_path?: string | null; completion: number };
     scenario: { id: number; slug: string; title: string; summary: string } | null;
     learning: { time: string; scenarios: number; level: number; lessonProgress: string };
     posts: DashboardPost[]; feedTab: DashboardTab;
+    feedPage: { next_cursor: string | null; has_more: boolean };
+    virtualFeedEnabled: boolean;
 };
 
 /** Minimal authenticated chrome props for feature pages. */

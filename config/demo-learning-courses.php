@@ -7,7 +7,26 @@
  */
 return [
     'courses' => [
-        ['slug' => 'pmp-exam-preparation', 'title' => 'PMP Exam Preparation (Complete Course)', 'summary' => 'Explore project delivery, people, processes and business environment topics.', 'category' => 'Project Management', 'level' => 'Intermediate', 'minutes' => 2100, 'thumbnail' => 1, 'accessTier' => 'paid', 'lessons' => [
+        ['slug' => 'pmp-exam-preparation', 'title' => 'PMP Exam Preparation (Complete Course)', 'summary' => 'Explore project delivery, people, processes and business environment topics.', 'category' => 'Project Management', 'level' => 'Intermediate', 'minutes' => 2100, 'thumbnail' => 1, 'accessTier' => 'paid',
+            'overview' => 'An exam-focused study outline for project professionals preparing for the PMP certification. Explore people, process, and business environment domains using practical examples and scenario-based thinking.',
+            'objectives' => [
+                'Understand the PMP exam structure and key domains',
+                'Apply project management concepts to real scenarios',
+                'Compare Agile, Hybrid, and predictive approaches',
+                'Evaluate stakeholder and project delivery decisions',
+                'Strengthen your exam preparation strategy',
+            ],
+            // Public syllabus headings; actual study-note bodies remain enrollment-gated.
+            'outline' => [
+                ['title' => 'Course Introduction', 'topics' => ['Exam structure and approach', 'Understanding the study outline', 'Planning your preparation', 'How to use the sample study notes']],
+                ['title' => 'Foundations of Project Management', 'topics' => ['Project value and outcomes', 'Project delivery approaches', 'Roles and responsibilities']],
+                ['title' => 'People (Domain 1)', 'topics' => ['Leadership and collaboration', 'Stakeholder engagement', 'Resolving conflict', 'Communication decisions']],
+                ['title' => 'Process (Domain 2)', 'topics' => ['Planning and delivery', 'Risk and change management', 'Quality and resource decisions', 'Monitoring project performance']],
+                ['title' => 'Business Environment (Domain 3)', 'topics' => ['Compliance and governance', 'Realizing business value', 'Organizational change']],
+                ['title' => 'Agile & Hybrid Approaches', 'topics' => ['Adaptive planning', 'Scrum collaboration', 'Selecting an appropriate approach']],
+                ['title' => 'Exam Preparation & Scenario Thinking', 'topics' => ['Reading situational questions', 'Evaluating answer choices', 'Developing an exam study strategy']],
+            ],
+            'lessons' => [
             ['title' => 'Project management foundations', 'body' => 'Review the project lifecycle, business value and key responsibilities of a project manager. Compare predictive, agile and hybrid approaches in a sample project.'],
             ['title' => 'Stakeholder scenarios', 'body' => 'Identify stakeholders, evaluate their needs and practice documenting communication expectations. Consider how you would respond when expectations conflict.'],
         ]],

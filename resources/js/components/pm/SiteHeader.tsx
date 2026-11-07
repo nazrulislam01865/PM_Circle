@@ -15,10 +15,12 @@ type HeaderProps = {
     active?: string;
     joinLabel?: string;
     actions?: ReactNode;
+    /** Keep the sidebar as the only desktop brand in the member shell. */
+    brandPlacement?: 'always' | 'mobile';
 };
 
 /** The homepage navigation is shared by the public, authentication and member shells. */
-export function SiteHeader({ active, joinLabel = 'Join the community', actions }: HeaderProps) {
+export function SiteHeader({ active, joinLabel = 'Join the community', actions, brandPlacement = 'always' }: HeaderProps) {
     const page = usePage<{ auth?: { user: { onboarding_step?: number } | null } }>();
     const [open, setOpen] = useState(false);
     const pathname = page.url.split('?')[0].split('#')[0];
@@ -35,7 +37,7 @@ export function SiteHeader({ active, joinLabel = 'Join the community', actions }
 
     return <header className="pm-header pm-site-header">
         <div className="pm-container pm-header-inner">
-            <Brand small />
+            {brandPlacement === 'always' ? <Brand small /> : <span className="pm-member-mobile-brand"><Brand small /></span>}
             <nav id="pm-site-navigation" className={`pm-main-nav${open ? ' is-open' : ''}`} aria-label="Main navigation">
                 {navigation.map(item => <Link key={item.href} href={item.href}
                     className={isActive(item.href) ? 'active' : ''}

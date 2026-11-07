@@ -68,6 +68,9 @@ function CommentEntry({ comment, postId, onJoin, canInteract, onReply, onLike, r
     </div>;
 }
 
+// A reply draft survives virtual unmount/remount in this browser session.
+const commentDrafts = new Map<number, string>();
+
 /** One on-demand comment experience shared by homepage, member feed and community cards. */
 export function InlinePostComments({ postId, canInteract, onJoin, onPosted, onClose }: {
     postId: number; canInteract: boolean; onJoin: RequestToJoin; onPosted: () => void; onClose: () => void;
@@ -78,7 +81,7 @@ export function InlinePostComments({ postId, canInteract, onJoin, onPosted, onCl
     const [loading, setLoading] = useState(true);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
-    const [text, setText] = useState('');
+    const [text, setText] = useState(() => commentDrafts.get(postId) ?? '');
     const [replyTo, setReplyTo] = useState<number | null>(null);
     const [sort, setSort] = useState<'relevant' | 'newest'>('relevant');
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -120,7 +123,7 @@ export function InlinePostComments({ postId, canInteract, onJoin, onPosted, onCl
             } else {
                 setComments(previous => [item.comment, ...previous]);
             }
-            setText(''); setReplyTo(null); onPosted();
+            commentDrafts.delete(postId); setText(''); setReplyTo(null); onPosted();
         } catch (reason) { setError(reason instanceof Error ? reason.message : 'Unable to post comment.'); }
         finally { setBusy(false); }
     };
@@ -148,7 +151,7 @@ export function InlinePostComments({ postId, canInteract, onJoin, onPosted, onCl
             <Avatar name={auth?.user?.name || 'Community member'} src={auth?.user?.avatar_path} size={38}/>
             <div className="pm-inline-compose-field">
                 {replyTo && <div className="pm-inline-reply-note">Replying to a comment <button type="button" onClick={() => setReplyTo(null)}>Cancel reply</button></div>}
-                <textarea ref={textareaRef} value={text} onChange={e => setText(e.target.value)} minLength={2} maxLength={3000}
+                <textarea ref={textareaRef} value={text} onChange={e => { const value = e.target.value; setText(value); if (value) commentDrafts.set(postId, value); else commentDrafts.delete(postId); }} minLength={2} maxLength={3000}
                     rows={2} aria-label={replyTo ? 'Write a reply' : 'Add a comment'} placeholder={replyTo ? 'Write a reply...' : 'Add a comment...'}
                     onFocus={() => { if (!canInteract) onJoin('comment on a discussion'); }} />
                 <div className="pm-inline-compose-actions"><span>{text.length}/3000</span><button type="submit" disabled={busy || text.trim().length < 2} className="pm-button pm-button-sm"><Send size={15} aria-hidden="true"/> {busy ? 'Posting...' : replyTo ? 'Reply' : 'Post'}</button></div>

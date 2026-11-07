@@ -31,10 +31,14 @@ export function PostCard({
     post,
     isGuest = true,
     onJoin = () => {},
+    onReactionChange,
+    onCommentAdded,
 }: {
     post: PostPreview;
     isGuest?: boolean;
     onJoin?: RequestToJoin;
+    onReactionChange?: (reaction: ReactionType | null, count: number) => void;
+    onCommentAdded?: () => void;
 }) {
     const formattedDate = post.published_at
         ? new Date(post.published_at).toLocaleDateString('en-GB', {
@@ -87,7 +91,7 @@ export function PostCard({
             <footer className="pm-card-action-bar">
                 <PostEngagementActions postId={post.id} initial={post.viewer_reaction}
                     total={post.reactions_count ?? post.likes_count ?? 0} comments={post.comments_count}
-                    canInteract={!isGuest} onJoin={onJoin} />
+                    canInteract={!isGuest} onJoin={onJoin} onReactionChange={onReactionChange} onCommentAdded={onCommentAdded} />
                 <Link href={`/posts/${post.id}`} className="pm-read-discussion-link">Read discussion →</Link>
             </footer>
         </article>

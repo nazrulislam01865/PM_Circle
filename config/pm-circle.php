@@ -14,6 +14,8 @@ return [
         'PMC_SIGNUP_VERIFICATION_MODE',
         (bool) env('PMC_SIGNUP_EMAIL_CODE_REQUIRED', true) ? 'email' : 'off',
     ),
+    // Set false to disable DOM virtualization while retaining safe cursor loading.
+    'virtual_feed_enabled' => filter_var(env('PMC_VIRTUAL_FEED_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
     'demo_content_enabled' => (bool) env('PMC_DEMO_CONTENT_ENABLED', true),
     // Optional existing local member to receive illustrative profile entries.
     'demo_profile_email' => env('PMC_DEMO_PROFILE_EMAIL'),

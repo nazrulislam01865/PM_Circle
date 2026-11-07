@@ -38,9 +38,10 @@ export function JoinCommunityDialog({ action, onClose, hasAccount }: {
     </Dialog>;
 }
 
-export function ReactionPicker({ endpoint, initial, total, canInteract, onJoin, label = 'post' }: {
+export function ReactionPicker({ endpoint, initial, total, canInteract, onJoin, label = 'post', onChanged }: {
     endpoint: string; initial?: ReactionType | null; total?: number;
     canInteract: boolean; onJoin: RequestToJoin; label?: string;
+    onChanged?: (reaction: ReactionType | null, count: number) => void;
 }) {
     const [active, setActive] = useState<ReactionType | null>(initial ?? null);
     const [count, setCount] = useState(total ?? 0);
@@ -66,6 +67,9 @@ export function ReactionPicker({ endpoint, initial, total, canInteract, onJoin, 
         setBusy(true);
         setError('');
         const remove = active === type;
+        const previous = { active, count };
+        setActive(remove ? null : type);
+        setCount(Math.max(0, count + (remove ? -1 : active ? 0 : 1)));
         try {
             const token = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
             const response = await fetch(endpoint, {
@@ -83,8 +87,11 @@ export function ReactionPicker({ endpoint, initial, total, canInteract, onJoin, 
             const result: { reaction: ReactionType | null; count: number } = await response.json();
             setActive(result.reaction);
             setCount(result.count);
+            onChanged?.(result.reaction, result.count);
             setOpen(false);
         } catch (reason) {
+            setActive(previous.active);
+            setCount(previous.count);
             setError(reason instanceof Error ? reason.message : 'Unable to save your reaction.');
         } finally { setBusy(false); }
     };

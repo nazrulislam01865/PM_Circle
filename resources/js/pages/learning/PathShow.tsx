@@ -10,8 +10,8 @@ export default function PathShow({ shell, path }: { shell: LearningShell; path: 
     const percent = path.moduleCount ? Math.round(path.completedModules/path.moduleCount*100) : 0;
     const save = () => router.visit(`/learning/${path.slug}/save`, { method: path.saved ? 'delete' : 'post', preserveScroll: true });
     return <LearningLayout shell={shell}><Head title={path.title} />
-        <nav className="pm-learn-crumb"><Link href="/learning">‹ &nbsp;Learn & practice</Link><span>/</span>{path.level}</nav>
-        <Link className="pm-learn-back" href="/learning"><ArrowLeft size={17}/>Back to learning paths</Link>
+        <nav className="pm-learn-crumb"><Link href="/dashboard/learning?tab=paths">‹ &nbsp;Learn & practice</Link><span>/</span>{path.level}</nav>
+        <Link className="pm-learn-back" href="/dashboard/learning?tab=paths"><ArrowLeft size={17}/>Back to learning paths</Link>
         <div className="pm-learn-columns pm-learn-path-detail"><div className="pm-learn-main-col"><span className="pm-learn-level-tag">{path.level}</span>
             <h1>{path.title}</h1><p className="pm-learn-lead">{path.introduction}</p>
             <div className="pm-learn-path-facts"><span><BookOpen size={19}/>{path.moduleCount} modules</span><span><ClipboardList size={19}/>{path.practiceCount} activities</span><span><Clock3 size={19}/>About {Math.max(1,Math.round(path.minutes/60))} hours</span><span><Users size={19}/>No experience needed</span></div>

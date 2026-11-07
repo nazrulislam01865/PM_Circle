@@ -122,16 +122,16 @@ class PostInteractionController extends Controller
             : back();
     }
 
-    public function save(Request $request, Post $post): RedirectResponse
+    public function save(Request $request, Post $post): RedirectResponse|JsonResponse
     {
         $this->ensurePublic($post);
         DB::table('post_saves')->insertOrIgnore(['post_id' => $post->id, 'user_id' => $request->user()->id, 'created_at' => now(), 'updated_at' => now()]);
-        return back();
+        return $request->expectsJson() ? response()->json(['saved' => true]) : back();
     }
 
-    public function unsave(Request $request, Post $post): RedirectResponse
+    public function unsave(Request $request, Post $post): RedirectResponse|JsonResponse
     {
         $post->saves()->where('user_id', $request->user()->id)->delete();
-        return back();
+        return $request->expectsJson() ? response()->json(['saved' => false]) : back();
     }
 }

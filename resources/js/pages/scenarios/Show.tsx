@@ -94,7 +94,7 @@ type Props = {
 };
 
 export default function Show({ scenario, responses, related }: Props) {
-    const { auth } = usePage<{
+    const page = usePage<{
         auth: {
             user: {
                 id: number;
@@ -103,8 +103,11 @@ export default function Show({ scenario, responses, related }: Props) {
                 email_verified_at: string | null;
             } | null;
         };
-    }>().props;
+    }>();
+    const { auth } = page.props;
 
+    const memberView = page.url.split('?')[0].startsWith('/dashboard/daily-challenge/');
+    const libraryRoot = memberView ? '/dashboard/daily-challenge' : '/daily-challenge';
     const isGuest = !auth?.user;
     const canRespond = Boolean(auth?.user && auth.user.onboarding_step >= 3 && scenario.status === 'published');
 
@@ -159,12 +162,12 @@ export default function Show({ scenario, responses, related }: Props) {
             <div className="pm-container pm-page">
                 {/* Breadcrumbs & back navigation */}
                 <nav className="pm-crumbs" aria-label="Breadcrumb">
-                    <Link href="/">Home</Link> &nbsp;/&nbsp; <Link href="/daily-challenge">Daily Challenge</Link> &nbsp;/&nbsp;{' '}
+                    <Link href={memberView ? '/dashboard' : '/'}>Home</Link> &nbsp;/&nbsp; <Link href={libraryRoot}>Daily Challenge</Link> &nbsp;/&nbsp;{' '}
                     <span>Scenario</span>
                 </nav>
 
                 <div style={{ marginBottom: '18px' }}>
-                    <Link href="/daily-challenge" className="pm-back" style={{ fontWeight: 600 }}>
+                    <Link href={libraryRoot} className="pm-back" style={{ fontWeight: 600 }}>
                         ← All challenges
                     </Link>
                 </div>
@@ -668,7 +671,7 @@ export default function Show({ scenario, responses, related }: Props) {
                                     {related.map((item) => (
                                         <Link
                                             key={item.id}
-                                            href={`/scenarios/${item.slug}`}
+                                            href={`${memberView ? libraryRoot : '/scenarios'}/${encodeURIComponent(item.slug)}`}
                                             className="pm-topic-nav-item"
                                             style={{ padding: '14px 0' }}
                                         >

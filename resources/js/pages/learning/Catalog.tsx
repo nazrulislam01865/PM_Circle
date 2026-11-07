@@ -2,7 +2,6 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { ChevronDown, ChevronLeft, ChevronRight, GraduationCap, Grid2X2, Layers3, List, Search, SlidersHorizontal, Target, Trophy } from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
 import { CourseCard, type CatalogCard } from '@/components/learning/CourseCard';
-import { LearningLayout } from '@/components/learning/LearningShared';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
 import type { DemoCourseData, LearningCourseCardData, LearningPathCardData, LearningShell } from '@/types/learning';
 import { demoCourseHref, learningActivityHref, learningPathHref } from '@/types/learning';
@@ -51,6 +50,8 @@ function FilterSection({ title, expanded, onToggle, children }: { title: string;
 
 export default function Catalog({ shell, paths, courses, practiceModules, isMember, memberTier }: CatalogProps) {
     const pageUrl = usePage().url;
+    const memberView = pageUrl.split('?')[0] === '/dashboard/learning';
+    const catalogRoot = memberView ? '/dashboard/learning' : '/learning';
     const query = new URLSearchParams(pageUrl.split('?')[1] || '');
     const initialTab = query.get('tab');
     const [tab, setTab] = useState<CatalogTab>(initialTab === 'paths' || initialTab === 'my-learning' ? 'paths' : initialTab === 'practice' ? 'practice' : initialTab === 'exams' ? 'exams' : 'courses');
@@ -72,8 +73,8 @@ export default function Catalog({ shell, paths, courses, practiceModules, isMemb
         category: course.category, level: course.level, minutes: course.minutes,
         thumbnail: course.thumbnail, accessTier: course.accessTier, progress: 0,
         enrolled: course.enrolled, saveType: 'course',
-        href: demoCourseHref(course.slug), action: course.enrolled && (course.accessTier === 'free' || memberTier !== 'free') ? 'Continue course' : course.enrolled ? 'Upgrade to continue' : 'View course',
-    })), [courses, memberTier]);
+        href: memberView ? `${catalogRoot}/courses/${encodeURIComponent(course.slug)}` : demoCourseHref(course.slug), action: course.enrolled && (course.accessTier === 'free' || memberTier !== 'free') ? 'Continue course' : course.enrolled ? 'Upgrade to continue' : 'View course',
+    })), [courses, memberTier, memberView, catalogRoot]);
     const pathItems = useMemo<CatalogCard[]>(() => paths.map((path, index) => ({
         id: `path-${path.slug}`, slug: path.slug, title: path.title, description: path.summary,
         category: categoryFor(path.title), level: learningLevel(path.level), minutes: path.minutes,
@@ -87,9 +88,9 @@ export default function Catalog({ shell, paths, courses, practiceModules, isMemb
         thumbnail: (index + 4) % 8 + 1, accessTier: course.accessTier, progress: course.mcqCompleted ? 100 : 0,
         href: learningActivityHref(course.slug, course.modulePosition, course.mcqPosition!), action: course.mcqCompleted ? 'Review practice' : 'Start practice',
     })), [practiceModules]);
-    // These are existing ComingSoon destinations, not invented exam records or working tests.
+    // PMP now has a real sample practice workflow; Scrum remains a planned module.
     const examItems = useMemo<CatalogCard[]>(() => ([
-        { id: 'pmp-simulator', title: 'PMP Exam Simulator', description: 'Exam simulator content is not yet available.', category: 'Project Management', level: 'Advanced', minutes: 0, thumbnail: 6, accessTier: 'plus', progress: 0, href: '/dashboard/features/pmp', action: 'View status', available: false },
+        { id: 'pmp-simulator', title: 'PMP Exam Simulator', description: 'Timed PMP-style sample questions, answer tools and scored reviews for Plus and Pro.', category: 'Project Management', level: 'Advanced', minutes: 11, thumbnail: 6, accessTier: 'plus', progress: 0, href: '/exams/pmp', action: 'Open simulator', available: true },
         { id: 'scrum-simulator', title: 'Scrum / CSM Simulator', description: 'Exam simulator content is not yet available.', category: 'Project Management', level: 'Intermediate', minutes: 0, thumbnail: 2, accessTier: 'plus', progress: 0, href: '/dashboard/features/scrum', action: 'View status', available: false },
     ] as CatalogCard[]), []);
 
@@ -129,7 +130,7 @@ export default function Catalog({ shell, paths, courses, practiceModules, isMemb
     const enrollDemoCourse = (item: CatalogCard) => {
         if (!item.slug || enrolling || !isMember) return;
         setEnrolling(item.slug);
-        router.post(`${demoCourseHref(item.slug)}/enroll`, {}, {
+        router.post(`${memberView ? catalogRoot : '/learning'}/courses/${encodeURIComponent(item.slug)}/enroll`, {}, {
             onFinish: () => setEnrolling(null),
         });
     };
@@ -185,6 +186,7 @@ export default function Catalog({ shell, paths, courses, practiceModules, isMemb
             </div>
         </div>
     </>;
-    return shell ? <LearningLayout shell={shell} catalog>{pageContent}</LearningLayout>
-        : <PublicLayout active="/learning"><div className="pm-learning-catalog-public pm-learn-content">{pageContent}</div></PublicLayout>;
+    return <PublicLayout siteLayout={!memberView} active="/learning">
+        <div className="pm-learning-catalog-public pm-learn-content">{pageContent}</div>
+    </PublicLayout>;
 }

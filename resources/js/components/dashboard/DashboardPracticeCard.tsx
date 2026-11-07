@@ -4,7 +4,7 @@ import type { DashboardData } from '@/types/dashboard';
 
 export function DashboardPracticeCard({ dashboard }: { dashboard: DashboardData }) {
     const premium = dashboard.plan === 'premium';
-    const scenarioUrl = dashboard.scenario ? `/scenarios/${dashboard.scenario.slug}` : '/community';
+    const scenarioUrl = dashboard.scenario ? `/dashboard/daily-challenge/${encodeURIComponent(dashboard.scenario.slug)}` : '/dashboard/daily-challenge';
     return <section className={`pm-dash-card pm-dash-practice ${premium ? 'is-simulation' : ''}`} aria-label="Today's practice">
         <div className="pm-dash-practice-content"><div className="pm-dash-practice-title"><span className="pm-dash-practice-icon"><ClipboardList size={33}/></span>
             <div className="pm-dash-practice-text"><div className="pm-dash-practice-heading">{premium ? 'Continue your simulation' : "Today's practice"}</div>

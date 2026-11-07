@@ -2,16 +2,15 @@
 
 namespace App\Domain\Dashboard\Queries;
 
-use App\Models\Post;
+use App\Domain\Community\Queries\FeedQuery;
 use App\Models\Scenario;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use App\Domain\Billing\Queries\CurrentMemberPlan;
 
 /** Read-only, privacy-limited projection. Demo figures never grant entitlements. */
 final class DashboardOverview
 {
-    public function forMember(User $user, ?string $previewPlan = null, string $feedTab = 'all'): array
+    public function forMember(User $user, ?string $previewPlan = null, string $feedTab = 'all', ?FeedQuery $feed = null): array
     {
         $user->loadMissing('profile');
 
@@ -29,22 +28,9 @@ final class DashboardOverview
         ])->filter()->count();
         $completion = $isDemo ? ($plan === 'free' ? 45 : 80) : $filled * 20;
 
-        $query = Post::query()->forFeed($feedTab, $user->id);
-
-        $posts = $query->when($isDemo && $preview && $feedTab === 'all', fn ($q) => $q->orderByRaw(
-                'CASE WHEN posts.title = ? THEN 0 WHEN posts.title = ? THEN 1 ELSE 2 END',
-                ['How to run concise and effective status meetings', 'How do you handle unrealistic deadlines from stakeholders?']
-            ))->with(['author:id,name', 'author.profile' => fn ($q) => $q
-                ->where('visibility', 'public')->select('id', 'user_id', 'role', 'avatar_path')])
-            ->withCount(['comments', 'reactions'])
-            ->latest('published_at')->limit(2)->get();
-
-        $saved = $posts->isEmpty() ? [] : DB::table('post_saves')
-            ->where('user_id', $user->getKey())->whereIn('post_id', $posts->pluck('id'))
-            ->pluck('post_id')->all();
-        $reactions = $posts->isEmpty() ? [] : DB::table('post_reactions')
-            ->where('user_id', $user->getKey())->whereIn('post_id', $posts->pluck('id'))
-            ->pluck('type', 'post_id')->all();
+        $feed ??= app(FeedQuery::class);
+        $feedPage = $feed->page($feedTab, 'All', null, $user, null, true);
+        $dashboardPosts = $feed->dashboardPosts($feedPage['data']);
 
         $scenario = Scenario::query()->where('status', 'published')
             ->latest('published_at')->first(['id', 'slug', 'title', 'summary']);
@@ -54,7 +40,7 @@ final class DashboardOverview
                 'plan' => $plan,
                 'isDemo' => $isDemo,
                 'isPreview' => $preview,
-                'member' => ['name' => $user->name, 'role' => $profile?->role, 'avatar_path' => $profile?->avatar_path, 'completion' => $completion],
+                'member' => ['id' => $user->getKey(), 'name' => $user->name, 'role' => $profile?->role, 'avatar_path' => $profile?->avatar_path, 'completion' => $completion],
                 'scenario' => $scenario,
                 'learning' => $isDemo ? [
                     'time' => $plan === 'free' ? '1h 20m' : '8h 0m',
@@ -62,17 +48,12 @@ final class DashboardOverview
                     'level' => $plan === 'free' ? 1 : 4,
                     'lessonProgress' => $plan === 'free' ? '2 / 6' : '3 / 5',
                 ] : ['time' => '0h 0m', 'scenarios' => 0, 'level' => 1, 'lessonProgress' => '0 / 0'],
-                'posts' => $posts->map(fn (Post $post) => [
-                    'id' => $post->id, 'title' => $post->title, 'body' => $post->body,
-                    'image_path' => $post->image_path,
-                    'topic' => $post->topic, 'author' => $post->is_anonymous ? 'Anonymous member' : ($post->author?->name ?? 'Member'),
-                    'authorRole' => $post->is_anonymous ? null : $post->author?->profile?->role,
-                    'authorAvatar' => $post->is_anonymous ? null : $post->author?->profile?->avatar_path,
-                    'publishedAt' => $post->published_at?->toIso8601String(),
-                    'comments' => $post->comments_count, 'reactions' => $post->reactions_count,
-                    'saved' => in_array($post->id, $saved, true),
-                    'reaction' => $reactions[$post->id] ?? null,
-                ])->all(),
+                'posts' => $dashboardPosts,
+                'virtualFeedEnabled' => (bool) config('pm-circle.virtual_feed_enabled', true),
+                'feedPage' => [
+                    'next_cursor' => $feedPage['next_cursor'],
+                    'has_more' => $feedPage['has_more'],
+                ],
                 'feedTab' => $feedTab,
             ],
         ];

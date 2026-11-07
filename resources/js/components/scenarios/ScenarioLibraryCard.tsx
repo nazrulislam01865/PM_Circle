@@ -15,14 +15,15 @@ export type LibraryScenario = {
     viewer_bookmarked?: boolean;
 };
 
-export function ScenarioLibraryCard({ scenario, featured, canInteract, onJoin }: {
+export function ScenarioLibraryCard({ scenario, featured, canInteract, onJoin, hrefBase = '/scenarios' }: {
     scenario: LibraryScenario;
     featured: boolean;
     canInteract: boolean;
     onJoin: () => void;
+    hrefBase?: string;
 }) {
     const open = scenario.status === 'published';
-    const link = `/scenarios/${encodeURIComponent(scenario.slug)}`;
+    const link = `${hrefBase}/${encodeURIComponent(scenario.slug)}`;
     const published = new Date(scenario.published_at);
     const month = Number.isNaN(published.getTime()) ? '—' : published.toLocaleDateString('en-US', { month: 'short' });
     const day = Number.isNaN(published.getTime()) ? '—' : published.getDate();

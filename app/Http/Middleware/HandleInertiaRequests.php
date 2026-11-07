@@ -35,6 +35,11 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        // Public homepage-style pages never mount the dashboard sidebar.
+        // Avoid computing its member projection on those requests.
+        $siteLayout = in_array($request->path(), ['/', 'daily-challenge', 'community', 'learning'], true)
+            || $request->is('learning/courses/*');
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -46,7 +51,7 @@ class HandleInertiaRequests extends Middleware
                     'avatar' => $request->user()->profile?->avatar_path,
                 ] : null,
             ],
-            'memberShell' => fn () => $request->user() ? app(\App\Domain\Dashboard\Queries\MemberShell::class)->forMember($request->user()) : null,
+            'memberShell' => fn () => ! $siteLayout && $request->user() ? app(\App\Domain\Dashboard\Queries\MemberShell::class)->forMember($request->user()) : null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

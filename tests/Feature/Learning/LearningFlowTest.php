@@ -44,7 +44,8 @@ final class LearningFlowTest extends TestCase
     {
         $member = User::factory()->create(['onboarding_step' => 3]);
         $this->actingAs($member)->get('/learning')->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->component('learning/Catalog')->has('paths', 5));
+            ->assertInertia(fn (Assert $page) => $page->component('learning/Catalog')
+                ->has('paths', 5)->where('shell', null)->where('memberShell', null));
         $this->actingAs($member)->get('/learning/student-beginner')->assertOk()
             ->assertInertia(fn (Assert $page) => $page->component('learning/PathShow')->has('path.modules', 6));
     }

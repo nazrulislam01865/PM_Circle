@@ -11,20 +11,19 @@ import {
     Search,
     Users,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PostCard, type PostPreview } from '@/components/community/PostCard';
+import { VirtualizedFeed } from '@/components/community/VirtualizedFeed';
+import { useSlidingFeed, type FeedPage } from '@/hooks/community/useSlidingFeed';
 import { JoinCommunityDialog } from '@/components/home/HomeEngagement';
 import { TopicPills } from '@/components/community/TopicPills';
 import { FeedScopeTabs, type FeedScope } from '@/components/community/FeedScopeTabs';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
 
 type Props = {
-    posts: {
-        data: PostPreview[];
-        next_page_url: string | null;
-        prev_page_url: string | null;
-    };
+    posts: FeedPage<PostPreview>;
     activeTopic: string;
+    virtualFeedEnabled: boolean;
     feedTab: FeedScope;
     search?: string | null;
     todayScenario?: {
@@ -35,7 +34,7 @@ type Props = {
     } | null;
 };
 
-export default function Feed({ posts, activeTopic, feedTab, search, todayScenario }: Props) {
+export default function Feed({ posts, activeTopic, feedTab, search, todayScenario, virtualFeedEnabled }: Props) {
     const { auth, emailVerificationRequired } = usePage<{
         emailVerificationRequired?: boolean;
         auth: {
@@ -51,6 +50,31 @@ export default function Feed({ posts, activeTopic, feedTab, search, todayScenari
     const isGuest = !auth?.user || auth.user.onboarding_step < 3 || (emailVerificationRequired && !auth.user.email_verified_at);
     const [joinAction, setJoinAction] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState(search ?? '');
+    const sidebarRef = useRef<HTMLElement>(null);
+
+    useEffect(() => {
+        const sidebar = sidebarRef.current;
+        if (!sidebar) return;
+
+        const updateStickyOffset = () => {
+            // Like the member dashboard: tall sidebars remain accessible using
+            // the page scroll rather than introducing a second scrollbar.
+            const spacing = parseFloat(getComputedStyle(sidebar).getPropertyValue('--space-4')) || 16;
+            const offset = Math.min(spacing, window.innerHeight - sidebar.getBoundingClientRect().height - spacing);
+            sidebar.style.setProperty('--pm-community-sidebar-sticky-top', `${Math.round(offset)}px`);
+        };
+
+        const observer = new ResizeObserver(updateStickyOffset);
+        observer.observe(sidebar);
+        window.addEventListener('resize', updateStickyOffset);
+        updateStickyOffset();
+
+        return () => {
+            observer.disconnect();
+            window.removeEventListener('resize', updateStickyOffset);
+        };
+    }, []);
+    const feed = useSlidingFeed(posts, { tab: feedTab, topic: activeTopic, search, context: 'community', viewerId: auth?.user?.id ?? 0 });
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -62,7 +86,7 @@ export default function Feed({ posts, activeTopic, feedTab, search, todayScenari
     };
 
     return (
-        <PublicLayout active="/community" joinLabel="Join free">
+        <PublicLayout siteLayout active="/community" joinLabel="Join free">
             <Head title="Discussions · PM Circle" />
 
             <div className="pm-container pm-page">
@@ -157,62 +181,45 @@ export default function Feed({ posts, activeTopic, feedTab, search, todayScenari
                             </section>
                         )}
 
-                        {/* Post List */}
-                        <div className="pm-feed-posts-list">
-                            {posts.data.length > 0 ? (
-                                posts.data.map((post, index) => (
-                                    <div key={post.id}>
-                                        <PostCard post={post} isGuest={isGuest} onJoin={setJoinAction} />
-
-                                        {/* Inline locked response box directly under the first post for guests (pm1.png) */}
-                                        {index === 0 && isGuest && (
-                                            <div className="pm-inline-guest-prompt">
-                                                <div className="pm-inline-guest-header">
-                                                    <Lock size={16} /> Join the community to add your response
-                                                </div>
-                                                <input
-                                                    type="text"
-                                                    className="pm-inline-guest-textarea"
-                                                    placeholder="Share your thoughts, experience or advice..."
-                                                    disabled
-                                                />
-                                                <div className="pm-inline-guest-actions">
-                                                    <Link href="/register" className="pm-button pm-button-sm">
-                                                        Create free account
-                                                    </Link>
-                                                    <span className="pm-inline-guest-login">
-                                                        Already a member? <Link href="/login">Log in</Link>
-                                                    </span>
-                                                </div>
+                        {/* Server-hydrated, measured sliding window. Cards and guest prompt remain unchanged. */}
+                        {feed.items.length ? (
+                            <VirtualizedFeed items={feed.items} onNearEnd={feed.loadMore}
+                                className="pm-feed-posts-list" enabled={virtualFeedEnabled}
+                                renderItem={(post, index) => <>
+                                    <PostCard post={post} isGuest={isGuest} onJoin={setJoinAction}
+                                        onReactionChange={(reaction, count) => feed.updateItem(post.id, { viewer_reaction: reaction, reactions_count: count })}
+                                        onCommentAdded={() => feed.updateItem(post.id, { comments_count: post.comments_count + 1 })} />
+                                    {index === 0 && isGuest && (
+                                        <div className="pm-inline-guest-prompt">
+                                            <div className="pm-inline-guest-header"><Lock size={16} /> Join the community to add your response</div>
+                                            <input type="text" className="pm-inline-guest-textarea"
+                                                placeholder="Share your thoughts, experience or advice..." disabled />
+                                            <div className="pm-inline-guest-actions">
+                                                <Link href="/register" className="pm-button pm-button-sm">Create free account</Link>
+                                                <span className="pm-inline-guest-login">Already a member? <Link href="/login">Log in</Link></span>
                                             </div>
-                                        )}
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="pm-panel pm-empty">
-                                    <p>No discussions found in this topic. Try another search or category.</p>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Pagination / Load more */}
-                        {posts.next_page_url ? (
-                            <div className="pm-load-more-center">
-                                <Link href={posts.next_page_url} className="pm-btn-load-more">
-                                    Load more discussions <ChevronDown size={16} />
-                                </Link>
-                            </div>
+                                        </div>
+                                    )}
+                                </>} />
                         ) : (
-                            <div className="pm-load-more-center">
-                                <button type="button" className="pm-btn-load-more" disabled>
-                                    All discussions loaded
-                                </button>
+                            <div className="pm-panel pm-empty"><p>No discussions found in this topic. Try another search or category.</p></div>
+                        )}
+                        {(feed.hasMore || feed.loading || feed.error) && (
+                            <div className="pm-load-more-center" aria-live="polite">
+                                {feed.error ? (
+                                    <button type="button" className="pm-btn-load-more" onClick={feed.retry}>
+                                        <RefreshCw size={16} /> Retry loading posts
+                                    </button>
+                                ) : feed.loading ? <span className="helper" role="status">Loading discussions…</span>
+                                    : <button type="button" className="pm-btn-load-more" onClick={feed.loadMore}>
+                                        Load more discussions <ChevronDown size={16} />
+                                    </button>}
                             </div>
                         )}
                     </div>
 
                     {/* Right Sidebar */}
-                    <aside className="pm-sidebar-col">
+                    <aside ref={sidebarRef} className="pm-sidebar-col pm-community-sticky-sidebar">
                         {/* 1. Practise your judgement card */}
                         <section className="pm-sidebar-card">
                             <div className="pm-sidebar-kicker">PRACTISE YOUR JUDGEMENT</div>

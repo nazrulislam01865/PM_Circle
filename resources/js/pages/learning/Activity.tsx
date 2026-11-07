@@ -57,7 +57,7 @@ export default function Activity({ shell, path, module, activity, question, answ
     const canContinue = activity.completed || (activity.type === 'mcq' && !!question?.selected && question.position < question.total);
     const nextHref = activity.type === 'mcq' && question?.selected && question.position < question.total ? `${url}?question=${question.position+1}` : next;
     return <LearningLayout shell={shell}><Head title={`${module.title} · Learn & practice`}/>
-        <nav className="pm-learn-crumb"><Link href="/learning">‹ &nbsp;Learn & practice</Link><span>/</span><Link href={`/learning/${path.slug}`}>{path.level}</Link><span>/</span>Module {module.position}</nav>
+        <nav className="pm-learn-crumb"><Link href="/dashboard/learning?tab=paths">‹ &nbsp;Learn & practice</Link><span>/</span><Link href={`/learning/${path.slug}`}>{path.level}</Link><span>/</span>Module {module.position}</nav>
         <div className="pm-learn-activity-title"><div><h1>{module.title}</h1><p>Module {module.position} of {path.moduleCount} · {path.level} foundations</p></div><Link className="pm-learn-save-exit" href={`/learning/${path.slug}`}><Bookmark size={26}/>Save & exit</Link></div>
         <div className="pm-learn-columns pm-learn-activity-layout"><div className="pm-learn-main-col"><ActivityStepper slug={path.slug} module={module.position} activities={module.activities} active={activity.position}/>
             <div className="pm-learn-notice"><Info size={21}/>18 practice activities across this path; lessons are additional.</div>

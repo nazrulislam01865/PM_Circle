@@ -26,6 +26,20 @@ final class DemoCourseEnrollmentTest extends TestCase
         $this->assertDatabaseCount('learning_demo_course_enrollments', 0);
     }
 
+    public function test_public_pmp_course_details_expose_only_the_outline_and_no_pricing(): void
+    {
+        $this->get('/learning/courses/pmp-exam-preparation')->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component('learning/CourseShow')
+                ->where('isMember', false)
+                ->where('saved', false)
+                ->where('eligible', false)
+                ->has('course.outline', 7)
+                ->has('course.objectives', 5)
+                ->where('course.lessons.0.body', null)
+                ->missing('course.price')
+                ->missing('course.salePrice'));
+    }
+
     public function test_free_member_can_enroll_in_free_demo_course_once_and_read_its_lessons(): void
     {
         $member = User::factory()->create(['onboarding_step' => 3]);
@@ -113,6 +127,8 @@ final class DemoCourseEnrollmentTest extends TestCase
         $this->actingAs($first)->post($url)->assertRedirect();
         $this->assertDatabaseCount('learning_demo_course_saves', 1);
         $this->actingAs($first)->get('/learning')->assertInertia(fn (Assert $page) => $page->where('courses.0.saved', true));
+        $this->actingAs($first)->get('/learning/courses/pmp-exam-preparation')
+            ->assertInertia(fn (Assert $page) => $page->where('saved', true));
         $this->actingAs($other)->get('/learning')->assertInertia(fn (Assert $page) => $page->where('courses.0.saved', false));
         $this->actingAs($first)->delete($url)->assertRedirect();
         $this->assertDatabaseCount('learning_demo_course_saves', 0);

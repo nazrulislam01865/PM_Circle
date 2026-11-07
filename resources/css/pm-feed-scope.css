@@ -5,3 +5,16 @@
 .pm-feed-scope-tab.active { color: var(--pm-system-primary); font-weight: 700; border-bottom-color: var(--pm-system-primary); }
 .pm-community-feed-tabs { margin-bottom: var(--space-4, 16px); border-bottom: 1px solid var(--divider); }
 @media(max-width: 640px) { .pm-feed-scope-tabs { gap: var(--space-2, 8px); } .pm-feed-scope-tab { padding-inline: var(--space-3, 12px); font-size: 14px; } }
+
+/* Community feed: keep the right cards beside the scrolling post list.
+   Use normal document scrolling (no nested scrollbars); turn off sticky
+   when the shared two-column layout stacks below 701px. */
+@media (min-width: 701px) {
+    .pm-community-sticky-sidebar {
+        position: sticky;
+        top: var(--pm-community-sidebar-sticky-top, var(--space-4));
+        align-self: start;
+        min-width: 0;
+        overflow: visible;
+    }
+}

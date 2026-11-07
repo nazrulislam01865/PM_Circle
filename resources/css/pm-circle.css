@@ -133,6 +133,42 @@
     --foreground: var(--text);
     --muted-foreground: var(--muted);
 }
+/* Shared action primitives from the approved PM Circle design system.
+   Simulator actions use these exact primitives; keep button styling centralized. */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: var(--field-height);
+    padding: 11px 20px;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    background: var(--primary);
+    color: #fff;
+    font-family: var(--font);
+    font-size: var(--type-button);
+    font-weight: var(--type-weight-bold);
+    line-height: var(--type-line-button);
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+.btn > svg { flex: none; }
+.btn:hover { background: var(--primary-hover); color: #fff; }
+.btn:active { background: var(--primary-active); }
+.btn.secondary { border-color: var(--primary); background: var(--surface); color: var(--primary); }
+.btn.secondary:hover { background: var(--primary-soft); color: var(--primary); }
+.btn.ghost { background: transparent; color: var(--primary); }
+.btn.ghost:hover { background: var(--primary-soft); }
+.btn.danger { background: var(--danger); color: white; }
+.btn.small { min-height: 40px; padding: 9px 14px; font-size: var(--type-button-compact); line-height: var(--type-line-button-compact); }
+.btn:disabled { background: var(--disabled-bg) !important; color: var(--disabled-text) !important; border-color: var(--divider) !important; cursor: not-allowed; }
+.btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); }
+.icon-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
 .pm-app { min-height: 100vh; background: var(--pm-canvas); color: var(--pm-navy); font-family: var(--pm-font-family); font-size: 14px; line-height: 1.5; }
 .pm-app *, .pm-app *::before, .pm-app *::after { box-sizing: border-box; }
 .pm-app a { text-decoration: none; }
@@ -1087,3 +1123,38 @@
         --type-h2-responsive: var(--type-h2-mobile);
     }
 }
+
+/* PM Circle shared design-system primitives. Keep typography, control sizing and
+   visual states here; feature styles should only compose/layout these classes. */
+.pm-system-card {
+    background: var(--surface);
+    border: 1px solid var(--divider);
+    border-radius: var(--card-radius);
+    padding: var(--space-6);
+}
+.pm-system-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: var(--field-height);
+    padding: 11px 20px;
+    border: 1px solid var(--primary);
+    border-radius: var(--radius);
+    background: var(--primary);
+    color: white;
+    font-family: var(--font);
+    font-size: var(--type-button);
+    font-weight: var(--type-weight-bold);
+    line-height: var(--type-line-button);
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+}
+.pm-system-button:hover { background: var(--primary-hover); border-color: var(--primary-hover); color: white; text-decoration: none; }
+.pm-system-button:active { background: var(--primary-active); border-color: var(--primary-active); }
+.pm-system-button-secondary { color: var(--primary); border-color: var(--primary); background: var(--surface); }
+.pm-system-button-secondary:hover { background: var(--primary-soft); color: var(--primary); border-color: var(--primary); }
+.pm-system-button:disabled { color: var(--disabled-text); background: var(--disabled-bg); border-color: var(--divider); cursor: not-allowed; }
+.pm-system-button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+@media (max-width: 640px) { .pm-system-card { padding: var(--space-4); } }

@@ -33,20 +33,22 @@ export default function Membership({ plans, currentPlan, temporaryAccessEnabled 
             <PricingComparisonContent
                 plans={plans}
                 error={error}
-                billingFineprint="AI limits are illustrative. Paid billing and renewals require an enabled checkout integration."
+                billingFineprint={temporaryAccessEnabled
+                    ? 'Demo access only. Listed prices and durations are informational; switching plans does not collect payment or schedule renewals.'
+                    : 'AI limits are illustrative. Paid billing and renewals require an enabled checkout integration.'}
                 notice={<div className="pm-membership-notice">
                     <p className="pm-membership-current"><Crown size={17} aria-hidden="true"/>Current membership: <strong>{currentPlan === 'free' ? 'Free' : currentPlan === 'plus' ? 'Plus' : 'Pro'}</strong></p>
                     <p className="pm-membership-access"><ShieldCheck size={17} aria-hidden="true"/>{temporaryAccessEnabled
-                        ? 'Complimentary access is enabled. Switching plans creates no charge or paid subscription; pricing durations are informational.'
-                        : 'Paid checkout is not yet available. Your current membership remains unchanged.'}</p>
+                        ? 'Demo plan switching is enabled. Choose Free, Plus, or Pro to update your access immediately; no payment or paid subscription is created.'
+                        : 'Demo plan switching is disabled. Paid checkout is not yet available; your current membership remains unchanged.'}</p>
                 </div>}
                 renderAction={code => <button
                     type="button"
                     className={`pm-button ${code === 'plus' ? '' : 'pm-button-outline'} pm-button-sm`}
                     disabled={processing !== null || code === currentPlan || !temporaryAccessEnabled}
                     onClick={() => activate(code)}
-                    title={!temporaryAccessEnabled && code !== currentPlan ? 'Checkout is not available' : undefined}
-                >{code === currentPlan ? 'Current plan' : processing === code ? 'Applying…' : code === 'free' ? 'Switch to Free' : code === 'plus' ? 'Get Plus' : 'Get Pro'}</button>}
+                    title={!temporaryAccessEnabled && code !== currentPlan ? 'Demo plan switching is disabled' : undefined}
+                >{code === currentPlan ? 'Current plan' : processing === code ? 'Applying…' : code === 'free' ? 'Switch to Free' : code === 'plus' ? 'Switch to Plus' : 'Switch to Pro'}</button>}
             />
         </div>
     </MemberDashboardLayout>;

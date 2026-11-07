@@ -137,6 +137,49 @@ final class TemporaryMembershipTest extends TestCase
         }
     }
 
+    public function test_opted_in_production_demo_can_switch_free_plus_and_pro_without_billing(): void
+    {
+        config()->set('pm-circle.temporary_paid_access_enabled', false);
+        config()->set('pm-circle.self_service_complimentary_access_enabled', true);
+
+        $member = User::factory()->create(['onboarding_step' => 3]);
+        $previousEnvironment = app()->environment();
+        app()->detectEnvironment(fn () => 'production');
+
+        try {
+            $this->actingAs($member)->get(route('membership.index'))
+                ->assertOk()
+                ->assertInertia(fn (Assert $page) => $page
+                    ->component('billing/Membership')
+                    ->where('temporaryAccessEnabled', true)
+                    ->where('currentPlan', 'free')
+                    ->etc());
+
+            $csrfToken = 'demo-membership-switch-csrf-test-token';
+            foreach (['plus', 'pro', 'free'] as $code) {
+                $this->withSession(['_token' => $csrfToken])
+                    ->actingAs($member)
+                    ->post(route('membership.temporary'), [
+                        'plan' => $code,
+                        '_token' => $csrfToken,
+                    ])
+                    ->assertRedirect(route('dashboard'));
+
+                $this->assertSame($code, app(CurrentMemberPlan::class)->code($member));
+                $this->actingAs($member)->get(route('membership.index'))
+                    ->assertInertia(fn (Assert $page) => $page
+                        ->where('currentPlan', $code)
+                        ->where('temporaryAccessEnabled', true)
+                        ->etc());
+            }
+
+            $this->assertDatabaseCount('temporary_memberships', 1);
+            $this->assertDatabaseCount('subscriptions', 0);
+        } finally {
+            app()->detectEnvironment(fn () => $previousEnvironment);
+        }
+    }
+
     public function test_temporary_membership_is_specific_to_its_owner_and_validated(): void
     {
         $first = User::factory()->create(['onboarding_step' => 3]);

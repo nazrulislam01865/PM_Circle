@@ -1,10 +1,10 @@
 /* Shared community feed filters: use the app's centralized typography and theme. */
 .pm-feed-scope-tabs { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3, 12px); min-width: 0; }
-.pm-feed-scope-tab { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px var(--space-4, 16px); color: var(--text); font-size: var(--type-body, 16px); font-weight: 600; border-bottom: 2px solid transparent; text-decoration: none; white-space: nowrap; }
+.pm-feed-scope-tab { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px var(--space-4, 16px); color: var(--text); font-size: var(--type-body, 16px); font-weight: var(--type-weight-semibold); border-bottom: 2px solid transparent; text-decoration: none; white-space: nowrap; }
 .pm-feed-scope-tab:hover { color: var(--pm-system-primary); text-decoration: none; }
-.pm-feed-scope-tab.active { color: var(--pm-system-primary); font-weight: 700; border-bottom-color: var(--pm-system-primary); }
+.pm-feed-scope-tab.active { color: var(--pm-system-primary); font-weight: var(--type-weight-bold); border-bottom-color: var(--pm-system-primary); }
 .pm-community-feed-tabs { margin-bottom: var(--space-4, 16px); border-bottom: 1px solid var(--divider); }
-@media(max-width: 640px) { .pm-feed-scope-tabs { gap: var(--space-2, 8px); } .pm-feed-scope-tab { padding-inline: var(--space-3, 12px); font-size: 14px; } }
+@media(max-width: 640px) { .pm-feed-scope-tabs { gap: var(--space-2, 8px); } .pm-feed-scope-tab { padding-inline: var(--space-3, 12px); font-size: var(--type-small); } }
 
 /* Community feed: keep the right cards beside the scrolling post list.
    Use normal document scrolling (no nested scrollbars); turn off sticky

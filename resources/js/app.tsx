@@ -18,6 +18,8 @@ void createInertiaApp({
             case name.startsWith('learning/'):
             case name.startsWith('settings/'):
             case name === 'auth/login':
+            case name === 'auth/forgot-password':
+            case name === 'auth/reset-password':
             case name.startsWith('auth/RegisterStep'):
                 return null;
             case name.startsWith('auth/'):
@@ -36,7 +38,7 @@ void createInertiaApp({
         );
     },
     progress: {
-        color: '#0966e8',
+        color: 'var(--pm-tone-0966e8)',
     },
 });
 

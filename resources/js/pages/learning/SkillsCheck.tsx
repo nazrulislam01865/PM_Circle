@@ -176,19 +176,19 @@ export default function SkillsCheck({ shell }: { shell: LearningShell }) {
                 </nav>
 
                 <div style={{ marginBottom: '18px' }}>
-                    <Link href="/learning" className="pm-back" style={{ fontWeight: 600 }}>
+                    <Link href="/learning" className="pm-back" style={{ fontWeight: 'var(--type-weight-semibold)' }}>
                         ← Back to learning paths
                     </Link>
                 </div>
 
                 <div className="pm-skills-check-intro" style={{ marginBottom: '28px' }}>
-                    <h1 style={{ fontSize: '32px', fontWeight: 800, margin: '0 0 8px' }}>
+                    <h1 style={{ fontSize: 'var(--pm-font-size-32px)', fontWeight: 'var(--pm-font-weight-800)', margin: '0 0 8px' }}>
                         Let's find a good place to start.
                     </h1>
-                    <p style={{ fontSize: '16px', color: 'var(--muted)', margin: '0 0 12px' }}>
+                    <p style={{ fontSize: 'var(--type-body)', color: 'var(--muted)', margin: '0 0 12px' }}>
                         Tell us a little about your experience, then try a few project situations.
                     </p>
-                    <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: 'var(--muted)' }}>
+                    <div style={{ display: 'flex', gap: '16px', fontSize: 'var(--pm-font-size-13px)', color: 'var(--muted)' }}>
                         <span>📋 10 questions</span>
                         <span>⏱ About 5 minutes</span>
                         <span>ⓘ You can change your path later.</span>
@@ -198,7 +198,7 @@ export default function SkillsCheck({ shell }: { shell: LearningShell }) {
                 <div className="pm-two-column">
                     {/* Main questionnaire card */}
                     <div className="pm-skills-check-main">
-                        <div className="pm-panel" style={{ padding: '28px', borderRadius: '12px' }}>
+                        <div className="pm-panel" style={{ padding: '28px', borderRadius: 'var(--card-radius)' }}>
                             {/* Question meta & progress */}
                             <div
                                 style={{
@@ -208,10 +208,10 @@ export default function SkillsCheck({ shell }: { shell: LearningShell }) {
                                     marginBottom: '10px',
                                 }}
                             >
-                                <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--primary)' }}>
+                                <span style={{ fontSize: 'var(--pm-font-size-13px)', fontWeight: 'var(--type-weight-bold)', color: 'var(--primary)' }}>
                                     Question {currentStep + 1} of 10 &nbsp;·&nbsp; {q.category}
                                 </span>
-                                <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--muted)' }}>
+                                <span style={{ fontSize: 'var(--pm-font-size-13px)', fontWeight: 'var(--type-weight-bold)', color: 'var(--muted)' }}>
                                     {progressPercent}%
                                 </span>
                             </div>
@@ -220,8 +220,8 @@ export default function SkillsCheck({ shell }: { shell: LearningShell }) {
                             <div
                                 style={{
                                     height: '6px',
-                                    background: '#E2E8F0',
-                                    borderRadius: '3px',
+                                    background: 'var(--pm-tone-e2e8f0)',
+                                    borderRadius: 'var(--pm-radius-3px)',
                                     marginBottom: '28px',
                                     overflow: 'hidden',
                                 }}
@@ -236,10 +236,10 @@ export default function SkillsCheck({ shell }: { shell: LearningShell }) {
                                 />
                             </div>
 
-                            <h2 style={{ fontSize: '22px', fontWeight: 800, margin: '0 0 8px' }}>
+                            <h2 style={{ fontSize: 'var(--type-h3)', fontWeight: 'var(--pm-font-weight-800)', margin: '0 0 8px' }}>
                                 {q.question}
                             </h2>
-                            <p style={{ fontSize: '14px', color: 'var(--muted)', margin: '0 0 24px' }}>
+                            <p style={{ fontSize: 'var(--type-small)', color: 'var(--muted)', margin: '0 0 24px' }}>
                                 {q.help}
                             </p>
 
@@ -258,10 +258,10 @@ export default function SkillsCheck({ shell }: { shell: LearningShell }) {
                                                 gap: '14px',
                                                 padding: '16px 20px',
                                                 border: `1px solid ${isChosen ? 'var(--primary)' : 'var(--divider)'}`,
-                                                borderRadius: '8px',
-                                                background: isChosen ? 'var(--primary-soft)' : '#FFFFFF',
+                                                borderRadius: 'var(--pm-radius-8px)',
+                                                background: isChosen ? 'var(--primary-soft)' : 'var(--surface)',
                                                 color: 'var(--text)',
-                                                fontSize: '15px',
+                                                fontSize: 'var(--pm-font-size-15px)',
                                                 textAlign: 'left',
                                                 cursor: 'pointer',
                                                 transition: 'all 0.15s ease',
@@ -309,8 +309,8 @@ export default function SkillsCheck({ shell }: { shell: LearningShell }) {
                                     href="/learning"
                                     style={{
                                         color: 'var(--primary)',
-                                        fontSize: '14px',
-                                        fontWeight: 600,
+                                        fontSize: 'var(--type-small)',
+                                        fontWeight: 'var(--type-weight-semibold)',
                                         textDecoration: 'none',
                                     }}
                                 >
@@ -332,42 +332,42 @@ export default function SkillsCheck({ shell }: { shell: LearningShell }) {
 
                     {/* Right explanation sidebar */}
                     <aside className="pm-skills-check-sidebar">
-                        <section className="pm-panel" style={{ padding: '24px', borderRadius: '12px', marginBottom: '20px' }}>
-                            <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '0 0 16px' }}>
+                        <section className="pm-panel" style={{ padding: '24px', borderRadius: 'var(--card-radius)', marginBottom: '20px' }}>
+                            <h3 style={{ fontSize: 'var(--type-lead)', fontWeight: 'var(--pm-font-weight-800)', margin: '0 0 16px' }}>
                                 How we recommend a path
                             </h3>
 
                             <div style={{ display: 'flex', gap: '14px', marginBottom: '18px' }}>
                                 <User size={22} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
                                 <div>
-                                    <strong style={{ display: 'block', fontSize: '14px', marginBottom: '3px' }}>
+                                    <strong style={{ display: 'block', fontSize: 'var(--type-small)', marginBottom: '3px' }}>
                                         Your experience
                                     </strong>
-                                    <p style={{ margin: 0, fontSize: '13px', color: 'var(--muted)', lineHeight: 1.4 }}>
+                                    <p style={{ margin: 0, fontSize: 'var(--pm-font-size-13px)', color: 'var(--muted)', lineHeight: 'var(--type-line-h4)' }}>
                                         We look at your background and level of project experience.
                                     </p>
                                 </div>
                             </div>
 
                             <div style={{ display: 'flex', gap: '14px', marginBottom: '18px' }}>
-                                <Target size={22} color="#7C3AED" style={{ flexShrink: 0, marginTop: '2px' }} />
+                                <Target size={22} color="var(--pm-tone-7c3aed)" style={{ flexShrink: 0, marginTop: '2px' }} />
                                 <div>
-                                    <strong style={{ display: 'block', fontSize: '14px', marginBottom: '3px' }}>
+                                    <strong style={{ display: 'block', fontSize: 'var(--type-small)', marginBottom: '3px' }}>
                                         Your learning goals
                                     </strong>
-                                    <p style={{ margin: 0, fontSize: '13px', color: 'var(--muted)', lineHeight: 1.4 }}>
+                                    <p style={{ margin: 0, fontSize: 'var(--pm-font-size-13px)', color: 'var(--muted)', lineHeight: 'var(--type-line-h4)' }}>
                                         We consider what you want to achieve and the skills you want to build.
                                     </p>
                                 </div>
                             </div>
 
                             <div style={{ display: 'flex', gap: '14px', marginBottom: '18px' }}>
-                                <Compass size={22} color="#0D9488" style={{ flexShrink: 0, marginTop: '2px' }} />
+                                <Compass size={22} color="var(--pm-tone-0d9488)" style={{ flexShrink: 0, marginTop: '2px' }} />
                                 <div>
-                                    <strong style={{ display: 'block', fontSize: '14px', marginBottom: '3px' }}>
+                                    <strong style={{ display: 'block', fontSize: 'var(--type-small)', marginBottom: '3px' }}>
                                         How you approach project situations
                                     </strong>
-                                    <p style={{ margin: 0, fontSize: '13px', color: 'var(--muted)', lineHeight: 1.4 }}>
+                                    <p style={{ margin: 0, fontSize: 'var(--pm-font-size-13px)', color: 'var(--muted)', lineHeight: 'var(--type-line-h4)' }}>
                                         You'll try a few realistic project scenarios to show how you think and make decisions.
                                     </p>
                                 </div>
@@ -378,21 +378,21 @@ export default function SkillsCheck({ shell }: { shell: LearningShell }) {
                                     display: 'block',
                                     borderTop: '1px solid var(--divider)',
                                     paddingTop: '12px',
-                                    fontSize: '12px',
+                                    fontSize: 'var(--type-caption)',
                                     color: 'var(--muted)',
-                                    lineHeight: 1.4,
+                                    lineHeight: 'var(--type-line-h4)',
                                 }}
                             >
                                 ⓘ Your answers guide a starting recommendation—not a professional rating.
                             </small>
                         </section>
 
-                        <section className="pm-panel" style={{ padding: '24px', borderRadius: '12px' }}>
+                        <section className="pm-panel" style={{ padding: '24px', borderRadius: 'var(--card-radius)' }}>
                             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '10px' }}>
                                 <Settings size={20} color="var(--primary)" />
-                                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800 }}>You stay in control</h3>
+                                <h3 style={{ margin: 0, fontSize: 'var(--type-body)', fontWeight: 'var(--pm-font-weight-800)' }}>You stay in control</h3>
                             </div>
-                            <p style={{ margin: 0, fontSize: '13px', color: 'var(--muted)', lineHeight: 1.5 }}>
+                            <p style={{ margin: 0, fontSize: 'var(--pm-font-size-13px)', color: 'var(--muted)', lineHeight: 'var(--type-line-body)' }}>
                                 Review the recommendation, choose another path or retake the check anytime.
                             </p>
                         </section>

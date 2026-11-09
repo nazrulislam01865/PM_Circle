@@ -29,8 +29,8 @@
 .pm-dashboard .pm-membership-comparison .pm-compare-intro h1 {
     font-family: var(--pm-member-font);
     font-size: var(--pm-member-page-heading-size);
-    line-height: 1.25;
-    font-weight: 800;
+    line-height: var(--type-line-h2);
+    font-weight: var(--pm-font-weight-800);
     letter-spacing: -.7px;
     color: var(--pm-dash-deep);
 }
@@ -38,8 +38,8 @@
 .pm-dashboard .pm-membership-comparison .pm-compare-intro p {
     margin-top: 5px;
     font-size: var(--pm-member-font-body);
-    line-height: 1.5;
-    font-weight: 400;
+    line-height: var(--type-line-body);
+    font-weight: var(--type-weight-normal);
     color: var(--pm-dash-muted);
 }
 .pm-dashboard .pm-member-public-content .pm-panel {
@@ -52,12 +52,12 @@
 }
 .pm-dashboard .pm-member-public-content .pm-feature-section h2 {
     font-size: var(--pm-member-font-section);
-    font-weight: 750;
-    line-height: 1.35;
+    font-weight: var(--pm-font-weight-750);
+    line-height: var(--type-line-h3);
 }
 .pm-dashboard .pm-member-public-content .pm-feature-section > p {
     font-size: var(--pm-member-font-body);
-    line-height: 1.55;
+    line-height: var(--pm-line-height-1p55);
 }
 .pm-dashboard .pm-member-public-content .pm-feature-empty {
     padding: 28px 20px;
@@ -67,7 +67,7 @@
 }
 .pm-dashboard .pm-member-public-content .pm-feature-empty p {
     font-size: var(--pm-member-font-body);
-    line-height: 1.55;
+    line-height: var(--pm-line-height-1p55);
 }
 .pm-dashboard .pm-member-public-content .pm-feature-progress-grid {
     gap: var(--pm-member-page-gap);
@@ -90,18 +90,18 @@
 }
 .pm-dashboard .pm-member-public-content .pm-feature-privacy {
     font-size: var(--pm-member-font-xs);
-    line-height: 1.5;
+    line-height: var(--type-line-body);
     margin-top: 15px;
 }
 
 /* Use the same controls as the dashboard without changing button behavior. */
 .pm-dashboard .pm-member-public-content .pm-button.pm-button-sm,
 .pm-dashboard .pm-membership-comparison .pm-button.pm-button-sm {
-    min-height: 40px;
-    padding: 8px 15px;
+    min-height: var(--pm-control-dimension-40px);
+    padding: var(--space-2) var(--pm-control-padding-15px);
     border-radius: var(--pm-member-control-radius);
     font-size: var(--pm-member-font-sm);
-    line-height: 1.3;
+    line-height: var(--pm-line-height-1p3);
 }
 
 /* The discussion hero is a content section, not an independent public-page frame. */
@@ -121,7 +121,7 @@
     color: var(--pm-dash-deep);
     font-size: var(--pm-member-page-heading-size);
     letter-spacing: -.7px;
-    line-height: 1.25;
+    line-height: var(--type-line-h2);
     margin-bottom: 8px;
 }
 .pm-dashboard .pm-member-public-content .pm-feed-hero-content p {
@@ -145,7 +145,7 @@
 }
 .pm-dashboard .pm-member-public-content .pm-feed-search-input:focus {
     box-shadow: none;
-    outline: 2px solid #8ab8ef;
+    outline: 2px solid var(--pm-tone-8ab8ef);
     outline-offset: 1px;
 }
 

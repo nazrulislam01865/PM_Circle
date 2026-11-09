@@ -108,23 +108,23 @@ export default function Feed({ posts, activeTopic, feedTab, search, todayScenari
                     <div className="pm-feed-hero-illustration" aria-hidden="true">
                         <svg width="220" height="130" viewBox="0 0 220 130" fill="none" xmlns="http://www.w3.org/2000/svg">
                             {/* Dialogue bubble 1 */}
-                            <rect x="30" y="10" width="150" height="60" rx="12" fill="#EAF3FC" stroke="#0A66C2" strokeWidth="1.5" />
-                            <line x1="45" y1="26" x2="110" y2="26" stroke="#0A66C2" strokeWidth="2.5" strokeLinecap="round" />
-                            <line x1="45" y1="36" x2="150" y2="36" stroke="#8293A8" strokeWidth="2" strokeLinecap="round" />
-                            <line x1="45" y1="46" x2="130" y2="46" stroke="#8293A8" strokeWidth="2" strokeLinecap="round" />
-                            <path d="M50 70L40 82L60 70H50Z" fill="#EAF3FC" stroke="#0A66C2" strokeWidth="1.5" />
+                            <rect x="30" y="10" width="150" height="60" rx="12" fill="var(--primary-soft)" stroke="var(--primary)" strokeWidth="1.5" />
+                            <line x1="45" y1="26" x2="110" y2="26" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" />
+                            <line x1="45" y1="36" x2="150" y2="36" stroke="var(--input)" strokeWidth="2" strokeLinecap="round" />
+                            <line x1="45" y1="46" x2="130" y2="46" stroke="var(--input)" strokeWidth="2" strokeLinecap="round" />
+                            <path d="M50 70L40 82L60 70H50Z" fill="var(--primary-soft)" stroke="var(--primary)" strokeWidth="1.5" />
 
                             {/* Dialogue bubble 2 */}
-                            <rect x="70" y="55" width="140" height="55" rx="12" fill="#FFFFFF" stroke="#0A66C2" strokeWidth="1.5" />
-                            <line x1="85" y1="72" x2="175" y2="72" stroke="#8293A8" strokeWidth="2" strokeLinecap="round" />
-                            <line x1="85" y1="82" x2="150" y2="82" stroke="#8293A8" strokeWidth="2" strokeLinecap="round" />
-                            <path d="M185 110L195 122L175 110H185Z" fill="#FFFFFF" stroke="#0A66C2" strokeWidth="1.5" />
+                            <rect x="70" y="55" width="140" height="55" rx="12" fill="var(--surface)" stroke="var(--primary)" strokeWidth="1.5" />
+                            <line x1="85" y1="72" x2="175" y2="72" stroke="var(--input)" strokeWidth="2" strokeLinecap="round" />
+                            <line x1="85" y1="82" x2="150" y2="82" stroke="var(--input)" strokeWidth="2" strokeLinecap="round" />
+                            <path d="M185 110L195 122L175 110H185Z" fill="var(--surface)" stroke="var(--primary)" strokeWidth="1.5" />
 
                             {/* Little spark / avatar accents */}
-                            <circle cx="15" cy="50" r="14" fill="#EAF3FC" />
-                            <circle cx="205" cy="30" r="12" fill="#EAF3FC" />
-                            <line x1="12" y1="20" x2="20" y2="28" stroke="#0A66C2" strokeWidth="2" strokeLinecap="round" />
-                            <line x1="200" y1="75" x2="208" y2="83" stroke="#0A66C2" strokeWidth="2" strokeLinecap="round" />
+                            <circle cx="15" cy="50" r="14" fill="var(--primary-soft)" />
+                            <circle cx="205" cy="30" r="12" fill="var(--primary-soft)" />
+                            <line x1="12" y1="20" x2="20" y2="28" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" />
+                            <line x1="200" y1="75" x2="208" y2="83" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" />
                         </svg>
                     </div>
                 </section>
@@ -244,7 +244,7 @@ export default function Feed({ posts, activeTopic, feedTab, search, todayScenari
                         {/* 2. Find your next conversation */}
                         <section className="pm-sidebar-card">
                             <h3>Find your next conversation</h3>
-                            <p style={{ margin: 0, fontSize: '13px' }}>Explore popular topics from the community.</p>
+                            <p style={{ margin: 0, fontSize: 'var(--pm-font-size-13px)' }}>Explore popular topics from the community.</p>
 
                             <nav className="pm-topics-nav-list" aria-label="Popular topics">
                                 <Link
@@ -296,10 +296,10 @@ export default function Feed({ posts, activeTopic, feedTab, search, todayScenari
                         {/* 3. Your experience can help someone */}
                         <section className="pm-cta-guest-card">
                             <Users size={32} className="pm-cta-guest-icon" />
-                            <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '0 0 8px' }}>
+                            <h3 style={{ fontSize: 'var(--type-lead)', fontWeight: 'var(--pm-font-weight-800)', margin: '0 0 8px' }}>
                                 Your experience can help someone.
                             </h3>
-                            <p style={{ fontSize: '14px', color: 'var(--muted)', margin: '0 0 16px' }}>
+                            <p style={{ fontSize: 'var(--type-small)', color: 'var(--muted)', margin: '0 0 16px' }}>
                                 Ask questions. Share lessons. Learn with project professionals.
                             </p>
                             <Link href="/register" className="pm-button pm-btn-full">

@@ -50,6 +50,23 @@ final class PmpExamSimulatorTest extends TestCase
                 ->missing('questions.0.correct')->missing('questions.0.explanation')->where('responses', []));
     }
 
+    public function test_multiple_start_requests_return_the_same_active_attempt_as_json_without_hitting_the_old_six_request_limit(): void
+    {
+        $this->seed(PmpExamQuestionSeeder::class);
+        $user = $this->plusMember();
+        $takeUrl = null;
+
+        for ($i = 0; $i < 7; $i++) {
+            $response = $this->actingAs($user)->postJson(route('exams.pmp.start'));
+            $response->assertOk()->assertJsonStructure(['takeUrl']);
+            $currentUrl = $response->json('takeUrl');
+            $takeUrl ??= $currentUrl;
+            $this->assertSame($takeUrl, $currentUrl);
+        }
+
+        $this->assertDatabaseCount('pmp_exam_attempts', 1);
+    }
+
     public function test_answer_is_persisted_and_submit_scores_once_with_idempotent_results(): void
     {
         $this->seed(PmpExamQuestionSeeder::class);
@@ -78,6 +95,51 @@ final class PmpExamSimulatorTest extends TestCase
         $this->actingAs($user)->putJson(route('exams.pmp.answer', $attempt->id), [
             'questionId' => $firstQuestion, 'choice' => 'D', 'marked' => false,
         ])->assertStatus(409);
+    }
+
+    public function test_submission_returns_json_for_fetch_and_retries_do_not_hit_a_shared_ten_per_minute_limit(): void
+    {
+        $this->seed(PmpExamQuestionSeeder::class);
+        $user = $this->plusMember();
+        $this->actingAs($user)->post('/exams/pmp/start')->assertRedirect();
+        $attempt = DB::table('pmp_exam_attempts')->first();
+        $resultUrl = route('exams.pmp.result', $attempt->id);
+
+        // A retry is safe: it must return the same result and never score twice.
+        for ($i = 0; $i < 12; $i++) {
+            $this->actingAs($user)->postJson(route('exams.pmp.submit', $attempt->id))
+                ->assertOk()->assertExactJson(['resultUrl' => $resultUrl]);
+        }
+        $this->assertDatabaseHas('pmp_exam_attempts', [
+            'id' => $attempt->id, 'status' => 'completed', 'correct_count' => 0,
+        ]);
+    }
+
+    public function test_cleared_answer_is_not_counted_on_submission_and_review_mark_is_preserved(): void
+    {
+        $this->seed(PmpExamQuestionSeeder::class);
+        $user = $this->plusMember();
+        $this->actingAs($user)->post('/exams/pmp/start')->assertRedirect();
+        $attempt = DB::table('pmp_exam_attempts')->first();
+        $questionId = (int) json_decode($attempt->question_ids, true)[0];
+        $correctChoice = DB::table('pmp_exam_questions')->where('id', $questionId)->value('correct_option');
+
+        $this->actingAs($user)->putJson(route('exams.pmp.answer', $attempt->id), [
+            'questionId' => $questionId, 'choice' => $correctChoice, 'marked' => true,
+        ])->assertOk();
+        $this->actingAs($user)->putJson(route('exams.pmp.answer', $attempt->id), [
+            'questionId' => $questionId, 'choice' => null, 'marked' => true,
+        ])->assertOk();
+
+        $this->assertDatabaseHas('pmp_exam_attempt_answers', [
+            'attempt_id' => $attempt->id, 'question_id' => $questionId,
+            'choice' => null, 'marked_for_review' => true,
+        ]);
+        $this->actingAs($user)->post(route('exams.pmp.submit', $attempt->id))
+            ->assertRedirect(route('exams.pmp.result', $attempt->id));
+        $this->assertDatabaseHas('pmp_exam_attempts', [
+            'id' => $attempt->id, 'status' => 'completed', 'correct_count' => 0,
+        ]);
     }
 
     public function test_member_cannot_read_or_modify_another_members_attempt(): void

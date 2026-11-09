@@ -1,0 +1,109 @@
+/* PM Trends uses the shared PM Circle page container, header and design tokens. */
+.pm-trends { min-width:0; color:var(--text); font-family:var(--font); font-size:var(--type-small); }
+.pm-trends-hero { position:relative; overflow:hidden; min-height:140px; margin-bottom:var(--space-6); border:1px solid var(--divider); border-radius:var(--card-radius); background:linear-gradient(110deg,var(--pm-tone-f8fbff) 22%,var(--pm-tone-eff6ff) 64%,var(--pm-tone-e3f0ff)); }
+.pm-trends-hero::after { content:''; position:absolute; right:0; bottom:0; width:30%; height:96%; background:linear-gradient(180deg,var(--pm-tone-a0c8f6),var(--pm-tone-e6f2ff)); opacity:.78; clip-path:polygon(0 78%,9% 62%,17% 68%,28% 45%,41% 62%,63% 17%,76% 34%,88% 4%,100% 24%,100% 100%,0 100%); pointer-events:none; }
+.pm-trends-hero-content { position:relative; z-index:1; padding:30px 32px; }
+.pm-trends-hero-text { border-left:5px solid var(--primary); padding-left:24px; }
+.pm-trends-hero h1 { font-family:var(--font); font-size:var(--type-h2); line-height:var(--type-line-h1); font-weight:var(--type-weight-bold); letter-spacing:-.6px; margin:0 0 2px; }
+.pm-trends-hero p { margin:0; font-size:var(--type-small); line-height:var(--pm-line-height-1p45); }
+.pm-trends-listing { padding:0; }
+.pm-trends-filters { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:13px; }
+.pm-trends .pm-trend-filter { display:inline-flex; align-items:center; justify-content:center; gap:11px; min-width:117px; min-height:var(--pm-control-dimension-40px); padding:var(--pm-control-padding-7px) var(--pm-control-padding-17px); border:1px solid var(--divider); border-radius:var(--radius); background:var(--surface); color:var(--text); font-family:var(--font); font-size:var(--type-small); font-weight:var(--type-weight-semibold); line-height:var(--type-line-h4); box-shadow:var(--pm-shadow); white-space:nowrap; }
+.pm-trends .pm-trend-filter:first-child { min-width:120px; }
+.pm-trends .pm-trend-filter.is-selected { background:var(--primary); color:var(--surface); border-color:var(--primary); }
+.pm-trends .pm-trend-filter:hover:not(.is-selected) { background:var(--primary-soft); border-color:var(--primary); }
+.pm-trend-cards { display:grid; gap:6px; }
+.pm-trend-card { display:grid; grid-template-columns:250px minmax(0,1fr) 124px; gap:20px; align-items:center; min-height:123px; padding:12px 17px; background:var(--surface); border:1px solid var(--divider); border-radius:var(--card-radius); box-shadow:var(--pm-shadow); }
+.pm-trend-image-link { display:block; height:96px; border-radius:var(--radius); overflow:hidden; }
+.pm-trend-image-link img { display:block; width:100%; height:100%; object-fit:cover; }
+.pm-trend-card-content { min-width:0; align-self:center; }
+.pm-trend-badges { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.pm-trend-badge { display:inline-flex; align-items:center; border-radius:var(--card-radius); padding:3px 10px; font-size:var(--type-caption); line-height:var(--type-line-h1); font-weight:var(--type-weight-bold); white-space:nowrap; }
+.pm-trend-badge.is-purple { background:var(--pm-tone-ebddfc); color:var(--pm-tone-43227a); }
+.pm-trend-badge.is-blue { background:var(--pm-tone-ddecff); color:var(--pm-tone-164b96); }
+.pm-trend-badge.is-muted { background:var(--pm-tone-e8eefa); color:var(--text); }
+.pm-trend-card h2 { margin:5px 0 1px; font-size:var(--type-h4); line-height:var(--pm-line-height-1p3); font-weight:var(--type-weight-bold); letter-spacing:-.2px; }
+.pm-trend-card h2 a { color:var(--text); text-decoration:none; }
+.pm-trend-card h2 a:hover { color:var(--primary); }
+.pm-trend-card p { margin:0; font-size:var(--type-small); line-height:var(--pm-line-height-1p32); }
+.pm-trend-meta { display:flex; flex-wrap:wrap; align-items:center; margin-top:10px; gap:0; font-size:var(--type-caption); line-height:var(--type-line-h2); }
+.pm-trend-meta>span { display:inline-flex; align-items:center; gap:5px; padding-right:13px; margin-right:13px; border-right:1px solid var(--divider); white-space:nowrap; }
+.pm-trend-meta>span:last-child { padding-right:0; margin-right:0; border:0; white-space:normal; }
+.pm-trend-meta svg { width:15px; height:15px; flex:none; }
+.pm-trend-meta .is-ai svg, .pm-trend-meta .is-source svg { color:var(--primary); }
+.pm-trends .pm-trend-read { min-height:36px; justify-self:end; padding:7px 13px; font-size:var(--type-caption); font-weight:var(--type-weight-bold); white-space:nowrap; }
+.pm-trend-empty { padding:30px; border:1px solid var(--divider); border-radius:var(--card-radius); text-align:center; color:var(--muted); }
+/* Article view follows the same full-width page and panel structure as Community Feed. */
+.pm-trend-article-page { min-height:calc(100vh - 130px); }
+.pm-trends-article { width:100%; min-width:0; padding:32px 36px; }
+.pm-trend-breadcrumb { display:flex; align-items:center; gap:11px; margin-bottom:20px; font-size:var(--type-small); font-weight:var(--type-weight-semibold); }
+.pm-trend-breadcrumb a { display:inline-flex; align-items:center; color:var(--text); }
+.pm-trend-breadcrumb a:hover { color:var(--primary); }
+.pm-trend-breadcrumb svg { flex:none; }
+.pm-trend-article-page .pm-trend-badges { margin-bottom:7px; }
+.pm-trend-article-page .pm-trend-badge { padding:5px 12px; }
+.pm-trends-article h1 { font-size:var(--type-h2); line-height:var(--pm-line-height-1p28); font-weight:var(--type-weight-bold); letter-spacing:-.45px; margin:0 0 3px; }
+.pm-trend-lead { margin:0 0 10px; font-size:var(--type-lead); line-height:var(--type-line-h3); color:var(--pm-tone-41506b); }
+.pm-trend-article-toolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin:8px 0 13px; }
+.pm-trend-article-byline { display:flex; align-items:center; flex-wrap:wrap; gap:9px; font-size:var(--type-small); }
+.pm-trend-article-byline .pm-brand { line-height:var(--pm-line-height-1); }
+.pm-trend-article-byline .pm-brand-icon-small { width:25px; height:25px; }
+.pm-trend-article-byline .pm-brand-icon-small::before { width:13px; height:13px; }
+.pm-trend-article-byline .pm-brand-icon-small span { width:24px; }
+.pm-trend-article-byline .pm-brand-copy { display:none; }
+.pm-trend-article-byline strong { font-weight:var(--type-weight-bold); }
+.pm-trend-separator { display:inline-block; height:17px; border-left:1px solid var(--divider); margin:0 2px; }
+.pm-trend-reading { display:inline-flex; align-items:center; gap:5px; }
+.pm-trend-social { display:flex; gap:8px; }
+.pm-trends .pm-trend-icon-button { display:grid; place-items:center; min-width:39px; height:var(--pm-control-dimension-39px); border:1px solid var(--divider); border-radius:var(--radius); color:var(--text); background:var(--surface); }
+.pm-trends .pm-trend-icon-button:hover, .pm-trends .pm-trend-icon-button[aria-pressed="true"] { background:var(--primary-soft); color:var(--primary); }
+.pm-trend-share-status { color:var(--primary); font-size:var(--type-caption); text-align:right; }
+.pm-trend-cover { display:block; width:100%; height:auto; aspect-ratio:744/196; object-fit:cover; border-radius:var(--radius); margin:0 0 16px; }
+.pm-trend-article-body { font-size:var(--type-body); line-height:var(--pm-line-height-1p37); }
+.pm-trend-article-body p { margin:0 0 14px; }
+.pm-trend-article-body h2 { margin:14px 0 4px; font-size:var(--type-h3); line-height:var(--pm-line-height-1p3); font-weight:var(--type-weight-bold); }
+.pm-trend-article-body ul { list-style:disc; margin:0 0 17px; padding-left:26px; }
+.pm-trend-article-body li { padding-left:3px; margin:2px 0; }
+.pm-trend-article-body li::marker { color:var(--primary); }
+.pm-trend-article-chart { display:block; width:100%; height:auto; aspect-ratio:744/143; object-fit:cover; border:1px solid var(--divider); border-radius:var(--radius); margin:15px 0; }
+.pm-trend-sources { display:flex; align-items:center; gap:14px; padding:17px 4px; margin-top:23px; border-top:1px solid var(--divider); font-size:var(--type-small); }
+.pm-trend-sources svg { flex:none; }
+.pm-trend-sources a { color:var(--primary); }
+.pm-trend-sources a:hover { text-decoration:underline; }
+.pm-trend-disclaimer { display:flex; align-items:flex-start; gap:15px; padding:14px 16px; margin-top:5px; border:1px solid var(--pm-tone-c7ddfb); border-radius:var(--radius); background:var(--primary-soft); font-size:var(--type-small); line-height:var(--type-line-h4); }
+.pm-trend-disclaimer svg { flex:none; color:var(--primary); }
+.pm-trend-disclaimer p { margin:0; }
+.pm-trends-not-found { padding:40px 0; }
+@media(max-width:1080px) {
+ .pm-trend-card { grid-template-columns:215px minmax(0,1fr) 110px; gap:14px; }
+ .pm-trend-card h2 { font-size:var(--type-body); }
+ .pm-trend-meta { row-gap:6px; }
+}
+@media(max-width:740px) {
+ .pm-trends-hero h1 { font-size:var(--type-h2-mobile); }
+ .pm-trends-hero::after { opacity:.4; width:45%; }
+ .pm-trends-filters { flex-wrap:nowrap; overflow-x:auto; padding-bottom:var(--pm-control-padding-5px); scrollbar-width:thin; }
+ .pm-trends .pm-trend-filter { flex:none; }
+ .pm-trend-card { grid-template-columns:140px minmax(0,1fr); gap:12px; min-height:0; padding:12px; }
+ .pm-trend-image-link { height:100px; }
+ .pm-trend-card-content { align-self:start; }
+ .pm-trend-card h2 { font-size:var(--type-small); }
+ .pm-trend-card p { font-size:var(--type-caption); }
+ .pm-trend-meta { font-size:var(--pm-font-size-11px); }
+ .pm-trends .pm-trend-read { grid-column:2; justify-self:start; }
+ .pm-trends-article { padding:24px; }
+ .pm-trend-lead { font-size:var(--type-body); }
+ .pm-trend-article-body { font-size:var(--type-body); line-height:var(--pm-line-height-1p48); }
+}
+@media(max-width:450px) {
+ .pm-trends-hero-content { padding:20px; }
+ .pm-trends-hero-text { padding-left:13px; }
+ .pm-trend-card { grid-template-columns:100px minmax(0,1fr); gap:10px; }
+ .pm-trend-image-link { height:90px; }
+ .pm-trend-card h2 { font-size:var(--type-small); }
+ .pm-trend-meta>span { margin-right:7px; padding-right:7px; }
+ .pm-trends-article { padding:20px 16px; }
+ .pm-trends-article h1 { font-size:var(--type-h3); }
+ .pm-trend-article-byline { font-size:var(--type-caption); gap:6px; }
+ .pm-trend-article-toolbar { align-items:flex-start; }
+}

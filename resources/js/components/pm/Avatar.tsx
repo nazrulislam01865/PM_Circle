@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 /** Demo portraits are extracted from the supplied UI reference. Real members get initials until upload. */
-const swatches = ['#d7e4f6', '#d7e8e5', '#f2e1df', '#e6e1f2', '#f4e6cd'];
+const swatches = ['var(--pm-tone-d7e4f6)', 'var(--pm-tone-d7e8e5)', 'var(--pm-tone-f2e1df)', 'var(--pm-tone-e6e1f2)', 'var(--pm-tone-f4e6cd)'];
 const portraitByName: Record<string, string> = {
     'Community Hero': 'community-hero',
     'Community Top': 'community-top',

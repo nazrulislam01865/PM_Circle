@@ -6,7 +6,7 @@ import type { DashboardData } from '@/types/dashboard';
 export function DashboardInsightsPanel({ dashboard }: { dashboard: DashboardData }) {
     const views = dashboard.isDemo ? 32 : 0;
     const thisWeek = dashboard.isDemo ? 8 : 0;
-    if (dashboard.plan === 'free') return <section className="pm-dash-card pm-dash-upgrade-panel"><h2><Crown size={22} color="#f4b032" fill="#f4b032"/> Explore Pro</h2><p>Unlock your full learning experience</p>
+    if (dashboard.plan === 'free') return <section className="pm-dash-card pm-dash-upgrade-panel"><h2><Crown size={22} color="var(--pm-tone-f4b032)" fill="var(--pm-tone-f4b032)"/> Explore Pro</h2><p>Unlock your full learning experience</p>
         <ul><li><ChartNoAxesColumnIncreasing/> AI feedback on your answers</li><li><VenetianMask/> Ask anonymous questions</li><li><Lightbulb/> Deeper insights and analytics</li><li><GraduationCap/> More simulators and practice content</li></ul>
         <Link href="/pricing" className="pm-dash-btn pm-dash-btn-outline pm-dash-full">View plans <ArrowRight size={21}/></Link>
     </section>;

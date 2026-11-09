@@ -19,6 +19,10 @@ use App\Http\Controllers\Scenario\ScenarioReactionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+// Public, static PM Trends prototype; no database query or new content table.
+Route::inertia('/pm-trends', 'trends/Index')->name('pm-trends.index');
+Route::get('/pm-trends/{slug}', fn (string $slug) => \Inertia\Inertia::render('trends/Show', ['slug' => $slug]))
+    ->where('slug', '[a-z0-9-]+')->name('pm-trends.show');
 Route::get('/pricing', [HomeController::class, 'pricing'])->name('pricing');
 Route::get('/community', [PostController::class, 'index'])->name('community.index');
 Route::get('/community/feed-page', [PostController::class, 'feedPage'])->middleware('throttle:90,1')->name('community.feed-page');
@@ -55,10 +59,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 Route::middleware(['auth', 'verified', 'pm.onboarded'])->group(function () {
     Route::get('/exams/pmp', [PmpExamController::class, 'index'])->name('exams.pmp.index');
-    Route::post('/exams/pmp/start', [PmpExamController::class, 'start'])->middleware('throttle:6,1')->name('exams.pmp.start');
+    Route::post('/exams/pmp/start', [PmpExamController::class, 'start'])->middleware('throttle:pmp-exam-start')->name('exams.pmp.start');
     Route::get('/exams/pmp/attempts/{attempt}', [PmpExamController::class, 'take'])->whereNumber('attempt')->name('exams.pmp.take');
     Route::put('/exams/pmp/attempts/{attempt}/answer', [PmpExamController::class, 'answer'])->middleware('throttle:120,1')->whereNumber('attempt')->name('exams.pmp.answer');
-    Route::post('/exams/pmp/attempts/{attempt}/submit', [PmpExamController::class, 'submit'])->middleware('throttle:10,1')->whereNumber('attempt')->name('exams.pmp.submit');
+    Route::post('/exams/pmp/attempts/{attempt}/submit', [PmpExamController::class, 'submit'])->middleware('throttle:pmp-exam-submit')->whereNumber('attempt')->name('exams.pmp.submit');
     Route::get('/exams/pmp/attempts/{attempt}/result', [PmpExamController::class, 'result'])->whereNumber('attempt')->name('exams.pmp.result');
     Route::get('/exams/pmp/attempts/{attempt}/review', [PmpExamController::class, 'review'])->whereNumber('attempt')->name('exams.pmp.review');
     // Member workspace aliases reuse the public page queries and React components.

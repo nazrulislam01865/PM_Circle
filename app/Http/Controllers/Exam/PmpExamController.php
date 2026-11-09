@@ -35,7 +35,7 @@ final class PmpExamController extends Controller
         ]);
     }
 
-    public function start(Request $request, CurrentMemberPlan $plans): RedirectResponse
+    public function start(Request $request, CurrentMemberPlan $plans): JsonResponse|RedirectResponse
     {
         $this->authorizeMember($request, $plans);
         $userId = $request->user()->id;
@@ -62,6 +62,10 @@ final class PmpExamController extends Controller
                 'created_at' => $now, 'updated_at' => $now,
             ]);
         });
+
+        if ($request->expectsJson()) {
+            return response()->json(['takeUrl' => route('exams.pmp.take', ['attempt' => $id])]);
+        }
 
         return to_route('exams.pmp.take', ['attempt' => $id]);
     }
@@ -117,10 +121,17 @@ final class PmpExamController extends Controller
         });
     }
 
-    public function submit(Request $request, int $attempt, CurrentMemberPlan $plans): RedirectResponse
+    public function submit(Request $request, int $attempt, CurrentMemberPlan $plans): JsonResponse|RedirectResponse
     {
         $this->authorizeMember($request, $plans);
         DB::transaction(fn () => $this->finishAttempt($attempt, $request->user()->id));
+
+        // Fetch callers need a JSON success response; browser and Inertia requests
+        // keep their existing redirect behavior.
+        if ($request->expectsJson()) {
+            return response()->json(['resultUrl' => route('exams.pmp.result', ['attempt' => $attempt])]);
+        }
+
         return to_route('exams.pmp.result', ['attempt' => $attempt]);
     }
 

@@ -3,12 +3,12 @@
     .pm-learn-columns { grid-template-columns: minmax(0,1fr) 300px; }
     .pm-learn-continue-stats { flex-basis: 32%; }
     .pm-learn-path-icon { flex-basis: 50px; width: 50px; height: 50px; }
-    .pm-learn-step-title { font-size: 12px; }
+    .pm-learn-step-title { font-size: var(--type-caption); }
     .pm-learn-step-block { gap: 6px; }
 }
 @media(max-width:1060px) {
     .pm-learn-continue { flex-wrap: wrap; }
-    .pm-learn-continue-stats { flex: 1 1 100%; padding-top: 10px; border-left: none; border-top: 1px solid #e3e9ef; }
+    .pm-learn-continue-stats { flex: 1 1 100%; padding-top: 10px; border-left: none; border-top: 1px solid var(--pm-tone-e3e9ef); }
     .pm-learn-columns { grid-template-columns: minmax(0,1fr) 265px; }
     .pm-learn-path-grid { grid-template-columns: 1fr; }
     .pm-learn-practice-grid { grid-template-columns: repeat(2,1fr); }
@@ -24,7 +24,7 @@
 @media(max-width:650px) {
     .pm-learn-content { padding-inline: 12px; }
     .pm-learn-page-title { align-items: flex-start; }
-    .pm-learn-page-title .pm-dash-btn { font-size: 0; min-width: 42px; padding: 9px; }
+    .pm-learn-page-title .pm-dash-btn { font-size: var(--pm-font-size-zero); min-width: 42px; padding: var(--pm-control-padding-9px); }
     .pm-learn-page-title .pm-dash-btn svg { width: 20px; }
     .pm-learn-continue-icon { width: 50px; height: 50px; }
     .pm-learn-continue-main { min-width: 0; }
@@ -32,9 +32,9 @@
     .pm-learn-path-grid, .pm-learn-side-col { grid-template-columns: minmax(0,1fr); }
     .pm-learn-continue-stats { grid-template-columns: repeat(3,1fr); }
     .pm-learn-continue-stats > div { padding-inline: 6px; }
-    .pm-learn-page-title p { font-size: 13px; }
+    .pm-learn-page-title p { font-size: var(--pm-font-size-13px); }
     .pm-learn-tabs { gap: 0; justify-content: space-between; }
-    .pm-learn-tabs button { padding: 9px 7px; font-size: 12px; }
+    .pm-learn-tabs button { padding: var(--pm-control-padding-9px) var(--pm-control-padding-7px); font-size: var(--type-caption); }
     .pm-learn-levels { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
     .pm-learn-levels button { white-space: nowrap; }
     .pm-learn-select { min-width: 110px; }
@@ -47,11 +47,11 @@
     .pm-learn-steps { flex-wrap: wrap; justify-content: flex-start; gap: 9px; }
     .pm-learn-step-block { flex: 0 0 auto; }
     .pm-learn-step-number { width: 28px; height: 28px; }
-    .pm-learn-step-title { font-size: 11px; }
+    .pm-learn-step-title { font-size: var(--pm-font-size-11px); }
     .pm-learn-reminder { flex-wrap: wrap; }
     .pm-learn-reminder a { margin-left: 72px; }
-    .pm-learn-activity-nav .pm-dash-btn { min-width: 0; flex: 1; font-size: 11px; padding: 8px; }
-    .pm-learn-activity-title h1 { font-size: 28px; }
-    .pm-learn-save-exit { font-size: 11px; }
+    .pm-learn-activity-nav .pm-dash-btn { min-width: 0; flex: 1; font-size: var(--pm-font-size-11px); padding: var(--space-2); }
+    .pm-learn-activity-title h1 { font-size: var(--type-h2); }
+    .pm-learn-save-exit { font-size: var(--pm-font-size-11px); }
     .pm-learn-save-exit svg { width: 19px; }
 }

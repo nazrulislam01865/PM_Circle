@@ -167,7 +167,7 @@ export default function Show({ scenario, responses, related }: Props) {
                 </nav>
 
                 <div style={{ marginBottom: '18px' }}>
-                    <Link href={libraryRoot} className="pm-back" style={{ fontWeight: 600 }}>
+                    <Link href={libraryRoot} className="pm-back" style={{ fontWeight: 'var(--type-weight-semibold)' }}>
                         ← All challenges
                     </Link>
                 </div>
@@ -538,10 +538,10 @@ export default function Show({ scenario, responses, related }: Props) {
                                                             >
                                                                 <Avatar name={reply.user.name} size={28} />
                                                                 <div className="pm-author-meta">
-                                                                    <strong style={{ fontSize: '13px' }}>
+                                                                    <strong style={{ fontSize: 'var(--pm-font-size-13px)' }}>
                                                                         {reply.user.name}
                                                                     </strong>
-                                                                    <span style={{ fontSize: '11px' }}>
+                                                                    <span style={{ fontSize: 'var(--pm-font-size-11px)' }}>
                                                                         {reply.user.profile?.role ?? 'Member'} · 4 hours
                                                                         ago
                                                                     </span>
@@ -549,10 +549,10 @@ export default function Show({ scenario, responses, related }: Props) {
                                                             </div>
                                                             <p
                                                                 style={{
-                                                                    fontSize: '14px',
+                                                                    fontSize: 'var(--type-small)',
                                                                     color: 'var(--text)',
                                                                     margin: 0,
-                                                                    lineHeight: 1.5,
+                                                                    lineHeight: 'var(--type-line-body)',
                                                                 }}
                                                             >
                                                                 {reply.body}
@@ -614,21 +614,21 @@ export default function Show({ scenario, responses, related }: Props) {
                         <section className="pm-sidebar-card">
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
                                 <Cpu size={22} color="var(--primary)" />
-                                <h3 style={{ margin: 0, fontSize: '18px' }}>How AI feedback works</h3>
+                                <h3 style={{ margin: 0, fontSize: 'var(--type-lead)' }}>How AI feedback works</h3>
                             </div>
-                            <p style={{ fontSize: '14px', color: 'var(--text)', lineHeight: 1.5 }}>
+                            <p style={{ fontSize: 'var(--type-small)', color: 'var(--text)', lineHeight: 'var(--type-line-body)' }}>
                                 Responses are reviewed for reasoning, trade-offs, stakeholder involvement and practical
                                 next steps.
                             </p>
                             <small
-                                style={{ display: 'block', color: 'var(--muted)', fontSize: '12px', margin: '8px 0' }}
+                                style={{ display: 'block', color: 'var(--muted)', fontSize: 'var(--type-caption)', margin: '8px 0' }}
                             >
                                 AI feedback can be imperfect. Use your judgment.
                             </small>
                             <a
                                 href="#assessment-criteria"
                                 className="pm-text-link"
-                                style={{ fontSize: '13px', display: 'inline-block', marginTop: '6px' }}
+                                style={{ fontSize: 'var(--pm-font-size-13px)', display: 'inline-block', marginTop: '6px' }}
                             >
                                 View assessment criteria →
                             </a>
@@ -637,10 +637,10 @@ export default function Show({ scenario, responses, related }: Props) {
                         {/* 3. Your perspective belongs here */}
                         <section className="pm-cta-guest-card">
                             <Users size={28} className="pm-cta-guest-icon" />
-                            <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '0 0 8px' }}>
+                            <h3 style={{ fontSize: 'var(--type-lead)', fontWeight: 'var(--pm-font-weight-800)', margin: '0 0 8px' }}>
                                 Your perspective belongs here.
                             </h3>
-                            <p style={{ fontSize: '14px', color: 'var(--muted)', margin: '0 0 16px' }}>
+                            <p style={{ fontSize: 'var(--type-small)', color: 'var(--muted)', margin: '0 0 16px' }}>
                                 Respond, learn from feedback and track your progress.
                             </p>
                             <Link href="/register" className="pm-button pm-btn-full">
@@ -655,7 +655,7 @@ export default function Show({ scenario, responses, related }: Props) {
                                 style={{
                                     display: 'block',
                                     color: 'var(--muted)',
-                                    fontSize: '12px',
+                                    fontSize: 'var(--type-caption)',
                                     marginTop: '16px',
                                 }}
                             >
@@ -675,7 +675,7 @@ export default function Show({ scenario, responses, related }: Props) {
                                             className="pm-topic-nav-item"
                                             style={{ padding: '14px 0' }}
                                         >
-                                            <span style={{ fontSize: '14px', color: 'var(--text)' }}>{item.title}</span>
+                                            <span style={{ fontSize: 'var(--type-small)', color: 'var(--text)' }}>{item.title}</span>
                                             <ChevronRight size={16} color="var(--primary)" />
                                         </Link>
                                     ))}

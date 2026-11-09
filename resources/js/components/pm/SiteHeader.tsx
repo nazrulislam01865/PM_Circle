@@ -9,6 +9,7 @@ const navigation = [
     { href: '/learning', label: 'Learn & Practice' },
     { href: '/careers', label: 'Careers' },
     { href: '/members', label: 'Members' },
+    { href: '/pm-trends', label: 'PM Trends' },
 ];
 
 type HeaderProps = {
@@ -32,7 +33,8 @@ export function SiteHeader({ active, joinLabel = 'Join the community', actions, 
             (href === '/community' && pathname.startsWith('/posts/')) ||
             (href === '/learning' && pathname.startsWith('/learning/')) ||
             (href === '/careers' && pathname.startsWith('/careers/')) ||
-            (href === '/members' && pathname.startsWith('/members/'));
+            (href === '/members' && pathname.startsWith('/members/')) ||
+            (href === '/pm-trends' && pathname.startsWith('/pm-trends/'));
     };
 
     return <header className="pm-header pm-site-header">

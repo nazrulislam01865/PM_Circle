@@ -32,7 +32,7 @@ export function ExamToolGuide() {
             <ol><li>Select text in the question or scenario and click Highlight (or press H) to mark important words.</li>
                 <li>Enable Strike Through (or press S), then click any option to cross it out.</li>
                 <li>Apply or remove these tools any time before submitting the exam.</li></ol>
-        </section><p className="helper">Strike-through and highlighting are study aids and do not change your selected answer.</p></aside></div>
+        </section><p className="helper">Striking out a selected answer clears that choice. With Strike Through enabled, click the option again to restore it.</p></aside></div>
     </div>;
 }
 

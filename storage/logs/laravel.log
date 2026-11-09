@@ -1,0 +1,8 @@
+[2026-11-09 16:46:42] testing.WARNING: E2A transactional email request not accepted. {"http_status":202,"provider_status":"pending_review","error_code":null} 
+[2026-11-09 16:46:42] testing.WARNING: Password reset email delivery failed. {"exception_type":"RuntimeException"} 
+[2026-11-09 16:50:19] testing.WARNING: E2A transactional email request not accepted. {"http_status":202,"provider_status":"pending_review","error_code":null} 
+[2026-11-09 16:50:19] testing.WARNING: Password reset email delivery failed. {"exception_type":"RuntimeException"} 
+[2026-11-09 17:38:56] testing.WARNING: E2A transactional email request not accepted. {"http_status":202,"provider_status":"pending_review","error_code":null} 
+[2026-11-09 17:38:56] testing.WARNING: Password reset email delivery failed. {"exception_type":"RuntimeException"} 
+[2026-11-09 17:53:03] testing.WARNING: E2A transactional email request not accepted. {"http_status":202,"provider_status":"pending_review","error_code":null} 
+[2026-11-09 17:53:03] testing.WARNING: Password reset email delivery failed. {"exception_type":"RuntimeException"} 

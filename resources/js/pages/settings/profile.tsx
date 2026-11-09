@@ -395,7 +395,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                             ✏️ Edit
                                         </button>
                                     </div>
-                                    <div className="text-[14.5px] leading-relaxed text-[#334155] whitespace-pre-line">
+                                    <div className="text-(length:--pm-font-size-14p5px) leading-relaxed text-(color:--pm-tone-334155) whitespace-pre-line">
                                         {profileData.about}
                                     </div>
                                 </div>
@@ -460,7 +460,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                     {profileData.featured_project ? <div className="pm-project-card">
                                         <div className="pm-project-thumb">
                                             <Laptop size={44} strokeWidth={1.5} />
-                                            <span className="text-[11px] font-semibold tracking-wider uppercase opacity-80">
+                                            <span className="text-(length:--pm-font-size-11px) font-semibold tracking-wider uppercase opacity-80">
                                                 Interactive Portal
                                             </span>
                                         </div>
@@ -486,7 +486,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                                 >
                                                     View work sample ↗
                                                 </button>
-                                                <span className="text-[12px] text-[#64748B]">Anonymised case study</span>
+                                                <span className="text-(length:--type-caption) text-(color:--disabled-text)">Anonymised case study</span>
                                             </div>
                                         </div>
                                     </div> : <p className="pm-profile-empty">No projects added yet. Add a project in Edit profile.</p>}
@@ -526,10 +526,10 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                     <div className="space-y-4">
                                         {profileData.educations.map((edu) => (
                                             <div key={edu.id} className="flex items-start gap-3">
-                                                <GraduationCap size={22} className="text-[#0A66C2] mt-0.5" />
+                                                <GraduationCap size={22} className="text-(color:--primary) mt-0.5" />
                                                 <div>
-                                                    <div className="font-semibold text-[#0F172A] text-[15px]">{edu.degree}</div>
-                                                    <div className="text-[13.5px] text-[#475569]">
+                                                    <div className="font-semibold text-(color:--pm-tone-0f172a) text-(length:--pm-font-size-15px)">{edu.degree}</div>
+                                                    <div className="text-(length:--pm-font-size-13p5px) text-(color:--pm-tone-475569)">
                                                         {edu.institution} · Graduated {edu.year}
                                                     </div>
                                                 </div>
@@ -537,11 +537,11 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                         ))}
 
                                         {profileData.certifications.map((cert) => (
-                                            <div key={cert.id} className="flex items-start gap-3 pt-3 border-t border-[#F1F5F9]">
-                                                <Shield size={22} className="text-[#D97706] mt-0.5" />
+                                            <div key={cert.id} className="flex items-start gap-3 pt-3 border-t border-(color:--pm-tone-f1f5f9)">
+                                                <Shield size={22} className="text-(color:--pm-tone-d97706) mt-0.5" />
                                                 <div>
-                                                    <div className="font-semibold text-[#0F172A] text-[15px]">{cert.name}</div>
-                                                    <div className="text-[13.5px] text-[#475569]">
+                                                    <div className="font-semibold text-(color:--pm-tone-0f172a) text-(length:--pm-font-size-15px)">{cert.name}</div>
+                                                    <div className="text-(length:--pm-font-size-13p5px) text-(color:--pm-tone-475569)">
                                                         {cert.status_label || 'Valid until 2028 · Self-reported'}
                                                     </div>
                                                 </div>
@@ -561,7 +561,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                         </Link>
                                     </div>
 
-                                    <p className="text-[13.5px] text-[#475569] m-0">
+                                    <p className="text-(length:--pm-font-size-13p5px) text-(color:--pm-tone-475569) m-0">
                                         Track your practical simulation experience, solved workplace dilemmas, and accredited learning hours.
                                     </p>
 
@@ -589,7 +589,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                             <div className="pm-card">
                                 <div className="pm-card-body">
                                     <div className="pm-card-header-row mb-3">
-                                        <h4 className="pm-card-title text-[16px]">Profile completeness</h4>
+                                        <h4 className="pm-card-title text-(length:--type-body)">Profile completeness</h4>
                                     </div>
 
                                     <div className="pm-progress-widget">
@@ -598,13 +598,13 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                                 <path
                                                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                                                     fill="none"
-                                                    stroke="#E2E8F0"
+                                                    stroke="var(--pm-tone-e2e8f0)"
                                                     strokeWidth="3.5"
                                                 />
                                                 <path
                                                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                                                     fill="none"
-                                                    stroke="#0A66C2"
+                                                    stroke="var(--primary)"
                                                     strokeWidth="3.5"
                                                     strokeDasharray={`${profileData.completeness}, 100`}
                                                 />
@@ -631,16 +631,16 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                             <div className="pm-card">
                                 <div className="pm-card-body">
                                     <div className="pm-card-header-row mb-3">
-                                        <h4 className="pm-card-title text-[16px]">Profile visibility</h4>
+                                        <h4 className="pm-card-title text-(length:--type-body)">Profile visibility</h4>
                                     </div>
 
                                     <div className="space-y-4">
                                         <div>
-                                            <label className="text-[12px] font-semibold text-[#64748B] uppercase block mb-1">
+                                            <label className="text-(length:--type-caption) font-semibold text-(color:--disabled-text) uppercase block mb-1">
                                                 Who can see your profile
                                             </label>
                                             <select
-                                                className="pm-select text-[13.5px] py-2"
+                                                className="pm-select text-(length:--pm-font-size-13p5px) py-2"
                                                 value={formData.visibility}
                                                 onChange={(e) => {
                                                     setFormData({ ...formData, visibility: e.target.value });
@@ -655,8 +655,8 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                             </select>
                                         </div>
 
-                                        <div className="flex items-center justify-between pt-2 border-t border-[#F1F5F9]">
-                                            <span className="text-[13.5px] font-medium text-[#1E293B]">
+                                        <div className="flex items-center justify-between pt-2 border-t border-(color:--pm-tone-f1f5f9)">
+                                            <span className="text-(length:--pm-font-size-13p5px) font-medium text-(color:--pm-tone-1e293b)">
                                                 Show resume to employers
                                             </span>
                                             <label className="pm-switch">
@@ -674,14 +674,14 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                             </label>
                                         </div>
 
-                                        <div className="flex items-center justify-between pt-2 border-t border-[#F1F5F9]">
-                                            <span className="text-[13.5px] font-medium text-[#1E293B]">Contact details</span>
-                                            <span className="text-[13px] text-[#64748B] font-semibold">Private</span>
+                                        <div className="flex items-center justify-between pt-2 border-t border-(color:--pm-tone-f1f5f9)">
+                                            <span className="text-(length:--pm-font-size-13p5px) font-medium text-(color:--pm-tone-1e293b)">Contact details</span>
+                                            <span className="text-(length:--pm-font-size-13px) text-(color:--disabled-text) font-semibold">Private</span>
                                         </div>
 
                                         <button
                                             type="button"
-                                            className="text-[13px] text-[#0A66C2] font-semibold hover:underline block pt-1"
+                                            className="text-(length:--pm-font-size-13px) text-(color:--primary) font-semibold hover:underline block pt-1"
                                             onClick={() => changeTab('privacy')}
                                         >
                                             Manage granular privacy settings →
@@ -694,7 +694,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                             <div className="pm-card">
                                 <div className="pm-card-body">
                                     <div className="pm-card-header-row mb-3">
-                                        <h4 className="pm-card-title text-[16px]">Resume</h4>
+                                        <h4 className="pm-card-title text-(length:--type-body)">Resume</h4>
                                     </div>
 
                                     <div className="pm-resume-card-inner">
@@ -730,25 +730,25 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                             <div className="pm-card">
                                 <div className="pm-card-body">
                                     <div className="pm-card-header-row mb-2">
-                                        <h4 className="pm-card-title text-[16px]">Profile insights</h4>
+                                        <h4 className="pm-card-title text-(length:--type-body)">Profile insights</h4>
                                     </div>
 
                                     <div className="flex items-baseline gap-2 mb-2">
-                                        <span className="text-[28px] font-bold text-[#0F172A]">{profileData.insights.views}</span>
-                                        <span className="text-[13px] text-[#16A34A] font-semibold">
+                                        <span className="text-(length:--type-h2) font-bold text-(color:--pm-tone-0f172a)">{profileData.insights.views}</span>
+                                        <span className="text-(length:--pm-font-size-13px) text-(color:--pm-tone-16a34a) font-semibold">
                                             {profileData.insights.change} {profileData.insights.period}
                                         </span>
                                     </div>
 
-                                    <p className="text-[13px] text-[#64748B] mb-3">
+                                    <p className="text-(length:--pm-font-size-13px) text-(color:--disabled-text) mb-3">
                                         Profile views from peers, project leaders, and verified recruiters.
                                     </p>
 
-                                    <div className="p-3 bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg">
-                                        <div className="text-[12.5px] font-semibold text-[#1E40AF] mb-1 flex items-center gap-1.5">
+                                    <div className="p-3 bg-(color:--pm-tone-eff6ff) border border-(color:--pm-tone-bfdbfe) rounded-lg">
+                                        <div className="text-(length:--pm-font-size-12p5px) font-semibold text-(color:--pm-tone-1e40af) mb-1 flex items-center gap-1.5">
                                             <Sparkles size={14} /> Pro member insight
                                         </div>
-                                        <p className="text-[12px] text-[#1E3A8A] m-0">
+                                        <p className="text-(length:--type-caption) text-(color:--pm-tone-1e3a8a) m-0">
                                             Upgrade to Pro to see the companies, hiring leads, and roles looking at your profile.
                                         </p>
                                     </div>
@@ -970,10 +970,10 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                             {/* Build From Resume CTA */}
                             <div className="pm-card">
                                 <div className="pm-card-body">
-                                    <h4 className="pm-card-title text-[15px] mb-2 flex items-center gap-2">
-                                        <UploadCloud size={18} className="text-[#0A66C2]" /> Build from your resume
+                                    <h4 className="pm-card-title text-(length:--pm-font-size-15px) mb-2 flex items-center gap-2">
+                                        <UploadCloud size={18} className="text-(color:--primary)" /> Build from your resume
                                     </h4>
-                                    <p className="text-[13px] text-[#475569] mb-4">
+                                    <p className="text-(length:--pm-font-size-13px) text-(color:--pm-tone-475569) mb-4">
                                         Upload a resume to get suggested profile updates. Review each change before applying.
                                     </p>
                                     <button
@@ -989,8 +989,8 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                             {/* Privacy Note */}
                             <div className="pm-card">
                                 <div className="pm-card-body">
-                                    <h4 className="pm-card-title text-[15px] mb-2">Privacy</h4>
-                                    <p className="text-[13px] text-[#475569]">
+                                    <h4 className="pm-card-title text-(length:--pm-font-size-15px) mb-2">Privacy</h4>
+                                    <p className="text-(length:--pm-font-size-13px) text-(color:--pm-tone-475569)">
                                         Your profile is currently visible to <strong>Members only</strong>. Changes you make are updated instantly.
                                     </p>
                                 </div>
@@ -999,12 +999,12 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                             {/* Account Card */}
                             <div className="pm-card">
                                 <div className="pm-card-body">
-                                    <h4 className="pm-card-title text-[15px] mb-2">Account</h4>
-                                    <div className="text-[13.5px] font-semibold text-[#0F172A] mb-1">{formData.name}</div>
-                                    <div className="text-[13px] text-[#475569] mb-2 flex items-center gap-1.5">
+                                    <h4 className="pm-card-title text-(length:--pm-font-size-15px) mb-2">Account</h4>
+                                    <div className="text-(length:--pm-font-size-13p5px) font-semibold text-(color:--pm-tone-0f172a) mb-1">{formData.name}</div>
+                                    <div className="text-(length:--pm-font-size-13px) text-(color:--pm-tone-475569) mb-2 flex items-center gap-1.5">
                                         {profileData.email} <CheckCircle2 size={14} className="text-emerald-600" />
                                     </div>
-                                    <Link href="/settings/security" className="text-[13px] text-[#0A66C2] font-semibold hover:underline">
+                                    <Link href="/settings/security" className="text-(length:--pm-font-size-13px) text-(color:--primary) font-semibold hover:underline">
                                         Manage password and security →
                                     </Link>
                                 </div>
@@ -1035,7 +1035,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
 
                                 <div>
                                     <label className="pm-label mb-1 block">Profile visibility</label>
-                                    <p className="text-[13px] text-[#64748B] mb-2">
+                                    <p className="text-(length:--pm-font-size-13px) text-(color:--disabled-text) mb-2">
                                         Choose who is allowed to view your complete profile and achievements.
                                     </p>
                                     <select
@@ -1049,12 +1049,12 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                     </select>
                                 </div>
 
-                                <div className="pt-4 border-t border-[#F1F5F9] flex items-center justify-between">
+                                <div className="pt-4 border-t border-(color:--pm-tone-f1f5f9) flex items-center justify-between">
                                     <div>
-                                        <div className="text-[14px] font-semibold text-[#0F172A]">
+                                        <div className="text-(length:--type-small) font-semibold text-(color:--pm-tone-0f172a)">
                                             Open to career opportunities
                                         </div>
-                                        <div className="text-[12.5px] text-[#64748B]">
+                                        <div className="text-(length:--pm-font-size-12p5px) text-(color:--disabled-text)">
                                             Displays the "Open to opportunities" badge to verified hiring leads.
                                         </div>
                                     </div>
@@ -1068,12 +1068,12 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                     </label>
                                 </div>
 
-                                <div className="pt-4 border-t border-[#F1F5F9] flex items-center justify-between">
+                                <div className="pt-4 border-t border-(color:--pm-tone-f1f5f9) flex items-center justify-between">
                                     <div>
-                                        <div className="text-[14px] font-semibold text-[#0F172A]">
+                                        <div className="text-(length:--type-small) font-semibold text-(color:--pm-tone-0f172a)">
                                             Show resume to employers
                                         </div>
-                                        <div className="text-[12.5px] text-[#64748B]">
+                                        <div className="text-(length:--pm-font-size-12p5px) text-(color:--disabled-text)">
                                             Allows recruiters and hiring managers to download your uploaded CV.
                                         </div>
                                     </div>
@@ -1090,17 +1090,17 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                     </label>
                                 </div>
 
-                                <div className="pt-4 border-t border-[#F1F5F9] flex items-center justify-between">
+                                <div className="pt-4 border-t border-(color:--pm-tone-f1f5f9) flex items-center justify-between">
                                     <div>
-                                        <div className="text-[14px] font-semibold text-[#0F172A]">
+                                        <div className="text-(length:--type-small) font-semibold text-(color:--pm-tone-0f172a)">
                                             Contact information
                                         </div>
-                                        <div className="text-[12.5px] text-[#64748B]">
+                                        <div className="text-(length:--pm-font-size-12p5px) text-(color:--disabled-text)">
                                             Controls whether other members can see your email or phone number.
                                         </div>
                                     </div>
                                     <select
-                                        className="pm-select w-auto text-[13px] py-1.5"
+                                        className="pm-select w-auto text-(length:--pm-font-size-13px) py-1.5"
                                         value={formData.contact_visibility}
                                         onChange={(e) => setFormData({ ...formData, contact_visibility: e.target.value })}
                                     >

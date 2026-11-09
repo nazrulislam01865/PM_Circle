@@ -1,0 +1,56 @@
+/* PM Circle — canonical control contract, sourced from the UI style guide.
+   Feature styles own layout and special visualizations, not their own type
+   scale, primary actions, focus ring or standard form geometry. */
+.pm-app, .pm-dashboard {
+    font-family: var(--font-ui);
+    color: var(--ink);
+}
+.pm-app :is(button, input, select, textarea),
+.pm-dashboard :is(button, input, select, textarea) {
+    font-family: inherit;
+}
+/* Existing shared control families. Preserve each family's markup/layout. */
+.pm-app :is(.btn, .pm-button, .pm-btn, .pm-dash-btn),
+.pm-dashboard :is(.btn, .pm-button, .pm-btn, .pm-dash-btn) {
+    font-family: var(--font-ui);
+    font-size: var(--text-ui) !important;
+    line-height: var(--line-ui) !important;
+    font-weight: var(--semibold);
+    border-radius: var(--radius-control);
+    min-height: var(--control-height);
+}
+.pm-app :is(.btn, .pm-button, .pm-btn, .pm-dash-btn):focus-visible,
+.pm-dashboard :is(.btn, .pm-button, .pm-btn, .pm-dash-btn):focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
+}
+.pm-app :is(.pm-field input, .pm-field select, .pm-input, .pm-select, .pm-textarea),
+.pm-dashboard :is(.pm-field input, .pm-field select, .pm-input, .pm-select, .pm-textarea) {
+    min-height: var(--control-height);
+    font-size: var(--text-ui);
+    line-height: var(--line-ui);
+    border-radius: var(--radius-control);
+    color: var(--ink);
+    background-color: var(--surface);
+    border-color: var(--control-border);
+}
+.pm-app :is(.pm-field input, .pm-field select, .pm-input, .pm-select, .pm-textarea):focus-visible,
+.pm-dashboard :is(.pm-field input, .pm-field select, .pm-input, .pm-select, .pm-textarea):focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
+}
+.pm-app :is(.pm-field [aria-invalid="true"], .pm-input[aria-invalid="true"], .pm-select[aria-invalid="true"]),
+.pm-dashboard :is(.pm-field [aria-invalid="true"], .pm-input[aria-invalid="true"], .pm-select[aria-invalid="true"]) {
+    border-color: var(--red);
+}
+@media (pointer: coarse) {
+    .pm-app :is(.btn, .pm-button, .pm-btn, .pm-dash-btn),
+    .pm-dashboard :is(.btn, .pm-button, .pm-btn, .pm-dash-btn) {
+        min-height: var(--control-touch);
+    }
+}
+
+.pm-app :is(.pm-field input, .pm-field select, .pm-input, .pm-select, .pm-textarea):focus,
+.pm-dashboard :is(.pm-field input, .pm-field select, .pm-input, .pm-select, .pm-textarea):focus {
+    border-color: var(--focus);
+}

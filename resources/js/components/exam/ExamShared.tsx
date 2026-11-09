@@ -82,10 +82,13 @@ export function ExamOptionList({ question, chosen, struck = [], onChoose, onStri
         {Object.entries(question.options).map(([key, content]) => {
             const isCorrect = reveal && key === question.correct;
             const isWrong = reveal && key === chosen && !isCorrect;
+            const eliminated = struck.includes(key);
             return <div key={key} className={`pm-exam-choice ${key === chosen ? 'is-selected' : ''} ${struck.includes(key) ? 'is-struck' : ''} ${isCorrect ? 'is-correct' : ''} ${isWrong ? 'is-incorrect' : ''}`}>
-                <label className="pm-exam-choice-label" onClick={event => { if (strikeMode && onStrike) { event.preventDefault(); onStrike(key); } }}><input type="radio" name={`exam-${question.id}`} value={key}
-                    checked={chosen === key} disabled={readonly} onChange={() => { if (!strikeMode) onChoose?.(key); }}/>
+                <label className="pm-exam-choice-label" title={eliminated ? 'Enable Strike Through and click again to restore this option' : undefined}
+                    onClick={event => { if (strikeMode && onStrike) { event.preventDefault(); onStrike(key); } }}><input type="radio" name={`exam-${question.id}`} value={key}
+                    checked={chosen === key} disabled={readonly || (eliminated && !strikeMode)} onChange={() => { if (!strikeMode && !eliminated) onChoose?.(key); }}/>
                     <strong>{key}.</strong><span className="pm-exam-choice-text">{content}</span></label>
+                {eliminated && !readonly && onStrike && <button type="button" className="pm-exam-choice-strike" aria-label={`Cancel strike-through for option ${key}`} onClick={() => onStrike(key)}>Undo</button>}
                 {isCorrect && <span className="pm-exam-choice-result">Correct Answer <Check size={14}/></span>}
                 {isWrong && <span className="pm-exam-choice-result">Your Answer <X size={14}/></span>}
             </div>;

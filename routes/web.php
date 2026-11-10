@@ -8,6 +8,7 @@ use App\Http\Controllers\Account\SavedPostsController;
 use App\Http\Controllers\Learning\LearningController;
 use App\Http\Controllers\Learning\DemoCourseController;
 use App\Http\Controllers\Exam\PmpExamController;
+use App\Http\Controllers\Interview\InterviewController;
 use App\Http\Controllers\Billing\TemporaryMembershipController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Community\PostInteractionController;
@@ -58,6 +59,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified', 'pm.onboarded'])->group(function () {
+    Route::get('/interview-preparation', [InterviewController::class, 'index'])->name('interview.index');
+    Route::post('/interview-preparation/start', [InterviewController::class, 'start'])->middleware('throttle:10,1')->name('interview.start');
+    Route::get('/interview-preparation/sessions/{session}', [InterviewController::class, 'practice'])->whereNumber('session')->name('interview.practice');
+    Route::post('/interview-preparation/sessions/{session}/answer', [InterviewController::class, 'submit'])->middleware('throttle:15,1')->whereNumber('session')->name('interview.answer');
+    Route::get('/interview-preparation/sessions/{session}/answers/{position}', [InterviewController::class, 'answerStatus'])->middleware('throttle:60,1')->whereNumber('session')->whereNumber('position')->name('interview.answer.status');
+    Route::delete('/interview-preparation/sessions/{session}/answers/{position}', [InterviewController::class, 'retry'])->middleware('throttle:15,1')->whereNumber('session')->whereNumber('position')->name('interview.answer.retry');
+    Route::post('/interview-preparation/sessions/{session}/finish', [InterviewController::class, 'finish'])->middleware('throttle:10,1')->whereNumber('session')->name('interview.finish');
+    Route::get('/interview-preparation/results', [InterviewController::class, 'results'])->name('interview.results');
+    Route::get('/interview-preparation/results/{session}', [InterviewController::class, 'results'])->whereNumber('session')->name('interview.results.show');
+
     Route::get('/exams/pmp', [PmpExamController::class, 'index'])->name('exams.pmp.index');
     Route::post('/exams/pmp/start', [PmpExamController::class, 'start'])->middleware('throttle:pmp-exam-start')->name('exams.pmp.start');
     Route::get('/exams/pmp/attempts/{attempt}', [PmpExamController::class, 'take'])->whereNumber('attempt')->name('exams.pmp.take');

@@ -2,15 +2,15 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Mail\SignupVerificationCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Mail;
-use RuntimeException;
+use Illuminate\Support\Facades\Http;
+use Tests\Support\FakesE2aSignupEmail;
 use Tests\TestCase;
 
 class SignupEmailCodeTest extends TestCase
 {
     use RefreshDatabase;
+    use FakesE2aSignupEmail;
 
     public function test_signup_requires_verification_of_the_same_email(): void
     {
@@ -18,11 +18,11 @@ class SignupEmailCodeTest extends TestCase
             ->assertSessionHasErrors('email');
         $this->assertGuest();
 
-        Mail::fake();
+        $this->fakeSuccessfulE2aSignupEmail();
         $this->postJson('/api/auth/send-verification-code', ['email' => 'member@example.com'])->assertOk()
             ->assertJsonMissing(['dev_code']);
 
-        $code = $this->sentCode();
+        $code = $this->sentSignupCode('member@example.com');
         $this->postJson('/api/auth/verify-code', ['email' => 'other@example.com', 'code' => $code])
             ->assertUnprocessable();
         $this->postJson('/api/auth/verify-code', ['email' => 'member@example.com', 'code' => $code])
@@ -38,9 +38,9 @@ class SignupEmailCodeTest extends TestCase
 
     public function test_codes_are_random_and_attempt_limited_without_a_bypass(): void
     {
-        Mail::fake();
+        $this->fakeSuccessfulE2aSignupEmail();
         $this->postJson('/api/auth/send-verification-code', ['email' => 'member@example.com'])->assertOk();
-        $code = $this->sentCode();
+        $code = $this->sentSignupCode('member@example.com');
         $this->assertMatchesRegularExpression('/^\d{6}$/', $code);
 
         for ($attempt = 0; $attempt < 5; $attempt++) {
@@ -53,9 +53,10 @@ class SignupEmailCodeTest extends TestCase
             ->assertStatus(429);
     }
 
-    public function test_failed_mail_delivery_does_not_create_a_valid_code(): void
+    public function test_failed_e2a_delivery_does_not_create_a_valid_code(): void
     {
-        Mail::shouldReceive('to')->once()->andThrow(new RuntimeException('SMTP offline'));
+        $this->configureE2aSignupEmail();
+        Http::fake(['api.e2a.dev/*' => Http::response(['error' => 'Unavailable'], 503)]);
         $this->postJson('/api/auth/send-verification-code', ['email' => 'member@example.com'])
             ->assertStatus(503);
         // A failed delivery must not create a verification challenge.
@@ -75,16 +76,5 @@ class SignupEmailCodeTest extends TestCase
             'password_confirmation' => 'ValidPassword123!',
             'legal_acceptance' => true,
         ];
-    }
-
-    private function sentCode(): string
-    {
-        $code = '';
-        Mail::assertSent(SignupVerificationCode::class, function (SignupVerificationCode $mail) use (&$code): bool {
-            $code = $mail->code;
-            return true;
-        });
-
-        return $code;
     }
 }

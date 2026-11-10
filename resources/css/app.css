@@ -24,6 +24,7 @@
 @import './pm-exam-simulator.css';
 @import './pm-trends.css';
 @import './pm-ui-guideline.css';
+@import './pm-interview.css';
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';

@@ -956,3 +956,11 @@
     --sidebar-border: oklch(0.269 0 0);
     --sidebar-ring: oklch(0.439 0 0);
 }
+
+/* Interview feature sizing uses the shared PM Circle type, control and color tokens. */
+:root {
+    --pm-interview-max-width: 90rem;
+    --pm-interview-card-gap: var(--s4);
+    --pm-interview-hero-height: 10.75rem;
+    --pm-interview-score-size: var(--donut);
+}

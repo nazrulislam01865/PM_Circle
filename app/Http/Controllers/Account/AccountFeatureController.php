@@ -14,6 +14,9 @@ final class AccountFeatureController extends Controller
     public function __invoke(Request $request, string $feature): Response|RedirectResponse
     {
         $user = $request->user();
+        if ($feature === 'interview') {
+            return to_route('interview.index');
+        }
         if ($feature === 'pmp') {
             return to_route('exams.pmp.index');
         }

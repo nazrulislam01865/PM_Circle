@@ -2,15 +2,15 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Mail\SignupVerificationCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Mail;
 use Laravel\Fortify\Features;
+use Tests\Support\FakesE2aSignupEmail;
 use Tests\TestCase;
 
 class RegistrationTest extends TestCase
 {
     use RefreshDatabase;
+    use FakesE2aSignupEmail;
 
     protected function setUp(): void
     {
@@ -28,13 +28,9 @@ class RegistrationTest extends TestCase
 
     public function test_new_users_can_register()
     {
-        Mail::fake();
+        $this->fakeSuccessfulE2aSignupEmail();
         $this->postJson('/api/auth/send-verification-code', ['email' => 'test@example.com'])->assertOk();
-        $code = '';
-        Mail::assertSent(SignupVerificationCode::class, function (SignupVerificationCode $mail) use (&$code): bool {
-            $code = $mail->code;
-            return true;
-        });
+        $code = $this->sentSignupCode('test@example.com');
         $this->postJson('/api/auth/verify-code', ['email' => 'test@example.com', 'code' => $code])->assertOk();
 
         $response = $this->post(route('register.store'), [

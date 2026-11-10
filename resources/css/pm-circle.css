@@ -203,7 +203,24 @@
 .pm-field input::placeholder { color: var(--pm-tone-9aa6ba); }.pm-field small { display: block; color: var(--pm-muted); margin-top: 6px; font-size: var(--pm-font-size-13px); }
 .pm-error { color: var(--pm-tone-be123c) !important; margin-top: 6px; font-size: var(--type-caption) !important; }
 .pm-field-grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 20px; }
-.pm-password-wrap { position: relative; }.pm-password-wrap input { padding-right: var(--pm-control-padding-55px); }.pm-password-wrap button { position: absolute; right: 8px; height: var(--pm-control-dimension-50px); width: 45px; border: 0; background: transparent; color: var(--pm-tone-6f809e); }
+/* Position the login password visibility control relative to the input, not its inline flow position. */
+.pm-password-wrap { position: relative; }
+.pm-password-wrap input { padding-right: var(--pm-control-padding-55px); }
+.pm-password-wrap button {
+    position: absolute;
+    top: 50%;
+    right: var(--s2);
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--control-height);
+    height: var(--control-height);
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--pm-tone-6f809e);
+}
 .pm-legal-row { display: flex; align-items: center; gap: 12px; margin-bottom: 25px; }.pm-legal-row input { width: 21px; height: var(--pm-control-dimension-21px); accent-color: var(--pm-primary); }.pm-legal-row label { font-size: var(--type-small); }.pm-legal-row a { color: var(--pm-primary); font-weight: var(--pm-font-weight-650); }
 .pm-auth-submit { width: 100%; font-size: var(--type-lead); min-height: 56px; }
 .pm-auth-note { display: flex; align-items: center; justify-content: center; gap: 9px; color: var(--pm-tone-7c89a3); text-align: center; font-size: var(--pm-font-size-13px); padding: 19px 0 15px; }

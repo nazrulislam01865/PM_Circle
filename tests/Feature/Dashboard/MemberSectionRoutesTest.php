@@ -4,6 +4,7 @@ namespace Tests\Feature\Dashboard;
 
 use App\Models\User;
 use Database\Seeders\DemoScenarioSeeder;
+use Database\Seeders\LearningDemoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -26,6 +27,8 @@ final class MemberSectionRoutesTest extends TestCase
 
     public function test_learning_catalog_reuses_public_content_projection_inside_the_member_shell(): void
     {
+        $this->seed(LearningDemoSeeder::class);
+
         $member = User::factory()->create(['onboarding_step' => 3]);
         $this->actingAs($member)->get('/dashboard/learning')->assertOk()
             ->assertInertia(fn (Assert $page) => $page->component('learning/Catalog')

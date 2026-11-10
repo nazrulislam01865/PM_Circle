@@ -2,16 +2,16 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Mail\SignupVerificationCode;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
+use Tests\Support\FakesE2aSignupEmail;
 use Tests\TestCase;
 
 class RegistrationPasswordSecurityTest extends TestCase
 {
     use RefreshDatabase;
+    use FakesE2aSignupEmail;
 
     public function test_seven_character_password_is_rejected(): void
     {
@@ -28,13 +28,9 @@ class RegistrationPasswordSecurityTest extends TestCase
 
     public function test_eight_character_password_is_stored_as_bcrypt_hash(): void
     {
-        Mail::fake();
+        $this->fakeSuccessfulE2aSignupEmail();
         $this->postJson('/api/auth/send-verification-code', ['email' => 'eight@example.com'])->assertOk();
-        $code = '';
-        Mail::assertSent(SignupVerificationCode::class, function (SignupVerificationCode $mail) use (&$code): bool {
-            $code = $mail->code;
-            return true;
-        });
+        $code = $this->sentSignupCode('eight@example.com');
         $this->postJson('/api/auth/verify-code', ['email' => 'eight@example.com', 'code' => $code])->assertOk();
 
         $plainText = 'Abc1234!';

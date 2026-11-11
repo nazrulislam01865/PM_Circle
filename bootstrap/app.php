@@ -16,7 +16,19 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
-        $middleware->alias(['pm.onboarded' => \App\Http\Middleware\EnsureOnboarded::class]);
+        $middleware->alias([
+            'pm.onboarded' => \App\Http\Middleware\EnsureOnboarded::class,
+            'pm.admin' => \App\Http\Middleware\EnsureAdministrator::class,
+            'pm.member' => \App\Http\Middleware\EnsureMember::class,
+        ]);
+
+        // One session/guard per browser, but different entry points and destinations.
+        $middleware->redirectTo(
+            guests: fn (Request $request) => $request->is('admin', 'admin/*')
+                ? route('admin.login') : route('login'),
+            users: fn (Request $request) => $request->user()?->is_admin === true
+                ? route('admin.dashboard') : route('dashboard'),
+        );
 
         $middleware->web(append: [
             HandleAppearance::class,

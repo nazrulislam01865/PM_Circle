@@ -16,7 +16,7 @@ export function HomeCommunitySection({ posts, content, joinHref, canInteract, on
         <TopicPills active="All" topics={content?.topics ?? ['All', 'I learned', 'From my project', 'Ask the community']}/>
         <div className="pm-home-community-posts">
             {posts.length ? posts.map(post => <HomePostPreview key={post.id} post={post} canInteract={canInteract} onJoin={onJoin}/>)
-                : <p className="pm-empty">The discussion is just getting started. Share your first lesson or question to help others grow.</p>}
+                : <p className="pm-empty">{content?.empty_message ?? 'The discussion is just getting started. Share your first lesson or question to help others grow.'}</p>}
         </div>
         <div className="pm-join-strip pm-home-join-strip">
             <NotebookPen size={34} strokeWidth={1.8} aria-hidden="true"/>

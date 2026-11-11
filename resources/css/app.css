@@ -23,8 +23,11 @@
 @import './pm-site-header.css';
 @import './pm-exam-simulator.css';
 @import './pm-trends.css';
+@import './pm-careers.css';
 @import './pm-ui-guideline.css';
 @import './pm-interview.css';
+@import './pm-discover.css';
+@import './pm-admin.css';
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';

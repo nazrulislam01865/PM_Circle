@@ -20,6 +20,8 @@ final class HomePageContentSeeder extends Seeder
                 'description' => 'Learn by doing. Share what works. Meet your people. Build your career.',
                 'primary_label' => 'Join the community — free',
                 'secondary_label' => "Explore today's discussion",
+                'primary_url' => '/register', 'secondary_url' => '/community',
+                'caption_learn' => "Learn\n& practise", 'caption_discuss' => "Discuss\n& share", 'caption_career' => "Grow\nyour career",
                 'people' => [
                     ['name' => 'Community Hero', 'avatar_path' => '/images/demo/community-hero.webp'],
                     ['name' => 'Community Top', 'avatar_path' => '/images/demo/community-top.webp'],
@@ -31,12 +33,14 @@ final class HomePageContentSeeder extends Seeder
             'pathway' => self::pathwayDefaults(),
             'scenario' => [
                 'heading' => "Today's scenario", 'status_label' => 'Open for discussion',
-                'button_label' => 'Read scenario & join discussion', 'read_button_label' => 'Read scenario',
+                'button_label' => 'Read scenario & join discussion', 'view_all_label' => 'View all', 'read_button_label' => 'Read scenario',
                 'discussion_button_label' => 'Join discussion', 'responses_heading' => 'Community responses',
+                'empty_message' => 'Practical scenarios are being prepared for the community.',
+                'empty_responses_message' => 'Be the first to share your approach.',
                 'score_label' => 'Sample AI reasoning score', 'hint' => 'Read freely. Sign in to respond.',
                 'demo_response_emails' => ['demo-priya@example.invalid', 'demo-marcus@example.invalid'],
             ],
-            'members' => ['heading' => 'New to the circle', 'hint' => 'Join to view full profiles and connect.', 'button_label' => 'Meet the members', 'demo_emails' => ['demo-sara@example.invalid', 'demo-daniel@example.invalid', 'demo-meera@example.invalid']],
+            'members' => ['heading' => 'New to the circle', 'hint' => 'Join to view full profiles and connect.', 'button_label' => 'Meet the members', 'empty_message' => 'Be among the first members to join the community.', 'demo_emails' => ['demo-sara@example.invalid', 'demo-daniel@example.invalid', 'demo-meera@example.invalid']],
             'skills' => [
                 'heading' => 'Build your next skill',
                 'items' => [
@@ -47,6 +51,7 @@ final class HomePageContentSeeder extends Seeder
             ],
             'community' => [
                 'heading' => 'From the community', 'view_all_label' => 'View all posts',
+                'empty_message' => 'The discussion is just getting started. Share your first lesson or question to help others grow.',
                 'topics' => ['All', 'I learned', 'From my project', 'Ask the community'],
                 'demo_post_emails' => ['demo-nadia@example.invalid', 'demo-alex@example.invalid'],
                 'prompt_title' => 'Have a lesson worth sharing?',
@@ -62,6 +67,8 @@ final class HomePageContentSeeder extends Seeder
                     ['title' => 'Tell your story better', 'description' => 'AI resume support for your project experience', 'url' => '/careers', 'icon' => 'resume'],
                 ],
                 'opportunities_heading' => 'Latest opportunities',
+                'jobs_view_all_label' => 'View all jobs', 'show_sample_opportunities' => false,
+                'empty_message' => 'Verified job opportunities will appear here when the careers module is launched.',
                 'opportunities' => [
                     ['role' => 'IT Project Manager', 'company' => 'Technology company', 'location' => 'Remote', 'type' => 'Full time', 'icon' => 'manager'],
                     ['role' => 'PMO Analyst', 'company' => 'Consulting firm', 'location' => 'Hybrid', 'type' => 'Full time', 'icon' => 'analyst'],
@@ -79,6 +86,7 @@ final class HomePageContentSeeder extends Seeder
                     'hint' => 'For aspiring PMs, experienced practitioners, trainers and leaders.',
                 ],
             ],
+            'sections' => ['hero' => true, 'pathway' => true, 'scenario' => true, 'community' => true, 'members' => true, 'skills' => true, 'careers' => true],
             'demo_scenario_engagement' => ['likes' => 42, 'responses' => 128],
         ]]);
         $content = $page->content;
@@ -91,13 +99,21 @@ final class HomePageContentSeeder extends Seeder
 
         // Merge only newly introduced homepage labels. Never reset admin edits.
         $additions = [
+            'hero' => ['primary_url' => '/register', 'secondary_url' => '/community', 'caption_learn' => "Learn\n& practise", 'caption_discuss' => "Discuss\n& share", 'caption_career' => "Grow\nyour career"],
             'scenario' => [
+                'view_all_label' => 'View all',
+                'empty_message' => 'Practical scenarios are being prepared for the community.',
+                'empty_responses_message' => 'Be the first to share your approach.',
                 'read_button_label' => 'Read scenario',
                 'discussion_button_label' => 'Join discussion',
                 'responses_heading' => 'Community responses',
                 'demo_response_emails' => ['demo-priya@example.invalid', 'demo-marcus@example.invalid'],
             ],
+            'careers' => ['jobs_view_all_label' => 'View all jobs', 'show_sample_opportunities' => false, 'empty_message' => 'Verified job opportunities will appear here when the careers module is launched.'],
+            'members' => ['empty_message' => 'Be among the first members to join the community.'],
+            'sections' => ['hero' => true, 'pathway' => true, 'scenario' => true, 'community' => true, 'members' => true, 'skills' => true, 'careers' => true],
             'community' => [
+                'empty_message' => 'The discussion is just getting started. Share your first lesson or question to help others grow.',
                 'topics' => ['All', 'I learned', 'From my project', 'Ask the community'],
                 'demo_post_emails' => ['demo-nadia@example.invalid', 'demo-alex@example.invalid'],
             ],

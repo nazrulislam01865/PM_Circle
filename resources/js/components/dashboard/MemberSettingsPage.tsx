@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 export function MemberSettingsPage({ active, children }: { active: 'security' | 'appearance'; children: ReactNode }) {
     const { memberShell } = usePage<{ memberShell?: DashboardShellData }>().props;
     const shell: DashboardShellData = memberShell ?? {
-        plan: 'free', member: { name: 'Member', role: '', completion: 0 }, isDemo: false,
+        plan: 'free', member: { id: 0, name: 'Member', role: '', completion: 0 }, isDemo: false,
     };
     return <MemberDashboardLayout dashboard={shell}>
         <div className="pm-member-settings">

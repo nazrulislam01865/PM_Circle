@@ -4,6 +4,12 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Http\Responses\RoleAwareLoginResponse;
+use App\Http\Responses\RoleAwareLogoutResponse;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Laravel\Fortify\Contracts\LoginResponse;
+use Laravel\Fortify\Contracts\LogoutResponse;
 use App\Support\SignupVerificationMode;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -22,7 +28,8 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(LoginResponse::class, RoleAwareLoginResponse::class);
+        $this->app->singleton(LogoutResponse::class, RoleAwareLogoutResponse::class);
     }
 
     /**
@@ -42,6 +49,27 @@ class FortifyServiceProvider extends ServiceProvider
     {
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
         Fortify::createUsersUsing(CreateNewUser::class);
+
+        // The admin and member login forms run the same Fortify security pipeline,
+        // but each accepts only accounts of its own type. Never trust a hidden
+        // role field supplied by the browser.
+        Fortify::authenticateUsing(function (Request $request): ?User {
+            $email = Str::lower(trim((string) $request->input('email', '')));
+            $user = User::query()->where('email', $email)->first();
+            $isAdminEntry = $request->is('admin/login');
+            if ($isAdminEntry) {
+                // Administrator sessions must not persist through remember-me cookies.
+                $request->merge(['remember' => false]);
+            }
+
+            if (! $user || ! Hash::check((string) $request->input('password', ''), $user->password)
+                || $user->is_admin !== $isAdminEntry || $user->status !== 'active'
+                || ($isAdminEntry && $user->email_verified_at === null)) {
+                return null;
+            }
+
+            return $user;
+        });
     }
 
     /**

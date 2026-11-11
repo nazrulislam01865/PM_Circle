@@ -36,6 +36,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'two_factor_confirmed_at' => 'datetime',
             'legal_accepted_at' => 'datetime',
             'onboarding_step' => 'integer',
+            'is_admin' => 'boolean',
         ];
     }
 

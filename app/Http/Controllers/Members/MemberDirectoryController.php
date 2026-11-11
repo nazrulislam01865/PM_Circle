@@ -17,6 +17,7 @@ final class MemberDirectoryController extends Controller
         abort_if(mb_strlen($search) > 80, 422, 'Search is too long.');
 
         $members = User::query()
+            ->where('is_admin', false)
             ->where('status', 'active')
             ->whereHas('profile', fn ($query) => $query->where('visibility', 'public'))
             ->when(config('pm-circle.email_verification_required'), fn ($query) => $query->whereNotNull('email_verified_at'))
@@ -33,11 +34,11 @@ final class MemberDirectoryController extends Controller
 
     public function show(Request $request, User $member): Response
     {
-        abort_unless($member->status === 'active', 404);
+        abort_unless($member->is_admin !== true && $member->status === 'active', 404);
         if (config('pm-circle.email_verification_required')) {
             abort_unless($member->email_verified_at !== null, 404);
         }
-        $viewer = $request->user();
+        $viewer = $request->user()?->is_admin === true ? null : $request->user();
         $isOwnProfile = $viewer?->id === $member->id;
         // Owners may preview their own member-facing projection without making a
         // private profile discoverable or allowing others to view it.
@@ -59,7 +60,8 @@ final class MemberDirectoryController extends Controller
     public function follow(Request $request, User $member)
     {
         abort_if($request->user()->id === $member->id, 422, 'You cannot follow yourself.');
-        abort_unless($member->status === 'active' && $member->profile()->where('visibility', 'public')->exists(), 404);
+        abort_unless($member->is_admin !== true && $member->status === 'active'
+            && $member->profile()->where('visibility', 'public')->exists(), 404);
         DB::table('member_follows')->insertOrIgnore([
             'follower_id' => $request->user()->id, 'followed_id' => $member->id,
             'created_at' => now(), 'updated_at' => now(),

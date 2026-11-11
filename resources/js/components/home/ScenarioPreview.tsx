@@ -29,7 +29,7 @@ export function ScenarioPreview({ scenario, responses, content, canInteract, onJ
                 <span className="pm-home-scenario-eyebrow">{content?.heading}</span>
                 <div className="pm-home-scenario-top-actions">
                     {scenario && <span className="pm-home-scenario-status"><span className="pm-home-status-dot" aria-hidden="true"/>{content?.status_label}</span>}
-                    <Link href="/daily-challenge" className="pm-button pm-button-outline pm-button-sm pm-home-scenario-view-all">View all <ArrowRight size={16} aria-hidden="true"/></Link>
+                    <Link href="/daily-challenge" className="pm-button pm-button-outline pm-button-sm pm-home-scenario-view-all">{content?.view_all_label ?? 'View all'} <ArrowRight size={16} aria-hidden="true"/></Link>
                 </div>
             </div>
             {scenario ? <>
@@ -40,7 +40,7 @@ export function ScenarioPreview({ scenario, responses, content, canInteract, onJ
                     <HomeCommentAction label={content?.discussion_button_label ?? 'Join discussion'} href={url} canInteract={canInteract} onJoin={onJoin}/>
                     <span className="pm-home-scenario-hint">{content?.hint}</span>
                 </div>
-            </> : <p className="pm-empty">Practical scenarios are being prepared for the community.</p>}
+            </> : <p className="pm-empty">{content?.empty_message ?? 'Practical scenarios are being prepared for the community.'}</p>}
         </div>
         {scenario && <>
             <div className="pm-home-scenario-social">
@@ -49,7 +49,7 @@ export function ScenarioPreview({ scenario, responses, content, canInteract, onJ
                 <HomeCommentAction label={responses.length === 1 ? 'response' : 'responses'} count={responses.length} href={url} canInteract={canInteract} onJoin={onJoin}/>
             </div>
             <div className="pm-home-responses-heading">{content?.responses_heading ?? 'Community responses'}</div>
-            {responses.length === 0 && <p className="pm-empty">Be the first to share your approach.</p>}
+            {responses.length === 0 && <p className="pm-empty">{content?.empty_responses_message ?? 'Be the first to share your approach.'}</p>}
             {responses.map(response => <article className="pm-home-response" key={response.id}>
                 <Avatar name={response.user.name} src={response.user.profile?.avatar_path} size={34}/>
                 <div className="pm-home-response-main">

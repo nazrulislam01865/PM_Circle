@@ -6,6 +6,7 @@ import {
     type LucideIcon,
 } from 'lucide-react';
 import type { HomePathwayContent } from '@/types/home';
+import { HomeContentIcon, type HomepageIconAssets } from '@/components/home/HomeContentIcon';
 
 /** Known icon keys are mapped to the existing icon library; content is supplied by Laravel. */
 const icons: Record<string, LucideIcon> = {
@@ -19,14 +20,14 @@ const icons: Record<string, LucideIcon> = {
     simulation: Layers3,
 };
 
-function CareerSteps({ content }: { content: HomePathwayContent['steps'] }) {
+function CareerSteps({ content, iconAssets }: { content: HomePathwayContent['steps']; iconAssets?: HomepageIconAssets }) {
     return <section className="pm-pathway-steps" aria-labelledby="pm-pathway-title">
         <h2 id="pm-pathway-title">{content.heading}</h2>
         <div className="pm-pathway-steps-grid">
             {content.items.map((item, index) => {
                 const Icon = icons[item.icon] ?? Compass;
                 return <div className="pm-pathway-step" key={`${item.title}-${index}`}>
-                    <Icon aria-hidden="true" size={36} strokeWidth={1.8} />
+                    <HomeContentIcon category="pathway_step_icon" icon={item.icon} assets={iconAssets} fallback={Icon} size={36} strokeWidth={1.8}/>
                     <h3>{item.title}</h3>
                     <p>{item.description}</p>
                 </div>;
@@ -35,7 +36,7 @@ function CareerSteps({ content }: { content: HomePathwayContent['steps'] }) {
     </section>;
 }
 
-function ExamCarousel({ content }: { content: HomePathwayContent['exams'] }) {
+function ExamCarousel({ content, iconAssets }: { content: HomePathwayContent['exams']; iconAssets?: HomepageIconAssets }) {
     const scroller = useRef<HTMLDivElement>(null);
     const [activeIndex, setActiveIndex] = useState(0);
     const items = content.items;
@@ -78,7 +79,7 @@ function ExamCarousel({ content }: { content: HomePathwayContent['exams'] }) {
                         const Icon = icons[item.icon] ?? Layers3;
                         return <article className="pm-pathway-exam-card" key={`${item.title}-${index}`}>
                             <div className="pm-pathway-exam-intro">
-                                <Icon size={39} strokeWidth={1.85} aria-hidden="true" />
+                                <HomeContentIcon category="pathway_exam_icon" icon={item.icon} assets={iconAssets} fallback={Icon} size={39} strokeWidth={1.85}/>
                                 <div><h3>{item.title}</h3><p>{item.description}</p></div>
                             </div>
                             <div className="pm-pathway-exam-pills" aria-label="Practice features">
@@ -122,11 +123,11 @@ function ProfessionalSkillsBanner({ content }: { content: HomePathwayContent['ba
 }
 
 /** Replaces the former statistics panel; the remaining homepage is untouched. */
-export function HomePathway({ content }: { content?: HomePathwayContent }) {
+export function HomePathway({ content, iconAssets }: { content?: HomePathwayContent; iconAssets?: HomepageIconAssets }) {
     if (!content) return null;
     return <div className="pm-pathway-band"><div className="pm-pathway-container">
-        <CareerSteps content={content.steps}/>
-        <ExamCarousel content={content.exams}/>
+        <CareerSteps content={content.steps} iconAssets={iconAssets}/>
+        <ExamCarousel content={content.exams} iconAssets={iconAssets}/>
         <ProfessionalSkillsBanner content={content.banner}/>
     </div></div>;
 }

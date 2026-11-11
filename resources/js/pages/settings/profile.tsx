@@ -113,6 +113,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
     const dashboardShell: DashboardShellData = memberShell || {
         plan: 'premium',
         member: {
+            id: profileData?.id ?? 0,
             name: profileData?.name || 'Sara Ahmed',
             role: profileData?.role || 'Project Manager',
             completion: profileData?.completeness || 80,

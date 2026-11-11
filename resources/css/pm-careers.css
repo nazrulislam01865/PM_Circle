@@ -1,0 +1,51 @@
+/* Careers deliberately reuses the PM Trends list cards, badges, buttons and page frame.
+   Keep styling local to Careers; typography, colors and controls use shared tokens. */
+.pm-careers { min-width: 0; }
+.pm-career-preview-note { display:flex; gap:var(--s3); align-items:flex-start; padding:var(--s3) var(--s4); margin-bottom:var(--s4); border:1px solid var(--border); border-radius:var(--radius-card); background:var(--blue-soft); color:var(--ink); font-size:var(--text-sm); line-height:var(--line-sm); }
+.pm-career-preview-note svg { flex:none; margin-top:var(--s1); color:var(--blue); }
+.pm-career-preview-note p { margin:0; }
+.pm-careers-toolbar { display:flex; align-items:center; justify-content:space-between; gap:var(--s3); flex-wrap:wrap; margin-bottom:var(--s3); }
+.pm-careers-search { display:flex; flex:1 1 20rem; max-width:34rem; min-width:0; align-items:center; gap:var(--s2); min-height:var(--control-height); padding:0 var(--s3); background:var(--surface); border:1px solid var(--control-border); border-radius:var(--radius-control); color:var(--muted); }
+.pm-careers-search:focus-within { outline:3px solid var(--focus); outline-offset:2px; }
+.pm-careers-search svg { flex:none; }
+.pm-careers-search input { flex:1; min-width:0; width:100%; min-height:var(--control-height); padding:var(--s2) 0; background:transparent; border:0; outline:none; color:var(--ink); font-family:var(--font-ui); font-size:var(--text-ui); line-height:var(--line-ui); }
+.pm-careers-search input:focus-visible { outline:none; }
+.pm-careers .pm-careers-filters { margin-bottom:0; }
+.pm-careers .pm-careers-filters .pm-trend-filter { min-width:0; }
+.pm-career-count { margin:0 0 var(--s2); font-size:var(--text-sm); line-height:var(--line-sm); color:var(--muted); }
+.pm-careers .pm-trend-read { padding-inline:var(--s2); }
+.pm-career-card .pm-career-company { font-weight:var(--semibold); color:var(--muted); }
+.pm-career-meta { row-gap:var(--s1); }
+.pm-career-card .pm-trend-meta>span { max-width:100%; white-space:normal; }
+.pm-career-details-page { padding-bottom:var(--s10); }
+.pm-career-detail { padding:var(--s8); min-width:0; }
+.pm-career-detail h1 { margin:var(--s3) 0 var(--s1); font-size:var(--text-h1); line-height:var(--line-h1); }
+.pm-career-detail-company { margin:0; color:var(--muted); font-size:var(--text-body); line-height:var(--line-body); }
+.pm-career-detail-facts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--s4); margin:var(--s6) 0; padding:var(--s5); background:var(--canvas); border:1px solid var(--border); border-radius:var(--radius-card); }
+.pm-career-detail-facts>div { display:flex; align-items:flex-start; gap:var(--s2); min-width:0; }
+.pm-career-detail-facts svg { flex:none; width:var(--icon); height:var(--icon); color:var(--blue); }
+.pm-career-detail-facts span { min-width:0; display:grid; gap:var(--s1); overflow-wrap:anywhere; }
+.pm-career-detail-facts small { font-size:var(--text-xs); line-height:var(--line-xs); color:var(--muted); }
+.pm-career-detail-facts strong { font-size:var(--text-ui); line-height:var(--line-ui); font-weight:var(--semibold); }
+.pm-career-detail-section { border-top:1px solid var(--border); padding-top:var(--s5); }
+.pm-career-detail-section h2 { font-size:var(--text-h2); line-height:var(--line-h2); margin:0 0 var(--s2); }
+.pm-career-detail-section p { margin:0; font-size:var(--text-body); line-height:var(--line-body); color:var(--muted); }
+.pm-career-detail-notice { display:flex; gap:var(--s3); align-items:flex-start; margin:var(--s6) 0; padding:var(--s4); border:1px solid var(--border); border-radius:var(--radius-control); background:var(--blue-soft); color:var(--ink); font-size:var(--text-sm); line-height:var(--line-sm); }
+.pm-career-detail-notice svg { flex:none; color:var(--blue); }
+.pm-career-detail-notice p { margin:0; }
+.pm-career-detail-actions { display:flex; gap:var(--s3); flex-wrap:wrap; padding-top:var(--s4); border-top:1px solid var(--border); }
+.pm-career-detail-actions :is(.btn) { display:inline-flex; align-items:center; gap:var(--s2); }
+.pm-career-back { margin-top:var(--s4); display:inline-flex; align-items:center; gap:var(--s2); }
+@media(max-width:740px) {
+ .pm-careers-toolbar { align-items:stretch; flex-direction:column; }
+ .pm-careers-search { flex:0 0 auto; max-width:none; width:100%; }
+ .pm-careers .pm-careers-filters { overflow-x:auto; max-width:100%; }
+ .pm-career-detail { padding:var(--s5); }
+ .pm-career-detail-facts { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media(max-width:450px) {
+ .pm-career-detail-facts { grid-template-columns:minmax(0,1fr); }
+ .pm-careers .pm-trend-card .pm-trend-meta { margin-top:var(--s2); }
+ .pm-careers .pm-trend-card .pm-trend-badges { gap:var(--s1); }
+ .pm-careers .pm-trend-card .pm-trend-badge { padding:var(--s1) var(--s2); }
+}

@@ -1,6 +1,6 @@
-import { Link, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
-import { Brand } from '@/components/pm/Brand';
+import { SiteFooter } from '@/components/pm/SiteFooter';
 import { SiteHeader } from '@/components/pm/SiteHeader';
 import { MemberDashboardLayout } from '@/layouts/pm/MemberDashboardLayout';
 import type { DashboardShellData } from '@/types/dashboard';
@@ -16,6 +16,6 @@ export function PublicLayout({ children, active, joinLabel = 'Join the community
     return <div className={pricingPrototype ? 'pm-app pm-pricing-shell' : 'pm-app'}>
         <SiteHeader active={active} joinLabel={joinLabel}/>
         <main>{children}</main>
-        <footer className="pm-footer"><div className="pm-container pm-footer-inner"><Brand small={!pricingPrototype} monogram={pricingPrototype} /><nav aria-label="Footer"><Link href="/about">About</Link>{!pricingPrototype && <Link href="/community">Community guidelines</Link>}<Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link>{pricingPrototype && <Link href="/about">Contact</Link>}</nav>{!pricingPrototype && <p>Building better project professionals together.</p>}</div></footer>
+        <SiteFooter pricingPrototype={pricingPrototype}/>
     </div>;
 }

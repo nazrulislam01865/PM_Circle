@@ -22,10 +22,11 @@ type HeaderProps = {
 
 /** The homepage navigation is shared by the public, authentication and member shells. */
 export function SiteHeader({ active, joinLabel = 'Join the community', actions, brandPlacement = 'always' }: HeaderProps) {
-    const page = usePage<{ auth?: { user: { onboarding_step?: number } | null } }>();
+    const page = usePage<{ auth?: { user: { onboarding_step?: number; is_admin?: boolean } | null } }>();
     const [open, setOpen] = useState(false);
     const pathname = page.url.split('?')[0].split('#')[0];
     const user = page.props.auth?.user;
+    const workspace = user?.is_admin ? '/admin' : '/dashboard';
     const isActive = (href: string) => {
         if (active) return href === active;
         return pathname === href ||
@@ -48,9 +49,9 @@ export function SiteHeader({ active, joinLabel = 'Join the community', actions, 
             </nav>
             {actions ? <div className="pm-header-actions pm-site-member-actions">{actions}</div>
                 : <div className="pm-header-actions">
-                    {user ? <Link className="pm-text-link" href="/dashboard">Dashboard</Link>
+                    {user ? <Link className="pm-text-link" href={workspace}>{user.is_admin ? 'Administration' : 'Dashboard'}</Link>
                         : <Link className="pm-text-link" href="/login">Log in</Link>}
-                    <Link className="pm-button pm-button-sm" href={user ? '/dashboard' : '/register'}>{user ? 'My community' : joinLabel}</Link>
+                    <Link className="pm-button pm-button-sm" href={user ? workspace : '/register'}>{user ? (user.is_admin ? 'Admin panel' : 'My community') : joinLabel}</Link>
                 </div>}
             <button className="pm-mobile-toggle" type="button"
                 aria-label={open ? 'Close main menu' : 'Open main menu'}

@@ -38,7 +38,7 @@ class HandleInertiaRequests extends Middleware
         // Public homepage-style pages never mount the dashboard sidebar.
         // Avoid computing its member projection on those requests.
         $siteLayout = in_array($request->path(), ['/', 'daily-challenge', 'community', 'learning'], true)
-            || $request->is('learning/courses/*');
+            || $request->is('learning/courses/*') || $request->is('admin', 'admin/*');
 
         return [
             ...parent::share($request),
@@ -47,11 +47,12 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user() ? [
                     ...$request->user()->only(['id', 'name', 'email', 'email_verified_at', 'onboarding_step', 'created_at', 'updated_at']),
-                    'avatar_path' => $request->user()->loadMissing('profile')->profile?->avatar_path,
-                    'avatar' => $request->user()->profile?->avatar_path,
+                    'is_admin' => (bool) $request->user()->is_admin,
+                    'avatar_path' => $request->user()->is_admin ? null : $request->user()->loadMissing('profile')->profile?->avatar_path,
+                    'avatar' => $request->user()->is_admin ? null : $request->user()->profile?->avatar_path,
                 ] : null,
             ],
-            'memberShell' => fn () => ! $siteLayout && $request->user() ? app(\App\Domain\Dashboard\Queries\MemberShell::class)->forMember($request->user()) : null,
+            'memberShell' => fn () => ! $siteLayout && $request->user() && $request->user()->is_admin !== true ? app(\App\Domain\Dashboard\Queries\MemberShell::class)->forMember($request->user()) : null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

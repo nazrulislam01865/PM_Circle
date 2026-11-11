@@ -10,6 +10,16 @@ abstract class TestCase extends BaseTestCase
 {
     public function createApplication()
     {
+        // Laravel resolves the compiled Blade cache while bootstrapping. Keep this
+        // writable even when an extracted source archive omits empty directories.
+        $viewCache = dirname(__DIR__).'/storage/framework/views';
+        if ((! is_dir($viewCache) && ! @mkdir($viewCache, 0775, true) && ! is_dir($viewCache))
+            || ! is_writable($viewCache)) {
+            throw new RuntimeException(
+                'The test view-cache directory [storage/framework/views] must exist and be writable.'
+            );
+        }
+
         $app = parent::createApplication();
 
         // Cached local/production configuration can make tests use the wrong database

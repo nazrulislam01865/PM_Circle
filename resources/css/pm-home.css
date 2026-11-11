@@ -556,3 +556,13 @@
 @media (max-width: 760px) {
     .pm-home .pm-feature-section > .pm-container > h2 { font-size: var(--type-h2-mobile); }
 }
+
+/* Image overrides keep the same footprint as their original decorative Lucide icons. */
+.pm-home-content-icon{display:inline-block;flex:none;max-width:none;object-fit:contain;vertical-align:middle}
+/* Uploaded icons inherit the footprint of the existing vector illustrations. */
+.pm-home .pm-pathway-step > .pm-home-content-icon{display:block;margin-bottom:11px}
+.pm-home .pm-pathway-exam-intro > .pm-home-content-icon{margin-top:0}
+.pm-skill > .pm-home-content-icon{width:36px!important;height:36px!important;padding:6px;border-radius:50%;background:var(--pm-tone-ebf4ff)}
+.pm-feature > .pm-home-content-icon{width:43px!important;height:43px!important;padding:8px;border-radius:50%;background:var(--pm-tone-e9f3ff)}
+.pm-job-row > .pm-home-content-icon{width:38px!important;height:38px!important;padding:5px;border-radius:var(--pm-radius-7px);background:var(--pm-tone-f0f6ff)}
+@media(max-width:52rem){.pm-home .pm-pathway-step > .pm-home-content-icon{width:31px!important;height:31px!important;margin-bottom:7px}.pm-home .pm-pathway-exam-intro > .pm-home-content-icon{width:31px!important;height:31px!important}}

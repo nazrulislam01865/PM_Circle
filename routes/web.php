@@ -15,11 +15,44 @@ use App\Http\Controllers\Community\PostInteractionController;
 use App\Http\Controllers\Onboarding\OnboardingController;
 use App\Http\Controllers\Settings\ProfileController as SettingsProfileController;
 use App\Http\Controllers\PublicSite\HomeController;
+use App\Http\Controllers\Admin\HomepageController;
+use App\Http\Controllers\Admin\MasterDataController;
 use App\Http\Controllers\Scenario\ScenarioController;
 use App\Http\Controllers\Scenario\ScenarioReactionController;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 use Illuminate\Support\Facades\Route;
 
+// Admin credentials are accepted only by this separate Fortify login endpoint.
+// It uses Fortify's existing throttling, session regeneration, and 2FA pipeline.
+Route::middleware('guest:web')->group(function (): void {
+    Route::get('/admin/login', fn () => Inertia::render('auth/admin-login'))->name('admin.login');
+    Route::post('/admin/login', [AuthenticatedSessionController::class, 'store'])
+        ->middleware('throttle:login')->name('admin.login.store');
+});
+Route::post('/admin/logout', [AuthenticatedSessionController::class, 'destroy'])
+    ->middleware(['auth', 'pm.admin'])->name('admin.logout');
+
+// Administration is isolated from public/member areas and authorized on every request.
+Route::middleware(['auth', 'pm.admin', 'verified'])->prefix('admin')->name('admin.')->group(function (): void {
+    Route::get('/', [HomepageController::class, 'dashboard'])->name('dashboard');
+    Route::get('/homepage', [HomepageController::class, 'edit'])->name('homepage.edit');
+    Route::put('/homepage', [HomepageController::class, 'update'])->middleware('throttle:20,1')->name('homepage.update');
+    Route::post('/homepage/images', [HomepageController::class, 'upload'])->middleware('throttle:20,1')->name('homepage.upload');
+    Route::get('/navigation', [MasterDataController::class, 'navigationIndex'])->name('navigation.index');
+    Route::post('/navigation', [MasterDataController::class, 'store'])->middleware('throttle:20,1')->name('navigation.store');
+    Route::patch('/navigation/{masterDataOption}', [MasterDataController::class, 'update'])->middleware('throttle:30,1')->name('navigation.update');
+    Route::get('/master-data', [MasterDataController::class, 'index'])->name('master-data.index');
+    Route::post('/master-data/{masterDataOption}/icon', [MasterDataController::class, 'uploadIcon'])->middleware('throttle:10,1')->name('master-data.icon.upload');
+    Route::delete('/master-data/{masterDataOption}/icon', [MasterDataController::class, 'removeIcon'])->middleware('throttle:10,1')->name('master-data.icon.remove');
+    Route::post('/master-data', [MasterDataController::class, 'store'])->middleware('throttle:20,1')->name('master-data.store');
+    Route::patch('/master-data/{masterDataOption}', [MasterDataController::class, 'update'])->middleware('throttle:30,1')->name('master-data.update');
+});
+
 Route::get('/', [HomeController::class, 'index'])->name('home');
+// Public, browser-only career exploration; requires no account, API or database records.
+Route::inertia('/discover-pm', 'public/DiscoverPm')->name('discover-pm.index');
 // Public, static PM Trends prototype; no database query or new content table.
 Route::inertia('/pm-trends', 'trends/Index')->name('pm-trends.index');
 Route::get('/pm-trends/{slug}', fn (string $slug) => \Inertia\Inertia::render('trends/Show', ['slug' => $slug]))
@@ -38,19 +71,22 @@ Route::get('/daily-challenge', [ScenarioController::class, 'index'])->name('scen
 Route::get('/scenarios/{scenario:slug}', [ScenarioController::class, 'show'])->name('scenarios.show');
 Route::redirect('/join/step/1', '/register')->name('join.account');
 Route::post('/join/email', [OnboardingController::class, 'beginRegistration'])->middleware('throttle:15,1')->name('join.email');
-Route::get('/join/step/2', [OnboardingController::class, 'profile'])->name('join.profile');
-Route::post('/join/step/2', [OnboardingController::class, 'saveProfile'])->middleware('throttle:10,1')->name('join.profile.save');
-Route::post('/api/auth/send-verification-code', [EmailVerificationCodeController::class, 'sendCode'])->middleware('throttle:15,1');
-Route::post('/api/auth/verify-code', [EmailVerificationCodeController::class, 'verifyCode'])->middleware('throttle:30,1');
+Route::get('/join/step/2', [OnboardingController::class, 'profile'])->middleware('pm.member:true')->name('join.profile');
+Route::post('/join/step/2', [OnboardingController::class, 'saveProfile'])->middleware(['pm.member:true', 'throttle:10,1'])->name('join.profile.save');
+Route::post('/api/auth/send-verification-code', [EmailVerificationCodeController::class, 'sendCode'])->middleware(['pm.member:true', 'throttle:15,1']);
+Route::post('/api/auth/verify-code', [EmailVerificationCodeController::class, 'verifyCode'])->middleware(['pm.member:true', 'throttle:30,1']);
 Route::inertia('/about', 'public/About')->name('about');
 Route::inertia('/terms', 'public/Terms')->name('terms');
 Route::inertia('/privacy', 'public/Privacy')->name('privacy');
 
-Route::get('/careers', fn () => \Inertia\Inertia::render('career/Jobs', ['demo' => app()->environment(['local','testing']) && config('pm-circle.demo_content_enabled')]))->name('careers.index');
+// Public preview jobs: static sample data in the React feature, never submitted as live vacancies.
+Route::inertia('/careers', 'career/Jobs')->name('careers.index');
+Route::get('/careers/{job}', fn (string $job) => \Inertia\Inertia::render('career/Show', ['job' => $job]))
+    ->where('job', '[a-z0-9-]+')->name('careers.show');
 Route::get('/members', [MemberDirectoryController::class, 'index'])->name('members.index');
 Route::get('/members/{member}', [MemberDirectoryController::class, 'show'])->whereNumber('member')->name('members.show');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'pm.member', 'verified'])->group(function () {
     Route::get('/join/step/3', [OnboardingController::class, 'plan'])->name('join.plan');
     Route::post('/join/step/3', [OnboardingController::class, 'choosePlan'])->middleware('throttle:10,1')->name('join.plan.save');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
@@ -58,7 +94,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard/features/{feature}', AccountFeatureController::class)->name('dashboard.features');
 });
 
-Route::middleware(['auth', 'verified', 'pm.onboarded'])->group(function () {
+Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded'])->group(function () {
     Route::get('/interview-preparation', [InterviewController::class, 'index'])->name('interview.index');
     Route::post('/interview-preparation/start', [InterviewController::class, 'start'])->middleware('throttle:10,1')->name('interview.start');
     Route::get('/interview-preparation/sessions/{session}', [InterviewController::class, 'practice'])->whereNumber('session')->name('interview.practice');

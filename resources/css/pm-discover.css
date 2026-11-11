@@ -1,0 +1,234 @@
+/* Discover PM uses the existing shared SiteHeader and the approved design tokens. */
+.pm-discover-page { display: flex; flex-direction: column; min-height: 100vh; }
+.pm-discover {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    color: var(--ink);
+    background: var(--canvas);
+    font-family: var(--font-ui);
+    font-size: var(--text-body);
+    line-height: var(--line-body);
+}
+.pm-discover *, .pm-discover *::before, .pm-discover *::after { box-sizing: border-box; }
+.pm-discover a { color: var(--blue); }
+.pm-discover-main { width: min(100% - 2 * var(--s4), 47rem); margin-inline: auto; padding-top: calc(var(--s10) + var(--s4)); padding-bottom: calc(var(--s10) + var(--s4)); flex: 1 0 auto; }
+.pm-discover-steps { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: var(--s3); margin-bottom: var(--s4); font-size: var(--text-sm); line-height: var(--line-sm); }
+.pm-discover-step { color: var(--muted); display: inline-flex; align-items: center; gap: var(--s2); white-space: nowrap; }
+.pm-discover-step.is-current { font-weight: var(--bold); color: var(--blue); }
+.pm-discover-step-number { flex: 0 0 auto; width: var(--s6); height: var(--s6); display: inline-grid; place-items: center; font-size: var(--text-sm); line-height: var(--line-sm); border-radius: 50%; background: transparent; border: 1px solid var(--border); color: var(--muted); }
+.pm-discover-step.is-current .pm-discover-step-number { background: var(--blue); color: var(--surface); border-color: var(--blue); }
+.pm-discover-progress { background: var(--border); height: .1875rem; border-radius: var(--radius-pill); overflow: hidden; margin-bottom: var(--s6); }
+.pm-discover-progress > span { display: block; height: 100%; background: var(--blue); opacity: 1; transition: width .15s ease; }
+.pm-discover-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: var(--s8); box-shadow: 0 1px 2px rgb(0 0 0 / 2%); }
+.pm-discover-eyebrow { margin: 0 0 var(--s3); color: var(--blue); font-size: var(--text-xs); line-height: var(--line-xs); font-weight: var(--bold); letter-spacing: .12em; }
+.pm-discover-card > h1 { color: var(--ink); font-size: var(--text-h1); line-height: var(--line-h1); font-weight: var(--bold); letter-spacing: -.025em; margin: 0; }
+.pm-discover-description { margin: var(--s4) 0 var(--s6); color: var(--muted); font-size: var(--text-body); line-height: var(--line-body); }
+.pm-discover-info { margin: 0 0 var(--s5); background: var(--blue-soft); border-radius: var(--radius-control); padding: var(--s5); }
+.pm-discover-info h2, .pm-discover-feedback h2 { font-size: var(--text-h4); line-height: var(--line-h4); font-weight: var(--bold); margin: 0 0 var(--s3); }
+.pm-discover-info p, .pm-discover-feedback p { margin: 0; }
+.pm-discover-fine-print { margin: 0 0 var(--s4); color: var(--muted); font-size: var(--text-sm); line-height: var(--line-sm); }
+.pm-discover-privacy { margin-bottom: var(--s4); color: var(--blue); font-size: var(--text-sm); line-height: var(--line-sm); }
+.pm-discover-privacy summary { cursor: pointer; }
+.pm-discover-privacy p { color: var(--muted); margin-top: var(--s2); }
+.pm-discover .btn { min-height: var(--control-touch); font-size: var(--text-ui); line-height: var(--line-ui); font-weight: var(--semibold); padding: var(--s2) var(--s5); border-radius: var(--radius-control); white-space: normal; text-decoration: none; }
+.pm-discover .btn:not(.secondary) { background: var(--blue); border-color: var(--blue); color: var(--surface); }
+.pm-discover .btn:not(.secondary):hover { background: var(--blue-hover); border-color: var(--blue-hover); }
+.pm-discover .btn.secondary { background: var(--surface); color: var(--blue); border-color: var(--blue); }
+.pm-discover .btn.secondary:hover { background: var(--blue-soft); }
+.pm-discover .btn:disabled { color: var(--muted) !important; background: var(--track) !important; border-color: var(--border) !important; opacity: 1; }
+.pm-discover-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s4); }
+.pm-discover .pm-field { min-width: 0; display: grid; align-content: start; gap: var(--s1); }
+.pm-discover .pm-field label { color: var(--ink); font-weight: var(--semibold); font-size: var(--text-ui); line-height: var(--line-ui); }
+.pm-discover .pm-field select { width: 100%; min-height: var(--control-height); border: 1px solid var(--control-border); border-radius: var(--radius-control); background: var(--surface); color: var(--ink); padding: var(--s2) var(--s3); font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui); }
+.pm-discover .pm-field select[aria-invalid='true'] { border-color: var(--red); }
+.pm-discover .pm-field .pm-error { margin: 0; color: var(--red); font-size: var(--text-xs); line-height: var(--line-xs); }
+.pm-discover-form-note { margin: var(--s5) 0 var(--s6); color: var(--muted); font-size: var(--text-sm); line-height: var(--line-sm); }
+.pm-discover-actions { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--s3); border-top: 1px solid var(--border); margin-top: var(--s6); padding-top: var(--s5); }
+.pm-discover-choices { display: grid; gap: var(--s3); border: 0; margin: 0; padding: 0; min-width: 0; }
+.pm-discover-choice { display: flex; align-items: center; gap: var(--s3); padding: var(--s3) var(--s4); border: 1px solid var(--control-border); border-radius: var(--radius-control); min-height: calc(var(--control-touch) + var(--s2)); cursor: pointer; background: var(--surface); color: var(--ink); font-size: var(--text-body); line-height: var(--line-body); }
+.pm-discover-choice:hover { border-color: var(--blue); }
+.pm-discover-choice.is-selected { border: 2px solid var(--blue); padding: calc(var(--s3) - 1px) calc(var(--s4) - 1px); background: var(--blue-soft); }
+.pm-discover-choice input { flex: none; width: var(--s5); height: var(--s5); margin: 0; accent-color: var(--blue); cursor: pointer; }
+.pm-discover-choice span { min-width: 0; }
+.pm-discover-findings { margin-top: var(--s5); }
+.pm-discover-finding { padding: var(--s4) 0 var(--s6); border-bottom: 1px solid var(--border); }
+.pm-discover-finding:first-child { padding-top: 0; }
+.pm-discover-finding-heading { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s2); }
+.pm-discover-finding h2 { font-size: var(--text-h5); line-height: var(--line-h5); font-weight: var(--bold); margin: 0; }
+.pm-discover-mini-badge { font-size: var(--text-xs); line-height: var(--line-xs); border-radius: var(--radius-pill); padding: var(--s1) var(--s2); background: var(--blue-soft); color: var(--blue-hover); font-weight: var(--semibold); }
+.pm-discover-area-description { margin: var(--s2) 0 var(--s3); color: var(--muted); font-size: var(--text-sm); line-height: var(--line-sm); }
+.pm-discover-try { margin: 0; font-size: var(--text-ui); line-height: var(--line-ui); }
+.pm-discover-findings-note { font-size: var(--text-xs); line-height: var(--line-sm); color: var(--muted); margin: var(--s4) 0 0; }
+.pm-discover-practice-choices { gap: var(--s2); }
+.pm-discover-practice-choices .pm-discover-choice { min-height: calc(var(--control-touch) + var(--s1)); }
+.pm-discover-feedback { padding: var(--s5); border-radius: var(--radius-control); background: var(--blue-soft); margin-top: var(--s5); }
+.pm-discover-feedback small { display: block; margin-top: var(--s4); color: var(--muted); font-size: var(--text-xs); line-height: var(--line-xs); }
+.pm-discover-next-overview { padding-top: 0; margin-bottom: var(--s5); }
+.pm-discover-next-highlight { background: var(--blue-soft); padding: var(--s5); border-radius: var(--radius-control); }
+.pm-discover-next-label { color: var(--blue); font-size: var(--text-xs); line-height: var(--line-xs); font-weight: var(--bold); text-transform: uppercase; letter-spacing: .06em; }
+.pm-discover-next-highlight h2 { margin: var(--s2) 0; font-size: var(--text-h2); line-height: var(--line-h2); }
+.pm-discover-next-highlight p, .pm-discover-next-section p { margin: 0; }
+.pm-discover-next-section { padding: var(--s5) 0; border-bottom: 1px solid var(--border); }
+.pm-discover-next-section h2 { font-size: var(--text-h5); line-height: var(--line-h5); font-weight: var(--bold); margin: 0 0 var(--s2); }
+.pm-discover-next-section ul { padding-left: var(--s6); margin: 0; }
+.pm-discover :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+@media (max-width: 42rem) {
+    .pm-discover-main { padding-top: var(--s6); }
+    .pm-discover-steps { justify-content: center; gap: var(--s2); font-size: var(--text-xs); }
+    .pm-discover-step { gap: var(--s1); }
+    .pm-discover-step-number { width: var(--s5); height: var(--s5); font-size: var(--text-xs); }
+    .pm-discover-card { padding: var(--s4); }
+    .pm-discover-form-grid { grid-template-columns: minmax(0, 1fr); }
+    .pm-discover .pm-field select { min-height: var(--control-touch); }
+    .pm-discover-actions .btn { max-width: 100%; }
+}
+@media (max-width: 23rem) {
+    .pm-discover-step { font-size: 0; }
+    .pm-discover-step.is-current { font-size: var(--text-xs); }
+    .pm-discover-actions { align-items: stretch; }
+}
+@media (prefers-reduced-motion: reduce) { .pm-discover-progress > span { transition: none; } }
+
+/* Additional career-exploration screens. All colors, type and controls use the site tokens. */
+.pm-discover-card > h1 + :not(.pm-discover-description) { margin-top: var(--s6); }
+.pm-discover-career-info {
+    background: var(--blue-soft);
+    border-radius: var(--radius-control);
+    padding: var(--s5);
+    margin: var(--s4) 0 0;
+    color: var(--ink);
+}
+.pm-discover-career-info h2,
+.pm-discover-career-outline h2,
+.pm-discover-career-list-title,
+.pm-discover-detail-row h2 {
+    font-size: var(--text-h5);
+    line-height: var(--line-h5);
+    font-weight: var(--bold);
+    margin: 0 0 var(--s2);
+}
+.pm-discover-career-info p { margin: 0; }
+.pm-discover-career-info p + p { margin-top: var(--s2); }
+.pm-discover-career-info-label {
+    color: var(--blue);
+    font-size: var(--text-xs);
+    line-height: var(--line-xs);
+    font-weight: var(--bold);
+    letter-spacing: .12em;
+    margin-bottom: var(--s1) !important;
+}
+.pm-discover-career-info:has(.pm-discover-career-info-label) h2 { font-size: var(--text-h2); line-height: var(--line-h2); }
+.pm-discover-career-after-panel { margin: var(--s5) 0 0; color: var(--muted); }
+.pm-discover-detail-rows { margin-top: var(--s5); }
+.pm-discover-detail-row { border-bottom: 1px solid var(--border); padding: var(--s4) 0; }
+.pm-discover-detail-row:first-child { padding-top: 0; }
+.pm-discover-detail-row p { margin: 0; }
+.pm-discover-career-caption {
+    color: var(--muted);
+    font-size: var(--text-xs);
+    line-height: var(--line-sm);
+    margin: var(--s4) 0 0;
+}
+.pm-discover-career-info .pm-discover-career-caption { margin-top: var(--s4); }
+.pm-discover-pills { display: flex; gap: var(--s2); flex-wrap: wrap; margin-bottom: var(--s4); }
+.pm-discover-pill {
+    min-height: var(--control-height);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--ink);
+    font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui);
+    padding: var(--s2) var(--s3);
+    cursor: pointer;
+}
+.pm-discover-pill:hover { border-color: var(--blue); }
+.pm-discover-pill.is-selected { background: var(--blue-soft); border-color: var(--blue); color: var(--blue); }
+.pm-discover-career-twocol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s4); }
+.pm-discover-career-outline {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    padding: var(--s5);
+    min-width: 0;
+}
+.pm-discover-career-outline p { font-size: var(--text-ui); line-height: var(--line-body); margin: 0; }
+.pm-discover-career-twocol + .pm-discover-career-info { margin-top: var(--s5); }
+.pm-discover-career-warning {
+    border-left: 3px solid #d9a128;
+    padding: var(--s2) var(--s3);
+    margin: var(--s4) 0 0;
+    background: #fffaf0;
+    color: var(--muted);
+    font-size: var(--text-xs);
+    line-height: var(--line-sm);
+}
+.pm-discover-card > .pm-discover-career-warning:first-of-type { margin-top: var(--s4); margin-bottom: var(--s4); }
+.pm-discover-career-salary-roles { display: grid; gap: var(--s2); margin-top: var(--s5); }
+.pm-discover-career-role {
+    width: 100%; text-align: left; border: 1px solid var(--control-border);
+    border-radius: var(--radius-control); background: var(--surface);
+    padding: var(--s3) var(--s4); min-height: var(--control-touch);
+    font: var(--regular) var(--text-ui)/var(--line-ui) var(--font-ui);
+    color: var(--ink); cursor: pointer;
+}
+.pm-discover-career-role:hover { border-color: var(--blue); }
+.pm-discover-career-role.is-selected { background: var(--blue-soft); border-color: var(--blue); }
+.pm-discover-career-pay { margin-top: var(--s5); }
+.pm-discover-career-pay-number { color: var(--blue) !important; font-size: var(--text-h2); line-height: var(--line-h2); font-weight: var(--bold); font-variant-numeric: tabular-nums; margin-top: var(--s2) !important; }
+.pm-discover-career-pay .pm-discover-career-caption { margin-top: var(--s1) !important; }
+.pm-discover-career-pay-note { color: var(--muted); margin: var(--s4) 0 0; }
+.pm-discover-career-privacy { margin-top: var(--s4); font-size: var(--text-sm); line-height: var(--line-sm); }
+.pm-discover-career-privacy summary { color: var(--blue); cursor: pointer; }
+.pm-discover-career-privacy p { margin: var(--s2) 0 0; color: var(--muted); }
+.pm-discover-career-list-title { margin: var(--s5) 0 var(--s4); }
+.pm-discover-career-plan p, .pm-discover-career-checks p { margin: 0; padding: var(--s3) 0; border-bottom: 1px solid var(--border); }
+.pm-discover-career-plan p:first-child, .pm-discover-career-checks p:first-child { padding-top: 0; }
+.pm-discover-career-plan p:last-child, .pm-discover-career-checks p:last-child { border-bottom: 0; }
+.pm-discover-print {
+    border: 0; padding: 0; background: none; color: var(--blue);
+    font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui);
+    text-decoration: underline; text-underline-offset: .18em; cursor: pointer;
+}
+.pm-discover-card > .pm-discover-print { margin-top: var(--s2); }
+.pm-discover-goal-label { display: block; font-weight: var(--semibold); font-size: var(--text-ui); line-height: var(--line-ui); margin: var(--s5) 0 var(--s3); }
+.pm-discover-goal-input {
+    width: 100%; min-height: 6rem; resize: vertical;
+    border: 1px solid var(--control-border); border-radius: var(--radius-control);
+    padding: var(--s3); background: var(--surface); color: var(--ink);
+    font: var(--regular) var(--text-body)/var(--line-body) var(--font-ui);
+}
+.pm-discover-goal-input[aria-invalid='true'] { border-color: var(--red); }
+.pm-discover-goal-error { color: var(--red); font-size: var(--text-sm); line-height: var(--line-sm); margin: var(--s2) 0 0; }
+.pm-discover-goal-result { overflow-wrap: anywhere; white-space: pre-wrap; }
+.pm-discover-career-checks + .pm-discover-career-caption { margin-top: var(--s3); }
+.pm-discover-career-small-step { margin-top: var(--s4); }
+.pm-discover-final-choices { padding: 0; margin: 0; border: 0; display: grid; gap: var(--s3); }
+.pm-discover-final-choice {
+    display: flex; align-items: center; gap: var(--s3); padding: var(--s4);
+    border: 1px solid var(--control-border); border-radius: var(--radius-control);
+    background: var(--surface); cursor: pointer; min-height: calc(var(--control-touch) + var(--s6));
+}
+.pm-discover-final-choice:hover { border-color: var(--blue); }
+.pm-discover-final-choice.is-selected { border-color: var(--blue); background: var(--blue-soft); }
+.pm-discover-final-choice input { flex: none; width: var(--s5); height: var(--s5); margin: 0; accent-color: var(--blue); }
+.pm-discover-final-choice span { display: grid; gap: var(--s1); }
+.pm-discover-final-choice strong { color: var(--ink); font-size: var(--text-ui); line-height: var(--line-ui); }
+.pm-discover-final-choice small { color: var(--muted); font-size: var(--text-sm); line-height: var(--line-sm); }
+.pm-discover-final-selected { margin-top: var(--s4); }
+.pm-discover .pm-discover-final-choices + .pm-discover-actions { margin-top: var(--s6); }
+.pm-discover-final-choices + .pm-discover-final-selected + .pm-discover-actions { margin-top: var(--s5); }
+.pm-discover .pm-discover-actions > .pm-discover-print { margin-left: auto; }
+@media (max-width: 42rem) {
+    .pm-discover-career-twocol { grid-template-columns: minmax(0, 1fr); }
+    .pm-discover-pill { min-height: var(--control-touch); }
+    .pm-discover-career-info, .pm-discover-career-outline { padding: var(--s4); }
+}
+@media print {
+    .pm-discover-page .pm-header, .pm-discover-page .pm-footer,
+    .pm-discover-steps, .pm-discover-progress, .pm-discover-actions,
+    .pm-discover-print, .pm-discover-final-selected, .pm-discover-pills { display: none !important; }
+    .pm-discover-page, .pm-discover, .pm-discover-main { background: #fff !important; min-height: 0; }
+    .pm-discover-main { width: 100%; max-width: none; padding: 0; }
+    .pm-discover-card { box-shadow: none; break-inside: avoid; }
+}

@@ -1398,3 +1398,6 @@
 #75 /Applications/XAMPP/xamppfiles/htdocs/laravel/PM_Circle/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('/Applications/X...')
 #76 {main}
 "} 
+[2026-11-11 15:28:10] local.INFO: Career job fetch completed {"keyword":"Project Manager","accepted":15,"rejected":0} 
+[2026-11-11 15:28:10] local.WARNING: JobSpy CLI returned an error {"site":"bdjobs","exit_code":1,"diagnostic":"ERROR: jobspy.bdjobs: response status code 503"} 
+[2026-11-11 15:55:39] testing.WARNING: JobSpy skipped invalid job records {"invalid_count":2} 

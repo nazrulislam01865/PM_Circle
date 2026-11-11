@@ -2,7 +2,7 @@ import { Link } from '@inertiajs/react';
 import { ArrowRight, BriefcaseBusiness, CalendarDays, MapPin, Wallet } from 'lucide-react';
 import { careerJobHref, formatCareerJobDate, formatCareerJobSalary, type CareerJob } from '@/data/career-jobs';
 
-/** Keep the same shared horizontal card surface as PM Trends, with job-specific fields. */
+/** Reuse the existing PM Trends horizontal card layout and shared styles. */
 export function CareerJobCard({ job }: { job: CareerJob }) {
     const href = careerJobHref(job.id);
 
@@ -12,15 +12,15 @@ export function CareerJobCard({ job }: { job: CareerJob }) {
         </Link>
         <div className="pm-trend-card-content">
             <div className="pm-trend-badges">
-                <span className="pm-trend-badge is-muted">Sample listing</span>
-                <span className="pm-trend-badge is-blue">{job.type}</span>
+                <span className="pm-trend-badge is-muted">External listing · {job.source}</span>
+                {job.type !== 'Not specified' && <span className="pm-trend-badge is-blue">{job.type}</span>}
             </div>
             <h2><Link href={href}>{job.title}</Link></h2>
             <p className="pm-career-company">{job.company}</p>
             <div className="pm-trend-meta pm-career-meta">
                 <span><MapPin aria-hidden="true"/>{job.location}</span>
                 <span><CalendarDays aria-hidden="true"/>{formatCareerJobDate(job.posted)}</span>
-                <span><BriefcaseBusiness aria-hidden="true"/>{job.experience ?? 'Experience not provided'}</span>
+                {job.experience && <span><BriefcaseBusiness aria-hidden="true"/>{job.experience}</span>}
                 {job.salary && <span><Wallet aria-hidden="true"/>{formatCareerJobSalary(job)}</span>}
             </div>
         </div>

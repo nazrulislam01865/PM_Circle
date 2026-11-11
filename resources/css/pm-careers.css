@@ -49,3 +49,6 @@
  .pm-careers .pm-trend-card .pm-trend-badges { gap:var(--s1); }
  .pm-careers .pm-trend-card .pm-trend-badge { padding:var(--s1) var(--s2); }
 }
+.pm-careers-search-submit { flex:none; }
+.pm-careers-pagination { display:flex; align-items:center; justify-content:center; gap:var(--s3); margin-top:var(--s5); color:var(--muted); font-size:var(--text-ui); }
+.pm-career-description { white-space:pre-line; overflow-wrap:anywhere; }

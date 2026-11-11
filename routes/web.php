@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\EmailVerificationCodeController;
+use App\Http\Controllers\Careers\CareerJobsController;
 use App\Http\Controllers\Community\PostController;
 use App\Http\Controllers\Members\MemberDirectoryController;
 use App\Http\Controllers\Account\AccountFeatureController;
@@ -79,10 +80,10 @@ Route::inertia('/about', 'public/About')->name('about');
 Route::inertia('/terms', 'public/Terms')->name('terms');
 Route::inertia('/privacy', 'public/Privacy')->name('privacy');
 
-// Public preview jobs: static sample data in the React feature, never submitted as live vacancies.
-Route::inertia('/careers', 'career/Jobs')->name('careers.index');
-Route::get('/careers/{job}', fn (string $job) => \Inertia\Inertia::render('career/Show', ['job' => $job]))
-    ->where('job', '[a-z0-9-]+')->name('careers.show');
+// Public career listings use the stored, auto-published JobSpy imports only.
+Route::get('/careers', [CareerJobsController::class, 'index'])->name('careers.index');
+Route::get('/careers/{job}', [CareerJobsController::class, 'show'])
+    ->where('job', 'job-[a-f0-9]{32}')->name('careers.show');
 Route::get('/members', [MemberDirectoryController::class, 'index'])->name('members.index');
 Route::get('/members/{member}', [MemberDirectoryController::class, 'show'])->whereNumber('member')->name('members.show');
 

@@ -22,10 +22,13 @@ final class DashboardController extends Controller
             'tab' => ['nullable', 'in:all,for-you,following,mine'],
         ]);
 
-        return Inertia::render('account/Dashboard', $overview->forMember(
-            $request->user(),
-            $validated['demo_plan'] ?? null,
-            ($validated['tab'] ?? 'all') === 'for-you' ? 'all' : ($validated['tab'] ?? 'all'),
-        ));
+        return Inertia::render('account/Dashboard', [
+            ...$overview->forMember(
+                $request->user(),
+                $validated['demo_plan'] ?? null,
+                ($validated['tab'] ?? 'all') === 'for-you' ? 'all' : ($validated['tab'] ?? 'all'),
+            ),
+            'flashStatus' => $request->session()->get('status'),
+        ]);
     }
 }

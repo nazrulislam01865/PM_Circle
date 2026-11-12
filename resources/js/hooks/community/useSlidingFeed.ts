@@ -112,6 +112,8 @@ export function useSlidingFeed<T extends ItemWithId>(initial: FeedPage<T>, filte
         }
     }, [key, stateKey, filter.tab, filter.topic, filter.search, filter.context, error]);
 
+    const removeItem = useCallback((id: number) => setItems(previous => previous.filter(post => post.id !== id)), []);
+
     const updateItem = useCallback((id: number, change: Partial<T>) => {
         setItems(previous => previous.map(post => post.id === id ? { ...post, ...change } : post));
     }, []);
@@ -120,5 +122,5 @@ export function useSlidingFeed<T extends ItemWithId>(initial: FeedPage<T>, filte
     const ready = stateKey === key;
     return { items: ready ? items : initial.data, loadMore, loading: ready && loading,
         error: ready ? error : '', hasMore: (ready ? nextCursor : initial.next_cursor) !== null,
-        retry: () => setError(''), updateItem };
+        retry: () => setError(''), updateItem, removeItem };
 }

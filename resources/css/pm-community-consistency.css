@@ -1,0 +1,150 @@
+/* PM Circle: shared feed, discussion and comment presentation.
+   The same tokens are used for guest and member pages. */
+
+/* Keep body, media and hashtags in the same column as the author's name/date. */
+.pm-unified-post-card .pm-post-card-main.pm-post-aligned-content,
+.pm-member-home .pm-unified-post-card .pm-post-card-main.pm-post-aligned-content,
+.pm-unified-post-card .pm-tag-pills-row {
+    margin-inline-start: calc(var(--pm-unified-avatar, 40px) + var(--s3));
+}
+.pm-unified-post-card .pm-post-card-main { padding-inline: 0; }
+.pm-unified-post-card .pm-post-card-main .pm-card-body { text-align: start; }
+
+/* Identity and audience dropdowns share an identical baseline and field height. */
+.pm-compose-prototype .pm-compose-identity-bar {
+    display: grid;
+    grid-template-columns: 40px minmax(0,1fr) minmax(0,1fr);
+    gap: var(--s3);
+    align-items: end;
+}
+.pm-compose-prototype .pm-compose-identity-bar > .pm-avatar,
+.pm-compose-prototype .pm-compose-identity-bar > :first-child {
+    align-self: end;
+    margin-bottom: 0;
+}
+.pm-compose-prototype .pm-compose-identity-choice,
+.pm-compose-prototype .pm-compose-audience {
+    display: grid;
+    grid-template-rows: var(--line-xs) var(--control-height);
+    align-content: end;
+    gap: var(--s1);
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    margin: 0;
+}
+.pm-compose-prototype .pm-compose-label-spacer { display: block; height: var(--line-xs); }
+.pm-compose-prototype .pm-compose-audience label { font: var(--medium) var(--text-xs)/var(--line-xs) var(--font-ui); }
+.pm-compose-prototype :is(.pm-compose-identity-choice, .pm-compose-audience) .pm-dropdown-trigger {
+    width: 100%; height: var(--control-height); min-height: var(--control-height);
+    box-sizing: border-box;
+}
+
+/* Comment composer and list: compact avatar-led layout, no padded container within the card. */
+.pm-inline-comments { margin-top: var(--s4); padding-top: var(--s4); }
+.pm-inline-comments-head { margin-bottom: var(--s3); }
+.pm-inline-comment-item, .pm-thread-comment, .pm-thread-reply { gap: var(--s3); }
+.pm-inline-comment-bubble {
+    padding: 0; background: transparent;
+    border: 0; border-radius: 0;
+}
+.pm-inline-comment-author { justify-content: flex-start; flex-wrap: wrap; }
+.pm-inline-comment-author span { margin-left: 0; }
+.pm-inline-comment-bubble p { margin-top: var(--s1); font: var(--regular) var(--text-body)/var(--line-body) var(--font-ui); }
+.pm-inline-comment-actions, .pm-thread-actions { padding: var(--s1) 0 0; margin: 0; }
+.pm-inline-comment-actions .pm-comment-engagement,
+.pm-thread-actions .pm-comment-engagement { gap: var(--s2); }
+.pm-comment-engagement .pm-home-action,
+.pm-engagement-shell .pm-inline-comments .pm-inline-comment-actions .pm-comment-engagement .pm-home-action,
+.pm-thread-actions .pm-comment-engagement .pm-home-action {
+    display: inline-flex; align-items: center; gap: var(--s2);
+    min-height: var(--control-height); padding: var(--s2);
+    border: 0; border-radius: var(--radius-control); background: transparent;
+    color: var(--muted); font: var(--medium) var(--text-sm)/var(--line-sm) var(--font-ui);
+}
+.pm-engagement-shell .pm-inline-comments .pm-inline-comment-actions .pm-comment-engagement .pm-home-action:hover,
+.pm-thread-actions .pm-comment-engagement .pm-home-action:hover { background: var(--blue-soft); color: var(--blue); }
+.pm-comment-engagement .pm-home-action svg { width: var(--icon); height: var(--icon); }
+.pm-thread-comment, .pm-thread-reply { border-bottom: 0; padding: var(--s3) 0; }
+.pm-thread-body > p { font: var(--regular) var(--text-body)/var(--line-body) var(--font-ui); margin-top: var(--s1); }
+.pm-thread-author { flex-wrap: wrap; font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui); }
+.pm-thread-author strong { font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui); }
+.pm-thread-menu { display: none; } /* Inert dots must not resemble a clickable menu. */
+.pm-thread-actions button { white-space: nowrap; }
+.pm-thread-branch { margin-top: var(--s2); }
+.pm-post-comments-panel .pm-post-comments-heading { margin-bottom: var(--s4); }
+.pm-post-comments-panel .pm-post-comments-heading h2 { font: var(--bold) var(--text-h3)/var(--line-h3) var(--font-ui); }
+
+/* The post-detail composer and sort use the same inline-comment metrics. */
+.pm-member-post-page .pm-post-composer {
+    border: 0; background: transparent; box-shadow: none; padding: 0;
+    display: flex; flex-wrap: wrap; gap: var(--s2); margin: 0 0 var(--s4);
+}
+.pm-member-post-page .pm-post-composer-top { display: flex; align-items: flex-start; gap: var(--s3); width: 100%; }
+.pm-member-post-page .pm-comment-composer-field {
+    min-width: 0; flex: 1; border: 1px solid var(--control-border);
+    border-radius: var(--radius-card); overflow: hidden; background: var(--surface);
+}
+.pm-member-post-page .pm-comment-composer-field:focus-within { border-color: var(--focus); }
+.pm-member-post-page .pm-post-composer-top textarea {
+    display: block; width: 100%; min-height: 100px; margin: 0;
+    border: 0; outline: 0; box-shadow: none; resize: vertical;
+    padding: var(--s3); font: var(--regular) var(--text-body)/var(--line-body) var(--font-ui);
+}
+.pm-member-post-page .pm-comment-composer-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: var(--s2); padding: var(--s2) var(--s3);
+    font: var(--regular) var(--text-xs)/var(--line-xs) var(--font-ui); color: var(--muted);
+}
+.pm-member-post-page .pm-comment-composer-footer .pm-button { min-height: var(--control-height); }
+.pm-member-post-page .pm-post-composer-footer { flex: 1 1 100%; padding-left: calc(40px + var(--s3)); }
+.pm-member-post-page .pm-post-composer > .pm-error { margin-left: calc(40px + var(--s3)); }
+.pm-member-post-page .pm-post-comments-sort-row {
+    display: flex; align-items: center; justify-content: flex-start;
+    margin: 0 0 var(--s3); padding: 0;
+}
+.pm-member-post-page .pm-post-comments-sort-row .pm-inline-sort-control {
+    display: inline-flex; align-items: center; gap: var(--s2); min-height: var(--control-height);
+    border-radius: var(--radius-control); padding: 0 var(--s2); color: var(--ink);
+}
+.pm-member-post-page .pm-post-comments-sort-row .pm-inline-sort-control select {
+    appearance: none; border: 0; background: transparent; box-shadow: none; padding: 0;
+    width: auto; min-width: 0; min-height: var(--control-height); cursor: pointer;
+    font: var(--medium) var(--text-ui)/var(--line-ui) var(--font-ui);
+}
+.pm-member-post-page .pm-post-comments-sort-row .pm-inline-sort-control:hover { background: var(--blue-soft); }
+.pm-member-post-page .pm-post-comments-sort-row .pm-inline-sort-control:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* The exact shared engagement row structure is used for posts, challenge and responses. */
+:is(.pm-unified-post-card, .pm-scenario-engagement, .pm-home .pm-home-scenario-social, .pm-home .pm-home-response-actions, .pm-comment-engagement)
+.pm-engagement-actions .pm-home-action,
+:is(.pm-unified-post-card, .pm-scenario-engagement, .pm-home .pm-home-scenario-social, .pm-home .pm-home-response-actions)
+.pm-home-action {
+    min-height: var(--control-touch);
+    padding: var(--s2);
+    font: var(--regular) var(--text-ui)/var(--line-ui) var(--font-ui);
+    color: var(--muted);
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-control);
+}
+:is(.pm-scenario-engagement, .pm-home .pm-home-scenario-social, .pm-home .pm-home-response-actions)
+.pm-home-action:hover { background: var(--blue-soft); color: var(--blue); }
+.pm-scenario-engagement.pm-card-action-bar {
+    display: block; margin-top: var(--s4); padding: var(--s2) 0 0;
+    border-top: 1px solid var(--border);
+}
+.pm-scenario-engagement .pm-engagement-actions { gap: var(--s3); width: 100%; }
+.pm-scenario-engagement .pm-engagement-actions .pm-home-action svg { width: var(--icon); height: var(--icon); }
+.pm-scenario-engagement .pm-engagement-actions > button[aria-pressed]:last-child { margin-left: auto; }
+
+@media (max-width: 42rem) {
+    .pm-unified-post-card .pm-post-card-main.pm-post-aligned-content,
+    .pm-member-home .pm-unified-post-card .pm-post-card-main.pm-post-aligned-content,
+    .pm-unified-post-card .pm-tag-pills-row { margin-inline-start: calc(var(--pm-unified-avatar, 40px) + var(--s3)); }
+    .pm-compose-prototype .pm-compose-identity-bar { grid-template-columns: 40px minmax(0,1fr); }
+    .pm-compose-prototype .pm-compose-identity-bar > :first-child { grid-column: 1; grid-row: 1; }
+    .pm-compose-prototype .pm-compose-identity-choice { grid-column: 2; grid-row: 1; }
+    .pm-compose-prototype .pm-compose-audience { grid-column: 2; grid-row: 2; }
+    .pm-post-comments-panel { padding: var(--s4); }
+}

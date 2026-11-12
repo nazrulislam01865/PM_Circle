@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Actions\Fortify\CreateNewUser;
 use App\Models\User;
 use App\Support\SignupVerificationMode;
+use App\Support\Onboarding\SignupMasterData;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -64,6 +65,7 @@ class OnboardingController extends Controller
             if (! $email) return to_route('join.account');
             return Inertia::render('auth/RegisterStep2', [
                 'isGuest' => true, 'email' => $email, 'name' => '', 'profile' => null, 'certifications' => [],
+                'signupOptions' => SignupMasterData::options(),
             ]);
         }
         if (! $request->user()->hasVerifiedEmail()) return to_route('verification.notice');
@@ -73,6 +75,7 @@ class OnboardingController extends Controller
             'name' => $request->user()->name,
             'profile' => $request->user()->profile?->only(['role', 'years_experience', 'resume_scan_status']),
             'certifications' => $request->user()->certifications()->get(['name', 'credential_number']),
+            'signupOptions' => SignupMasterData::options(),
         ]);
     }
 

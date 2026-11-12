@@ -27,7 +27,7 @@ function CareerSteps({ content, iconAssets }: { content: HomePathwayContent['ste
             {content.items.map((item, index) => {
                 const Icon = icons[item.icon] ?? Compass;
                 return <div className="pm-pathway-step" key={`${item.title}-${index}`}>
-                    <HomeContentIcon category="pathway_step_icon" icon={item.icon} assets={iconAssets} fallback={Icon} size={36} strokeWidth={1.8}/>
+                    <HomeContentIcon category="pathway_step_icon" icon={item.icon} image={item.icon_image} assets={iconAssets} fallback={Icon} size={36} strokeWidth={1.8}/>
                     <h3>{item.title}</h3>
                     <p>{item.description}</p>
                 </div>;
@@ -79,7 +79,7 @@ function ExamCarousel({ content, iconAssets }: { content: HomePathwayContent['ex
                         const Icon = icons[item.icon] ?? Layers3;
                         return <article className="pm-pathway-exam-card" key={`${item.title}-${index}`}>
                             <div className="pm-pathway-exam-intro">
-                                <HomeContentIcon category="pathway_exam_icon" icon={item.icon} assets={iconAssets} fallback={Icon} size={39} strokeWidth={1.85}/>
+                                <HomeContentIcon category="pathway_exam_icon" icon={item.icon} image={item.icon_image} assets={iconAssets} fallback={Icon} size={36} strokeWidth={1.85}/>
                                 <div><h3>{item.title}</h3><p>{item.description}</p></div>
                             </div>
                             <div className="pm-pathway-exam-pills" aria-label="Practice features">
@@ -111,7 +111,7 @@ function ExamCarousel({ content, iconAssets }: { content: HomePathwayContent['ex
 
 function ProfessionalSkillsBanner({ content }: { content: HomePathwayContent['banner'] }) {
     return <section className="pm-pathway-banner" aria-label="Professional skills">
-        <MessageCircle aria-hidden="true" className="pm-pathway-banner-icon" size={38} strokeWidth={1.8}/>
+        <MessageCircle aria-hidden="true" className="pm-pathway-banner-icon" size={36} strokeWidth={1.8}/>
         <div className="pm-pathway-banner-copy">
             <h2>{content.heading}</h2>
             <p>{content.description}</p>

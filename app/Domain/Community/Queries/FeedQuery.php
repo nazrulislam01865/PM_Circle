@@ -42,7 +42,8 @@ final class FeedQuery
             }
         }
 
-        $query = Post::query()->forFeed($tab, $viewer?->getKey())
+        $query = Post::query()->forFeed($tab, $viewer && $viewer->status === 'active' && ! $viewer->is_admin
+                && $viewer->onboarding_step >= 3 && $viewer->hasVerifiedEmail() ? $viewer->getKey() : null)
             ->whereNotNull('posts.published_at')
             ->when($topic !== 'All', function ($query) use ($topic): void {
                 if ($topic === 'Questions') {
@@ -76,8 +77,8 @@ final class FeedQuery
         $page = $query->cursorPaginate(
             $token === null ? self::INITIAL_SIZE : self::NEXT_SIZE,
             ['posts.id', 'posts.author_id', 'posts.title', 'posts.body', 'posts.image_path',
-                'posts.is_anonymous', 'posts.ai_generated', 'posts.topic', 'posts.tags',
-                'posts.claps_count', 'posts.published_at'],
+                'posts.is_anonymous', 'posts.visibility', 'posts.ai_generated', 'posts.topic', 'posts.tags',
+                'posts.claps_count', 'posts.notifications_muted_at', 'posts.published_at'],
             'cursor',
             $cursor,
         );
@@ -97,13 +98,33 @@ final class FeedQuery
             ? DB::table('post_reactions')->where('user_id', $viewer->getKey())
                 ->whereIn('post_id', $ids)->pluck('type', 'post_id')
             : collect();
-        $viewerSaved = $includeSaved && $viewer && $ids
+        $viewerSaved = $viewer && $ids
             ? DB::table('post_saves')->where('user_id', $viewer->getKey())
                 ->whereIn('post_id', $ids)->pluck('post_id')->all()
             : [];
+        // Poll rows are loaded in two batched lookups, only when a page contains polls.
+        $pollIds = $posts->where('topic', 'Poll')->pluck('id')->all();
+        $pollOptions = $pollIds ? DB::table('post_poll_options as options')
+            ->leftJoin('post_poll_votes as votes', 'votes.option_id', '=', 'options.id')
+            ->whereIn('options.post_id', $pollIds)
+            ->groupBy('options.id', 'options.post_id', 'options.label', 'options.position')
+            ->orderBy('options.position')
+            ->selectRaw('options.id, options.post_id, options.label, options.position, count(votes.user_id) as votes_count')
+            ->get()->groupBy('post_id') : collect();
+        $pollVotes = $viewer && $pollIds ? DB::table('post_poll_votes')
+            ->whereIn('post_id', $pollIds)->where('user_id', $viewer->id)->pluck('option_id', 'post_id') : collect();
         foreach ($posts as $post) {
+            if ($post->topic === 'Poll') {
+                $post->setAttribute('poll_options', ($pollOptions->get($post->id) ?? collect())->map(fn ($option) => [
+                    'id' => $option->id, 'label' => $option->label, 'votes_count' => (int) $option->votes_count,
+                ])->all());
+                $post->setAttribute('viewer_vote', $pollVotes->get($post->id));
+            }
             $post->setAttribute('viewer_reaction', $viewerReactions->get($post->id));
             $post->setAttribute('viewer_saved', in_array($post->id, $viewerSaved, true));
+            $post->setAttribute('viewer_is_author', (bool) ($viewer && $post->author_id === $viewer->id));
+            $post->setAttribute('viewer_muted', (bool) ($viewer && $post->author_id === $viewer->id && $post->notifications_muted_at));
+            $post->makeHidden('notifications_muted_at');
             $post->anonymizeForPublic();
         }
 
@@ -130,13 +151,20 @@ final class FeedQuery
             return [
                 'id' => $post['id'], 'title' => $post['title'] ?? null,
                 'body' => $post['body'], 'image_path' => $post['image_path'] ?? null,
-                'topic' => $post['topic'], 'author' => $author['name'] ?? 'Member',
+                'topic' => $post['topic'],
+                'is_anonymous' => (bool) ($post['is_anonymous'] ?? false),
+                'visibility' => $post['visibility'] ?? 'public',
+                'author' => $author['name'] ?? 'Member',
                 'authorRole' => $profile['role'] ?? null,
                 'authorAvatar' => $profile['avatar_path'] ?? null,
                 'publishedAt' => $post['published_at'] ?? null,
                 'comments' => $post['comments_count'] ?? 0,
                 'reactions' => $post['reactions_count'] ?? 0,
                 'saved' => (bool) ($post['viewer_saved'] ?? false),
+                'isOwner' => (bool) ($post['viewer_is_author'] ?? false),
+                'isMuted' => (bool) ($post['viewer_muted'] ?? false),
+                'pollOptions' => $post['poll_options'] ?? [],
+                'viewerVote' => $post['viewer_vote'] ?? null,
                 'reaction' => $post['viewer_reaction'] ?? null,
             ];
         }, $items);

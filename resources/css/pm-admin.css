@@ -225,3 +225,18 @@
 @media(max-width:42rem){.pm-admin-login-main{margin:var(--s6) auto}.pm-admin-login-card{padding:var(--s5)}}
 .pm-admin-logout{width:100%;background:transparent;border:0;text-align:left;cursor:pointer}
 .pm-admin-logout:hover{background:var(--canvas);color:var(--blue)}
+
+/* Scoped homepage editor layouts; reuse the approved form tokens. */
+.pm-admin-field-grid.pm-admin-field-stack{grid-template-columns:minmax(0,1fr)}
+.pm-admin-button-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s4);align-items:start}
+.pm-admin-field-label{font-size:var(--text-ui);font-weight:var(--semibold)}
+.pm-admin-upload-icon img{width:36px;height:36px;min-width:36px;min-height:36px;
+    padding:0;margin:0;border:0;border-radius:0;background:none;object-fit:contain}
+.pm-admin-upload-icon .pm-admin-hint{flex-basis:100%}
+@media(max-width:45rem){.pm-admin-button-pair{grid-template-columns:minmax(0,1fr)}}
+
+/* Same Radix select used by signup, with writable route inputs for homepage actions. */
+.pm-admin-route-inputs{display:grid;gap:var(--s2);min-width:0}
+.pm-admin-route-inputs>.pm-dropdown-trigger{font-size:var(--text-ui)}
+.pm-admin-featured>.pm-dropdown-trigger{width:100%}
+.pm-admin-master-code>.pm-admin-field{min-width:0}

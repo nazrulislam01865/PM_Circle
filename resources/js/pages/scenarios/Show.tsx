@@ -1,4 +1,4 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     Bookmark,
     Check,
@@ -7,21 +7,20 @@ import {
     ChevronUp,
     Clock,
     Cpu,
-    Heart,
     Lock,
     MessageCircle,
     MoreHorizontal,
-    Share2,
     Sliders,
     Sparkles,
     Star,
     Target,
-    ThumbsUp,
     Users,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar } from '@/components/pm/Avatar';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
+import { EngagementActionBar } from '@/components/community/EngagementActionBar';
+import { HomeShareAction, JoinCommunityDialog, ReactionPicker, type ReactionType } from '@/components/home/HomeEngagement';
 
 type NestedReply = {
     id: number;
@@ -51,6 +50,8 @@ type ScenarioResponseItem = {
     } | null;
     likes_count?: number;
     loves_count?: number;
+    reactions_count?: number;
+    reactions?: { type: ReactionType }[];
     user: {
         id: number;
         name: string;
@@ -75,6 +76,9 @@ type Scenario = {
     published_at: string;
     status: 'published' | 'closed';
     ai_generated: boolean;
+    reactions_count?: number;
+    viewer_reaction?: ReactionType | null;
+    viewer_bookmarked?: boolean;
 };
 
 type Props = {
@@ -125,7 +129,23 @@ export default function Show({ scenario, responses, related }: Props) {
     // Active reply composer target
     const [replyingToId, setReplyingToId] = useState<number | null>(null);
 
-    const [shareCopied, setShareCopied] = useState(false);
+    const canReact = Boolean(auth?.user && auth.user.onboarding_step >= 3);
+    const [joinAction, setJoinAction] = useState<string | null>(null);
+    const [bookmarked, setBookmarked] = useState(Boolean(scenario.viewer_bookmarked));
+    const [bookmarkBusy, setBookmarkBusy] = useState(false);
+    const scenarioUrl = `/scenarios/${encodeURIComponent(scenario.slug)}`;
+    const toggleBookmark = () => {
+        if (!canReact) { setJoinAction('save a scenario'); return; }
+        if (bookmarkBusy) return;
+        setBookmarkBusy(true);
+        const options = {
+            preserveScroll: true,
+            onSuccess: () => setBookmarked(previous => !previous),
+            onFinish: () => setBookmarkBusy(false),
+        };
+        if (bookmarked) router.delete(`/scenarios/${scenario.id}/bookmark`, options);
+        else router.post(`/scenarios/${scenario.id}/bookmark`, {}, options);
+    };
 
     const toggleFeedback = (id: number) => {
         setExpandedFeedback((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -135,17 +155,10 @@ export default function Show({ scenario, responses, related }: Props) {
         setExpandedReplies((prev) => ({ ...prev, [id]: !prev[id] }));
     };
 
-    const handleShare = () => {
-        if (navigator.clipboard) {
-            void navigator.clipboard.writeText(window.location.href).then(() => {
-                setShareCopied(true);
-                setTimeout(() => setShareCopied(false), 2000);
-            });
-        }
-    };
 
-    const handleSubmitResponse = (e: React.FormEvent) => {
+    const handleSubmitResponse = (e: React.FormEvent, parentId: number | null = null) => {
         e.preventDefault();
+        form.transform(data => ({ ...data, parent_id: parentId }));
         form.post(`/scenarios/${scenario.id}/responses`, {
             preserveScroll: true,
             onSuccess: () => {
@@ -236,26 +249,20 @@ export default function Show({ scenario, responses, related }: Props) {
                             </div>
 
                             {/* Action Row */}
-                            <div className="pm-card-action-bar" style={{ marginTop: '20px' }}>
-                                <div className="pm-action-buttons-group">
-                                    <button type="button" className="pm-action-item">
-                                        <ThumbsUp size={15} /> Like 42
+                            <div className="pm-card-action-bar pm-scenario-engagement">
+                                <EngagementActionBar>
+                                    <ReactionPicker endpoint={`/scenarios/${scenario.id}/reactions`} initial={scenario.viewer_reaction}
+                                        total={scenario.reactions_count ?? 0} canInteract={canReact} onJoin={setJoinAction} label="scenario" />
+                                    <button type="button" className="pm-home-action" onClick={() => {
+                                        document.getElementById('scenario-responses')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    }}><MessageCircle size={19} aria-hidden="true"/> {responses.total ?? responses.data.length} responses</button>
+                                    <HomeShareAction href={scenarioUrl} canInteract={canReact} onJoin={setJoinAction}/>
+                                    <button type="button" className="pm-home-action" disabled={bookmarkBusy}
+                                        aria-pressed={bookmarked} onClick={toggleBookmark}>
+                                        <Bookmark size={19} fill={bookmarked ? 'currentColor' : 'none'} aria-hidden="true"/>
+                                        {bookmarked ? 'Saved' : 'Save'}
                                     </button>
-                                    <button type="button" className="pm-action-item">
-                                        <Heart size={15} /> Love 26
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={handleShare}
-                                        className="pm-action-item"
-                                        style={{ color: 'var(--primary)' }}
-                                    >
-                                        <Share2 size={15} /> {shareCopied ? 'Link copied' : 'Share'}
-                                    </button>
-                                    <button type="button" className="pm-action-item">
-                                        <Bookmark size={15} /> Save
-                                    </button>
-                                </div>
+                                </EngagementActionBar>
                             </div>
                         </article>
 
@@ -311,7 +318,7 @@ export default function Show({ scenario, responses, related }: Props) {
                         </section>
 
                         {/* Community Responses Section (pm2.png) */}
-                        <section className="pm-community-responses-block">
+                        <section className="pm-community-responses-block" id="scenario-responses">
                             <div className="pm-community-responses-header">
                                 <div>
                                     <h2>Community responses</h2>
@@ -450,29 +457,16 @@ export default function Show({ scenario, responses, related }: Props) {
                                             )}
 
                                             {/* Action bar for response */}
-                                            <div className="pm-card-action-bar" style={{ marginTop: '12px' }}>
-                                                <div className="pm-action-buttons-group">
-                                                    <button type="button" className="pm-action-item">
-                                                        <ThumbsUp size={14} /> Like {resp.likes_count ?? 18}
-                                                    </button>
-                                                    <button type="button" className="pm-action-item">
-                                                        <Heart size={14} /> Love {resp.loves_count ?? 7}
-                                                    </button>
-                                                    {scenario.status === 'published' && <button
-                                                        type="button"
-                                                        className="pm-action-item"
-                                                        onClick={() =>
-                                                            setReplyingToId(
-                                                                replyingToId === resp.id ? null : resp.id
-                                                            )
-                                                        }
-                                                    >
-                                                        <MessageCircle size={14} /> Reply
+                                            <div className="pm-card-action-bar pm-scenario-engagement">
+                                                <EngagementActionBar>
+                                                    <ReactionPicker endpoint={`/scenarios/${scenario.id}/responses/${resp.id}/reactions`}
+                                                        initial={resp.reactions?.[0]?.type ?? null} total={resp.reactions_count ?? 0}
+                                                        canInteract={canRespond} onJoin={setJoinAction} label="response"/>
+                                                    {scenario.status === 'published' && <button type="button" className="pm-home-action"
+                                                        onClick={() => setReplyingToId(replyingToId === resp.id ? null : resp.id)}>
+                                                        <MessageCircle size={19} aria-hidden="true"/>Reply
                                                     </button>}
-                                                    <button type="button" className="pm-action-item">
-                                                        <Share2 size={14} /> Share
-                                                    </button>
-                                                </div>
+                                                </EngagementActionBar>
                                             </div>
 
                                             {/* Inline Reply Form when clicking Reply */}
@@ -482,8 +476,7 @@ export default function Show({ scenario, responses, related }: Props) {
                                                         <form
                                                             onSubmit={(e) => {
                                                                 e.preventDefault();
-                                                                form.setData('parent_id', resp.id);
-                                                                handleSubmitResponse(e);
+                                                                handleSubmitResponse(e, resp.id);
                                                             }}
                                                         >
                                                             <textarea
@@ -685,6 +678,7 @@ export default function Show({ scenario, responses, related }: Props) {
                     </aside>
                 </div>
             </div>
+            <JoinCommunityDialog action={joinAction} onClose={() => setJoinAction(null)} hasAccount={Boolean(auth?.user)} />
         </PublicLayout>
     );
 }

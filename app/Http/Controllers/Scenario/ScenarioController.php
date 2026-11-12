@@ -102,16 +102,31 @@ class ScenarioController extends Controller
     {
         abort_unless(in_array($scenario->status, ['published', 'closed'], true), 404);
 
+        $viewerId = $request->user()?->id;
+        $scenario->loadCount(['reactions as reactions_count' => fn ($query) => $query
+            ->whereIn('type', ['like', 'love', 'care', 'haha', 'wow', 'sad', 'angry'])]);
+
+        if ($viewerId) {
+            $myActions = $scenario->reactions()->where('user_id', $viewerId)->pluck('type');
+            $scenario->setAttribute('viewer_reaction', $myActions->first(fn ($type) => $type !== 'save'));
+            $scenario->setAttribute('viewer_bookmarked', $myActions->contains('save'));
+        } else {
+            $scenario->setAttribute('viewer_reaction', null);
+            $scenario->setAttribute('viewer_bookmarked', false);
+        }
+
         $responses = $scenario->responses()
             ->whereNull('parent_id')
             ->with([
                 'user:id,name',
+                ...($viewerId ? ['reactions' => fn ($query) => $query->where('user_id', $viewerId)] : []),
                 'user.profile' => fn ($q) => $q->where('visibility', 'public')->select('id', 'user_id', 'role'),
                 'replies' => fn ($q) => $q->with([
                     'user:id,name',
                     'user.profile' => fn ($p) => $p->where('visibility', 'public')->select('id', 'user_id', 'role'),
                 ])->oldest(),
             ])
+            ->withCount('reactions')
             ->orderByDesc('is_community_helpful')
             ->orderByDesc('likes_count')
             ->orderByDesc('created_at')

@@ -44,6 +44,7 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'name' => config('app.name'),
             'emailVerificationRequired' => config('pm-circle.email_verification_required'),
+            'siteNavigation' => fn () => $request->is('admin', 'admin/*') ? null : \App\Support\Admin\SiteNavigation::links(),
             'auth' => [
                 'user' => $request->user() ? [
                     ...$request->user()->only(['id', 'name', 'email', 'email_verified_at', 'onboarding_step', 'created_at', 'updated_at']),

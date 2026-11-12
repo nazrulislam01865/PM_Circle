@@ -1,0 +1,215 @@
+/* Canonical post card used by dashboard, community list, homepage and discussion detail.
+   One set of dimensions and reaction colors; never target login state or page wrappers. */
+.pm-unified-post-card {
+    --pm-unified-avatar: 40px;
+    display: block;
+    min-width: 0;
+    margin: 0 0 var(--s4);
+    padding: var(--s5);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    color: var(--ink);
+    font: var(--regular) var(--text-body)/var(--line-body) var(--font-ui);
+    overflow: visible; /* Reaction picker and post menu must not be clipped. */
+}
+.pm-unified-post-card .pm-card-author-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--s3);
+    margin: 0 0 var(--s3);
+}
+.pm-unified-post-card .pm-author-info-wrap {
+    display: flex;
+    align-items: flex-start;
+    flex: 1;
+    min-width: 0;
+    gap: var(--s3);
+}
+.pm-unified-post-card .pm-author-info-wrap > .pm-avatar { flex: 0 0 var(--pm-unified-avatar); }
+.pm-unified-post-card .pm-author-meta {
+    display: grid;
+    justify-items: start;
+    gap: var(--s1);
+    min-width: 0;
+}
+.pm-unified-post-card .pm-author-meta strong {
+    display: block;
+    color: var(--ink);
+    font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui);
+    overflow-wrap: anywhere;
+}
+.pm-unified-post-card .pm-author-meta small,
+.pm-unified-post-card .pm-author-meta small span {
+    display: inline;
+    color: var(--muted);
+    margin: 0;
+    font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui);
+}
+.pm-unified-post-card .pm-author-meta .pm-post-category-inline {
+    color: var(--blue);
+    font-weight: var(--medium);
+}
+.pm-unified-post-card .pm-post-card-main.pm-post-aligned-content,
+.pm-member-home .pm-unified-post-card .pm-post-card-main.pm-post-aligned-content {
+    margin: 0 0 var(--s3) calc(var(--pm-unified-avatar) + var(--s3));
+    min-width: 0;
+}
+.pm-unified-post-card .pm-post-card-main .pm-card-title {
+    margin: 0 0 var(--s1);
+    color: var(--ink);
+    font: var(--semibold) var(--text-h4)/var(--line-h4) var(--font-ui);
+}
+.pm-unified-post-card.pm-post-detail-card .pm-card-title {
+    font: var(--bold) var(--text-h3)/var(--line-h3) var(--font-ui);
+}
+.pm-unified-post-card .pm-unified-post-body-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+    border-radius: var(--radius-control);
+}
+.pm-unified-post-card .pm-unified-post-body-link:hover { color: var(--ink); }
+.pm-unified-post-card .pm-unified-post-body-link:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.pm-unified-post-card .pm-post-card-main .pm-card-body {
+    margin: 0;
+    font: var(--regular) var(--text-body)/var(--line-body) var(--font-ui);
+    color: var(--ink);
+    overflow-wrap: anywhere;
+}
+.pm-unified-post-card .pm-post-content-image { max-width: 100%; height: auto; }
+.pm-unified-post-card .pm-tag-pills-row { margin: 0 0 var(--s3) calc(var(--pm-unified-avatar) + var(--s3)); }
+.pm-unified-post-card .pm-ai-disclosure { margin-bottom: var(--s3); }
+.pm-unified-post-card .pm-card-action-bar {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--s2);
+    width: 100%;
+    padding: var(--s2) 0 0;
+    margin-top: var(--s3);
+    border-top: 1px solid var(--border);
+}
+.pm-unified-post-card .pm-card-action-bar .pm-engagement-shell {
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.pm-unified-post-card .pm-card-action-bar .pm-engagement-actions { width: 100%; }
+.pm-unified-post-card .pm-card-action-bar .pm-read-discussion-link {
+    align-self: center;
+    margin-left: auto;
+    white-space: nowrap;
+    color: var(--blue);
+    font: var(--semibold) var(--text-sm)/var(--line-sm) var(--font-ui);
+    text-decoration: none;
+}
+.pm-unified-post-card .pm-card-action-bar .pm-read-discussion-link:hover { color: var(--blue-hover); }
+/* Preserve the same nested-comment layout used by all feed cards. */
+.pm-unified-post-card .pm-card-action-bar:has(.pm-inline-comments) { flex-direction: column; }
+.pm-unified-post-card .pm-card-action-bar:has(.pm-inline-comments) .pm-engagement-shell { width: 100%; }
+.pm-unified-post-card .pm-engagement-actions .pm-home-action { 
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s2);
+    min-height: var(--control-touch);
+    padding: var(--s2);
+    border: 0;
+    border-radius: var(--radius-control);
+    background: transparent;
+    color: var(--muted);
+    font: var(--regular) var(--text-ui)/var(--line-ui) var(--font-ui);
+    cursor: pointer;
+}
+.pm-unified-post-card .pm-engagement-actions .pm-home-action:hover,
+.pm-unified-post-card .pm-engagement-actions .pm-home-action:focus-visible {
+    background: var(--blue-soft);
+    color: var(--blue);
+}
+.pm-unified-post-card .pm-engagement-actions .pm-home-action svg { color: currentColor; width: var(--icon); height: var(--icon); }
+.pm-unified-post-card .pm-engagement-actions .pm-post-save-action { margin-left: auto; }
+.pm-unified-post-card .pm-engagement-actions .pm-home-reaction-main[aria-pressed='true'].is-like { color: var(--reaction-like); }
+.pm-unified-post-card .pm-engagement-actions .pm-home-reaction-main[aria-pressed='true'].is-love { color: var(--reaction-love); }
+.pm-unified-post-card .pm-engagement-actions .pm-home-reaction-main[aria-pressed='true'].is-care { color: var(--reaction-care); }
+.pm-unified-post-card .pm-engagement-actions .pm-home-reaction-main[aria-pressed='true'].is-haha { color: var(--reaction-haha); }
+.pm-unified-post-card .pm-engagement-actions .pm-home-reaction-main[aria-pressed='true'].is-wow { color: var(--reaction-wow); }
+.pm-unified-post-card .pm-engagement-actions .pm-home-reaction-main[aria-pressed='true'].is-sad { color: var(--reaction-sad); }
+.pm-unified-post-card .pm-engagement-actions .pm-home-reaction-main[aria-pressed='true'].is-angry { color: var(--reaction-angry); }
+/* The same seven selectable reaction colors on desktop, mobile, public and member pages. */
+.pm-unified-post-card .pm-engagement-actions .pm-home-reaction-choice {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 41px;
+    width: 41px;
+    height: 41px;
+    min-height: 41px;
+    padding: 0;
+    border-radius: var(--radius-pill);
+}
+/* The post detail page keeps its full comments section rather than inline comments. */
+.pm-post-detail-card .pm-card-action-bar { margin-bottom: 0; }
+.pm-home-community-posts .pm-unified-post-card { margin: var(--s3) 0; }
+@media (max-width: 42rem) {
+    .pm-unified-post-card { padding: var(--s4); }
+    .pm-unified-post-card .pm-post-card-main.pm-post-aligned-content,
+    .pm-member-home .pm-unified-post-card .pm-post-card-main.pm-post-aligned-content {
+        margin-inline-start: 0;
+    }
+    .pm-unified-post-card .pm-tag-pills-row { margin-inline-start: 0; }
+    .pm-unified-post-card .pm-card-action-bar { flex-wrap: wrap; }
+    .pm-unified-post-card .pm-card-action-bar .pm-read-discussion-link { font-size: var(--text-xs); }
+    .pm-unified-post-card .pm-engagement-actions .pm-home-reaction-choice { flex-basis: 36px; width: 36px; height: 36px; min-height: 36px; }
+}
+
+/* Shared reaction/comment/share control metrics for discussion and daily challenge.
+   All four callers already render EngagementActionBar + ReactionPicker; avoid
+   separate guest/member color palettes or icon sizes. */
+:is(.pm-unified-post-card, .pm-scenario-engagement, .pm-home .pm-home-scenario-social, .pm-home .pm-home-response-actions)
+    .pm-engagement-actions .pm-home-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s2);
+    min-height: var(--control-touch);
+    padding: var(--s2);
+    border: 0;
+    border-radius: var(--radius-control);
+    background: transparent;
+    color: var(--muted);
+    font: var(--regular) var(--text-ui)/var(--line-ui) var(--font-ui);
+}
+:is(.pm-unified-post-card, .pm-scenario-engagement, .pm-home .pm-home-scenario-social, .pm-home .pm-home-response-actions)
+    .pm-engagement-actions .pm-home-action:hover {
+    color: var(--blue);
+    background: var(--blue-soft);
+}
+:is(.pm-unified-post-card, .pm-scenario-engagement, .pm-home .pm-home-scenario-social, .pm-home .pm-home-response-actions)
+    .pm-engagement-actions .pm-home-action svg {
+    width: var(--icon);
+    height: var(--icon);
+    color: currentColor;
+    stroke-width: 1.75;
+}
+:is(.pm-unified-post-card, .pm-scenario-engagement, .pm-home .pm-home-scenario-social, .pm-home .pm-home-response-actions)
+    .pm-engagement-actions .pm-home-reaction-choice {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    flex: 0 0 41px;
+    width: 41px;
+    height: 41px;
+    min-height: 41px;
+    padding: 0;
+    border-radius: var(--radius-pill);
+}
+@media(max-width:42rem) {
+    :is(.pm-unified-post-card, .pm-scenario-engagement, .pm-home .pm-home-scenario-social, .pm-home .pm-home-response-actions)
+        .pm-engagement-actions .pm-home-reaction-choice {
+        flex-basis: 36px;
+        width: 36px;
+        height: 36px;
+        min-height: 36px;
+    }
+}

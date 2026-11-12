@@ -5,7 +5,7 @@ namespace App\Http\Controllers\PublicSite;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Onboarding\OnboardingController;
 use App\Models\HomePageContent;
-use App\Support\Admin\HomepageMasterData;
+use App\Models\CareerJob;
 use App\Models\Post;
 use App\Models\Scenario;
 use App\Models\User;
@@ -21,7 +21,6 @@ class HomeController extends Controller
         $demo = app()->environment(['local', 'testing']) && config('pm-circle.demo_content_enabled');
         $visible = fn (string $section): bool => data_get($content, 'sections.'.$section, true) !== false;
         $scenarioId = data_get($content, 'scenario.featured_id');
-        $featuredPosts = array_slice((array) data_get($content, 'community.featured_ids', []), 0, 2);
         $featuredMembers = array_slice((array) data_get($content, 'members.featured_ids', []), 0, 3);
         $viewerId = auth()->user()?->is_admin === true ? null : auth()->id();
 
@@ -59,10 +58,10 @@ class HomeController extends Controller
             ->latest('created_at')->limit(2)->get() : collect();
 
         $posts = $visible('community') ? Post::query()->where('status', 'published')->where('visibility', 'public')
-            ->when($featuredPosts !== [], fn ($query) => $query->whereIn('id', $featuredPosts))
+            ->when($viewerId, fn ($query) => $query->whereNotExists(fn ($hidden) => $hidden->selectRaw('1')
+                ->from('post_hides')->whereColumn('post_hides.post_id', 'posts.id')
+                ->where('post_hides.user_id', $viewerId)))
             ->select(['id', 'author_id', 'title', 'body', 'image_path', 'is_anonymous', 'topic', 'ai_generated', 'published_at'])
-            ->when($demo && $featuredPosts === [], fn ($query) => $query->whereHas('author', fn ($users) => $users
-                ->whereIn('email', data_get($content, 'community.demo_post_emails', []))))
             ->with([
                 'author:id,name',
                 'author.profile' => fn ($query) => $query->where('visibility', 'public')
@@ -78,10 +77,6 @@ class HomeController extends Controller
                     ->whereColumn('post_id', 'posts.id')->where('user_id', $viewerId)->limit(1),
             ]))
             ->latest('published_at')->limit(2)->get() : collect();
-        if ($featuredPosts !== []) {
-            $postOrder = array_flip($featuredPosts);
-            $posts = $posts->sortBy(fn (Post $post) => $postOrder[$post->id] ?? PHP_INT_MAX)->values();
-        }
         $posts->each(fn (Post $post) => $post->anonymizeForPublic());
 
         $members = $visible('members') ? User::query()
@@ -104,9 +99,19 @@ class HomeController extends Controller
             $members = $members->sortBy(fn (User $member) => $order[$member->email] ?? PHP_INT_MAX)->values();
         }
 
+        // Same freshness and ordering as the Careers listing, limited to the homepage's three cards.
+        $jobs = $visible('careers') ? CareerJob::query()->current()
+            ->orderByDesc('posted_at')->orderByDesc('id')
+            ->limit(3)->get(['slug', 'title', 'company', 'location', 'job_type'])
+            ->map(fn (CareerJob $job) => [
+                'slug' => $job->slug, 'title' => $job->title, 'company' => $job->company,
+                'location' => $job->location ?: 'Not specified',
+                'type' => $job->job_type ?: 'Not specified',
+            ])->values() : collect();
+
         return Inertia::render('public/Home', [
             'content' => $content,
-            'iconAssets' => HomepageMasterData::iconAssets(),
+            'jobs' => $jobs,
             'isDemo' => $demo,
             'scenario' => $scenario,
             'scenarioResponses' => $responses,

@@ -82,6 +82,33 @@ class DailyChallengeLibraryTest extends TestCase
         $this->assertDatabaseCount('scenario_reactions', 0);
     }
 
+    public function test_scenario_detail_exposes_real_reactions_and_saved_state_for_shared_action_bar(): void
+    {
+        $this->seed(DemoScenarioSeeder::class);
+        $viewer = User::factory()->create(['onboarding_step' => 3]);
+        $author = User::factory()->create(['onboarding_step' => 3]);
+        $scenario = Scenario::query()->where('slug', 'a-late-change-a-fixed-deadline')->firstOrFail();
+        $response = $scenario->responses()->create([
+            'user_id' => $author->id,
+            'body' => 'Assess the impact, then discuss options with the sponsor and delivery team.',
+        ]);
+
+        $this->actingAs($viewer)->postJson("/scenarios/{$scenario->id}/reactions", ['type' => 'love'])->assertOk();
+        $this->actingAs($viewer)->post("/scenarios/{$scenario->id}/bookmark")->assertRedirect();
+        $this->actingAs($viewer)->postJson("/scenarios/{$scenario->id}/responses/{$response->id}/reactions", ['type' => 'care'])->assertOk();
+        $this->actingAs($viewer)->get("/scenarios/{$scenario->slug}")->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->component('scenarios/Show')
+            ->where('scenario.reactions_count', 1)
+            ->where('scenario.viewer_reaction', 'love')
+            ->where('scenario.viewer_bookmarked', true)
+            ->where('responses.data.0.reactions_count', 1)
+            ->where('responses.data.0.reactions.0.type', 'care')
+            ->etc());
+
+        $this->get('/scenarios/'.$scenario->slug)->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('scenario.reactions_count', 1)->etc());
+    }
+
     public function test_invalid_filters_are_rejected_without_loading_records(): void
     {
         $this->get('/daily-challenge?tab=invalid')->assertSessionHasErrors('tab');

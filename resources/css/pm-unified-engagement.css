@@ -1,0 +1,99 @@
+/* One engagement row for dashboard, community posts, scenarios, and homepage previews.
+   Specificity here only overrides old page-level defaults; design remains token-led. */
+.pm-scenario-engagement .pm-engagement-actions,
+.pm-home .pm-home-scenario-social .pm-engagement-actions,
+.pm-home .pm-home-response-actions .pm-engagement-actions,
+.pm-home .pm-home-post .pm-post-actions .pm-engagement-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    min-width: 0;
+}
+.pm-scenario-engagement .pm-engagement-actions .pm-home-action,
+.pm-home .pm-home-scenario-social .pm-engagement-actions .pm-home-action,
+.pm-home .pm-home-response-actions .pm-engagement-actions .pm-home-action,
+.pm-home .pm-home-post .pm-post-actions .pm-engagement-actions .pm-home-action {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 44px;
+    padding: 7px var(--space-2);
+    border: 0;
+    border-radius: var(--radius-control);
+    background: transparent;
+    color: var(--muted);
+    font-size: var(--type-small);
+    line-height: var(--line-ui);
+    text-decoration: none;
+}
+.pm-scenario-engagement .pm-engagement-actions .pm-home-action:hover,
+.pm-home .pm-home-scenario-social .pm-engagement-actions .pm-home-action:hover,
+.pm-home .pm-home-response-actions .pm-engagement-actions .pm-home-action:hover,
+.pm-home .pm-home-post .pm-post-actions .pm-engagement-actions .pm-home-action:hover {
+    color: var(--primary);
+    background: var(--primary-soft);
+}
+.pm-scenario-engagement .pm-engagement-actions .pm-home-action svg,
+.pm-home .pm-home-scenario-social .pm-engagement-actions .pm-home-action svg,
+.pm-home .pm-home-response-actions .pm-engagement-actions .pm-home-action svg,
+.pm-home .pm-home-post .pm-post-actions .pm-engagement-actions .pm-home-action svg {
+    width: var(--icon);
+    height: var(--icon);
+    color: currentColor;
+    stroke-width: 1.75;
+}
+/* Active reaction color always follows the shared picker, regardless of page wrapper. */
+:is(.pm-home .pm-home-post .pm-post-actions, .pm-home .pm-home-scenario-social, .pm-home .pm-home-response-actions, .pm-scenario-engagement, .pm-dash-feed-actions, .pm-member-post-actions) .pm-engagement-actions .pm-home-reaction-main.is-like[aria-pressed="true"] { color: var(--reaction-like); }
+:is(.pm-home .pm-home-post .pm-post-actions, .pm-home .pm-home-scenario-social, .pm-home .pm-home-response-actions, .pm-scenario-engagement, .pm-dash-feed-actions, .pm-member-post-actions) .pm-engagement-actions .pm-home-reaction-main.is-love[aria-pressed="true"] { color: var(--reaction-love); }
+:is(.pm-home .pm-home-post .pm-post-actions, .pm-home .pm-home-scenario-social, .pm-home .pm-home-response-actions, .pm-scenario-engagement, .pm-dash-feed-actions, .pm-member-post-actions) .pm-engagement-actions .pm-home-reaction-main.is-care[aria-pressed="true"] { color: var(--reaction-care); }
+:is(.pm-home .pm-home-post .pm-post-actions, .pm-home .pm-home-scenario-social, .pm-home .pm-home-response-actions, .pm-scenario-engagement, .pm-dash-feed-actions, .pm-member-post-actions) .pm-engagement-actions .pm-home-reaction-main.is-haha[aria-pressed="true"] { color: var(--reaction-haha); }
+:is(.pm-home .pm-home-post .pm-post-actions, .pm-home .pm-home-scenario-social, .pm-home .pm-home-response-actions, .pm-scenario-engagement, .pm-dash-feed-actions, .pm-member-post-actions) .pm-engagement-actions .pm-home-reaction-main.is-wow[aria-pressed="true"] { color: var(--reaction-wow); }
+:is(.pm-home .pm-home-post .pm-post-actions, .pm-home .pm-home-scenario-social, .pm-home .pm-home-response-actions, .pm-scenario-engagement, .pm-dash-feed-actions, .pm-member-post-actions) .pm-engagement-actions .pm-home-reaction-main.is-sad[aria-pressed="true"] { color: var(--reaction-sad); }
+:is(.pm-home .pm-home-post .pm-post-actions, .pm-home .pm-home-scenario-social, .pm-home .pm-home-response-actions, .pm-scenario-engagement, .pm-dash-feed-actions, .pm-member-post-actions) .pm-engagement-actions .pm-home-reaction-main.is-angry[aria-pressed="true"] { color: var(--reaction-angry); }
+/* A reaction popup uses its own circular buttons; generic page styles must not collapse them. */
+.pm-home .pm-home-scenario-social .pm-engagement-actions .pm-home-reaction-choice,
+.pm-home .pm-home-response-actions .pm-engagement-actions .pm-home-reaction-choice,
+.pm-home .pm-home-post .pm-post-actions .pm-engagement-actions .pm-home-reaction-choice {
+    flex: 0 0 41px;
+    width: 41px;
+    height: 41px;
+    padding: 0;
+    border-radius: 50%;
+}
+.pm-home .pm-home-scenario-social .pm-engagement-actions .pm-home-reaction-choice svg,
+.pm-home .pm-home-response-actions .pm-engagement-actions .pm-home-reaction-choice svg,
+.pm-home .pm-home-post .pm-post-actions .pm-engagement-actions .pm-home-reaction-choice svg {
+    width: 23px;
+    height: 23px;
+}
+/* Preserve individual reaction-button backgrounds: old homepage selectors must not clear them. */
+:is(.pm-home .pm-home-post .pm-post-actions, .pm-home .pm-home-scenario-social, .pm-home .pm-home-response-actions) .pm-engagement-actions .pm-home-reaction-choice.is-like { background: var(--primary-soft); }
+:is(.pm-home .pm-home-post .pm-post-actions, .pm-home .pm-home-scenario-social, .pm-home .pm-home-response-actions) .pm-engagement-actions .pm-home-reaction-choice.is-love { background: var(--pm-home-reaction-bg-love); }
+:is(.pm-home .pm-home-post .pm-post-actions, .pm-home .pm-home-scenario-social, .pm-home .pm-home-response-actions) .pm-engagement-actions .pm-home-reaction-choice.is-care { background: var(--pm-home-reaction-bg-care); }
+:is(.pm-home .pm-home-post .pm-post-actions, .pm-home .pm-home-scenario-social, .pm-home .pm-home-response-actions) .pm-engagement-actions .pm-home-reaction-choice.is-haha { background: var(--pm-home-reaction-bg-haha); }
+:is(.pm-home .pm-home-post .pm-post-actions, .pm-home .pm-home-scenario-social, .pm-home .pm-home-response-actions) .pm-engagement-actions .pm-home-reaction-choice.is-wow { background: var(--pm-home-reaction-bg-wow); }
+:is(.pm-home .pm-home-post .pm-post-actions, .pm-home .pm-home-scenario-social, .pm-home .pm-home-response-actions) .pm-engagement-actions .pm-home-reaction-choice.is-sad { background: var(--pm-home-reaction-bg-sad); }
+:is(.pm-home .pm-home-post .pm-post-actions, .pm-home .pm-home-scenario-social, .pm-home .pm-home-response-actions) .pm-engagement-actions .pm-home-reaction-choice.is-angry { background: var(--pm-home-reaction-bg-angry); }
+/* Retain the approved member-post detail page; only line up its comment sorter with the inner input. */
+.pm-member-post-page .pm-post-comments-heading {
+    min-width: 0;
+    padding-inline-end: var(--space-4);
+}
+.pm-member-post-page .pm-post-comments-heading select {
+    min-height: var(--control-height);
+    min-width: 0;
+    max-width: 100%;
+    font: inherit;
+    font-size: var(--type-small);
+}
+.pm-member-post-page .pm-post-composer-top textarea { min-width: 0; }
+@media (max-width: 640px) {
+    .pm-home .pm-home-scenario-social .pm-engagement-actions .pm-home-reaction-choice,
+    .pm-home .pm-home-response-actions .pm-engagement-actions .pm-home-reaction-choice,
+    .pm-home .pm-home-post .pm-post-actions .pm-engagement-actions .pm-home-reaction-choice {
+        flex-basis: 36px;
+        width: 36px;
+        height: 36px;
+    }
+}

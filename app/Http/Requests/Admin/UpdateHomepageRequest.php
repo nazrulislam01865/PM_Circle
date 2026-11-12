@@ -19,31 +19,47 @@ final class UpdateHomepageRequest extends FormRequest
         $text = ['required', 'string', 'max:500'];
         $body = ['required', 'string', 'max:3000'];
         $label = ['required', 'string', 'max:160'];
-        // One indexed lookup supplies all allowed dropdown choices for this request.
-        $catalog = HomepageMasterData::options();
-        $choice = static fn (string $category): array => ['required', 'string', Rule::in(array_column($catalog[$category] ?? [], 'value'))];
+        // Fixed built-in icon sets are validated server-side; no master-data query is needed.
+        $choice = static fn (string $category): array => ['required', 'string', Rule::in(
+            HomepageMasterData::ICON_VALUES[$category] ?? []
+        )];
+        $route = ['nullable', 'string', 'max:160', function (string $attribute, mixed $value, \Closure $fail): void {
+            if ($value !== null && $value !== '' && (! is_string($value) || ! HomepageMasterData::isAllowedNewValue('header_menu', $value))) {
+                $fail('Enter a valid same-site page destination, not an external or admin URL.');
+            }
+        }];
+        $requiredRoute = $route;
+        $requiredRoute[0] = 'required';
+        $iconImage = ['nullable', 'string', 'max:1024', function (string $attribute, mixed $value, \Closure $fail): void {
+            if ($value === null || $value === '') return;
+            $prefix = Storage::disk('public')->url('homepage/');
+            $filename = is_string($value) && str_starts_with($value, $prefix) ? substr($value, strlen($prefix)) : '';
+            if (preg_match('~^[A-Za-z0-9_-]+\.(?:png|jpe?g|webp)$~D', $filename) !== 1) {
+                $fail('Choose an icon uploaded through the homepage editor.');
+            }
+        }];
         $r = [
             'version' => ['required', 'integer', 'min:1'],
             'content' => ['required', 'array:sections,hero,pathway,scenario,community,members,skills,careers'],
-            'content.sections' => ['required', 'array:hero,pathway,scenario,community,members,skills,careers'],
+            'content.sections' => ['required', 'array:hero,pathway,scenario,community,members,skills,career_features,careers'],
         ];
 
-        foreach (['hero', 'pathway', 'scenario', 'community', 'members', 'skills', 'careers'] as $key) {
+        foreach (['hero', 'pathway', 'scenario', 'community', 'members', 'skills', 'career_features', 'careers'] as $key) {
             $r["content.sections.{$key}"] = ['required', 'boolean'];
         }
 
         $fields = [
-            'hero' => ['eyebrow' => $label, 'title' => $text, 'description' => $body, 'primary_label' => $label, 'secondary_label' => $label, 'primary_url' => $choice('hero_primary_url'), 'secondary_url' => $choice('hero_secondary_url'), 'caption_learn' => $label, 'caption_discuss' => $label, 'caption_career' => $label],
-            'scenario' => ['heading' => $label, 'status_label' => $label, 'button_label' => $label, 'read_button_label' => $label, 'discussion_button_label' => $label, 'responses_heading' => $label, 'score_label' => $label, 'view_all_label' => $label, 'empty_message' => $body, 'empty_responses_message' => $body, 'hint' => $body],
+            'hero' => ['eyebrow' => $label, 'title' => $text, 'description' => $body, 'primary_label' => $label, 'secondary_label' => $label, 'primary_url' => $requiredRoute, 'secondary_url' => $requiredRoute, 'caption_learn' => $label, 'caption_discuss' => $label, 'caption_career' => $label],
+            'scenario' => ['view_all_url' => $route, 'read_url' => $route, 'discussion_url' => $route, 'heading' => $label, 'status_label' => $label, 'button_label' => $label, 'read_button_label' => $label, 'discussion_button_label' => $label, 'responses_heading' => $label, 'score_label' => $label, 'view_all_label' => $label, 'empty_message' => $body, 'empty_responses_message' => $body, 'hint' => $body],
             'members' => ['heading' => $text, 'hint' => $body, 'button_label' => $label, 'empty_message' => $body],
             'skills' => ['heading' => $text],
-            'community' => ['heading' => $text, 'view_all_label' => $label, 'prompt_title' => $text, 'prompt_description' => $body, 'button_label' => $label, 'empty_message' => $body],
-            'careers' => ['heading' => $text, 'opportunities_heading' => $text, 'jobs_view_all_label' => $label, 'empty_message' => $body],
+            'community' => ['view_all_url' => $route, 'button_url' => $route, 'heading' => $text, 'view_all_label' => $label, 'prompt_title' => $text, 'prompt_description' => $body, 'button_label' => $label, 'empty_message' => $body],
+            'careers' => ['jobs_url' => $route, 'heading' => $text, 'opportunities_heading' => $text, 'jobs_view_all_label' => $label, 'empty_message' => $body],
             'pathway.steps' => ['heading' => $text],
             'pathway.exams' => ['heading' => $text, 'description' => $body, 'compare_label' => $label, 'more_label' => $label],
             'pathway.banner' => ['heading' => $text, 'description' => $body, 'button_label' => $label],
-            'careers.resume' => ['title' => $text, 'description' => $body, 'button_label' => $label],
-            'careers.join' => ['heading' => $text, 'description' => $body, 'button_label' => $label, 'hint' => $body],
+            'careers.resume' => ['button_url' => $route, 'icon_image' => $iconImage, 'title' => $text, 'description' => $body, 'button_label' => $label],
+            'careers.join' => ['button_url' => $route, 'heading' => $text, 'description' => $body, 'button_label' => $label, 'hint' => $body],
         ];
         foreach ($fields as $group => $names) {
             $r['content.'.$group] = ['required', 'array:'.implode(',', array_keys($names))
@@ -79,40 +95,44 @@ final class UpdateHomepageRequest extends FormRequest
                 }
             }],
             'content.pathway.steps.items' => ['present', 'array', 'max:10'],
-            'content.pathway.steps.items.*' => ['array:title,description,icon'],
+            'content.pathway.steps.items.*' => ['array:title,description,icon,icon_image'],
             'content.pathway.steps.items.*.title' => $text,
             'content.pathway.steps.items.*.description' => $body,
             'content.pathway.steps.items.*.icon' => $choice('pathway_step_icon'),
+            'content.pathway.steps.items.*.icon_image' => $iconImage,
             'content.pathway.exams.items' => ['present', 'array', 'max:10'],
-            'content.pathway.exams.items.*' => ['array:title,description,icon,features,button_label,plans_label'],
+            'content.pathway.exams.items.*' => ['array:title,description,icon,icon_image,features,button_label,plans_label'],
             'content.pathway.exams.items.*.title' => $text,
             'content.pathway.exams.items.*.description' => $body,
             'content.pathway.exams.items.*.icon' => $choice('pathway_exam_icon'),
+            'content.pathway.exams.items.*.icon_image' => $iconImage,
             'content.pathway.exams.items.*.button_label' => $label,
             'content.pathway.exams.items.*.plans_label' => $label,
             'content.pathway.exams.items.*.features' => ['present', 'array', 'max:8'],
             'content.pathway.exams.items.*.features.*' => $label,
             'content.skills.items' => ['present', 'array', 'max:10'],
-            'content.skills.items.*' => ['array:title,description,url,icon'],
+            'content.skills.items.*' => ['array:title,description,url,icon,icon_image'],
             'content.skills.items.*.title' => $text,
             'content.skills.items.*.description' => $body,
-            'content.skills.items.*.url' => $choice('skills_url'),
+            'content.skills.items.*.url' => $requiredRoute,
             'content.skills.items.*.icon' => $choice('skills_icon'),
+            'content.skills.items.*.icon_image' => $iconImage,
             'content.community.topics' => ['required', 'array', 'min:1', 'max:10'],
             'content.community.topics.*' => $label,
             'content.careers.features' => ['present', 'array', 'max:12'],
-            'content.careers.features.*' => ['array:title,description,url,icon'],
+            'content.careers.features.*' => ['array:title,description,url,icon,icon_image'],
+            'content.careers.features.*.icon_image' => $iconImage,
             'content.careers.features.*.title' => $text,
             'content.careers.features.*.description' => $body,
-            'content.careers.features.*.url' => $choice('careers_feature_url'),
+            'content.careers.features.*.url' => $requiredRoute,
             'content.careers.features.*.icon' => $choice('careers_feature_icon'),
             'content.careers.show_sample_opportunities' => ['required', 'boolean'],
             'content.careers.opportunities' => ['present', 'array', 'max:12'],
             'content.careers.opportunities.*' => ['array:role,company,location,type,icon'],
             'content.careers.opportunities.*.role' => $text,
             'content.careers.opportunities.*.company' => $text,
-            'content.careers.opportunities.*.location' => $choice('careers_location'),
-            'content.careers.opportunities.*.type' => $choice('careers_type'),
+            'content.careers.opportunities.*.location' => ['required', 'string', 'max:100'],
+            'content.careers.opportunities.*.type' => ['required', 'string', 'max:100'],
             'content.careers.opportunities.*.icon' => $choice('careers_opportunity_icon'),
             'content.scenario.featured_id' => ['nullable', 'integer', Rule::exists('scenarios', 'id')->where('status', 'published')],
             'content.community.featured_ids' => ['present', 'array', 'max:2'],

@@ -26,7 +26,7 @@ export function SkillSidebar({ content, iconAssets }: { content?: HomeContent['s
         {(content?.items ?? []).map(skill => {
             const Icon = skillIcons[skill.icon as keyof typeof skillIcons] ?? ClipboardCheck;
             return <Link key={skill.title} className="pm-skill" href={skill.url}>
-                <HomeContentIcon category="skills_icon" icon={skill.icon} assets={iconAssets} fallback={Icon}/><span><strong>{skill.title}</strong><small>{skill.description}</small></span><ChevronRight size={16}/>
+                <HomeContentIcon category="skills_icon" icon={skill.icon} image={skill.icon_image} assets={iconAssets} fallback={Icon} size={36}/><span><strong>{skill.title}</strong><small>{skill.description}</small></span><ChevronRight size={16}/>
             </Link>;
         })}
     </section>;

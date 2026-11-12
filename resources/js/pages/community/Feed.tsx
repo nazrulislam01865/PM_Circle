@@ -16,7 +16,6 @@ import { PostCard, type PostPreview } from '@/components/community/PostCard';
 import { VirtualizedFeed } from '@/components/community/VirtualizedFeed';
 import { useSlidingFeed, type FeedPage } from '@/hooks/community/useSlidingFeed';
 import { JoinCommunityDialog } from '@/components/home/HomeEngagement';
-import { TopicPills } from '@/components/community/TopicPills';
 import { FeedScopeTabs, type FeedScope } from '@/components/community/FeedScopeTabs';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
 
@@ -160,9 +159,6 @@ export default function Feed({ posts, activeTopic, feedTab, search, todayScenari
                             ) : <FeedScopeTabs active={feedTab} hrefFor={(tab) => `/community?${new URLSearchParams({ tab, ...(activeTopic !== 'All' ? { topic: activeTopic } : {}), ...(search ? { search } : {}) })}`} />}
                         </div>
 
-                        {/* Filter pills */}
-                        <TopicPills active={activeTopic} feedTab={feedTab} />
-
                         {/* Guest Join Callout Banner */}
                         {isGuest && (
                             <section className="pm-guest-banner-card">
@@ -188,7 +184,11 @@ export default function Feed({ posts, activeTopic, feedTab, search, todayScenari
                                 renderItem={(post, index) => <>
                                     <PostCard post={post} isGuest={isGuest} onJoin={setJoinAction}
                                         onReactionChange={(reaction, count) => feed.updateItem(post.id, { viewer_reaction: reaction, reactions_count: count })}
-                                        onCommentAdded={() => feed.updateItem(post.id, { comments_count: post.comments_count + 1 })} />
+                                        onCommentAdded={() => feed.updateItem(post.id, { comments_count: post.comments_count + 1 })}
+                                        onSavedChange={saved => feed.updateItem(post.id, { viewer_saved: saved })}
+                                        onUpdated={updated => feed.updateItem(post.id, updated)}
+                                        onMuteChange={muted => feed.updateItem(post.id, { viewer_muted: muted })}
+                                        onRemoved={() => feed.removeItem(post.id)} />
                                     {index === 0 && isGuest && (
                                         <div className="pm-inline-guest-prompt">
                                             <div className="pm-inline-guest-header"><Lock size={16} /> Join the community to add your response</div>

@@ -7,7 +7,7 @@ import { type HomePost } from '@/components/home/HomePostPreview';
 import { HomeCommunitySection } from '@/components/home/HomeCommunitySection';
 import { CareerHighlights } from '@/components/home/CareerHighlights';
 import { HomePathway } from '@/components/home/HomePathway';
-import type { HomeContent, HomeMember } from '@/types/home';
+import type { HomeContent, HomeMember, HomeCareerJob } from '@/types/home';
 import type { HomepageIconAssets } from '@/components/home/HomeContentIcon';
 import { JoinCommunityDialog } from '@/components/home/HomeEngagement';
 import { useState } from 'react';
@@ -20,9 +20,10 @@ type Props = {
     scenarioResponses: ScenarioResponsePreview[];
     posts: HomePost[];
     members: HomeMember[];
+    jobs: HomeCareerJob[];
 };
 
-export default function Home({ content, iconAssets, isDemo, scenario, scenarioResponses, posts, members }: Props) {
+export default function Home({ content, iconAssets, isDemo, scenario, scenarioResponses, posts, members, jobs }: Props) {
     const { auth, emailVerificationRequired } = usePage<{ auth: { user: { onboarding_step: number; email_verified_at: string | null; is_admin?: boolean } | null }; emailVerificationRequired?: boolean }>().props;
     const [joinAction, setJoinAction] = useState<string | null>(null);
     const canInteract = Boolean(auth?.user && !auth.user.is_admin && auth.user.onboarding_step >= 3 && (!emailVerificationRequired || auth.user.email_verified_at));
@@ -49,7 +50,8 @@ export default function Home({ content, iconAssets, isDemo, scenario, scenarioRe
                     {visible('skills') && <SkillSidebar content={content.skills} iconAssets={iconAssets}/>}
                 </aside>
             </div>}
-            {visible('careers') && <CareerHighlights content={content.careers} people={people} demo={isDemo} iconAssets={iconAssets}/>}
+            {(visible('careers') || (content.sections?.career_features ?? content.sections?.careers) !== false) && <CareerHighlights content={content.careers} people={people} demo={isDemo} iconAssets={iconAssets} jobs={jobs ?? []}
+                showFeatures={(content.sections?.career_features ?? content.sections?.careers) !== false} showRest={visible('careers')}/>}
             <JoinCommunityDialog action={joinAction} onClose={() => setJoinAction(null)} hasAccount={Boolean(auth?.user && !auth.user.is_admin)}/>
         </div>
     </PublicLayout>;

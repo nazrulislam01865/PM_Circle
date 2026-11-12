@@ -113,7 +113,7 @@ export default function Result({ shell, attempt, domains }: {
         <Head title="Exam Result Report"/>
         <div className="pm-exam-report">
             <nav className="pm-exam-report-breadcrumb" aria-label="Breadcrumb">
-                <Link href="/learning">Learn &amp; Practice</Link><span aria-hidden="true">/</span>
+                <Link href="/dashboard/learning">Learn &amp; Practice</Link><span aria-hidden="true">/</span>
                 <Link href={examBase}>PMP® Exam Simulator</Link><span aria-hidden="true">/</span>
                 <span aria-current="page">Exam Result</span>
             </nav>

@@ -10,7 +10,6 @@ use Database\Seeders\HomepageMasterDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Cache;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -28,144 +27,153 @@ class HomepageMasterDataTest extends TestCase
 
     private function administrator(): User
     {
-        $user = User::factory()->create();
-        $user->forceFill(['is_admin' => true])->save();
+        $admin = User::factory()->create();
+        $admin->forceFill(['is_admin' => true])->save();
 
-        return $user;
+        return $admin;
     }
 
-    public function test_regular_members_and_guests_cannot_manage_master_data(): void
+    private function payload(): array
+    {
+        $page = HomePageContent::query()->where('key', 'home')->firstOrFail();
+        $content = $page->content;
+        unset($content['demo_scenario_engagement']);
+        unset($content['scenario']['demo_response_emails'], $content['community']['demo_post_emails'], $content['members']['demo_emails']);
+        $content['scenario']['featured_id'] = null;
+        $content['community']['featured_ids'] = [];
+        $content['members']['featured_ids'] = [];
+
+        return ['version' => (int) $page->revision, 'content' => $content];
+    }
+
+    public function test_members_and_guests_cannot_access_admin_catalogs(): void
     {
         $option = MasterDataOption::query()->firstOrFail();
         $this->get('/admin/master-data')->assertRedirect();
-        $this->post('/admin/master-data', [])->assertRedirect();
+        $this->get('/admin/navigation')->assertRedirect();
         $this->actingAs(User::factory()->create());
         $this->get('/admin/master-data')->assertForbidden();
         $this->get('/admin/navigation')->assertForbidden();
-        $this->post('/admin/master-data', [])->assertForbidden();
-        $this->post('/admin/navigation', [])->assertForbidden();
-        $this->patch("/admin/master-data/{$option->id}", [])->assertForbidden();
         $this->patch("/admin/navigation/{$option->id}", [])->assertForbidden();
     }
 
-    public function test_editor_reads_options_from_master_data_and_supports_deep_link_to_section(): void
+    public function test_navigation_control_has_only_header_and_footer_categories(): void
     {
         $this->actingAs($this->administrator());
-        $this->get('/admin/homepage?section=careers')->assertOk()->assertInertia(fn (Assert $page) => $page
-            ->component('admin/Homepage')
-            ->where('selectedSection', 'careers')
-            ->has('masterOptions.careers_location', 3)
+        $this->get('/admin/navigation')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->component('admin/MasterData')
+            ->where('navigation', true)
+            ->where('selectedCategory', 'header_menu')
+            ->has('categories', 2)
+            ->has('options.header_menu', 6)
+            ->has('options.footer_menu', 4)
         );
+        $this->get('/admin/navigation?category=skills_icon')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('selectedCategory', 'header_menu')
+        );
+    }
+
+    public function test_master_data_excludes_icon_uploads_but_preserves_signup_categories(): void
+    {
+        $this->actingAs($this->administrator());
         $this->get('/admin/master-data')->assertOk()->assertInertia(fn (Assert $page) => $page
             ->component('admin/MasterData')
-            ->has('categories', 7)
+            ->where('navigation', false)
+            ->has('categories', 5)
+        );
+        $this->post('/admin/master-data', [
+            'category' => 'skills_icon', 'value' => 'custom-image', 'label' => 'Icon',
+        ])->assertSessionHasErrors('category');
+        $this->get('/admin/homepage')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->has('masterOptions.skills_icon', 3)
         );
     }
 
-    public function test_options_are_shared_and_seeding_preserves_admin_edits(): void
+    public function test_editing_header_link_updates_public_navigation(): void
     {
         $this->actingAs($this->administrator());
-        $option = MasterDataOption::query()->where('category', 'skills_icon')->where('value', 'practice')->firstOrFail();
-        $this->patch("/admin/master-data/{$option->id}", [
-            'label' => 'Practice questions', 'sort_order' => 5, 'is_active' => true,
-        ])->assertRedirect('/admin/master-data?category=skills_icon');
-        $this->seed(HomepageMasterDataSeeder::class);
-        $this->assertSame('Practice questions', $option->fresh()->label);
-        $this->get('/admin/homepage')->assertInertia(fn (Assert $page) => $page
-            ->where('masterOptions.skills_icon.0.label', 'Practice questions')
-        );
-    }
-
-    public function test_currently_used_option_cannot_be_retired(): void
-    {
-        $this->actingAs($this->administrator());
-        $option = MasterDataOption::query()->where('category', 'hero_primary_url')->where('value', '/register')->firstOrFail();
+        $option = MasterDataOption::query()->where('category', 'header_menu')->where('value', '/careers')->firstOrFail();
         $this->patch("/admin/navigation/{$option->id}", [
-            'label' => 'Register', 'sort_order' => 10, 'is_active' => false,
-        ])->assertSessionHasErrors('is_active');
-        $this->assertTrue($option->fresh()->is_active);
+            'value' => '/discover-pm', 'label' => 'Explore PM', 'sort_order' => 1, 'is_active' => true,
+        ])->assertRedirect('/admin/navigation?category=header_menu');
+        $this->assertSame('/discover-pm', $option->fresh()->value);
+        $this->get('/')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('siteNavigation.header.0.href', '/discover-pm')
+            ->where('siteNavigation.header.0.label', 'Explore PM')
+        );
+        $this->seed(HomepageMasterDataSeeder::class);
+        $this->assertSame(6, MasterDataOption::query()->where('category', 'header_menu')->count());
+        $this->assertDatabaseMissing('master_data_options', ['category' => 'header_menu', 'value' => '/careers']);
     }
 
-    public function test_admin_can_add_safe_option_and_cannot_add_external_destination_or_unsupported_icon(): void
+    public function test_footer_controls_support_order_and_deactivation(): void
     {
         $this->actingAs($this->administrator());
-        $this->post('/admin/navigation', [
-            'category' => 'hero_primary_url', 'value' => '/daily-challenge', 'label' => 'Daily challenge',
-        ])->assertRedirect('/admin/navigation?category=hero_primary_url');
-        $this->assertDatabaseHas('master_data_options', ['category' => 'hero_primary_url', 'value' => '/daily-challenge']);
-
-        $this->post('/admin/navigation', [
-            'category' => 'hero_primary_url', 'value' => 'https://evil.example', 'label' => 'Bad',
-        ])->assertSessionHasErrors('value');
-        $this->post('/admin/master-data', [
-            'category' => 'pathway_step_icon', 'value' => 'unimplemented-icon', 'label' => 'Unknown',
-        ])->assertSessionHasErrors('value');
-    }
-
-    public function test_inactive_options_are_excluded_from_editor_choices(): void
-    {
-        $this->actingAs($this->administrator());
-        $option = MasterDataOption::query()->where('category', 'careers_type')->where('value', 'Contract')->firstOrFail();
-        $this->patch("/admin/master-data/{$option->id}", [
-            'label' => 'Contract', 'sort_order' => 30, 'is_active' => false,
-        ])->assertRedirect('/admin/master-data?category=careers_type');
-        $this->assertFalse($option->fresh()->is_active);
-        $this->get('/admin/homepage')->assertInertia(fn (Assert $page) => $page
-            ->has('masterOptions.careers_type', 2)
+        $option = MasterDataOption::query()->where('category', 'footer_menu')->where('value', '/community')->firstOrFail();
+        $this->patch("/admin/navigation/{$option->id}", [
+            'value' => '/community', 'label' => 'Community', 'sort_order' => 2, 'is_active' => true,
+        ])->assertRedirect();
+        $this->get('/')->assertInertia(fn (Assert $page) => $page
+            ->where('siteNavigation.footer.0.href', '/community')
+        );
+        $this->patch("/admin/navigation/{$option->id}", [
+            'value' => '/community', 'label' => 'Community', 'sort_order' => 2, 'is_active' => false,
+        ])->assertRedirect();
+        $this->get('/')->assertInertia(fn (Assert $page) => $page
+            ->has('siteNavigation.footer', 3)
         );
     }
-    public function test_sidebar_catalogs_are_separated_and_validated_by_section(): void
+
+    public function test_navigation_rejects_external_admin_and_duplicate_destinations(): void
     {
         $this->actingAs($this->administrator());
-        $this->get('/admin/master-data?category=careers_type')->assertOk()->assertInertia(fn (Assert $page) => $page
-            ->component('admin/MasterData')->where('selectedCategory', 'careers_type')
-            ->where('navigation', false)->has('categories', 7));
-        $this->get('/admin/navigation?category=skills_url')->assertOk()->assertInertia(fn (Assert $page) => $page
-            ->component('admin/MasterData')->where('selectedCategory', 'skills_url')
-            ->where('navigation', true)->has('categories', 4));
-        $this->post('/admin/master-data', [
-            'category' => 'hero_primary_url', 'value' => '/learning', 'label' => 'Learning',
-        ])->assertSessionHasErrors('category');
         $this->post('/admin/navigation', [
-            'category' => 'skills_icon', 'value' => 'practice', 'label' => 'Practice',
+            'category' => 'header_menu', 'value' => 'https://malicious.test', 'label' => 'Outside',
+        ])->assertSessionHasErrors('value');
+        $this->post('/admin/navigation', [
+            'category' => 'footer_menu', 'value' => '/admin', 'label' => 'Admin',
+        ])->assertSessionHasErrors('value');
+        $menu = MasterDataOption::query()->where('category', 'header_menu')->where('value', '/careers')->firstOrFail();
+        $this->patch("/admin/navigation/{$menu->id}", [
+            'value' => '/community', 'label' => 'Wrong', 'sort_order' => 10, 'is_active' => true,
+        ])->assertSessionHasErrors('value');
+        $this->patch("/admin/navigation/{$menu->id}", [
+            'value' => 'javascript:alert(1)', 'label' => 'Wrong', 'sort_order' => 10, 'is_active' => true,
+        ])->assertSessionHasErrors('value');
+    }
+
+    public function test_navigation_and_master_data_cannot_be_mixed(): void
+    {
+        $this->actingAs($this->administrator());
+        $this->post('/admin/navigation', [
+            'category' => 'signup_role', 'value' => 'Assistant', 'label' => 'Assistant',
         ])->assertSessionHasErrors('category');
-        $icon = MasterDataOption::query()->where('category', 'skills_icon')->firstOrFail();
-        $this->patch("/admin/navigation/{$icon->id}", ['label' => 'Ignored', 'sort_order' => 1, 'is_active' => true])->assertNotFound();
+        $this->post('/admin/master-data', [
+            'category' => 'header_menu', 'value' => '/about', 'label' => 'About',
+        ])->assertSessionHasErrors('category');
     }
 
-    public function test_admin_icon_upload_is_safe_and_public_homepage_receives_asset(): void
+    public function test_individual_homepage_icon_upload_works_without_master_data_icons(): void
     {
         Storage::fake('public');
-        Cache::forget('pm-circle:homepage-icon-assets');
         $this->actingAs($this->administrator());
-        $icon = MasterDataOption::query()->where('category', 'skills_icon')->firstOrFail();
-        $this->post("/admin/master-data/{$icon->id}/icon", [
-            'icon' => UploadedFile::fake()->createWithContent('practice.png', base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO8GzHYAAAAASUVORK5CYII=')),
-        ])->assertRedirect('/admin/master-data?category=skills_icon');
-        $path = $icon->fresh()->icon_path;
-        $this->assertNotNull($path);
-        Storage::disk('public')->assertExists($path);
+        $icon = UploadedFile::fake()->createWithContent('skill.png', base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg=='));
+        $url = $this->postJson('/admin/homepage/images', ['image' => $icon])->assertOk()->json('url');
+        $payload = $this->payload();
+        $payload['content']['skills']['items'][0]['icon_image'] = $url;
+        $this->put('/admin/homepage', $payload)->assertRedirect();
+        $this->assertSame($url, HomePageContent::query()->where('key', 'home')->firstOrFail()->content['skills']['items'][0]['icon_image']);
         $this->get('/')->assertOk()->assertInertia(fn (Assert $page) => $page
-            ->component('public/Home')
-            ->where('iconAssets.skills_icon.'.$icon->value, Storage::disk('public')->url($path)));
-        $this->delete("/admin/master-data/{$icon->id}/icon")
-            ->assertRedirect('/admin/master-data?category=skills_icon');
-        $this->assertNull($icon->fresh()->icon_path);
+            ->where('content.skills.items.0.icon_image', $url)
+            ->missing('iconAssets')
+        );
     }
 
-    public function test_icon_upload_rejects_svg_and_navigation_options_and_guests(): void
+    public function test_global_master_data_icon_upload_endpoints_are_not_available(): void
     {
-        Storage::fake('public');
-        $icon = MasterDataOption::query()->where('category', 'skills_icon')->firstOrFail();
-        $navigation = MasterDataOption::query()->where('category', 'hero_primary_url')->firstOrFail();
-        $this->post("/admin/master-data/{$icon->id}/icon", [])->assertRedirect();
         $this->actingAs($this->administrator());
-        $this->post("/admin/master-data/{$icon->id}/icon", [
-            'icon' => UploadedFile::fake()->create('unsafe.svg', 1, 'image/svg+xml'),
-        ])->assertSessionHasErrors('icon');
-        $this->post("/admin/master-data/{$navigation->id}/icon", [
-            'icon' => UploadedFile::fake()->createWithContent('bad.png', base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO8GzHYAAAAASUVORK5CYII=')),
-        ])->assertNotFound();
+        $oldIcon = MasterDataOption::query()->firstOrFail();
+        $this->post("/admin/master-data/{$oldIcon->id}/icon", [])->assertNotFound();
+        $this->delete("/admin/master-data/{$oldIcon->id}/icon")->assertNotFound();
     }
-
 }

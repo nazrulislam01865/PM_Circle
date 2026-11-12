@@ -28,6 +28,53 @@ final class MemberDiscoveryTest extends TestCase
         $this->get('/members/'.$public->id)->assertOk();
     }
 
+    public function test_directory_filters_use_public_profile_fields_and_expose_real_counts(): void
+    {
+        $viewer = User::factory()->create(['status' => 'active', 'onboarding_step' => 3]);
+        $first = User::factory()->create(['name' => 'Alpha Manager', 'status' => 'active', 'onboarding_step' => 3]);
+        $other = User::factory()->create(['name' => 'Beta Member', 'status' => 'active', 'onboarding_step' => 3]);
+        $private = User::factory()->create(['name' => 'Private Manager', 'status' => 'active', 'onboarding_step' => 3]);
+
+        $first->profile()->create(['visibility' => 'public', 'role' => 'Project Manager', 'industry' => 'Technology', 'city' => 'Dhaka', 'country' => 'Bangladesh']);
+        $other->profile()->create(['visibility' => 'public', 'role' => 'Scrum Master', 'industry' => 'Consulting', 'city' => 'Dhaka', 'country' => 'Bangladesh']);
+        $private->profile()->create(['visibility' => 'private', 'role' => 'Project Manager', 'industry' => 'Technology']);
+        \Illuminate\Support\Facades\DB::table('member_follows')->insert([
+            'follower_id' => $viewer->id, 'followed_id' => $first->id,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        Post::create(['author_id' => $first->id, 'body' => 'Public contribution', 'status' => 'published', 'visibility' => 'public', 'published_at' => now(), 'is_anonymous' => false]);
+        Post::create(['author_id' => $first->id, 'body' => 'Private contribution', 'status' => 'published', 'visibility' => 'private', 'published_at' => now(), 'is_anonymous' => false]);
+
+        $this->actingAs($viewer)->get('/members?role=Project%20Manager&industry=Technology&location=Dhaka%7CBangladesh&tab=following')
+            ->assertOk()->assertInertia(fn (Assert $page) => $page
+                ->component('members/Directory')
+                ->has('members.data', 1)
+                ->where('members.data.0.id', $first->id)
+                ->where('members.data.0.profile.city', 'Dhaka')
+                ->where('members.data.0.followers_count', 1)
+                ->where('members.data.0.contributions_count', 1)
+                ->where('members.data.0.is_following', true)
+                ->where('filterOptions.roles.0', 'Project Manager')
+                ->missing('members.data.0.email'));
+    }
+
+    public function test_directory_guest_following_is_empty_and_invalid_filters_are_rejected(): void
+    {
+        $member = User::factory()->create(['status' => 'active']);
+        $member->profile()->create(['visibility' => 'public', 'role' => 'Coordinator']);
+        $this->get('/members?tab=following')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->component('members/Directory')->has('members.data', 0));
+        $this->get('/members?sort=unsafe')->assertRedirect()->assertSessionHasErrors('sort');
+        $this->get('/members?role='.str_repeat('x', 121))->assertRedirect()->assertSessionHasErrors('role');
+    }
+
+    public function test_authenticated_community_feed_route_is_a_real_page(): void
+    {
+        $member = User::factory()->create(['status' => 'active', 'onboarding_step' => 3]);
+        $this->actingAs($member)->get('/community')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->component('community/Feed'));
+    }
+
     public function test_member_can_preview_own_private_profile_without_exposing_it_to_others(): void
     {
         $owner = User::factory()->create(['onboarding_step' => 3, 'status' => 'active']);

@@ -34,6 +34,7 @@ class Post extends Model
             'claps_count' => 'integer',
             'published_at' => 'datetime',
             'ai_generated' => 'boolean',
+            'notifications_muted_at' => 'datetime',
             'is_anonymous' => 'boolean',
         ];
     }
@@ -56,7 +57,16 @@ class Post extends Model
      */
     public function scopeForFeed(Builder $query, string $tab = 'all', ?int $viewerId = null): Builder
     {
-        $query->where('posts.status', 'published')->where('posts.visibility', 'public');
+        $query->where('posts.status', 'published')
+            ->where(function (Builder $visible) use ($viewerId): void {
+                $visible->where('posts.visibility', 'public');
+                if ($viewerId) $visible->orWhere('posts.visibility', 'members');
+            });
+        if ($viewerId) {
+            $query->whereNotExists(fn ($hidden) => $hidden->selectRaw('1')
+                ->from('post_hides')->whereColumn('post_hides.post_id', 'posts.id')
+                ->where('post_hides.user_id', $viewerId));
+        }
 
         if ($tab === 'mine') {
             return $viewerId ? $query->where('posts.author_id', $viewerId) : $query->whereRaw('1 = 0');
@@ -93,6 +103,11 @@ class Post extends Model
 
             return $value;
         });
+    }
+
+    public function pollOptions(): HasMany
+    {
+        return $this->hasMany(PostPollOption::class)->orderBy('position');
     }
 
     public function author(): BelongsTo

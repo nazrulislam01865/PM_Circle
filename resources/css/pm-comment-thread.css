@@ -1,0 +1,141 @@
+/* Single PM Circle comment/reply presentation across feed and detail.
+   Tokens come from pm-design-tokens.css; no secondary theme or reaction palette. */
+.pm-unified-post-card .pm-post-card-main .pm-card-body {
+    padding: 0; /* The global profile .pm-card-body padding was double-indenting post text. */
+}
+.pm-unified-post-card .pm-post-card-main.pm-post-aligned-content {
+    margin-inline-start: calc(var(--pm-unified-avatar) + var(--s3));
+    padding-inline: 0;
+}
+.pm-unified-post-card .pm-post-card-main :is(.pm-post-content, .pm-card-title) {
+    text-align: start;
+    margin-inline: 0;
+}
+
+/* All seven reactions use one palette, even in the comment thread.
+   The legacy .pm-inline-comment-actions button rule previously made every icon muted. */
+.pm-home-reaction-root .pm-home-reaction-choice.is-like { color: var(--reaction-like); background: var(--blue-soft); }
+.pm-home-reaction-root .pm-home-reaction-choice.is-love { color: var(--reaction-love); background: var(--pm-home-reaction-bg-love); }
+.pm-home-reaction-root .pm-home-reaction-choice.is-care { color: var(--reaction-care); background: var(--pm-home-reaction-bg-care); }
+.pm-home-reaction-root .pm-home-reaction-choice.is-haha { color: var(--reaction-haha); background: var(--pm-home-reaction-bg-haha); }
+.pm-home-reaction-root .pm-home-reaction-choice.is-wow { color: var(--reaction-wow); background: var(--pm-home-reaction-bg-wow); }
+.pm-home-reaction-root .pm-home-reaction-choice.is-sad { color: var(--reaction-sad); background: var(--pm-home-reaction-bg-sad); }
+.pm-home-reaction-root .pm-home-reaction-choice.is-angry { color: var(--reaction-angry); background: var(--pm-home-reaction-bg-angry); }
+.pm-comment-engagement .pm-home-reaction-main[aria-pressed='true'].is-like { color: var(--reaction-like); }
+.pm-comment-engagement .pm-home-reaction-main[aria-pressed='true'].is-love { color: var(--reaction-love); }
+.pm-comment-engagement .pm-home-reaction-main[aria-pressed='true'].is-care { color: var(--reaction-care); }
+.pm-comment-engagement .pm-home-reaction-main[aria-pressed='true'].is-haha { color: var(--reaction-haha); }
+.pm-comment-engagement .pm-home-reaction-main[aria-pressed='true'].is-wow { color: var(--reaction-wow); }
+.pm-comment-engagement .pm-home-reaction-main[aria-pressed='true'].is-sad { color: var(--reaction-sad); }
+.pm-comment-engagement .pm-home-reaction-main[aria-pressed='true'].is-angry { color: var(--reaction-angry); }
+.pm-comment-engagement .pm-home-reaction-choice,
+.pm-inline-comment-actions .pm-home-reaction-choice,
+.pm-thread-actions .pm-home-reaction-choice {
+    width: 41px; height: 41px; min-height: 41px;
+    flex: 0 0 41px; padding: 0; border-radius: var(--radius-pill);
+}
+.pm-comment-engagement .pm-home-reaction-choice svg { color: currentColor; }
+.pm-comment-engagement .pm-home-action[aria-pressed='true'] { background: transparent; }
+.pm-comment-engagement .pm-home-action[aria-pressed='true']:hover { background: var(--blue-soft); }
+.pm-comment-engagement .pm-home-reaction-options { z-index: 45; }
+
+.pm-comment-compose {
+    display: flex; align-items: flex-start; gap: var(--s3);
+    width: 100%; max-width: 52rem; min-width: 0;
+    margin: 0 0 var(--s4);
+}
+.pm-comment-compose--reply { max-width: 38rem; margin: var(--s2) 0 var(--s3); }
+.pm-comment-compose > .pm-avatar { flex-shrink: 0; }
+.pm-comment-compose-field {
+    flex: 1; min-width: 0; position: relative;
+    background: var(--surface); border: 1px solid var(--control-border);
+    border-radius: var(--radius-card);
+}
+.pm-comment-compose-field:focus-within { border-color: var(--focus); }
+.pm-comment-compose-field textarea {
+    display: block; width: 100%; min-width: 0; min-height: 3.5rem;
+    max-height: 12rem; resize: vertical; border: 0; outline: 0;
+    box-shadow: none; background: transparent; color: var(--ink);
+    font: var(--regular) var(--text-body)/var(--line-body) var(--font-ui);
+    padding: var(--s2) var(--s3);
+}
+.pm-comment-compose--reply textarea { min-height: 2.75rem; }
+.pm-comment-compose-field textarea:focus { outline: none; box-shadow: none; }
+.pm-comment-compose-toolbar {
+    display: flex; align-items: center; gap: var(--s2);
+    padding: var(--s1) var(--s2) var(--s2);
+}
+.pm-comment-tools { display: flex; align-items: center; gap: var(--s1); }
+.pm-comment-tools button {
+    display: inline-grid; place-items: center; min-width: var(--control-height);
+    min-height: var(--control-height); border: 0; border-radius: var(--radius-control);
+    background: transparent; color: var(--muted); cursor: pointer;
+}
+.pm-comment-tools button:not(:disabled):hover,
+.pm-comment-tools button[aria-expanded='true'] { color: var(--blue); background: var(--blue-soft); }
+.pm-comment-tools button:disabled { opacity: .5; cursor: not-allowed; }
+.pm-comment-character-count {
+    margin-left: auto; color: var(--muted);
+    font: var(--regular) var(--text-xs)/var(--line-xs) var(--font-ui);
+    font-variant-numeric: tabular-nums;
+}
+.pm-comment-submit { display: inline-flex; align-items: center; gap: var(--s2); min-height: var(--control-height); }
+.pm-comment-submit:disabled { color: var(--muted); background: var(--track); border-color: var(--border); }
+.pm-comment-reply-context {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--s2);
+    padding: var(--s1) var(--s2); background: var(--blue-soft);
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
+    font: var(--medium) var(--text-xs)/var(--line-xs) var(--font-ui);
+    color: var(--ink);
+}
+.pm-comment-reply-context button { border: 0; background: transparent; color: var(--blue); cursor: pointer; padding: var(--s1); }
+.pm-comment-emoji-list {
+    display: flex; flex-wrap: wrap; gap: var(--s1);
+    padding: var(--s2); border-top: 1px solid var(--border);
+}
+.pm-comment-emoji-list button { background: transparent; border: 0; border-radius: var(--radius-control); min-width: 36px; min-height: 36px; font-size: var(--text-h3); cursor: pointer; }
+.pm-comment-emoji-list button:hover { background: var(--blue-soft); }
+.pm-comment-media-preview { display: flex; align-items: center; gap: var(--s2); padding: 0 var(--s2) var(--s2); min-width: 0; }
+.pm-comment-media-preview img { max-width: 9rem; max-height: 6rem; object-fit: contain; border-radius: var(--radius-control); }
+.pm-comment-media-preview span { min-width: 0; font: var(--regular) var(--text-xs)/var(--line-xs) var(--font-ui); color: var(--muted); overflow-wrap: anywhere; }
+.pm-comment-media-preview button { margin-left: auto; flex-shrink: 0; background: transparent; border: 0; color: var(--muted); cursor: pointer; }
+.pm-comment-attachment { display: block; width: auto; max-width: min(100%, 22rem); max-height: 20rem; height: auto; object-fit: contain; margin-block: var(--s2); border-radius: var(--radius-control); }
+
+/* Comments are text led, no nested card-like bubbles, and child replies are indented only once. */
+.pm-inline-comment-item,
+.pm-thread-comment,
+.pm-thread-reply { align-items: flex-start; min-width: 0; gap: var(--s3); }
+.pm-inline-comment-content,
+.pm-thread-body { min-width: 0; }
+.pm-inline-comment-author { display: flex; align-items: baseline; gap: var(--s2); justify-content: flex-start; flex-wrap: wrap; }
+.pm-inline-comment-author strong,
+.pm-thread-author strong { color: var(--ink); font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui); }
+.pm-inline-comment-author span,
+.pm-thread-author > span:last-child { color: var(--muted); font: var(--regular) var(--text-xs)/var(--line-xs) var(--font-ui); }
+.pm-inline-comment-text,
+.pm-thread-body > p { margin: var(--s1) 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink); font: var(--regular) var(--text-body)/var(--line-body) var(--font-ui); }
+.pm-inline-comment-actions,
+.pm-thread-actions { display: flex; margin: var(--s1) 0 0; padding: 0; gap: var(--s2); }
+.pm-inline-comment-branch,
+.pm-thread-branch { margin-top: var(--s2); padding-left: var(--s4); border-left: 2px solid var(--border); }
+.pm-inline-comment-branch .pm-inline-comment-item--nested,
+.pm-thread-branch .pm-thread-reply { padding-block: var(--s2); margin: 0; }
+.pm-inline-comment-replies-toggle,
+.pm-thread-toggle { display: inline-flex; align-items: center; gap: var(--s1); background: transparent; border: 0; border-radius: 0; padding: var(--s1) 0; color: var(--blue); font: var(--semibold) var(--text-sm)/var(--line-sm) var(--font-ui); cursor: pointer; }
+.pm-inline-comment-replies-toggle:hover,
+.pm-thread-toggle:hover { color: var(--blue-hover); text-decoration: underline; }
+.pm-thread-toggle .pm-rotate { transform: rotate(180deg); }
+.pm-inline-comments .pm-comment-compose--reply,
+.pm-thread-body .pm-comment-compose--reply { width: min(100%, 38rem); }
+.pm-inline-comments .pm-comment-compose { margin-bottom: var(--s3); }
+.pm-member-post-page .pm-post-comments-panel .pm-comment-compose { margin-bottom: var(--s4); }
+.pm-inline-comments .pm-inline-comments-sort-row,
+.pm-member-post-page .pm-post-comments-sort-row { margin-block: var(--s2) var(--s4); }
+
+@media (max-width: 42rem) {
+    .pm-comment-compose { gap: var(--s2); }
+    .pm-comment-compose-toolbar { flex-wrap: wrap; }
+    .pm-comment-character-count { margin-left: auto; }
+    .pm-comment-submit { min-height: var(--control-touch); }
+    .pm-inline-comment-branch, .pm-thread-branch { padding-left: var(--s2); }
+}

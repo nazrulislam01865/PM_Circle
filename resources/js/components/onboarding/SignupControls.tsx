@@ -1,5 +1,5 @@
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from 'react';
-import { ArrowRight, ChevronDown, Eye, EyeOff, LockKeyhole } from 'lucide-react';
+import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react';
+import { ArrowRight, Eye, EyeOff, LockKeyhole } from 'lucide-react';
 
 export function SignupField({ id, label, optional, required, error, hint, children }: {
     id: string; label: string; optional?: boolean; required?: boolean; error?: string; hint?: string; children: ReactNode;
@@ -16,15 +16,6 @@ export function SignupField({ id, label, optional, required, error, hint, childr
 
 export function SignupInput({ invalid, ...props }: InputHTMLAttributes<HTMLInputElement> & { invalid?: boolean }) {
     return <input {...props} aria-invalid={invalid || undefined} className={`signup-input ${invalid ? 'is-invalid' : ''} ${props.className || ''}`} />;
-}
-
-export function SignupSelect({ children, ...props }: SelectHTMLAttributes<HTMLSelectElement> & { children: ReactNode }) {
-    return (
-        <div className="signup-select-wrap">
-            <select {...props} className={`signup-input signup-select ${props.className || ''}`}>{children}</select>
-            <ChevronDown size={16} aria-hidden="true" />
-        </div>
-    );
 }
 
 export function SignupPassword({ visible, onToggle, invalid, ...props }: InputHTMLAttributes<HTMLInputElement> & { visible: boolean; onToggle: () => void; invalid?: boolean }) {

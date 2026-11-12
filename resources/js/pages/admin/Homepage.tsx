@@ -2,6 +2,7 @@ import { Link, router } from '@inertiajs/react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { AlertCircle, ArrowDown, ArrowUp, CheckCircle2, ExternalLink, Save, Trash2 } from 'lucide-react';
 import { AdminLayout } from '@/layouts/admin/AdminLayout';
+import { PMDropdown } from '@/components/pm/PMDropdown';
 import { ContentField, FeaturedSelector, HomepageImageUploader, RepeatableItems, EditableStringList, type EditorField, type EditorOptions } from '@/components/admin/HomepageFields';
 import type { HomeContent } from '@/types/home';
 import { homepageSections, type HomepageSection as Section } from '@/components/admin/homepage-sections';
@@ -46,19 +47,34 @@ export default function Homepage({ configured, content, version, options, master
         });
     }
     const choices = (category: string): SelectOption[] => masterOptions[category] ?? [];
-    const requiredCategories = ['hero_primary_url', 'hero_secondary_url', 'pathway_step_icon', 'pathway_exam_icon', 'skills_url', 'skills_icon', 'careers_feature_url', 'careers_feature_icon', 'careers_opportunity_icon', 'careers_location', 'careers_type'];
-    const missingMasterData = requiredCategories.some(category => choices(category).length === 0);
+    // Suggestions are existing public destinations; the route field is also writable.
+    const routeSuggestions: SelectOption[] = [...new Map([
+        ...['/daily-challenge', '/community', '/register', '/learning', '/careers', '/pricing'].map(path => [path, { value: path, label: path }] as const),
+        ...(['/', '/about', '/members', '/discover-pm', '/pm-trends', '/dashboard'] as const).map(path => [path, { value: path, label: path }] as const),
+    ]).values()];
+    const cardRouteSuggestions = [{ value: '/learning', label: '/learning' }, ...routeSuggestions.filter(option => option.value !== '/learning')];
     function text(path: string, label: string, kind: 'text' | 'textarea' | 'select' = 'text', choices?: { value: string; label: string }[], hint?: string) {
         return <ContentField key={path} id={`content-${path.replace(/[^a-zA-Z0-9]/g, '-')}`} label={label} value={String(data ? getValue(data, path) ?? '' : '')} type={kind}
             onChange={value => update(path, value)} choices={choices} hint={hint} error={errors[`content.${path}`]}/>;
     }
-    function list(path: string, title: string, fields: EditorField[], max = 10) {
+    function routeField(path: string, label: string, hint?: string) {
+        return <ContentField key={path} id={`content-${path.replace(/[^a-zA-Z0-9]/g, '-')}`} label={label}
+            value={String(data ? getValue(data, path) ?? '' : '')} type="route" choices={routeSuggestions}
+            onChange={value => update(path, value)} hint={hint} error={errors[`content.${path}`]}/>;
+    }
+    function buttonPair(labelPath: string, labelName: string, routePath: string, routeName: string, hint?: string) {
+        return <div className="pm-admin-button-pair" key={labelPath}>
+            {text(labelPath, labelName)}
+            {routeField(routePath, routeName, hint)}
+        </div>;
+    }
+    function list(path: string, title: string, fields: EditorField[], max = 10, layout: 'grid' | 'stacked' = 'grid') {
         const raw = data ? getValue(data, path) : undefined;
         return <RepeatableItems title={title} path={`content.${path}`} rows={Array.isArray(raw) ? raw : []} fields={fields}
-            max={max} errors={errors} onChange={items => update(path, items)}/>;
+            max={max} layout={layout} errors={errors} onChange={items => update(path, items)}/>;
     }
     function save() {
-        if (!data || processing || missingMasterData) return;
+        if (!data || processing) return;
         setProcessing(true); setErrors({});
         router.put(`/admin/homepage?section=${selected}`, { content: data, version }, {
             preserveScroll: true,
@@ -78,9 +94,8 @@ export default function Homepage({ configured, content, version, options, master
                 <div><span className="pm-admin-kicker">PUBLIC WEBSITE</span><strong>Homepage sections</strong>
                     <small>{dirty ? 'Unsaved changes' : 'All current edits saved'}</small></div>
                 <div className="pm-admin-editor-actions"><Link href="/" target="_blank" className="pm-admin-button pm-admin-button-quiet">View homepage <ExternalLink size={16}/></Link>
-                    <button type="button" className="pm-admin-button pm-admin-button-primary" onClick={save} disabled={processing || !dirty || missingMasterData}><Save size={17}/>{processing ? 'Saving…' : 'Save changes'}</button></div>
+                    <button type="button" className="pm-admin-button pm-admin-button-primary" onClick={save} disabled={processing || !dirty}><Save size={17}/>{processing ? 'Saving…' : 'Save changes'}</button></div>
             </div>
-            {missingMasterData && <div className="pm-admin-notice pm-admin-notice-error" role="alert"><AlertCircle size={18}/><span>Homepage editor choices are incomplete. Run the <code>HomepageMasterDataSeeder</code> and check <Link href="/admin/master-data">Master data</Link> and <Link href="/admin/navigation">Navigation control</Link> before saving.</span></div>}
             {saved && <div className="pm-admin-notice pm-admin-notice-success" role="status"><CheckCircle2 size={18}/> Homepage saved. Changes are live on the public page.</div>}
             {errors.version && <div className="pm-admin-notice pm-admin-notice-error" role="alert"><AlertCircle size={18}/>{errors.version}</div>}
             {Object.keys(errors).length > 0 && !errors.version && <div className="pm-admin-notice pm-admin-notice-error" role="alert"><AlertCircle size={18}/> Please review the highlighted fields. {Object.values(errors)[0]}</div>}
@@ -89,11 +104,11 @@ export default function Homepage({ configured, content, version, options, master
                     <label className="pm-admin-switch"><input type="checkbox" checked={data.sections[selected]} onChange={event => update(`sections.${selected}`, event.target.checked)}/><span>{data.sections[selected] ? 'Visible' : 'Hidden'}</span></label>
                 </div>
                 {selected === 'hero' && frame('Hero & portraits', 'Control the main welcome message, actions and portrait images.', <>
-                    <div className="pm-admin-field-grid">{text('hero.eyebrow', 'Eyebrow')}{text('hero.title', 'Headline')}
-                        {text('hero.description', 'Description', 'textarea')}{text('hero.primary_label', 'Primary button label')}
-                        {text('hero.primary_url', 'Primary button destination', 'select', choices('hero_primary_url'))}
-                        {text('hero.secondary_label', 'Secondary button label')}{text('hero.secondary_url', 'Secondary button destination', 'select', choices('hero_secondary_url'))}
-                        {text('hero.caption_learn', 'Orbit learning caption', 'textarea')}{text('hero.caption_discuss', 'Orbit community caption', 'textarea')}{text('hero.caption_career', 'Orbit career caption', 'textarea')}</div>
+                    <div className="pm-admin-field-grid">{text('hero.eyebrow', 'Eyebrow')}{text('hero.title', 'Headline')}</div>
+                    {text('hero.description', 'Description', 'textarea')}
+                    {buttonPair('hero.primary_label', 'Primary button label', 'hero.primary_url', 'Primary button destination')}
+                    {buttonPair('hero.secondary_label', 'Secondary button label', 'hero.secondary_url', 'Secondary button destination')}
+                    <div className="pm-admin-field-grid">{text('hero.caption_learn', 'Orbit learning caption', 'textarea')}{text('hero.caption_discuss', 'Orbit community caption', 'textarea')}{text('hero.caption_career', 'Orbit career caption', 'textarea')}</div>
                     <div className="pm-admin-repeater"><div className="pm-admin-list-heading"><h3>Hero portraits</h3>
                         <button type="button" className="pm-admin-button pm-admin-button-quiet" disabled={(data.hero?.people.length ?? 0) >= 5} onClick={() => update('hero.people', [...(data.hero?.people ?? []), { name: 'New portrait', avatar_path: '' }])}>Add portrait</button></div>
                         {(data.hero?.people ?? []).map((person, index) => <div className="pm-admin-repeat-card" key={`person-${index}`}>
@@ -113,30 +128,35 @@ export default function Homepage({ configured, content, version, options, master
                 </>)}
                 {selected === 'pathway' && frame('Career pathway', 'Adjust the pathway steps, certification cards and professional-skills banner.', <>
                     {text('pathway.steps.heading', 'Pathway heading')}
-                    {list('pathway.steps.items', 'Career steps', [{ key: 'title', label: 'Step title' }, { key: 'description', label: 'Description', kind: 'textarea' }, { key: 'icon', label: 'Icon', kind: 'select', choices: choices('pathway_step_icon') }])}
+                    {list('pathway.steps.items', 'Career steps', [{ key: 'title', label: 'Step title' }, { key: 'description', label: 'Description', kind: 'textarea' },
+                        { key: 'icon', label: 'Built-in icon', kind: 'select', choices: choices('pathway_step_icon') },
+                        { key: 'icon_image', label: 'Custom icon image (36 × 36 px)', kind: 'image' }], 10, 'stacked')}
                     <div className="pm-admin-field-grid">{text('pathway.exams.heading', 'Exams heading')}{text('pathway.exams.description', 'Exams introduction', 'textarea')}
                         {text('pathway.exams.compare_label', 'Compare plans label')}{text('pathway.exams.more_label', 'More exams label')}</div>
-                    {list('pathway.exams.items', 'Exam cards', [{ key: 'title', label: 'Title' }, { key: 'description', label: 'Description', kind: 'textarea' }, { key: 'icon', label: 'Icon', kind: 'select', choices: choices('pathway_exam_icon') }, { key: 'features', label: 'Feature highlights (one per line)', kind: 'lines' }, { key: 'button_label', label: 'Button label' }, { key: 'plans_label', label: 'Plans label' }])}
+                    {list('pathway.exams.items', 'Exam cards', [{ key: 'title', label: 'Title' }, { key: 'description', label: 'Description', kind: 'textarea' }, { key: 'icon', label: 'Built-in icon', kind: 'select', choices: choices('pathway_exam_icon') }, { key: 'icon_image', label: 'Custom icon image (36 × 36 px)', kind: 'image' }, { key: 'features', label: 'Feature highlights (one per line)', kind: 'lines' }, { key: 'button_label', label: 'Button label' }, { key: 'plans_label', label: 'Plans label' }])}
                     <h3 className="pm-admin-subheading">Professional skills banner</h3>
                     <div className="pm-admin-field-grid">{text('pathway.banner.heading', 'Heading')}{text('pathway.banner.description', 'Description', 'textarea')}{text('pathway.banner.button_label', 'Button label')}</div>
                 </>)}
-                {selected === 'scenario' && frame('Daily challenge', 'The actual scenario comes from published content. Choose one or leave automatic selection.', <>
-                    <div className="pm-admin-field-grid">{text('scenario.heading', 'Section heading')}{text('scenario.status_label', 'Status label')}
-                        {text('scenario.view_all_label', 'View all label')}{text('scenario.button_label', 'General action label')}
-                        {text('scenario.read_button_label', 'Read label')}{text('scenario.discussion_button_label', 'Discussion label')}
-                        {text('scenario.responses_heading', 'Responses heading')}{text('scenario.score_label', 'Score label')}{text('scenario.hint', 'Hint', 'textarea')}{text('scenario.empty_message', 'No published scenario message', 'textarea')}{text('scenario.empty_responses_message', 'No responses message', 'textarea')}</div>
+                {selected === 'scenario' && frame('Daily challenge', 'Scenario content is selected from published entries; configure the visible actions and their destinations.', <>
+                    <div className="pm-admin-field-grid">{text('scenario.heading', 'Section heading')}{text('scenario.status_label', 'Status label')}</div>
+                    {buttonPair('scenario.view_all_label', 'View all button label', 'scenario.view_all_url', 'View all destination')}
+                    {buttonPair('scenario.read_button_label', 'Read scenario button label', 'scenario.read_url', 'Read destination', 'Leave blank to open the current published scenario.')}
+                    {buttonPair('scenario.discussion_button_label', 'Join discussion button label', 'scenario.discussion_url', 'Discussion destination', 'Leave blank to open the current published scenario.')}
+                    <div className="pm-admin-field-grid">{text('scenario.responses_heading', 'Responses heading')}{text('scenario.score_label', 'Score label')}
+                        {text('scenario.hint', 'Hint', 'textarea')}{text('scenario.empty_message', 'No published scenario message', 'textarea')}{text('scenario.empty_responses_message', 'No responses message', 'textarea')}</div>
                     <div className="pm-admin-featured"><h3>Featured published scenario</h3><p>Leave Automatic to show the latest published scenario.</p>
-                        <select value={String(data.scenario?.featured_id ?? '')} onChange={event => update('scenario.featured_id', event.target.value ? Number(event.target.value) : null)}>
-                            <option value="">Automatic (latest)</option>{options.scenarios.map(scenario => <option key={scenario.id} value={scenario.id}>{scenario.title}</option>)}
-                        </select></div>
+                        <PMDropdown id="featured-scenario" value={String(data.scenario?.featured_id ?? '')}
+                            onValueChange={value => update('scenario.featured_id', value ? Number(value) : null)}
+                            placeholder="Automatic (latest)" options={options.scenarios.map(scenario => ({ value: String(scenario.id), label: scenario.title ?? `Scenario #${scenario.id}` }))}/></div>
                 </>)}
-                {selected === 'community' && frame('Community feed', 'Edit community copy and optionally pin two public posts.', <>
-                    <div className="pm-admin-field-grid">{text('community.heading', 'Section heading')}{text('community.view_all_label', 'View all label')}
-                        {text('community.prompt_title', 'Sharing invitation')}{text('community.prompt_description', 'Sharing message', 'textarea')}
-                        {text('community.button_label', 'Button label')}{text('community.empty_message', 'No posts message', 'textarea')}</div>
-                    {<EditableStringList title="Topic filters" values={data.community?.topics ?? []} onChange={values => update('community.topics', values)} error={errors['content.community.topics']}/>}
-                    <FeaturedSelector label="Featured community posts" hint="Choose up to two posts, or leave empty to automatically show the latest public posts."
-                        options={options.posts} selected={data.community?.featured_ids ?? []} max={2} onChange={ids => update('community.featured_ids', ids)} error={errors['content.community.featured_ids']}/>
+                {selected === 'community' && frame('Community feed', 'Latest published public posts appear automatically; configure the section and its actions.', <>
+                    {text('community.heading', 'Section heading')}
+                    {buttonPair('community.view_all_label', 'View all posts button label', 'community.view_all_url', 'View all destination')}
+                    <div className="pm-admin-field-grid">{text('community.prompt_title', 'Sharing invitation')}{text('community.prompt_description', 'Sharing message', 'textarea')}</div>
+                    {buttonPair('community.button_label', 'Join to share button label', 'community.button_url', 'Join button destination', 'Leave blank to use the default destination for each visitor.')}
+                    {text('community.empty_message', 'No posts message', 'textarea')}
+                    <EditableStringList title="Topic filters" values={data.community?.topics ?? []} onChange={values => update('community.topics', values)} error={errors['content.community.topics']}/>
+                    <p className="pm-admin-hint">The feed automatically shows the two latest published public posts. No manual post selection is necessary.</p>
                 </>)}
                 {selected === 'members' && frame('Member preview', 'Choose a few public member profiles or automatically show recent members.', <>
                     <div className="pm-admin-field-grid">{text('members.heading', 'Panel heading')}{text('members.hint', 'Supporting text', 'textarea')}{text('members.button_label', 'Button label')}{text('members.empty_message', 'No members message', 'textarea')}</div>
@@ -146,23 +166,37 @@ export default function Homepage({ configured, content, version, options, master
                 {selected === 'skills' && frame('Skills sidebar', 'Manage the cards shown next to the homepage feed.', <>
                     {text('skills.heading', 'Panel heading')}{list('skills.items', 'Skill cards', [
                         { key: 'title', label: 'Title' }, { key: 'description', label: 'Description', kind: 'textarea' },
-                        { key: 'url', label: 'Destination', kind: 'select', choices: choices('skills_url') },
-                        { key: 'icon', label: 'Icon', kind: 'select', choices: choices('skills_icon') },
+                        { key: 'url', label: 'Destination', kind: 'route', choices: cardRouteSuggestions },
+                        { key: 'icon', label: 'Built-in icon', kind: 'select', choices: choices('skills_icon') },
+                        { key: 'icon_image', label: 'Custom icon image (36 × 36 px)', kind: 'image' },
                     ])}
                 </>)}
-                {selected === 'careers' && frame('Career highlights', 'Manage features, sample opportunities, resume banner and final invitation.', <>
-                    <div className="pm-admin-field-grid">{text('careers.heading', 'Section heading')}{text('careers.opportunities_heading', 'Opportunities heading')}{text('careers.jobs_view_all_label', 'View all jobs label')}{text('careers.empty_message', 'No verified opportunities message', 'textarea')}</div>
+                {selected === 'career_features' && frame('PM career feature cards', 'Edit the four benefit cards, their page destinations and optional 36 × 36 px icons.', <>
+                    {text('careers.heading', 'Section heading')}
                     {list('careers.features', 'Feature cards', [{ key: 'title', label: 'Title' }, { key: 'description', label: 'Description', kind: 'textarea' },
-                        { key: 'url', label: 'Destination', kind: 'select', choices: choices('careers_feature_url') }, { key: 'icon', label: 'Icon', kind: 'select', choices: choices('careers_feature_icon') }], 12)}
-                    <div className="pm-admin-visibility"><div><strong>Display sample opportunities in public mode</strong><small>These are illustrative cards, not verified live job vacancies.</small></div>
-                        <label className="pm-admin-switch"><input type="checkbox" checked={Boolean(data.careers?.show_sample_opportunities)} onChange={event => update('careers.show_sample_opportunities', event.target.checked)}/><span>{data.careers?.show_sample_opportunities ? 'Yes' : 'No'}</span></label></div>
-                    {list('careers.opportunities', 'Sample job cards', [{ key: 'role', label: 'Role' }, { key: 'company', label: 'Example company' }, { key: 'location', label: 'Location', kind: 'select', choices: choices('careers_location') }, { key: 'type', label: 'Employment type', kind: 'select', choices: choices('careers_type') }, { key: 'icon', label: 'Icon', kind: 'select', choices: choices('careers_opportunity_icon') }], 12)}
-                    <h3 className="pm-admin-subheading">Resume banner</h3><div className="pm-admin-field-grid">{text('careers.resume.title', 'Title')}{text('careers.resume.description', 'Description', 'textarea')}{text('careers.resume.button_label', 'Button label')}</div>
-                    <h3 className="pm-admin-subheading">Membership invitation</h3><div className="pm-admin-field-grid">{text('careers.join.heading', 'Heading')}{text('careers.join.description', 'Description', 'textarea')}{text('careers.join.button_label', 'Button label')}{text('careers.join.hint', 'Hint', 'textarea')}</div>
+                        { key: 'url', label: 'Destination', kind: 'route', choices: cardRouteSuggestions },
+                        { key: 'icon', label: 'Built-in icon', kind: 'select', choices: choices('careers_feature_icon') },
+                        { key: 'icon_image', label: 'Custom icon image (36 × 36 px)', kind: 'image' }], 12)}
+                </>)}
+                {selected === 'careers' && frame('Opportunities & resume', 'Show the three latest Careers jobs and manage the resume panel and final membership invitation. The document illustration is unchanged.', <>
+                    <div className="pm-admin-field-grid">{text('careers.opportunities_heading', 'Opportunities heading')}{text('careers.empty_message', 'No verified opportunities message', 'textarea')}</div>
+                    {buttonPair('careers.jobs_view_all_label', 'View all jobs button label', 'careers.jobs_url', 'Jobs destination')}
+                    <p className="pm-admin-hint">The homepage displays the three newest current job listings from Careers automatically. No sample cards or manual job selection are used.</p>
+                    <h3 className="pm-admin-subheading">Resume banner</h3>
+                    <div className="pm-admin-field-grid">{text('careers.resume.title', 'Title')}{text('careers.resume.description', 'Description', 'textarea')}</div>
+                    {buttonPair('careers.resume.button_label', 'Resume button label', 'careers.resume.button_url', 'Resume button destination')}
+                    <div className="pm-admin-field"><span className="pm-admin-field-label">Resume sparkle icon (optional)</span>
+                        <HomepageImageUploader variant="icon" value={data.careers?.resume.icon_image ?? ''} onChange={url => update('careers.resume.icon_image', url)}/>
+                        {errors['content.careers.resume.icon_image'] && <span role="alert" className="pm-admin-error">{errors['content.careers.resume.icon_image']}</span>}
+                        <small className="pm-admin-hint">Only the small decorative sparkle icon changes. The document illustration remains exactly as it is.</small></div>
+                    <h3 className="pm-admin-subheading">Membership invitation</h3>
+                    <div className="pm-admin-field-grid">{text('careers.join.heading', 'Heading')}{text('careers.join.description', 'Description', 'textarea')}</div>
+                    {buttonPair('careers.join.button_label', 'Join button label', 'careers.join.button_url', 'Join button destination')}
+                    {text('careers.join.hint', 'Hint', 'textarea')}
                 </>)}
             </section>
             <div className="pm-admin-editor-bottom"><span>{dirty ? 'You have unsaved changes.' : 'Saved content is published instantly.'}</span>
-                <button type="button" className="pm-admin-button pm-admin-button-primary" onClick={save} disabled={processing || !dirty || missingMasterData}><Save size={16}/> Save homepage changes</button></div>
+                <button type="button" className="pm-admin-button pm-admin-button-primary" onClick={save} disabled={processing || !dirty}><Save size={16}/> Save homepage changes</button></div>
         </>}
     </AdminLayout>;
 }

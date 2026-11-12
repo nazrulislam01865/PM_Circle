@@ -25,8 +25,8 @@ export function ExamPage({ shell, children }: { shell: DashboardShellData; child
 type ExamBreadcrumbPart = string | { label: string; href?: string };
 export function ExamBreadcrumb({ parts = [] }: { parts?: ExamBreadcrumbPart[] }) {
     const trail = [
-        { label: 'Home', href: '/' },
-        { label: 'Learn & Practice', href: '/learning' },
+        { label: 'Home', href: '/dashboard' },
+        { label: 'Learn & Practice', href: '/dashboard/learning' },
         { label: 'PMP® Exam Simulator', href: parts.length ? examBase : null },
         ...parts.map(part => typeof part === 'string' ? { label: part, href: null } : { label: part.label, href: part.href ?? null }),
     ];

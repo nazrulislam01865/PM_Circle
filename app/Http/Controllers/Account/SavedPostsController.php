@@ -15,6 +15,8 @@ final class SavedPostsController extends Controller
         return Inertia::render('community/SavedPosts', [
             'posts' => Post::query()->where('status', 'published')->where('visibility', 'public')
                 ->whereHas('saves', fn ($query) => $query->where('user_id', $request->user()->id))
+                ->whereNotExists(fn ($hidden) => $hidden->selectRaw('1')->from('post_hides')
+                    ->whereColumn('post_hides.post_id', 'posts.id')->where('post_hides.user_id', $request->user()->id))
                 ->with(['author:id,name', 'author.profile' => fn ($query) => $query->where('visibility', 'public')->select('id', 'user_id', 'role')])
                 ->withCount(['comments', 'reactions'])->latest('published_at')->paginate(12)
                 ->through(function (Post $post): Post {

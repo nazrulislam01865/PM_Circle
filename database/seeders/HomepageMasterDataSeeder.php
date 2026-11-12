@@ -12,15 +12,15 @@ final class HomepageMasterDataSeeder extends Seeder
     public function run(): void
     {
         $groups = [
-            'hero_primary_url' => ['/register', '/discover-pm', '/learning', '/community', '/careers', '/dashboard'],
-            'hero_secondary_url' => ['/community', '/daily-challenge', '/discover-pm', '/learning', '/careers', '/pm-trends'],
-            'pathway_step_icon' => ['direction', 'learn', 'exams', 'skills', 'community'],
-            'pathway_exam_icon' => ['pmp', 'scrum', 'simulation'],
-            'skills_url' => ['/learning', '/community', '/careers'],
-            'skills_icon' => ['practice', 'scrum', 'simulation'],
-            'careers_feature_url' => ['/learning', '/community', '/careers'],
-            'careers_feature_icon' => ['learn', 'discuss', 'jobs', 'resume'],
-            'careers_opportunity_icon' => ['manager', 'analyst', 'scrum'],
+            'header_menu' => [
+                '/daily-challenge' => 'Daily Challenge', '/community' => 'Community Feed',
+                '/learning' => 'Learn & Practice', '/careers' => 'Careers',
+                '/members' => 'Members', '/pm-trends' => 'PM Trends',
+            ],
+            'footer_menu' => [
+                '/about' => 'About', '/community' => 'Community guidelines',
+                '/privacy' => 'Privacy', '/terms' => 'Terms',
+            ],
             'careers_location' => ['Remote', 'Hybrid', 'On-site'],
             'careers_type' => ['Full time', 'Part time', 'Contract'],
         ];
@@ -36,12 +36,21 @@ final class HomepageMasterDataSeeder extends Seeder
         }
 
         foreach ($groups as $category => $values) {
-            foreach ($values as $index => $value) {
+            // Menu entries are an initial default set; do not recreate an old URL after an admin edits it.
+            if (in_array($category, ['header_menu', 'footer_menu'], true)
+                && MasterDataOption::query()->where('category', $category)->exists()) {
+                continue;
+            }
+            foreach ($values as $index => $item) {
+                $position = array_search($index, array_keys($values), true);
+                $value = is_string($index) ? $index : $item;
+                $label = is_string($index) ? $item : $value;
                 MasterDataOption::query()->firstOrCreate(
                     ['category' => $category, 'value' => $value],
-                    ['label' => $value, 'sort_order' => ($index + 1) * 10, 'is_active' => true],
+                    ['label' => $label, 'sort_order' => ($position + 1) * 10, 'is_active' => true],
                 );
             }
         }
+        \App\Support\Admin\SiteNavigation::clearCache();
     }
 }

@@ -86,7 +86,7 @@ final class HomePageContentSeeder extends Seeder
                     'hint' => 'For aspiring PMs, experienced practitioners, trainers and leaders.',
                 ],
             ],
-            'sections' => ['hero' => true, 'pathway' => true, 'scenario' => true, 'community' => true, 'members' => true, 'skills' => true, 'careers' => true],
+            'sections' => ['hero' => true, 'pathway' => true, 'scenario' => true, 'community' => true, 'members' => true, 'skills' => true, 'career_features' => true, 'careers' => true],
             'demo_scenario_engagement' => ['likes' => 42, 'responses' => 128],
         ]]);
         $content = $page->content;
@@ -111,7 +111,7 @@ final class HomePageContentSeeder extends Seeder
             ],
             'careers' => ['jobs_view_all_label' => 'View all jobs', 'show_sample_opportunities' => false, 'empty_message' => 'Verified job opportunities will appear here when the careers module is launched.'],
             'members' => ['empty_message' => 'Be among the first members to join the community.'],
-            'sections' => ['hero' => true, 'pathway' => true, 'scenario' => true, 'community' => true, 'members' => true, 'skills' => true, 'careers' => true],
+            'sections' => ['hero' => true, 'pathway' => true, 'scenario' => true, 'community' => true, 'members' => true, 'skills' => true, 'career_features' => ($content['sections']['careers'] ?? true), 'careers' => true],
             'community' => [
                 'empty_message' => 'The discussion is just getting started. Share your first lesson or question to help others grow.',
                 'topics' => ['All', 'I learned', 'From my project', 'Ask the community'],

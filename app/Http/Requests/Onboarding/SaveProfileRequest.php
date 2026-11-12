@@ -6,6 +6,8 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\File;
 use App\Support\SignupPasswordRules;
 use App\Support\SignupVerificationMode;
+use App\Support\Onboarding\SignupMasterData;
+use Illuminate\Validation\Rule;
 
 class SaveProfileRequest extends FormRequest
 {
@@ -26,12 +28,15 @@ class SaveProfileRequest extends FormRequest
 
     public function rules(): array
     {
+        $options = SignupMasterData::options();
+        $allowed = static fn (string $category): array => array_column($options[$category] ?? [], 'value');
+
         return [
             'name' => ['required', 'string', 'max:255'],
-            'role' => ['nullable', 'string', 'max:80'],
-            'years_experience' => ['nullable', 'integer', 'between:0,60'],
+            'role' => ['nullable', 'string', 'max:80', Rule::in($allowed('signup_role'))],
+            'years_experience' => ['nullable', 'integer', 'between:0,60', Rule::in($allowed('signup_experience'))],
             'certifications' => ['sometimes', 'array', 'max:8'],
-            'certifications.*.name' => ['required', 'string', 'max:100'],
+            'certifications.*.name' => ['required', 'string', 'max:100', Rule::in($allowed('signup_certification'))],
             'certifications.*.credential_number' => ['nullable', 'string', 'max:120'],
             'resume' => ['nullable', File::types(['pdf', 'docx'])->max('5mb')],
             ...(! $this->user() ? [

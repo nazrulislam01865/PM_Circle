@@ -5,14 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreMasterDataOptionRequest;
 use App\Http\Requests\Admin\UpdateMasterDataOptionRequest;
-use App\Models\HomePageContent;
 use App\Models\MasterDataOption;
 use App\Support\Admin\HomepageMasterData;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
-use App\Http\Requests\Admin\UploadMasterIconRequest;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -30,7 +25,7 @@ final class MasterDataController extends Controller
 
     private function catalog(bool $navigation): Response
     {
-        $groups = $navigation ? HomepageMasterData::NAVIGATION_GROUPS : HomepageMasterData::DROPDOWN_GROUPS;
+        $groups = $navigation ? HomepageMasterData::NAVIGATION_GROUPS : HomepageMasterData::editableDropdownGroups();
         $selected = request()->query('category');
         if (! is_string($selected) || ! array_key_exists($selected, $groups)) {
             $selected = array_key_first($groups);
@@ -53,53 +48,24 @@ final class MasterDataController extends Controller
             'is_active' => true,
         ]);
 
+        if ($request->routeIs('admin.navigation.store')) {
+            \App\Support\Admin\SiteNavigation::clearCache();
+        }
+
         return to_route($request->routeIs('admin.navigation.store') ? 'admin.navigation.index' : 'admin.master-data.index', ['category' => $values['category']])->with('status', 'Value added.');
     }
 
     public function update(UpdateMasterDataOptionRequest $request, MasterDataOption $masterDataOption): RedirectResponse
     {
-        $groups = $request->routeIs('admin.navigation.update') ? HomepageMasterData::NAVIGATION_GROUPS : HomepageMasterData::DROPDOWN_GROUPS;
+        $groups = $request->routeIs('admin.navigation.update') ? HomepageMasterData::NAVIGATION_GROUPS : HomepageMasterData::editableDropdownGroups();
         abort_unless(array_key_exists($masterDataOption->category, $groups), 404);
         $values = $request->validated();
-        if (! $values['is_active'] && $masterDataOption->is_active) {
-            $content = HomePageContent::query()->where('key', 'home')->first(['content'])?->content ?? [];
-            if (HomepageMasterData::inUse($masterDataOption, $content)) {
-                throw ValidationException::withMessages([
-                    'is_active' => 'This option is currently used on the homepage. Replace it there before disabling it.',
-                ]);
-            }
-        }
         $masterDataOption->update($values);
+        if ($request->routeIs('admin.navigation.update')) {
+            \App\Support\Admin\SiteNavigation::clearCache();
+        }
 
         return to_route($request->routeIs('admin.navigation.update') ? 'admin.navigation.index' : 'admin.master-data.index', ['category' => $masterDataOption->category])->with('status', 'Value updated.');
     }
 
-    public function uploadIcon(UploadMasterIconRequest $request, MasterDataOption $masterDataOption): RedirectResponse
-    {
-        abort_unless(array_key_exists($masterDataOption->category, HomepageMasterData::ICON_VALUES), 404);
-        $path = $request->file('icon')->storePublicly('homepage-icons', 'public');
-        $previousPath = $masterDataOption->icon_path;
-        $masterDataOption->update(['icon_path' => $path]);
-        if ($previousPath && str_starts_with($previousPath, 'homepage-icons/')) {
-            Storage::disk('public')->delete($previousPath);
-        }
-        Cache::forget('pm-circle:homepage-icon-assets');
-
-        return to_route('admin.master-data.index', ['category' => $masterDataOption->category])
-            ->with('status', 'Icon uploaded. The public homepage now uses the uploaded image.');
-    }
-
-    public function removeIcon(MasterDataOption $masterDataOption): RedirectResponse
-    {
-        abort_unless(array_key_exists($masterDataOption->category, HomepageMasterData::ICON_VALUES), 404);
-        $previousPath = $masterDataOption->icon_path;
-        $masterDataOption->update(['icon_path' => null]);
-        if ($previousPath && str_starts_with($previousPath, 'homepage-icons/')) {
-            Storage::disk('public')->delete($previousPath);
-        }
-        Cache::forget('pm-circle:homepage-icon-assets');
-
-        return to_route('admin.master-data.index', ['category' => $masterDataOption->category])
-            ->with('status', 'Default icon restored.');
-    }
 }

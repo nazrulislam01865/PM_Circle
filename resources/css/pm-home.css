@@ -566,3 +566,41 @@
 .pm-feature > .pm-home-content-icon{width:43px!important;height:43px!important;padding:8px;border-radius:50%;background:var(--pm-tone-e9f3ff)}
 .pm-job-row > .pm-home-content-icon{width:38px!important;height:38px!important;padding:5px;border-radius:var(--pm-radius-7px);background:var(--pm-tone-f0f6ff)}
 @media(max-width:52rem){.pm-home .pm-pathway-step > .pm-home-content-icon{width:31px!important;height:31px!important;margin-bottom:7px}.pm-home .pm-pathway-exam-intro > .pm-home-content-icon{width:31px!important;height:31px!important}}
+
+/* Uploaded homepage icon artwork: exactly 36 x 36, without decorative wrappers. */
+.pm-home .pm-home-custom-icon,
+.pm-home .pm-pathway-step > .pm-home-custom-icon,
+.pm-home .pm-pathway-exam-intro > .pm-home-custom-icon,
+.pm-home .pm-feature > .pm-home-custom-icon {
+    display:block;flex:none;width:36px;height:36px;min-width:36px;min-height:36px;
+    padding:0;margin:0;border:0;border-radius:0;background:none;box-shadow:none;
+    object-fit:contain;max-width:none;
+}
+.pm-home .pm-pathway-step:has(> .pm-home-custom-icon) > h3{margin-top:11px}
+@media(max-width:52rem){
+    .pm-home .pm-pathway-step > .pm-home-custom-icon,
+    .pm-home .pm-pathway-exam-intro > .pm-home-custom-icon{width:36px;height:36px;min-width:36px;min-height:36px}
+}
+
+@media(max-width:42rem){.pm-home .pm-pathway-step:has(> .pm-home-custom-icon) > h3{margin-top:0}}
+
+/* The career/pathway icon controls share one 36px visual footprint; illustrations are untouched. */
+.pm-home .pm-pathway-step > svg,
+.pm-home .pm-pathway-step > .pm-home-content-icon,
+.pm-home .pm-pathway-exam-intro > svg,
+.pm-home .pm-pathway-exam-intro > .pm-home-content-icon,
+.pm-home .pm-feature > svg,
+.pm-home .pm-feature > .pm-home-content-icon {
+    box-sizing:border-box;width:36px!important;height:36px!important;
+    min-width:36px;min-height:36px;flex:none;
+    padding:0!important;margin:0!important;border:0!important;border-radius:0!important;
+    background:none!important;box-shadow:none!important;
+}
+.pm-home .pm-pathway-step > h3{margin-top:11px}
+@media(max-width:42rem){
+    .pm-home .pm-pathway-step{grid-template-columns:36px minmax(0,1fr)}
+    .pm-home .pm-pathway-step > h3{margin-top:0}
+}
+
+/* Current Careers preview uses the 36px plain-icon treatment, not old sample-job badges. */
+.pm-home .pm-job-row > svg.pm-job-icon{width:36px;height:36px;min-width:36px;min-height:36px;padding:0;margin:0;border:0;border-radius:0;background:none;box-shadow:none;flex:none}

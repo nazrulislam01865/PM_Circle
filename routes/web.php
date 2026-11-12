@@ -3,6 +3,9 @@
 use App\Http\Controllers\Auth\EmailVerificationCodeController;
 use App\Http\Controllers\Careers\CareerJobsController;
 use App\Http\Controllers\Community\PostController;
+use App\Http\Controllers\Community\PostManagementController;
+use App\Http\Controllers\Community\PostPollController;
+use App\Http\Controllers\Admin\PostModerationController;
 use App\Http\Controllers\Members\MemberDirectoryController;
 use App\Http\Controllers\Account\AccountFeatureController;
 use App\Http\Controllers\Account\SavedPostsController;
@@ -38,6 +41,9 @@ Route::post('/admin/logout', [AuthenticatedSessionController::class, 'destroy'])
 // Administration is isolated from public/member areas and authorized on every request.
 Route::middleware(['auth', 'pm.admin', 'verified'])->prefix('admin')->name('admin.')->group(function (): void {
     Route::get('/', [HomepageController::class, 'dashboard'])->name('dashboard');
+    Route::get('/post-reports', [PostModerationController::class, 'index'])->name('post-reports.index');
+    Route::post('/post-reviews/{post}', [PostModerationController::class, 'reviewPost'])->middleware('throttle:30,1')->name('post-reviews.update');
+    Route::patch('/post-reports/{report}', [PostModerationController::class, 'update'])->middleware('throttle:30,1')->whereNumber('report')->name('post-reports.update');
     Route::get('/homepage', [HomepageController::class, 'edit'])->name('homepage.edit');
     Route::put('/homepage', [HomepageController::class, 'update'])->middleware('throttle:20,1')->name('homepage.update');
     Route::post('/homepage/images', [HomepageController::class, 'upload'])->middleware('throttle:20,1')->name('homepage.upload');
@@ -45,8 +51,6 @@ Route::middleware(['auth', 'pm.admin', 'verified'])->prefix('admin')->name('admi
     Route::post('/navigation', [MasterDataController::class, 'store'])->middleware('throttle:20,1')->name('navigation.store');
     Route::patch('/navigation/{masterDataOption}', [MasterDataController::class, 'update'])->middleware('throttle:30,1')->name('navigation.update');
     Route::get('/master-data', [MasterDataController::class, 'index'])->name('master-data.index');
-    Route::post('/master-data/{masterDataOption}/icon', [MasterDataController::class, 'uploadIcon'])->middleware('throttle:10,1')->name('master-data.icon.upload');
-    Route::delete('/master-data/{masterDataOption}/icon', [MasterDataController::class, 'removeIcon'])->middleware('throttle:10,1')->name('master-data.icon.remove');
     Route::post('/master-data', [MasterDataController::class, 'store'])->middleware('throttle:20,1')->name('master-data.store');
     Route::patch('/master-data/{masterDataOption}', [MasterDataController::class, 'update'])->middleware('throttle:30,1')->name('master-data.update');
 });
@@ -66,8 +70,11 @@ Route::get('/learning/courses/{course}', [DemoCourseController::class, 'show'])-
 Route::get('/profile-media/{kind}/{filename}', [SettingsProfileController::class, 'showProfileImage'])
     ->where(['kind' => 'avatar|cover', 'filename' => '[a-zA-Z0-9._-]+'])->name('profile-media.show');
 Route::get('/post-media/{filename}', [PostController::class, 'media'])->where('filename', '[a-zA-Z0-9._-]+')->name('posts.media');
+Route::get('/posts/{post}/media/{filename}', [PostController::class, 'privateMedia'])->where('filename', '[a-zA-Z0-9._-]+')->name('posts.private-media');
 Route::get('/posts/{post}', [PostController::class, 'show'])->name('posts.show');
 Route::get('/posts/{post}/comments/preview', [PostInteractionController::class, 'previewComments'])->middleware('throttle:60,1')->name('posts.comments.preview');
+Route::get('/posts/{post}/comments/{comment}/media/{filename}', [PostInteractionController::class, 'commentMedia'])
+    ->where('filename', '[a-zA-Z0-9._-]+')->middleware('throttle:120,1')->name('posts.comments.media');
 Route::get('/daily-challenge', [ScenarioController::class, 'index'])->name('scenarios.index');
 Route::get('/scenarios/{scenario:slug}', [ScenarioController::class, 'show'])->name('scenarios.show');
 Route::redirect('/join/step/1', '/register')->name('join.account');
@@ -138,8 +145,16 @@ Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded'])->group(func
     Route::post('/learning/{path}/modules/{module}/activities/{activity}/complete', [LearningController::class, 'complete'])->middleware('throttle:30,1')->name('learning.complete');
 
     Route::post('/posts', [PostController::class, 'store'])->middleware('throttle:10,1')->name('posts.store');
+    Route::patch('/posts/{post}', [PostManagementController::class, 'update'])->middleware('throttle:20,1')->name('posts.update');
+    Route::delete('/posts/{post}', [PostManagementController::class, 'destroy'])->middleware('throttle:20,1')->name('posts.destroy');
+    Route::post('/posts/{post}/mute', [PostManagementController::class, 'mute'])->middleware('throttle:30,1')->name('posts.mute');
+    Route::post('/posts/{post}/hide', [PostManagementController::class, 'hide'])->middleware('throttle:30,1')->name('posts.hide');
+    Route::post('/posts/{post}/report', [PostManagementController::class, 'report'])->middleware('throttle:10,1')->name('posts.report');
+    Route::post('/posts/{post}/poll-votes', [PostPollController::class, 'vote'])->middleware('throttle:30,1')->name('posts.poll-vote');
     Route::post('/posts/{post}/comments', [PostInteractionController::class, 'comment'])->middleware('throttle:20,1')->name('posts.comments');
     Route::post('/posts/{post}/comments/{comment}/like', [PostInteractionController::class, 'toggleCommentLike'])->middleware('throttle:60,1')->name('comments.like');
+    Route::post('/posts/{post}/comments/{comment}/reactions', [PostInteractionController::class, 'reactToComment'])->middleware('throttle:60,1')->name('comments.reactions');
+    Route::delete('/posts/{post}/comments/{comment}/reactions', [PostInteractionController::class, 'unreactToComment'])->middleware('throttle:60,1')->name('comments.reactions.remove');
     Route::post('/posts/{post}/reactions', [PostInteractionController::class, 'react'])->middleware('throttle:60,1')->name('posts.reactions');
     Route::delete('/posts/{post}/reactions', [PostInteractionController::class, 'unreact'])->middleware('throttle:60,1')->name('posts.reactions.remove');
     Route::post('/posts/{post}/save', [PostInteractionController::class, 'save'])->name('posts.save');

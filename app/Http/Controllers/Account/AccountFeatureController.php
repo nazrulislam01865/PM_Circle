@@ -42,13 +42,31 @@ final class AccountFeatureController extends Controller
                 ->select('lm.learning_path_id', DB::raw('COUNT(*) as total'))->pluck('total', 'learning_path_id');
             $pathSummaries = $paths->map(fn ($path) => ['id' => $path->id, 'title' => $path->title,
                 'slug' => $path->slug, 'completedActivities' => (int) ($counts[$path->id] ?? 0)])->values();
-            return Inertia::render('account/Achievements', ['completedActivities' => $completed, 'paths' => $pathSummaries]);
+            $badges = [];
+            if (DB::table('posts')->where('author_id', $user->id)->where('status', 'published')->whereNull('deleted_at')->exists()) {
+                $badges[] = ['key' => 'first-post', 'label' => 'First post'];
+            }
+            if (DB::table('comments')->where('author_id', $user->id)->whereNull('deleted_at')->exists()) {
+                $badges[] = ['key' => 'first-reply', 'label' => 'First reply'];
+            }
+            if (DB::table('scenario_responses')->where('user_id', $user->id)->exists()) {
+                $badges[] = ['key' => 'first-scenario', 'label' => 'First scenario'];
+            }
+            return Inertia::render('account/Achievements', ['completedActivities' => $completed, 'paths' => $pathSummaries, 'badges' => $badges]);
         }
         if ($feature === 'insights') {
+            $profileViews = DB::table('member_profile_views')->where('profile_user_id', $user->id)
+                ->where('viewed_on', '>=', now()->subDays(29)->toDateString())
+                ->selectRaw('COUNT(*) AS last_30')
+                ->selectRaw('SUM(CASE WHEN viewed_on >= ? THEN 1 ELSE 0 END) AS this_week', [now()->subDays(6)->toDateString()])
+                ->first();
             return Inertia::render('account/Insights', [
                 'publicPosts' => $user->posts()->where('status', 'published')->where('visibility', 'public')->count(),
                 'savedPosts' => DB::table('post_saves')->where('user_id', $user->id)->count(),
+                'replies' => DB::table('comments')->where('author_id', $user->id)->whereNull('deleted_at')->count(),
+                'scenarioResponses' => DB::table('scenario_responses')->where('user_id', $user->id)->count(),
                 'completedActivities' => DB::table('learning_activity_completions')->where('user_id', $user->id)->count(),
+                'profileViews' => ['last30' => (int) ($profileViews->last_30 ?? 0), 'thisWeek' => (int) ($profileViews->this_week ?? 0)],
             ]);
         }
         $titles = [

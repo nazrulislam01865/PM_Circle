@@ -1,29 +1,38 @@
 import { ArrowDown, ArrowUp, Plus, Trash2, UploadCloud } from 'lucide-react';
 import { useState, type ChangeEvent } from 'react';
+import { PMDropdown } from '@/components/pm/PMDropdown';
 
-export type EditorField = { key: string; label: string; kind?: 'textarea' | 'select' | 'lines'; choices?: { value: string; label: string }[] };
+export type EditorField = { key: string; label: string; kind?: 'textarea' | 'select' | 'route' | 'lines' | 'image'; choices?: { value: string; label: string }[] };
 export type EditorOptions = { id: number; title?: string; name?: string }[];
 
 export function ContentField({ id: fieldId, label, value, onChange, type = 'text', choices, error, hint }: {
     id?: string; label: string; value: string; onChange: (next: string) => void;
-    type?: 'text' | 'textarea' | 'select'; choices?: { value: string; label: string }[]; error?: string; hint?: string;
+    type?: 'text' | 'textarea' | 'select' | 'route'; choices?: { value: string; label: string }[]; error?: string; hint?: string;
 }) {
     const id = fieldId ?? `field-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
     return <div className="pm-admin-field"><label htmlFor={id}>{label}</label>
-        {type === 'textarea' ? <textarea id={id} rows={3} value={value} aria-invalid={Boolean(error)} onChange={event => onChange(event.target.value)}/>
-            : type === 'select' ? <select id={id} value={value} aria-invalid={Boolean(error)} onChange={event => onChange(event.target.value)}>
-                {value && !(choices ?? []).some(choice => choice.value === value) && <option value={value} disabled>{value} (not in active master data)</option>}
-                {!(choices ?? []).length && !value && <option value="">No active master-data values</option>}
-                {(choices ?? []).map(choice => <option key={choice.value} value={choice.value}>{choice.label}</option>)}
-            </select> : <input id={id} value={value} aria-invalid={Boolean(error)} onChange={event => onChange(event.target.value)}/>}
-        {type === 'select' && !(choices ?? []).length && <small className="pm-admin-error">Manage allowed choices under Master data or Navigation control.</small>}
-        {hint && <small className="pm-admin-hint">{hint}</small>}{error && <span role="alert" className="pm-admin-error">{error}</span>}
+        {type === 'route' ? <div className="pm-admin-route-inputs">
+            <input id={id} value={value} placeholder="Enter a same-site path (e.g. /community)"
+                aria-invalid={Boolean(error)} autoComplete="off" onChange={event => onChange(event.target.value)}/>
+            <PMDropdown id={`${id}-suggestion`} value={(choices ?? []).some(option => option.value === value) ? value : ''}
+                onValueChange={onChange} options={choices ?? []} placeholder="Or choose a suggested page" aria-label={`Suggested destination for ${label}`}/>
+        </div>
+        : type === 'textarea' ? <textarea id={id} rows={3} value={value} aria-invalid={Boolean(error)} onChange={event => onChange(event.target.value)}/>
+            : type === 'select' ? <PMDropdown id={id} value={value} onValueChange={onChange}
+                invalid={Boolean(error)} aria-describedby={error ? `${id}-error` : undefined}
+                placeholder={(choices ?? []).length ? 'Select an option' : 'No available options'}
+                options={value && !(choices ?? []).some(choice => choice.value === value)
+                    ? [{ value, label: `${value} (previously selected)`, disabled: true }, ...(choices ?? [])]
+                    : (choices ?? [])}/>
+            : <input id={id} value={value} aria-invalid={Boolean(error)} onChange={event => onChange(event.target.value)}/>}
+        {type === 'select' && !(choices ?? []).length && <small className="pm-admin-error">No options are available for this field.</small>}
+        {hint && <small className="pm-admin-hint">{hint}</small>}{error && <span id={`${id}-error`} role="alert" className="pm-admin-error">{error}</span>}
     </div>;
 }
 
-export function RepeatableItems({ title, path, rows, fields, onChange, errors, max = 10 }: {
+export function RepeatableItems({ title, path, rows, fields, onChange, errors, max = 10, layout = 'grid' }: {
     title: string; path: string; rows: Record<string, unknown>[]; fields: EditorField[];
-    onChange: (items: Record<string, unknown>[]) => void; errors: Record<string, string>; max?: number;
+    onChange: (items: Record<string, unknown>[]) => void; errors: Record<string, string>; max?: number; layout?: 'grid' | 'stacked';
 }) {
     const setItem = (index: number, key: string, value: string) => onChange(rows.map((row, i) => i === index ? { ...row, [key]: fields.find(f => f.key === key)?.kind === 'lines'
         ? value.split('\n').map(s => s.trim()).filter(Boolean) : value } : row));
@@ -36,7 +45,7 @@ export function RepeatableItems({ title, path, rows, fields, onChange, errors, m
     };
     return <div className="pm-admin-repeater">
         <div className="pm-admin-list-heading"><h3>{title} <span>({rows.length})</span></h3>
-            <button type="button" className="pm-admin-button pm-admin-button-quiet" disabled={rows.length >= max || needsMaster} onClick={() => onChange([...rows, Object.fromEntries(fields.map(field => [field.key, field.kind === 'lines' ? [] : field.choices?.[0]?.value ?? '']))])}><Plus size={16}/> Add item</button>
+            <button type="button" className="pm-admin-button pm-admin-button-quiet" disabled={rows.length >= max || needsMaster} onClick={() => onChange([...rows, Object.fromEntries(fields.map(field => [field.key, field.kind === 'lines' ? [] : field.kind === 'image' ? '' : field.choices?.[0]?.value ?? '']))])}><Plus size={16}/> Add item</button>
         </div>
         {rows.length === 0 && <p className="pm-admin-empty">No items. Add a card to display it on the homepage.</p>}
         {rows.map((row, index) => <div className="pm-admin-repeat-card" key={`${path}-${index}`}>
@@ -46,11 +55,17 @@ export function RepeatableItems({ title, path, rows, fields, onChange, errors, m
                     <button type="button" aria-label={`Move item ${index + 1} down`} disabled={index === rows.length - 1} onClick={() => move(index, 1)}><ArrowDown size={16}/></button>
                     <button type="button" aria-label={`Remove item ${index + 1}`} onClick={() => onChange(rows.filter((_, i) => i !== index))}><Trash2 size={16}/></button>
                 </div></div>
-            <div className="pm-admin-field-grid">{fields.map(field => <ContentField key={field.key} id={`item-${path.replace(/[^a-zA-Z0-9]/g, '-')}-${index}-${field.key}`} label={`${field.label} · ${index + 1}`}
-                value={field.kind === 'lines' ? ((row[field.key] as string[] | undefined) ?? []).join('\n') : String(row[field.key] ?? '')}
-                type={field.kind === 'textarea' || field.kind === 'lines' ? 'textarea' : field.kind === 'select' ? 'select' : 'text'}
-                choices={field.choices} onChange={value => setItem(index, field.key, value)}
-                error={errors[`${path}.${index}.${field.key}`]}/>)}</div>
+            <div className={`pm-admin-field-grid ${layout === 'stacked' ? 'pm-admin-field-stack' : ''}`}>{fields.map(field => field.kind === 'image'
+                ? <div className="pm-admin-field pm-admin-icon-upload-field" key={field.key}>
+                    <span className="pm-admin-field-label">{field.label} · {index + 1} (optional)</span>
+                    <HomepageImageUploader variant="icon" value={String(row[field.key] ?? '')} onChange={value => setItem(index, field.key, value)}/>
+                    {errors[`${path}.${index}.${field.key}`] && <span role="alert" className="pm-admin-error">{errors[`${path}.${index}.${field.key}`]}</span>}
+                </div>
+                : <ContentField key={field.key} id={`item-${path.replace(/[^a-zA-Z0-9]/g, '-')}-${index}-${field.key}`} label={`${field.label} · ${index + 1}`}
+                    value={field.kind === 'lines' ? ((row[field.key] as string[] | undefined) ?? []).join('\n') : String(row[field.key] ?? '')}
+                    type={field.kind === 'textarea' || field.kind === 'lines' ? 'textarea' : field.kind === 'select' ? 'select' : field.kind === 'route' ? 'route' : 'text'}
+                    choices={field.choices} onChange={value => setItem(index, field.key, value)}
+                    error={errors[`${path}.${index}.${field.key}`]}/>)}</div>
         </div>)}
         {errors[path] && <span role="alert" className="pm-admin-error">{errors[path]}</span>}
     </div>;
@@ -71,7 +86,7 @@ export function FeaturedSelector({ label, hint, options, selected, onChange, max
     </div>;
 }
 
-export function HomepageImageUploader({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+export function HomepageImageUploader({ value, onChange, variant = 'portrait' }: { value: string; onChange: (url: string) => void; variant?: 'portrait' | 'icon' }) {
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     async function upload(event: ChangeEvent<HTMLInputElement>) {
@@ -100,11 +115,12 @@ export function HomepageImageUploader({ value, onChange }: { value: string; onCh
         } catch (cause) { setError(cause instanceof Error ? cause.message : 'Upload failed.'); }
         finally { setBusy(false); event.target.value = ''; }
     }
-    return <div className="pm-admin-upload">
-        {value && <img src={value} alt="Selected homepage portrait"/>}
-        <label className="pm-admin-button pm-admin-button-quiet"><UploadCloud size={16}/>{busy ? 'Uploading…' : 'Upload image'}
+    return <div className={`pm-admin-upload ${variant === 'icon' ? 'pm-admin-upload-icon' : ''}`}>
+        {value && <img src={value} alt={variant === 'icon' ? 'Selected icon preview' : 'Selected homepage portrait'}/>}
+        <label className="pm-admin-button pm-admin-button-quiet"><UploadCloud size={16}/>{busy ? 'Uploading…' : variant === 'icon' ? 'Upload icon' : 'Upload image'}
             <input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={upload} className="pm-admin-file-input"/></label>
         {value && <button type="button" className="pm-admin-button pm-admin-button-quiet" onClick={() => onChange('')}>Clear image</button>}
+        {variant === 'icon' && <small className="pm-admin-hint">36 × 36 px display · transparent PNG recommended · max 2 MB</small>}
         {error && <span role="alert" className="pm-admin-error">{error}</span>}
     </div>;
 }

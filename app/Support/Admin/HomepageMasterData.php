@@ -3,6 +3,7 @@
 namespace App\Support\Admin;
 
 use App\Models\MasterDataOption;
+use App\Support\Onboarding\SignupMasterData;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -14,23 +15,22 @@ final class HomepageMasterData
 {
     // Navigation links are managed separately from dropdown-only master data.
     public const NAVIGATION_GROUPS = [
-        'hero_primary_url' => 'Hero primary destinations',
-        'hero_secondary_url' => 'Hero secondary destinations',
-        'skills_url' => 'Skill card destinations',
-        'careers_feature_url' => 'Career feature destinations',
+        'header_menu' => 'Header menu',
+        'footer_menu' => 'Footer menu',
     ];
 
     public const DROPDOWN_GROUPS = [
-        'pathway_step_icon' => 'Career pathway icons',
-        'pathway_exam_icon' => 'Exam card icons',
-        'skills_icon' => 'Skill card icons',
-        'careers_feature_icon' => 'Career feature icons',
-        'careers_opportunity_icon' => 'Opportunity card icons',
         'careers_location' => 'Opportunity locations',
         'careers_type' => 'Employment types',
     ];
 
     public const GROUPS = self::NAVIGATION_GROUPS + self::DROPDOWN_GROUPS;
+
+    /** Signup choices share the existing admin master-data editor, not the homepage editor. */
+    public static function editableDropdownGroups(): array
+    {
+        return self::DROPDOWN_GROUPS + SignupMasterData::GROUPS;
+    }
 
     // Icons are implemented in the existing frontend and require a code release to add a new kind.
     public const ICON_VALUES = [
@@ -43,18 +43,19 @@ final class HomepageMasterData
 
     public static function categories(bool $navigation = false): array
     {
-        $groups = $navigation ? self::NAVIGATION_GROUPS : self::DROPDOWN_GROUPS;
+        $groups = $navigation ? self::NAVIGATION_GROUPS : self::editableDropdownGroups();
 
         return collect($groups)->map(fn (string $label, string $value) => [
             'value' => $value,
             'label' => $label,
-            'can_add' => ! array_key_exists($value, self::ICON_VALUES),
-            'is_icon' => array_key_exists($value, self::ICON_VALUES),
+            'can_add' => true,
+            'is_icon' => false,
         ])->values()->all();
     }
 
     public static function options(bool $includeInactive = false, ?array $categories = null): array
     {
+        $categories ??= array_keys(self::GROUPS);
         $query = MasterDataOption::query()->orderBy('sort_order')->orderBy('id');
         if (! $includeInactive) {
             $query->where('is_active', true);
@@ -63,37 +64,31 @@ final class HomepageMasterData
             $query->whereIn('category', $categories);
         }
 
-        return $query->get(['id', 'category', 'value', 'label', 'sort_order', 'is_active', 'icon_path'])
+        return $query->get(['id', 'category', 'value', 'label', 'sort_order', 'is_active'])
             ->groupBy('category')->map(fn (Collection $rows) => $rows->map(fn (MasterDataOption $row) => [
                 'id' => $row->id,
                 'value' => $row->value,
                 'label' => $row->label,
                 'sort_order' => $row->sort_order,
                 'is_active' => $row->is_active,
-                'icon_url' => $row->icon_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($row->icon_path) : null,
             ])->values()->all())->all();
-    }
-
-    /** Cached, public-safe overrides: icon codes remain unchanged in saved content. */
-    public static function iconAssets(): array
-    {
-        return \Illuminate\Support\Facades\Cache::remember('pm-circle:homepage-icon-assets', 300, static function (): array {
-            return MasterDataOption::query()->where('is_active', true)->whereNotNull('icon_path')
-                ->whereIn('category', array_keys(self::ICON_VALUES))
-                ->get(['category', 'value', 'icon_path'])
-                ->groupBy('category')->map(fn (Collection $rows) => $rows->mapWithKeys(
-                    fn (MasterDataOption $row) => [$row->value => \Illuminate\Support\Facades\Storage::disk('public')->url($row->icon_path)]
-                )->all())->all();
-        });
     }
 
     public static function isAllowedNewValue(string $category, string $value): bool
     {
-        if (! array_key_exists($category, self::GROUPS)) {
+        if (! array_key_exists($category, self::GROUPS) && ! array_key_exists($category, SignupMasterData::GROUPS)) {
             return false;
         }
         if (isset(self::ICON_VALUES[$category])) {
             return in_array($value, self::ICON_VALUES[$category], true);
+        }
+        if ($category === 'signup_experience') {
+            return ctype_digit($value) && (string) (int) $value === $value && (int) $value <= 60;
+        }
+        if (in_array($category, ['signup_role', 'signup_certification'], true)) {
+            return $value === trim($value)
+                && mb_strlen($value) <= ($category === 'signup_role' ? 80 : 100)
+                && preg_match('/^[^\p{C}<>]*[\p{L}\p{N}][^\p{C}<>]*$/uD', $value) === 1;
         }
         if (in_array($category, ['careers_location', 'careers_type'], true)) {
             return preg_match('/^[\p{L}\p{N} .,&()\/-]{1,100}$/uD', $value) === 1;
@@ -111,24 +106,4 @@ final class HomepageMasterData
         }
     }
 
-    /** Prevent retiring an option while the public homepage still uses it. */
-    public static function inUse(MasterDataOption $option, array $content): bool
-    {
-        $values = match ($option->category) {
-            'hero_primary_url' => [$content['hero']['primary_url'] ?? '/register'],
-            'hero_secondary_url' => [$content['hero']['secondary_url'] ?? '/community'],
-            'pathway_step_icon' => array_column($content['pathway']['steps']['items'] ?? [], 'icon'),
-            'pathway_exam_icon' => array_column($content['pathway']['exams']['items'] ?? [], 'icon'),
-            'skills_url' => array_column($content['skills']['items'] ?? [], 'url'),
-            'skills_icon' => array_column($content['skills']['items'] ?? [], 'icon'),
-            'careers_feature_url' => array_column($content['careers']['features'] ?? [], 'url'),
-            'careers_feature_icon' => array_column($content['careers']['features'] ?? [], 'icon'),
-            'careers_opportunity_icon' => array_column($content['careers']['opportunities'] ?? [], 'icon'),
-            'careers_location' => array_column($content['careers']['opportunities'] ?? [], 'location'),
-            'careers_type' => array_column($content['careers']['opportunities'] ?? [], 'type'),
-            default => [],
-        };
-
-        return in_array($option->value, $values, true);
-    }
 }

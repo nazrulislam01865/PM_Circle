@@ -23,6 +23,8 @@ final class HomepageController extends Controller
     public function dashboard(): Response
     {
         $homepage = HomePageContent::query()->where('key', 'home')->first();
+        $sections = $homepage?->content['sections'] ?? [];
+        $sections['career_features'] ??= ($sections['careers'] ?? true);
 
         return Inertia::render('admin/Dashboard', [
             'homepage' => [
@@ -32,7 +34,7 @@ final class HomepageController extends Controller
                     ? User::query()->whereKey($homepage->updated_by)->value('name')
                     : null,
                 'visibleSections' => $homepage ? count(array_filter(
-                    $homepage->content['sections'] ?? array_fill_keys(['hero', 'pathway', 'scenario', 'community', 'members', 'skills', 'careers'], true),
+                    array_replace(array_fill_keys(['hero', 'pathway', 'scenario', 'community', 'members', 'skills', 'career_features', 'careers'], true), $sections),
                     fn ($enabled) => $enabled === true,
                 )) : 0,
             ],
@@ -48,7 +50,7 @@ final class HomepageController extends Controller
     public function edit(): Response
     {
         $requested = request()->query('section', 'hero');
-        $selectedSection = in_array($requested, ['hero', 'pathway', 'scenario', 'community', 'members', 'skills', 'careers'], true) ? $requested : 'hero';
+        $selectedSection = in_array($requested, ['hero', 'pathway', 'scenario', 'community', 'members', 'skills', 'career_features', 'careers'], true) ? $requested : 'hero';
         $homepage = HomePageContent::query()->where('key', 'home')->first();
 
         if (! $homepage) {
@@ -58,16 +60,20 @@ final class HomepageController extends Controller
                 'content' => null,
                 'version' => 0,
                 'options' => ['scenarios' => [], 'posts' => [], 'members' => []],
-                'masterOptions' => HomepageMasterData::options(),
+                'masterOptions' => $this->editorChoices(),
             ]);
         }
 
         $content = $homepage->content ?? [];
+        // Preserve a legacy hidden careers section when introducing its separate cards editor.
+        $savedSections = $content['sections'] ?? [];
+        $savedSections['career_features'] ??= ($savedSections['careers'] ?? true);
         $content['sections'] = array_replace(array_fill_keys(
-            ['hero', 'pathway', 'scenario', 'community', 'members', 'skills', 'careers'], true,
-        ), $content['sections'] ?? []);
+            ['hero', 'pathway', 'scenario', 'community', 'members', 'skills', 'career_features', 'careers'], true,
+        ), $savedSections);
         $content['scenario']['featured_id'] ??= null;
-        $content['community']['featured_ids'] ??= [];
+        // Legacy manual pins are ignored and cleared from the editor payload.
+        $content['community']['featured_ids'] = [];
         $content['members']['featured_ids'] ??= [];
         $content['hero']['primary_url'] ??= '/register';
         $content['hero']['caption_learn'] ??= "Learn\n& practise";
@@ -75,6 +81,14 @@ final class HomepageController extends Controller
         $content['hero']['caption_career'] ??= "Grow\nyour career";
         $content['hero']['secondary_url'] ??= '/community';
         $content['scenario']['view_all_label'] ??= 'View all';
+        $content['scenario']['view_all_url'] ??= '/daily-challenge';
+        $content['scenario']['read_url'] ??= '';
+        $content['scenario']['discussion_url'] ??= '';
+        $content['community']['view_all_url'] ??= '/community';
+        $content['community']['button_url'] ??= '';
+        $content['careers']['jobs_url'] ??= '/careers';
+        $content['careers']['resume']['button_url'] ??= '/careers';
+        $content['careers']['join']['button_url'] ??= '/register';
         $content['scenario']['empty_message'] ??= 'Practical scenarios are being prepared for the community.';
         $content['scenario']['empty_responses_message'] ??= 'Be the first to share your approach.';
         $content['community']['empty_message'] ??= 'The discussion is just getting started. Share your first lesson or question to help others grow.';
@@ -92,13 +106,11 @@ final class HomepageController extends Controller
             'selectedSection' => $selectedSection,
             'content' => $content,
             'version' => (int) $homepage->revision,
-            'masterOptions' => HomepageMasterData::options(),
+            'masterOptions' => $this->editorChoices(),
             'options' => [
                 'scenarios' => Scenario::query()->where('status', 'published')->latest('published_at')
                     ->limit(40)->get(['id', 'title'])->toArray(),
-                'posts' => Post::query()->where('status', 'published')->where('visibility', 'public')
-                    ->latest('published_at')->limit(40)->get(['id', 'title', 'body'])
-                    ->map(fn (Post $post) => ['id' => $post->id, 'title' => mb_strimwidth($post->title ?: $post->body, 0, 90, '…')])->all(),
+                'posts' => [],
                 'members' => User::query()->where('status', 'active')
                     ->when(config('pm-circle.email_verification_required'), fn ($q) => $q->whereNotNull('email_verified_at'))
                     ->whereHas('profile', fn ($q) => $q->where('visibility', 'public'))
@@ -120,6 +132,8 @@ final class HomepageController extends Controller
             }
 
             $content = $homepage->content ?? [];
+            // Featured community content always uses the latest public posts.
+            $validated['content']['community']['featured_ids'] = [];
             foreach ($validated['content'] as $key => $value) {
                 // Preserve internal demo curation fields not exposed for editing.
                 $content[$key] = is_array($value)
@@ -130,10 +144,20 @@ final class HomepageController extends Controller
         });
 
         $section = $request->query('section');
-        $parameters = in_array($section, ['hero', 'pathway', 'scenario', 'community', 'members', 'skills', 'careers'], true)
+        $parameters = in_array($section, ['hero', 'pathway', 'scenario', 'community', 'members', 'skills', 'career_features', 'careers'], true)
             ? ['section' => $section] : [];
 
         return to_route('admin.homepage.edit', $parameters)->with('status', 'Homepage changes saved successfully.');
+    }
+
+    private function editorChoices(): array
+    {
+        $choices = [];
+        foreach (HomepageMasterData::ICON_VALUES as $category => $values) {
+            $choices[$category] = array_map(fn (string $value) => ['value' => $value, 'label' => ucwords(str_replace('_', ' ', $value))], $values);
+        }
+
+        return $choices;
     }
 
     public function upload(UploadHomepageImageRequest $request): JsonResponse

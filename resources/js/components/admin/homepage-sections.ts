@@ -6,7 +6,8 @@ export const homepageSections = [
     { key: 'community', name: 'Community feed', detail: 'Post cards, topics and call to action' },
     { key: 'members', name: 'Member preview', detail: 'New members panel and curated profiles' },
     { key: 'skills', name: 'Skills sidebar', detail: 'Practice cards and links' },
-    { key: 'careers', name: 'Career highlights', detail: 'Features, opportunities, resume and join' },
+    { key: 'career_features', name: 'PM career feature cards', detail: 'Four career benefit cards and their icons' },
+    { key: 'careers', name: 'Opportunities & resume', detail: 'Job examples, resume panel and join section' },
 ] as const;
 
 export type HomepageSection = (typeof homepageSections)[number]['key'];

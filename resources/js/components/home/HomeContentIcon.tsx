@@ -3,7 +3,7 @@ import type { LucideIcon } from 'lucide-react';
 export type HomepageIconAssets = Record<string, Record<string, string>>;
 
 /** Optional uploaded icon, otherwise the original Lucide icon is used unchanged. */
-export function HomeContentIcon({ category, icon, assets, fallback: Fallback, size = 24, strokeWidth, className }: {
+export function HomeContentIcon({ fallback: Fallback, size = 24, strokeWidth, className, image }: {
     category: string;
     icon: string;
     assets?: HomepageIconAssets;
@@ -11,10 +11,12 @@ export function HomeContentIcon({ category, icon, assets, fallback: Fallback, si
     size?: number;
     strokeWidth?: number;
     className?: string;
+    image?: string | null;
 }) {
-    const src = assets?.[category]?.[icon];
-    if (src) {
-        return <img src={src} className={`pm-home-content-icon ${className ?? ''}`} width={size} height={size} style={{ width: size, height: size }} alt="" aria-hidden="true" loading="lazy" decoding="async"/>;
+    if (image) {
+        return <img src={image} className={`pm-home-custom-icon ${className ?? ''}`} width={36} height={36} alt="" aria-hidden="true" loading="lazy" decoding="async"/>;
     }
+    // Uploaded artwork belongs to each homepage item; global master-data icon overrides are not used.
+
     return <Fallback aria-hidden="true" size={size} strokeWidth={strokeWidth} className={className}/>;
 }

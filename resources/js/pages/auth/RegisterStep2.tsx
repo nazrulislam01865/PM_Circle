@@ -3,22 +3,22 @@ import { FileUp, Plus, X } from 'lucide-react';
 import { SignupPassword } from '@/components/onboarding/SignupControls';
 import { SignupPasswordRequirements, meetsPasswordRequirements } from '@/components/onboarding/SignupPasswordRequirements';
 import { useRef, useState } from 'react';
-import { SignupButton, SignupField, SignupInput, SignupSelect } from '@/components/onboarding/SignupControls';
+import { SignupButton, SignupField, SignupInput } from '@/components/onboarding/SignupControls';
+import { PMDropdown } from '@/components/pm/PMDropdown';
 import { OnboardingLayout } from '@/layouts/pm/OnboardingLayout';
 
 type Certification = { name: string; credential_number: string };
+type SignupOption = { value: string; label: string };
+type SignupOptions = Record<'signup_role' | 'signup_experience' | 'signup_certification', SignupOption[]>;
 type Props = {
     name?: string;
     isGuest?: boolean;
     email?: string;
     profile?: { role?: string | null; years_experience?: number | null; resume_scan_status?: string } | null;
     certifications?: Certification[];
+    signupOptions?: Partial<SignupOptions>;
 };
-const roles = ['Project Manager', 'Project Coordinator', 'Program Manager', 'PMO Analyst', 'Scrum Master', 'Agile Coach', 'Business Analyst', 'Technical Project Manager', 'Product Operations', 'Student / Aspiring PM', 'Other'];
-const credentials = ['PMP', 'CAPM', 'CSM', 'PSM', 'PRINCE2', 'PMI-ACP', 'AgilePM', 'Other'];
-const years = [{ value: '0', label: 'Less than 1 year' }, ...Array.from({ length: 10 }, (_, index) => ({ value: String(index + 1), label: `${index + 1} ${index === 0 ? 'year' : 'years'}` })), { value: '15', label: '15+ years' }, { value: '20', label: '20+ years' }];
-
-export default function RegisterStep2({ name = '', profile, certifications = [], isGuest = false, email }: Props) {
+export default function RegisterStep2({ name = '', profile, certifications = [], isGuest = false, email, signupOptions = {} }: Props) {
     const [passwordVisible, setPasswordVisible] = useState(false);
     const [confirmationVisible, setConfirmationVisible] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
@@ -77,16 +77,16 @@ export default function RegisterStep2({ name = '', profile, certifications = [],
                 </section>}
                 <div className="signup-grid">
                     <SignupField id="signup-role" label="Your role" optional error={form.errors.role}>
-                        <SignupSelect id="signup-role" name="role" value={form.data.role} onChange={(e) => form.setData('role', e.target.value)}>
-                            <option value="">Select role</option>
-                            {roles.map((role) => <option key={role} value={role}>{role}</option>)}
-                        </SignupSelect>
+                        <PMDropdown id="signup-role" name="role" invalid={!!form.errors.role}
+                            aria-describedby={form.errors.role ? 'signup-role-error' : undefined}
+                            value={form.data.role} onValueChange={(value) => form.setData('role', value)}
+                            placeholder="Select role" options={signupOptions.signup_role ?? []} />
                     </SignupField>
                     <SignupField id="signup-years" label="Experience" optional error={form.errors.years_experience}>
-                        <SignupSelect id="signup-years" name="years_experience" value={form.data.years_experience} onChange={(e) => form.setData('years_experience', e.target.value)}>
-                            <option value="">Select years</option>
-                            {years.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
-                        </SignupSelect>
+                        <PMDropdown id="signup-years" name="years_experience" invalid={!!form.errors.years_experience}
+                            aria-describedby={form.errors.years_experience ? 'signup-years-error' : undefined}
+                            value={form.data.years_experience} onValueChange={(value) => form.setData('years_experience', value)}
+                            placeholder="Select years" options={signupOptions.signup_experience ?? []} />
                     </SignupField>
                 </div>
                 <hr className="signup-divider" />
@@ -96,10 +96,11 @@ export default function RegisterStep2({ name = '', profile, certifications = [],
                         {form.data.certifications.map((cert, index) => (
                             <div className="signup-grid signup-cert-row" key={index}>
                                 <SignupField id={`signup-cert-${index}`} label="Certification" error={form.errors[`certifications.${index}.name` as keyof typeof form.errors]}>
-                                    <SignupSelect id={`signup-cert-${index}`} value={cert.name} onChange={(e) => updateCertification(index, 'name', e.target.value)}>
-                                        <option value="">Select certification</option>
-                                        {credentials.map((credential) => <option value={credential} key={credential}>{credential}</option>)}
-                                    </SignupSelect>
+                                    <PMDropdown id={`signup-cert-${index}`}
+                                        invalid={!!form.errors[`certifications.${index}.name` as keyof typeof form.errors]}
+                                        aria-describedby={form.errors[`certifications.${index}.name` as keyof typeof form.errors] ? `signup-cert-${index}-error` : undefined}
+                                        value={cert.name} onValueChange={(value) => updateCertification(index, 'name', value)}
+                                        placeholder="Select certification" options={signupOptions.signup_certification ?? []} />
                                 </SignupField>
                                 <SignupField id={`signup-cert-number-${index}`} label="Certification number">
                                     <SignupInput id={`signup-cert-number-${index}`} value={cert.credential_number} placeholder="Enter number" onChange={(e) => updateCertification(index, 'credential_number', e.target.value)} />

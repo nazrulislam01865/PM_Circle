@@ -26,49 +26,49 @@ export function ScenarioPreview({ scenario, responses, content, canInteract, onJ
     const readUrl = content?.read_url || url;
     const discussionUrl = content?.discussion_url || url;
 
-    return <section className="pm-panel pm-home-scenario-card" aria-label={content?.heading}>
+    return <section className="pm-panel pm-home-scenario-card" aria-label={content?.heading ?? "Today's scenario"}>
         <div className="pm-home-scenario-highlight">
             <div className="pm-home-scenario-topline">
-                <span className="pm-home-scenario-eyebrow">{content?.heading}</span>
-                <div className="pm-home-scenario-top-actions">
-                    {scenario && <span className="pm-home-scenario-status"><span className="pm-home-status-dot" aria-hidden="true"/>{content?.status_label}</span>}
-                    <Link href={content?.view_all_url || '/daily-challenge'} className="pm-button pm-button-outline pm-button-sm pm-home-scenario-view-all">{content?.view_all_label ?? 'View all'} <ArrowRight size={16} aria-hidden="true"/></Link>
-                </div>
+                <span className="pm-home-scenario-eyebrow">{content?.heading ?? "Today's scenario"}</span>
+                <Link href={content?.view_all_url || '/daily-challenge'} className="pm-home-scenario-view-all">
+                    {content?.view_all_label ?? 'View all'} <ArrowRight size={16} aria-hidden="true"/>
+                </Link>
             </div>
             {scenario ? <>
                 <h2>{scenario.title}</h2>
-                <p>{scenario.summary}</p>
+                {content?.status_label && <p className="pm-home-scenario-meta">{content.status_label}</p>}
+                <p className="pm-home-scenario-summary">{scenario.summary}</p>
                 <div className="pm-home-scenario-cta">
-                    <Link href={readUrl} className="pm-button">{content?.read_button_label ?? content?.button_label}<ArrowRight size={18} aria-hidden="true"/></Link>
-                    <HomeCommentAction label={content?.discussion_button_label ?? 'Join discussion'} href={discussionUrl} canInteract={canInteract} onJoin={onJoin}/>
-                    <span className="pm-home-scenario-hint">{content?.hint}</span>
+                    <Link href={readUrl} className="pm-button pm-button-sm">{content?.read_button_label ?? content?.button_label ?? 'Read full scenario'} <ArrowRight size={18} aria-hidden="true"/></Link>
                 </div>
             </> : <p className="pm-empty">{content?.empty_message ?? 'Practical scenarios are being prepared for the community.'}</p>}
         </div>
         {scenario && <>
             <div className="pm-home-scenario-social">
                 <EngagementActionBar>
-                <ReactionPicker endpoint={`/scenarios/${scenario.id}/reactions`} initial={scenario.viewer_reaction} total={scenario.reactions_count} canInteract={canInteract} onJoin={onJoin} label="scenario"/>
-                <HomeShareAction href={url} canInteract={canInteract} onJoin={onJoin}/>
-                <HomeCommentAction label={responses.length === 1 ? 'response' : 'responses'} count={responses.length} href={url} canInteract={canInteract} onJoin={onJoin}/>
+                    <ReactionPicker endpoint={`/scenarios/${scenario.id}/reactions`} initial={scenario.viewer_reaction} total={scenario.reactions_count} canInteract={canInteract} onJoin={onJoin} label="scenario"/>
+                    <HomeCommentAction label={responses.length === 1 ? 'response' : 'responses'} count={responses.length} href={url} canInteract={canInteract} onJoin={onJoin}/>
+                    <HomeShareAction href={url} canInteract={canInteract} onJoin={onJoin}/>
                 </EngagementActionBar>
             </div>
-            <div className="pm-home-responses-heading">{content?.responses_heading ?? 'Community responses'}</div>
-            {responses.length === 0 && <p className="pm-empty">{content?.empty_responses_message ?? 'Be the first to share your approach.'}</p>}
-            {responses.map(response => <article className="pm-home-response" key={response.id}>
-                <Avatar name={response.user.name} src={response.user.profile?.avatar_path} size={34}/>
-                <div className="pm-home-response-main">
-                    <div className="pm-home-response-author"><strong>{response.user.name}</strong>
-                        <small>{response.user.profile?.role || 'Community member'} · {homeRelativeDate(response.created_at)}</small></div>
-                    <p>{response.body}</p>
-                    <div className="pm-home-response-actions">
-                        <EngagementActionBar>
-                        <ReactionPicker endpoint={`/scenarios/${scenario.id}/responses/${response.id}/reactions`} initial={response.viewer_reaction} total={response.reactions_count} canInteract={canInteract} onJoin={onJoin} label="response"/>
-                        <HomeCommentAction label="Reply" href={url} canInteract={canInteract} onJoin={onJoin}/>
-                        </EngagementActionBar>
+            <div className="pm-home-scenario-responses" aria-label={content?.responses_heading ?? 'Community responses'}>
+                {responses.length === 0 && <p className="pm-empty">{content?.empty_responses_message ?? 'Be the first to share your approach.'}</p>}
+                {responses.map(response => <article className="pm-home-response" key={response.id}>
+                    <Avatar name={response.user.name} src={response.user.profile?.avatar_path} size={34}/>
+                    <div className="pm-home-response-main">
+                        <div className="pm-home-response-author"><strong>{response.user.name}</strong>
+                            <small>{response.user.profile?.role || 'Community member'} · {homeRelativeDate(response.created_at)}</small></div>
+                        <p>{response.body}</p>
+                        <div className="pm-home-response-actions">
+                            <EngagementActionBar>
+                                <ReactionPicker endpoint={`/scenarios/${scenario.id}/responses/${response.id}/reactions`} initial={response.viewer_reaction} total={response.reactions_count} canInteract={canInteract} onJoin={onJoin} label="response"/>
+                                <HomeCommentAction label="Reply" href={url} canInteract={canInteract} onJoin={onJoin}/>
+                            </EngagementActionBar>
+                        </div>
                     </div>
-                </div>
-            </article>)}
+                </article>)}
+                {responses.length > 0 && <Link href={url} className="pm-home-scenario-read-comments">Read all comments <ArrowRight size={16} aria-hidden="true"/></Link>}
+            </div>
         </>}
     </section>;
 }

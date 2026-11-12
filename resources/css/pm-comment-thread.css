@@ -41,10 +41,10 @@
 
 .pm-comment-compose {
     display: flex; align-items: flex-start; gap: var(--s3);
-    width: 100%; max-width: 52rem; min-width: 0;
+    width: 100%; min-width: 0;
     margin: 0 0 var(--s4);
 }
-.pm-comment-compose--reply { max-width: 38rem; margin: var(--s2) 0 var(--s3); }
+.pm-comment-compose--reply { margin: var(--s2) 0 var(--s3); }
 .pm-comment-compose > .pm-avatar { flex-shrink: 0; }
 .pm-comment-compose-field {
     flex: 1; min-width: 0; position: relative;
@@ -125,8 +125,10 @@
 .pm-inline-comment-replies-toggle:hover,
 .pm-thread-toggle:hover { color: var(--blue-hover); text-decoration: underline; }
 .pm-thread-toggle .pm-rotate { transform: rotate(180deg); }
+/* Let parent and reply editors fill the available comment-column width.
+   The comment's existing avatar and thread indent remain outside the field. */
 .pm-inline-comments .pm-comment-compose--reply,
-.pm-thread-body .pm-comment-compose--reply { width: min(100%, 38rem); }
+.pm-thread-body .pm-comment-compose--reply { width: 100%; }
 .pm-inline-comments .pm-comment-compose { margin-bottom: var(--s3); }
 .pm-member-post-page .pm-post-comments-panel .pm-comment-compose { margin-bottom: var(--s4); }
 .pm-inline-comments .pm-inline-comments-sort-row,

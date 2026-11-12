@@ -1,0 +1,31 @@
+PM Circle - Poll Composer Footer Visibility Fix (2026-11-12)
+
+CHANGES
+- The poll and editor fields use one internal scrollable region.
+- The toolbar, post-type selector and submit footer stay visible at the bottom of the modal.
+- Existing poll options, form validation, submission and colors are unchanged.
+
+FILES CHANGED
+- resources/js/components/community/PostComposerDialog.tsx
+- resources/css/pm-post-composer.css
+
+APPLY
+Extract the changed-files ZIP into the Laravel project root, preserving folder paths.
+Then run:
+  npm run build
+  php artisan view:clear
+
+VERIFY
+Open /dashboard, create a post, select Poll, add four options, and check that
+the Post button and character counter stay visible. The Post button remains
+disabled until the question and at least two distinct choices are entered.
+Check at desktop and mobile widths.
+
+VERIFICATION IN THIS ENVIRONMENT
+TSX syntax, CSS parse, and source layout-contract checks passed.
+Full Vite build and browser visual testing were not performed.
+No migrations or additional dependencies.
+
+FULL SOURCE ARCHIVE
+Does not contain .env, private storage, session data, or other runtime logs.
+Preserve your local .env and storage folder. Run npm run build after extracting.

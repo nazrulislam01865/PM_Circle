@@ -63,22 +63,21 @@
     flex-wrap: wrap;
     gap: var(--space-4);
 }
-.pm-home .pm-home-scenario-view-all {
+.pm-home .pm-home-scenario-view-all,
+.pm-home .pm-home-scenario-view-all:hover {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-1);
-    min-height: 40px;
-    padding: 8px 12px;
-    background: var(--surface);
-    border: 1px solid var(--primary);
-    border-radius: var(--radius);
-    color: var(--primary);
-    font-size: var(--type-small);
-    font-weight: var(--type-weight-bold);
+    gap: var(--s1);
+    min-height: var(--control-compact);
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--blue);
+    font: var(--semibold) var(--text-sm)/var(--line-sm) var(--font-ui);
     text-decoration: none;
     white-space: nowrap;
 }
-.pm-home .pm-home-scenario-view-all:hover { color: var(--primary); background: var(--primary-soft); text-decoration: none; }
 
 /* Member shell is still a two-column dashboard beneath the shared full-width header. */
 .pm-dashboard.pm-dashboard-shared-header { flex-direction: column; }

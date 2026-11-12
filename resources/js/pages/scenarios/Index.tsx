@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowRight, Bookmark, ChevronDown, ChevronLeft, ChevronRight, Flame, Layers3, MessageCircle, Search } from 'lucide-react';
+import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { ScenarioLibraryCard, type LibraryScenario } from '@/components/scenarios/ScenarioLibraryCard';
 import { ScenarioLibraryFilters, type ChallengeFilters } from '@/components/scenarios/ScenarioLibraryFilters';
@@ -24,10 +24,10 @@ type Props = {
 };
 
 const tabs = [
-    { id: 'library', label: 'Scenario Library', icon: Layers3 },
-    { id: 'open', label: 'Open for Discussion', icon: MessageCircle },
-    { id: 'discussed', label: 'Most Discussed', icon: Flame },
-    { id: 'mine', label: 'My Participation', icon: Bookmark },
+    { id: 'library', label: 'All scenarios' },
+    { id: 'open', label: 'Open discussions' },
+    { id: 'discussed', label: 'Most discussed' },
+    { id: 'mine', label: 'My participation' },
 ] as const;
 
 function visiblePages(current: number, last: number): (number | '…')[] {
@@ -60,16 +60,16 @@ export default function Index({ scenarios, topics, statusCounts, todaySlug, filt
     };
 
     return <PublicLayout siteLayout={!memberView} active="/daily-challenge" joinLabel="Join free">
-        <Head title="Daily Challenge · PM Circle" />
+        <Head title="Scenario Library · PM Circle" />
         <div className="pm-challenge-page">
             <div className="pm-container pm-challenge-container">
                 <div className="pm-challenge-heading-row">
-                    <div><h1>Daily Challenge</h1><p>Real project scenarios to think, decide, and learn together.</p></div>
-                    {todaySlug && <Link className="pm-button pm-challenge-hero-button" href={`${memberView ? libraryRoot : '/scenarios'}/${encodeURIComponent(todaySlug)}`}>Today's Scenario <ArrowRight size={18} /></Link>}
+                    <div><h1>Scenario Library</h1><p>Real project scenarios to think, decide, and learn together.</p></div>
+                    {todaySlug && <Link className="pm-challenge-today-link" href={`${memberView ? libraryRoot : '/scenarios'}/${encodeURIComponent(todaySlug)}`}>Today's scenario <ArrowRight size={18} aria-hidden="true" /></Link>}
                 </div>
                 <div className="pm-challenge-tabs" role="group" aria-label="Scenario views">
-                    {tabs.map(({ id, label, icon: Icon }) => <button key={id} type="button" className={`pm-challenge-tab ${filters.tab === id ? 'is-active' : ''}`} aria-pressed={filters.tab === id} onClick={() => navigate({ tab: id, status: 'all' })}>
-                        <Icon size={21} aria-hidden="true" />{label}
+                    {tabs.map(({ id, label }) => <button key={id} type="button" className={`pm-challenge-tab ${filters.tab === id ? 'is-active' : ''}`} aria-pressed={filters.tab === id} onClick={() => navigate({ tab: id, status: 'all' })}>
+                        {label}
                     </button>)}
                 </div>
                 <div className="pm-challenge-layout">
@@ -77,14 +77,14 @@ export default function Index({ scenarios, topics, statusCounts, todaySlug, filt
                     <section className="pm-challenge-results" aria-label="Scenarios">
                         <div className="pm-challenge-toolbar">
                             <form className="pm-challenge-search" role="search" onSubmit={submitSearch}>
-                                <Search size={21} aria-hidden="true" />
-                                <input name="search" type="search" aria-label="Search scenarios" placeholder="Search scenarios (e.g., scope, risk, stakeholder, deadline...)" maxLength={80} value={search} onChange={event => setSearch(event.target.value)} />
+                                <Search size={20} aria-hidden="true" />
+                                <input name="search" type="search" aria-label="Search scenarios" placeholder="Search scenarios" maxLength={80} value={search} onChange={event => setSearch(event.target.value)} />
                             </form>
                             <div className="pm-challenge-sort-wrap"><select aria-label="Sort scenarios" value={filters.sort} onChange={event => navigate({ sort: event.target.value as ChallengeFilters['sort'] })}>
-                                <option value="latest">Latest First</option>
-                                <option value="oldest">Oldest First</option>
-                                <option value="discussed">Most Discussed</option>
-                            </select><ChevronDown size={19} aria-hidden="true" /></div>
+                                <option value="latest">Latest first</option>
+                                <option value="oldest">Oldest first</option>
+                                <option value="discussed">Most discussed</option>
+                            </select><ChevronDown size={18} aria-hidden="true" /></div>
                         </div>
                         <div className="pm-challenge-results-list">
                             {scenarios.data.map(scenario => <ScenarioLibraryCard key={scenario.id} scenario={scenario} featured={scenario.slug === todaySlug && scenario.status === 'published'} canInteract={canInteract} onJoin={() => setJoinAction('like or save this scenario')} hrefBase={memberView ? libraryRoot : '/scenarios'} />)}

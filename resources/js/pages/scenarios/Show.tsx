@@ -32,6 +32,7 @@ type NestedReply = {
         name: string;
         profile?: {
             role?: string;
+            avatar_path?: string | null;
         } | null;
     };
 };
@@ -57,6 +58,7 @@ type ScenarioResponseItem = {
         name: string;
         profile?: {
             role?: string;
+            avatar_path?: string | null;
         } | null;
     };
     replies?: NestedReply[];
@@ -115,8 +117,9 @@ export default function Show({ scenario, responses, related }: Props) {
     const isGuest = !auth?.user;
     const canRespond = Boolean(auth?.user && auth.user.onboarding_step >= 3 && scenario.status === 'published');
 
-    // Form for submitting top-level response
-    const form = useForm({ body: '', parent_id: null as number | null });
+    // Independent form state prevents typing in a reply from changing the main response.
+    const form = useForm({ body: '' });
+    const replyForm = useForm({ body: '', parent_id: null as number | null });
 
     // Local state for expandable AI feedback boxes (first item expanded by default as in pm2.png)
     const [expandedFeedback, setExpandedFeedback] = useState<Record<number, boolean>>({
@@ -155,15 +158,36 @@ export default function Show({ scenario, responses, related }: Props) {
         setExpandedReplies((prev) => ({ ...prev, [id]: !prev[id] }));
     };
 
+    const toggleReplyComposer = (id: number) => {
+        if (replyingToId === id) {
+            setReplyingToId(null);
+            replyForm.reset();
+        } else {
+            replyForm.setData({ body: '', parent_id: id });
+            setReplyingToId(id);
+        }
+        replyForm.clearErrors();
+    };
 
-    const handleSubmitResponse = (e: React.FormEvent, parentId: number | null = null) => {
+    const handleSubmitResponse = (e: React.FormEvent) => {
         e.preventDefault();
-        form.transform(data => ({ ...data, parent_id: parentId }));
         form.post(`/scenarios/${scenario.id}/responses`, {
             preserveScroll: true,
             onSuccess: () => {
                 form.reset();
+            },
+        });
+    };
+
+    const handleSubmitReply = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (replyingToId === null) return;
+        replyForm.post(`/scenarios/${scenario.id}/responses`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                replyForm.reset();
                 setReplyingToId(null);
+                setExpandedReplies((prev) => ({ ...prev, [replyingToId]: true }));
             },
         });
     };
@@ -275,7 +299,7 @@ export default function Show({ scenario, responses, related }: Props) {
                                     value={form.data.body}
                                     onChange={(e) => form.setData('body', e.target.value)}
                                     placeholder="Share your approach and explain why..."
-                                    minLength={30}
+                                    minLength={2}
                                     maxLength={10000}
                                     disabled={!canRespond}
                                     required
@@ -308,7 +332,7 @@ export default function Show({ scenario, responses, related }: Props) {
                                         <button
                                             type="submit"
                                             className="pm-button pm-button-sm"
-                                            disabled={form.processing || form.data.body.length < 30}
+                                            disabled={form.processing || form.data.body.trim().length < 2}
                                         >
                                             Submit response & get AI evaluation
                                         </button>
@@ -343,7 +367,7 @@ export default function Show({ scenario, responses, related }: Props) {
                                             {/* Response Header */}
                                             <div className="pm-response-card-header">
                                                 <div className="pm-author-info-wrap">
-                                                    <Avatar name={resp.user.name} size={40} />
+                                            <Avatar name={resp.user.name} src={resp.user.profile?.avatar_path} size={40} />
                                                     <div className="pm-author-meta">
                                                         <strong>{resp.user.name}</strong>
                                                         <span>
@@ -463,51 +487,55 @@ export default function Show({ scenario, responses, related }: Props) {
                                                         initial={resp.reactions?.[0]?.type ?? null} total={resp.reactions_count ?? 0}
                                                         canInteract={canRespond} onJoin={setJoinAction} label="response"/>
                                                     {scenario.status === 'published' && <button type="button" className="pm-home-action"
-                                                        onClick={() => setReplyingToId(replyingToId === resp.id ? null : resp.id)}>
+                                                        onClick={() => toggleReplyComposer(resp.id)}>
                                                         <MessageCircle size={19} aria-hidden="true"/>Reply
                                                     </button>}
                                                 </EngagementActionBar>
                                             </div>
 
-                                            {/* Inline Reply Form when clicking Reply */}
+                                            {/* Inline reply composer beneath the selected community response. */}
                                             {replyingToId === resp.id && (
-                                                <div style={{ marginTop: '14px' }}>
+                                                <div className="pm-scenario-reply-thread">
                                                     {canRespond ? (
                                                         <form
-                                                            onSubmit={(e) => {
-                                                                e.preventDefault();
-                                                                handleSubmitResponse(e, resp.id);
-                                                            }}
+                                                            className="pm-scenario-reply-composer"
+                                                            onSubmit={handleSubmitReply}
                                                         >
+                                                            <label
+                                                                className="pm-scenario-reply-label"
+                                                                htmlFor={`scenario-reply-${resp.id}`}
+                                                            >
+                                                                Replying to <strong>{resp.user.name}</strong>
+                                                            </label>
                                                             <textarea
-                                                                className="pm-response-textarea"
-                                                                style={{ minHeight: '80px' }}
+                                                                id={`scenario-reply-${resp.id}`}
+                                                                className="pm-response-textarea pm-scenario-reply-textarea"
                                                                 placeholder={`Reply to ${resp.user.name}...`}
-                                                                value={form.data.body}
-                                                                onChange={(e) => form.setData('body', e.target.value)}
+                                                                value={replyForm.data.body}
+                                                                onChange={(e) => replyForm.setData('body', e.target.value)}
+                                                                minLength={2}
+                                                                maxLength={10000}
                                                                 required
                                                             />
-                                                            <div
-                                                                style={{
-                                                                    display: 'flex',
-                                                                    gap: '8px',
-                                                                    justifyContent: 'flex-end',
-                                                                    marginTop: '8px',
-                                                                }}
-                                                            >
+                                                            {replyForm.errors.body && (
+                                                                <p className="pm-error pm-scenario-reply-error" role="alert">
+                                                                    {replyForm.errors.body}
+                                                                </p>
+                                                            )}
+                                                            <div className="pm-scenario-reply-actions">
                                                                 <button
                                                                     type="button"
-                                                                    className="pm-button pm-button-outline pm-button-sm"
-                                                                    onClick={() => setReplyingToId(null)}
+                                                                    className="pm-scenario-reply-cancel"
+                                                                    onClick={() => toggleReplyComposer(resp.id)}
                                                                 >
                                                                     Cancel
                                                                 </button>
                                                                 <button
                                                                     type="submit"
-                                                                    className="pm-button pm-button-sm"
-                                                                    disabled={form.processing}
+                                                                    className="pm-button pm-button-sm pm-scenario-reply-submit"
+                                                                    disabled={replyForm.processing || replyForm.data.body.trim().length < 2}
                                                                 >
-                                                                    Send reply
+                                                                    Post reply
                                                                 </button>
                                                             </div>
                                                         </form>
@@ -523,13 +551,14 @@ export default function Show({ scenario, responses, related }: Props) {
                                             {/* Threaded Nested Replies (pm2.png) */}
                                             {hasReplies && (
                                                 <div className="pm-threaded-replies-wrap">
-                                                    {resp.replies!.map((reply) => (
+                                                    <div id={`scenario-replies-${resp.id}`} hidden={!areRepliesExpanded}>
+                                                    {areRepliesExpanded && resp.replies!.map((reply) => (
                                                         <div key={reply.id} className="pm-nested-reply-card">
                                                             <div
                                                                 className="pm-author-info-wrap"
                                                                 style={{ marginBottom: '6px' }}
                                                             >
-                                                                <Avatar name={reply.user.name} size={28} />
+                                                                <Avatar name={reply.user.name} src={reply.user.profile?.avatar_path} size={28} />
                                                                 <div className="pm-author-meta">
                                                                     <strong style={{ fontSize: 'var(--pm-font-size-13px)' }}>
                                                                         {reply.user.name}
@@ -552,13 +581,16 @@ export default function Show({ scenario, responses, related }: Props) {
                                                             </p>
                                                         </div>
                                                     ))}
+                                                    </div>
 
                                                     <button
                                                         type="button"
                                                         className="pm-toggle-replies-btn"
                                                         onClick={() => toggleReplies(resp.id)}
+                                                        aria-expanded={areRepliesExpanded}
+                                                        aria-controls={`scenario-replies-${resp.id}`}
                                                     >
-                                                        View {resp.replies!.length} replies{' '}
+                                                        {areRepliesExpanded ? 'Hide' : 'View'} {resp.replies!.length} {resp.replies!.length === 1 ? 'reply' : 'replies'}{' '}
                                                         {areRepliesExpanded ? (
                                                             <ChevronUp size={14} />
                                                         ) : (

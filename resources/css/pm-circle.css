@@ -974,6 +974,68 @@
     font-style: italic;
 }
 
+/* Daily Challenge: inline response-reply composer. Uses the shared theme tokens. */
+.pm-scenario-reply-thread {
+    min-width: 0;
+    margin: var(--s4) 0 0 calc(var(--avatar) + var(--s4));
+    padding-left: var(--s6);
+    border-left: 2px solid var(--border);
+}
+.pm-scenario-reply-composer {
+    min-width: 0;
+    padding: var(--s3) var(--s4);
+    background: var(--blue-soft);
+    border: 1px solid var(--pm-tone-c8dff5);
+    border-radius: var(--radius-card);
+}
+.pm-scenario-reply-label {
+    display: block;
+    margin-bottom: var(--s2);
+    color: var(--ink);
+    font: var(--regular) var(--text-ui)/var(--line-ui) var(--font-ui);
+}
+.pm-scenario-reply-label strong { font-weight: var(--semibold); }
+.pm-response-textarea.pm-scenario-reply-textarea {
+    display: block;
+    min-width: 0;
+    min-height: 5rem;
+    padding: var(--s3);
+    background: var(--surface);
+    border-color: var(--control-border);
+    font: var(--regular) var(--text-body)/var(--line-body) var(--font-ui);
+}
+.pm-scenario-reply-error { margin-top: var(--s2); }
+.pm-scenario-reply-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: var(--s2);
+    margin-top: var(--s2);
+}
+.pm-scenario-reply-cancel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--control-height);
+    padding: var(--s2) var(--s3);
+    border: 0;
+    border-radius: var(--radius-control);
+    background: transparent;
+    color: var(--ink);
+    font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui);
+    cursor: pointer;
+}
+.pm-scenario-reply-cancel:hover { text-decoration: underline; }
+.pm-scenario-reply-submit { min-height: var(--control-height); }
+@media (max-width: 42rem) {
+    .pm-scenario-reply-thread {
+        margin-left: var(--s3);
+        padding-left: var(--s3);
+    }
+    .pm-scenario-reply-composer { padding: var(--s3); }
+}
+
 /* Threaded replies */
 .pm-threaded-replies-wrap {
     margin-top: 14px;

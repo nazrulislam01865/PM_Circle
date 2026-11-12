@@ -7,6 +7,7 @@ use App\Models\Scenario;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -120,10 +121,10 @@ class ScenarioController extends Controller
             ->with([
                 'user:id,name',
                 ...($viewerId ? ['reactions' => fn ($query) => $query->where('user_id', $viewerId)] : []),
-                'user.profile' => fn ($q) => $q->where('visibility', 'public')->select('id', 'user_id', 'role'),
+                'user.profile' => fn ($q) => $q->where('visibility', 'public')->select('id', 'user_id', 'role', 'avatar_path'),
                 'replies' => fn ($q) => $q->with([
                     'user:id,name',
-                    'user.profile' => fn ($p) => $p->where('visibility', 'public')->select('id', 'user_id', 'role'),
+                    'user.profile' => fn ($p) => $p->where('visibility', 'public')->select('id', 'user_id', 'role', 'avatar_path'),
                 ])->oldest(),
             ])
             ->withCount('reactions')
@@ -149,8 +150,9 @@ class ScenarioController extends Controller
     {
         abort_unless($scenario->status === 'published', 404);
         $validated = $request->validate([
-            'body' => ['required', 'string', 'min:30', 'max:10000'],
-            'parent_id' => ['nullable', 'exists:scenario_responses,id'],
+            'body' => ['required', 'string', 'min:2', 'max:10000'],
+            'parent_id' => ['nullable', 'integer', Rule::exists('scenario_responses', 'id')
+                ->where('scenario_id', $scenario->id)->whereNull('parent_id')],
         ]);
 
         $isReply = !empty($validated['parent_id']);

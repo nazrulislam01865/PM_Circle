@@ -231,9 +231,10 @@
     border-radius: var(--radius);
 }
 
-/* Shared comment actions: visible backgrounds that darken slightly on hover. */
+/* Style the reply and close controls, not the nested ReactionPicker buttons.
+   The shared seven-reaction palette lives in pm-engagement.css above. */
 .pm-engagement-shell .pm-inline-comments .pm-inline-comment-actions { gap: var(--space-2); }
-.pm-engagement-shell .pm-inline-comments .pm-inline-comment-actions button,
+.pm-engagement-shell .pm-inline-comments .pm-comment-engagement > button.pm-home-action,
 .pm-engagement-shell .pm-inline-comments .pm-inline-close {
     min-height: var(--pm-control-dimension-44px);
     padding: var(--space-2) var(--space-3);
@@ -246,16 +247,12 @@
     font-weight: var(--type-weight-semibold);
     transition: background-color 150ms ease, border-color 150ms ease;
 }
-.pm-engagement-shell .pm-inline-comments .pm-inline-comment-actions button:hover:not(:disabled),
+.pm-engagement-shell .pm-inline-comments .pm-comment-engagement > button.pm-home-action:hover:not(:disabled),
 .pm-engagement-shell .pm-inline-comments .pm-inline-close:hover {
     background: color-mix(in srgb, var(--primary-soft) 80%, var(--primary) 20%);
     color: var(--text);
 }
-.pm-engagement-shell .pm-inline-comments .pm-inline-comment-actions button[aria-pressed="true"] {
-    color: var(--primary);
-    border-color: var(--primary);
-}
-.pm-engagement-shell .pm-inline-comments .pm-inline-comment-actions button:disabled {
+.pm-engagement-shell .pm-inline-comments .pm-comment-engagement > button.pm-home-action:disabled {
     color: var(--disabled-text);
     background: var(--disabled-bg);
     cursor: not-allowed;
@@ -279,7 +276,7 @@
     color: var(--disabled-text);
 }
 @media (prefers-reduced-motion: reduce) {
-    .pm-engagement-shell .pm-inline-comments .pm-inline-comment-actions button,
+    .pm-engagement-shell .pm-inline-comments .pm-comment-engagement > button.pm-home-action,
     .pm-engagement-shell .pm-inline-comments .pm-inline-close { transition: none; }
 }
 .pm-engagement-shell .pm-inline-comments-sort-row {

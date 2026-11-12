@@ -54,16 +54,18 @@
 .pm-inline-comment-actions, .pm-thread-actions { padding: var(--s1) 0 0; margin: 0; }
 .pm-inline-comment-actions .pm-comment-engagement,
 .pm-thread-actions .pm-comment-engagement { gap: var(--s2); }
-.pm-comment-engagement .pm-home-action,
-.pm-engagement-shell .pm-inline-comments .pm-inline-comment-actions .pm-comment-engagement .pm-home-action,
-.pm-thread-actions .pm-comment-engagement .pm-home-action {
+/* Style the direct Reply action only; ReactionPicker's main button uses
+   the centralized per-reaction colors, including its selected state. */
+.pm-comment-engagement > button.pm-home-action,
+.pm-engagement-shell .pm-inline-comments .pm-inline-comment-actions .pm-comment-engagement > button.pm-home-action,
+.pm-thread-actions .pm-comment-engagement > button.pm-home-action {
     display: inline-flex; align-items: center; gap: var(--s2);
     min-height: var(--control-height); padding: var(--s2);
     border: 0; border-radius: var(--radius-control); background: transparent;
     color: var(--muted); font: var(--medium) var(--text-sm)/var(--line-sm) var(--font-ui);
 }
-.pm-engagement-shell .pm-inline-comments .pm-inline-comment-actions .pm-comment-engagement .pm-home-action:hover,
-.pm-thread-actions .pm-comment-engagement .pm-home-action:hover { background: var(--blue-soft); color: var(--blue); }
+.pm-engagement-shell .pm-inline-comments .pm-inline-comment-actions .pm-comment-engagement > button.pm-home-action:hover,
+.pm-thread-actions .pm-comment-engagement > button.pm-home-action:hover { background: var(--blue-soft); color: var(--blue); }
 .pm-comment-engagement .pm-home-action svg { width: var(--icon); height: var(--icon); }
 .pm-thread-comment, .pm-thread-reply { border-bottom: 0; padding: var(--s3) 0; }
 .pm-thread-body > p { font: var(--regular) var(--text-body)/var(--line-body) var(--font-ui); margin-top: var(--s1); }

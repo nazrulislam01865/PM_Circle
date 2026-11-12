@@ -12,6 +12,15 @@
 .pm-compose-identity strong { display: block; font-size: var(--type-lead); font-weight: var(--type-weight-bold); }
 .pm-compose-identity span { display: block; margin-top: 3px; font-size: var(--type-small); color: var(--pm-muted); }
 .pm-compose-form { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+/* Keep poll options and post text scrollable without clipping the submit footer. */
+.pm-compose-scroll-region { display: flex; flex: 1 1 0; flex-direction: column; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.pm-compose-scroll-region > .pm-compose-editor { flex: 1 0 auto; }
+.pm-compose-scroll-region > .pm-compose-poll-options,
+.pm-compose-scroll-region > .pm-compose-image { flex: 0 0 auto; }
+.pm-compose-form > .pm-compose-toolbar,
+.pm-compose-form > .pm-compose-types,
+.pm-compose-form > .pm-compose-footer { flex: 0 0 auto; }
+.pm-compose-form > .pm-compose-footer { background: var(--pm-surface); }
 .pm-compose-editor { outline: none; flex: 1; min-height: 140px; overflow: auto; padding: 18px 24px; font-size: var(--type-lead); line-height: var(--pm-line-height-1p6); font-family: var(--pm-font-family); color: var(--pm-navy); overflow-wrap: anywhere; white-space: pre-wrap; }
 .pm-compose-editor:empty::before { content: attr(data-placeholder); pointer-events: none; color: var(--pm-muted); }
 .pm-app .pm-compose-editor:is(:focus, :focus-visible) { outline: none; box-shadow: none; }

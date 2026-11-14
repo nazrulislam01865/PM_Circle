@@ -37,7 +37,7 @@ class HandleInertiaRequests extends Middleware
     {
         // Public homepage-style pages never mount the dashboard sidebar.
         // Avoid computing its member projection on those requests.
-        $siteLayout = in_array($request->path(), ['/', 'daily-challenge', 'community', 'learning'], true)
+        $siteLayout = in_array($request->path(), ['/', 'daily-challenge', 'community', 'learning', 'contact', 'help-center', 'refund-policy'], true)
             || $request->is('learning/courses/*') || $request->is('admin', 'admin/*');
 
         return [
@@ -45,6 +45,7 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'emailVerificationRequired' => config('pm-circle.email_verification_required'),
             'siteNavigation' => fn () => $request->is('admin', 'admin/*') ? null : \App\Support\Admin\SiteNavigation::links(),
+            'siteFooter' => fn () => $request->is('admin', 'admin/*') ? null : \App\Support\Exam\PmpPublicContent::load()['footer'],
             'auth' => [
                 'user' => $request->user() ? [
                     ...$request->user()->only(['id', 'name', 'email', 'email_verified_at', 'onboarding_step', 'created_at', 'updated_at']),

@@ -213,3 +213,102 @@
         min-height: 36px;
     }
 }
+
+/* Mobile post presentation: keep the desktop component and all interactions unchanged.
+   The post body and tags use the full card width, and the four existing actions
+   get predictable, accessible slots rather than wrapping unpredictably. */
+@media (max-width: 42rem) {
+    .pm-unified-post-card .pm-card-author-header {
+        align-items: center;
+        gap: var(--s2);
+        margin-bottom: var(--s3);
+    }
+    .pm-unified-post-card .pm-author-info-wrap {
+        align-items: center;
+        gap: var(--s2);
+    }
+    .pm-unified-post-card .pm-author-meta {
+        gap: 0;
+    }
+    /* Higher specificity resolves legacy post-alignment overrides imported later. */
+    .pm-unified-post-card.pm-discussion-card .pm-post-card-main.pm-post-aligned-content,
+    .pm-member-home .pm-unified-post-card.pm-discussion-card .pm-post-card-main.pm-post-aligned-content {
+        margin: 0 0 var(--s3);
+        width: 100%;
+    }
+    .pm-unified-post-card.pm-discussion-card .pm-tag-pills-row {
+        margin-inline-start: 0;
+    }
+    .pm-unified-post-card .pm-post-card-main .pm-card-body {
+        margin-bottom: 0;
+    }
+    .pm-unified-post-card .pm-card-action-bar,
+    .pm-unified-post-card .pm-card-action-bar:has(.pm-inline-comments) {
+        display: block;
+        padding-top: var(--s2);
+        margin-top: var(--s3);
+    }
+    .pm-unified-post-card .pm-card-action-bar .pm-engagement-shell {
+        width: 100%;
+        min-width: 0;
+    }
+    .pm-unified-post-card .pm-card-action-bar .pm-engagement-actions {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        align-items: stretch;
+        gap: var(--s1);
+    }
+    .pm-unified-post-card .pm-engagement-actions > :is(.pm-home-reaction-root, .pm-home-share-wrap, .pm-post-save-action) {
+        display: flex;
+        width: 100%;
+        min-width: 0;
+        margin: 0;
+    }
+    .pm-unified-post-card .pm-engagement-actions > .pm-home-action {
+        width: 100%;
+        min-width: 0;
+        margin: 0;
+    }
+    .pm-unified-post-card .pm-engagement-actions .pm-home-action:not(.pm-home-reaction-choice) {
+        width: 100%;
+        min-width: 0;
+        min-height: calc(var(--control-touch) + var(--s3));
+        padding: var(--s1);
+        flex-direction: column;
+        gap: var(--s1);
+        text-align: center;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        font: var(--medium) var(--text-ui)/var(--line-ui) var(--font-ui);
+    }
+    .pm-unified-post-card .pm-engagement-actions .pm-home-action:not(.pm-home-reaction-choice) svg {
+        flex-shrink: 0;
+    }
+    .pm-unified-post-card .pm-engagement-actions > .pm-home-reaction-error {
+        grid-column: 1 / -1;
+    }
+    .pm-unified-post-card .pm-card-action-bar .pm-read-discussion-link {
+        display: block;
+        width: fit-content;
+        margin: var(--s2) 0 0 auto;
+        text-align: end;
+        font: var(--semibold) var(--text-sm)/var(--line-sm) var(--font-ui);
+    }
+    /* The seven shared reactions remain available on narrow touch devices. */
+    .pm-unified-post-card .pm-home-reaction-options {
+        flex-wrap: wrap;
+        justify-content: center;
+        width: calc(4 * var(--control-touch) + 4 * var(--s2));
+        max-width: calc(100vw - var(--s8));
+        padding: var(--s2);
+        gap: var(--s1);
+        border-radius: var(--radius-card);
+    }
+    .pm-unified-post-card.pm-discussion-card .pm-engagement-actions .pm-home-reaction-choice {
+        flex: 0 0 var(--control-touch);
+        width: var(--control-touch);
+        height: var(--control-touch);
+        min-height: var(--control-touch);
+    }
+}
+

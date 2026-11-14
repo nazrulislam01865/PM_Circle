@@ -1,8 +1,10 @@
 import { Head, Link } from '@inertiajs/react';
 import { useEffect, useState, type ReactNode } from 'react';
-import { ChevronDown, ChevronRight, Database, ExternalLink, Flag, House, LayoutDashboard, LogOut, Menu, PanelTop, Route, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Database, ExternalLink, Flag, House, LayoutDashboard, LogOut, Menu, PanelTop, ClipboardCheck, Route, X } from 'lucide-react';
 import { Brand } from '@/components/pm/Brand';
 import { homepageSections, type HomepageSection, type HomepageSectionVisibility } from '@/components/admin/homepage-sections';
+import { pmpPublicSections } from '@/components/admin/pmp-public-sections';
+import type { PmpPublicSection } from '@/types/pmp-public';
 import { dropdownGroups, navigationGroups } from '@/components/admin/catalog-groups';
 
 type Props = {
@@ -14,24 +16,31 @@ type Props = {
     onSelectHomeSection?: (section: HomepageSection) => void;
     homepageVisibility?: HomepageSectionVisibility;
     selectedCatalogCategory?: string;
+    selectedPmpSection?: PmpPublicSection;
+    onSelectPmpSection?: (section: PmpPublicSection) => void;
+    pmpVisibility?: Record<PmpPublicSection, boolean>;
 };
 
-export function AdminLayout({ title, subtitle, children, active, selectedHomeSection, onSelectHomeSection, homepageVisibility, selectedCatalogCategory }: Props) {
+export function AdminLayout({ title, subtitle, children, active, selectedHomeSection, onSelectHomeSection, homepageVisibility, selectedCatalogCategory, selectedPmpSection, onSelectPmpSection, pmpVisibility }: Props) {
     const isHomepage = active === '/admin/homepage';
     const isMaster = active === '/admin/master-data';
     const isNavigation = active === '/admin/navigation';
+    const isPmp = active === '/admin/exam-simulator/pmp';
     const [homeOpen, setHomeOpen] = useState(isHomepage);
     const [masterOpen, setMasterOpen] = useState(isMaster);
     const [navOpen, setNavOpen] = useState(isNavigation);
+    const [pmpOpen, setPmpOpen] = useState(isPmp);
     const [mobileOpen, setMobileOpen] = useState(false);
     // Both catalog areas reuse one Inertia page; expand the matching group on route changes.
     useEffect(() => {
         if (isHomepage) setHomeOpen(true);
         if (isMaster) setMasterOpen(true);
         if (isNavigation) setNavOpen(true);
-    }, [active, isHomepage, isMaster, isNavigation]);
+        if (isPmp) setPmpOpen(true);
+    }, [active, isHomepage, isMaster, isNavigation, isPmp]);
     const sectionLabel = homepageSections.find(section => section.key === selectedHomeSection)?.name;
     const catalogLabel = [...dropdownGroups, ...navigationGroups].find(group => group.key === selectedCatalogCategory)?.label;
+    const pmpLabel = isPmp ? pmpPublicSections.find(section => section.key === selectedPmpSection)?.title : undefined;
 
     function adminGroup(icon: ReactNode, label: string, base: string, opened: boolean, toggle: () => void, groups: readonly { key: string; label: string }[]) {
         const activeGroup = active === base;
@@ -91,6 +100,30 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
                             </Link>;
                     })}
                 </div>}
+                <div className={`pm-admin-nav-parent ${isPmp ? 'is-current-group' : ''}`}>
+                    <Link href="/admin/exam-simulator/pmp" aria-current={isPmp ? 'page' : undefined}
+                        className={`pm-admin-nav-link pm-admin-nav-parent-link ${isPmp ? 'is-active' : ''}`}
+                        onClick={() => setMobileOpen(false)}>
+                        <ClipboardCheck size={18} aria-hidden="true"/><span className="pm-admin-nav-text">PMP public page</span>
+                    </Link>
+                    <button type="button" className="pm-admin-nav-toggle" aria-label={`${pmpOpen ? 'Collapse' : 'Expand'} PMP public page`}
+                        aria-controls="pm-admin-pmp-submenu" aria-expanded={pmpOpen} onClick={() => setPmpOpen(open => !open)}>
+                        {pmpOpen ? <ChevronDown size={17}/> : <ChevronRight size={17}/>}
+                    </button>
+                </div>
+                {pmpOpen && <div id="pm-admin-pmp-submenu" className="pm-admin-submenu" aria-label="PMP public page sections">
+                    {pmpPublicSections.map(section => {
+                        const selected = isPmp && section.key === selectedPmpSection;
+                        const contents = <><span className="pm-admin-submenu-marker" aria-hidden="true"/><span>{section.title}</span>
+                            {pmpVisibility && !pmpVisibility[section.key] && <span className="pm-admin-submenu-status">Hidden</span>}</>;
+                        return isPmp && onSelectPmpSection
+                            ? <button key={section.key} type="button" className={`pm-admin-submenu-link ${selected ? 'is-active' : ''}`}
+                                aria-current={selected ? 'step' : undefined}
+                                onClick={() => { onSelectPmpSection(section.key); setMobileOpen(false); }}>{contents}</button>
+                            : <Link key={section.key} href={`/admin/exam-simulator/pmp?section=${section.key}`}
+                                className="pm-admin-submenu-link" onClick={() => setMobileOpen(false)}>{contents}</Link>;
+                    })}
+                </div>}
                 {adminGroup(<Route size={18} aria-hidden="true"/>, 'Navigation control', '/admin/navigation', navOpen, () => setNavOpen(value => !value), navigationGroups)}
                 {adminGroup(<Database size={18} aria-hidden="true"/>, 'Master data', '/admin/master-data', masterOpen, () => setMasterOpen(value => !value), dropdownGroups)}
                 <span className="pm-admin-nav-label pm-admin-nav-label-separate">QUICK LINKS</span>
@@ -101,7 +134,7 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
         <div className="pm-admin-body">
             <header className="pm-admin-topbar">
                 <div className="pm-admin-breadcrumb"><span>PM Circle</span><span aria-hidden="true">/</span><span>Administration</span><span aria-hidden="true">/</span><strong>{title}</strong>
-                    {(sectionLabel || catalogLabel) && <><span aria-hidden="true">/</span><span>{sectionLabel || catalogLabel}</span></>}
+                    {(sectionLabel || catalogLabel || pmpLabel) && <><span aria-hidden="true">/</span><span>{sectionLabel || catalogLabel || pmpLabel}</span></>}
                 </div>
                 <Link href="/" className="pm-admin-view-site">View website <ExternalLink size={16} aria-hidden="true"/></Link>
             </header>

@@ -19,7 +19,10 @@ use App\Http\Controllers\Community\PostInteractionController;
 use App\Http\Controllers\Onboarding\OnboardingController;
 use App\Http\Controllers\Settings\ProfileController as SettingsProfileController;
 use App\Http\Controllers\PublicSite\HomeController;
+use App\Http\Controllers\PublicSite\ContactController;
 use App\Http\Controllers\Admin\HomepageController;
+use App\Http\Controllers\Admin\PmpPublicPageController as AdminPmpPublicPageController;
+use App\Http\Controllers\PublicSite\PmpPublicPageController;
 use App\Http\Controllers\Admin\MasterDataController;
 use App\Http\Controllers\Scenario\ScenarioController;
 use App\Http\Controllers\Scenario\ScenarioReactionController;
@@ -45,6 +48,8 @@ Route::middleware(['auth', 'pm.admin', 'verified'])->prefix('admin')->name('admi
     Route::post('/post-reviews/{post}', [PostModerationController::class, 'reviewPost'])->middleware('throttle:30,1')->name('post-reviews.update');
     Route::patch('/post-reports/{report}', [PostModerationController::class, 'update'])->middleware('throttle:30,1')->whereNumber('report')->name('post-reports.update');
     Route::get('/homepage', [HomepageController::class, 'edit'])->name('homepage.edit');
+    Route::get('/exam-simulator/pmp', [AdminPmpPublicPageController::class, 'edit'])->name('pmp-public.edit');
+    Route::put('/exam-simulator/pmp', [AdminPmpPublicPageController::class, 'update'])->middleware('throttle:20,1')->name('pmp-public.update');
     Route::put('/homepage', [HomepageController::class, 'update'])->middleware('throttle:20,1')->name('homepage.update');
     Route::post('/homepage/images', [HomepageController::class, 'upload'])->middleware('throttle:20,1')->name('homepage.upload');
     Route::get('/navigation', [MasterDataController::class, 'navigationIndex'])->name('navigation.index');
@@ -73,6 +78,7 @@ Route::get('/post-media/{filename}', [PostController::class, 'media'])->where('f
 Route::get('/posts/{post}/media/{filename}', [PostController::class, 'privateMedia'])->where('filename', '[a-zA-Z0-9._-]+')->name('posts.private-media');
 Route::get('/posts/{post}', [PostController::class, 'show'])->name('posts.show');
 Route::get('/posts/{post}/comments/preview', [PostInteractionController::class, 'previewComments'])->middleware('throttle:60,1')->name('posts.comments.preview');
+Route::get('/posts/{post}/comments/{comment}/replies', [PostInteractionController::class, 'replies'])->middleware('throttle:60,1')->name('posts.comments.replies');
 Route::get('/posts/{post}/comments/{comment}/media/{filename}', [PostInteractionController::class, 'commentMedia'])
     ->where('filename', '[a-zA-Z0-9._-]+')->middleware('throttle:120,1')->name('posts.comments.media');
 Route::get('/daily-challenge', [ScenarioController::class, 'index'])->name('scenarios.index');
@@ -86,6 +92,13 @@ Route::post('/api/auth/verify-code', [EmailVerificationCodeController::class, 'v
 Route::inertia('/about', 'public/About')->name('about');
 Route::inertia('/terms', 'public/Terms')->name('terms');
 Route::inertia('/privacy', 'public/Privacy')->name('privacy');
+// Static public support destinations for the PMP footer; no APIs or database queries.
+Route::inertia('/help-center', 'public/Support', ['mode' => 'help'])->name('help-center');
+Route::get('/contact', [ContactController::class, 'index'])->name('contact');
+Route::post('/contact', [ContactController::class, 'submit'])->middleware('throttle:5,10')->name('contact.submit');
+Route::get('/contact/confirm/{token}', [ContactController::class, 'confirm'])
+    ->middleware(['signed', 'throttle:10,1'])->where('token', '[A-Za-z0-9]{64}')->name('contact.confirm');
+Route::inertia('/refund-policy', 'public/PolicyNotice')->name('refund-policy');
 
 // Public career listings use the stored, auto-published JobSpy imports only.
 Route::get('/careers', [CareerJobsController::class, 'index'])->name('careers.index');
@@ -93,6 +106,12 @@ Route::get('/careers/{job}', [CareerJobsController::class, 'show'])
     ->where('job', 'job-[a-f0-9]{32}')->name('careers.show');
 Route::get('/members', [MemberDirectoryController::class, 'index'])->name('members.index');
 Route::get('/members/{member}', [MemberDirectoryController::class, 'show'])->whereNumber('member')->name('members.show');
+
+// Guest-only PMP landing; signed-in visitors are redirected to their authorized flow.
+Route::get('/exam-simulator/pmp', PmpPublicPageController::class)->name('exams.pmp.public');
+// Public status pages only; actual simulator APIs remain member/entitlement protected.
+Route::inertia('/simulators/project', 'public/ComingSoon', ['title' => 'Project Simulator'])->name('simulators.project.public');
+Route::inertia('/simulators/scrum', 'public/ComingSoon', ['title' => 'Scrum / CSM Simulator'])->name('simulators.scrum.public');
 
 Route::middleware(['auth', 'pm.member', 'verified'])->group(function () {
     Route::get('/join/step/3', [OnboardingController::class, 'plan'])->name('join.plan');
@@ -113,13 +132,18 @@ Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded'])->group(func
     Route::get('/interview-preparation/results', [InterviewController::class, 'results'])->name('interview.results');
     Route::get('/interview-preparation/results/{session}', [InterviewController::class, 'results'])->whereNumber('session')->name('interview.results.show');
 
+    Route::get('/exams/pmp/enter', [PmpExamController::class, 'entry'])->name('exams.pmp.entry');
     Route::get('/exams/pmp', [PmpExamController::class, 'index'])->name('exams.pmp.index');
+    Route::get('/exams/pmp/history', [PmpExamController::class, 'history'])->middleware('throttle:30,1')->name('exams.pmp.history');
+    Route::put('/exams/pmp/target-date', [PmpExamController::class, 'updateTargetDate'])->middleware('throttle:20,1')->name('exams.pmp.target-date');
     Route::post('/exams/pmp/start', [PmpExamController::class, 'start'])->middleware('throttle:pmp-exam-start')->name('exams.pmp.start');
     Route::get('/exams/pmp/attempts/{attempt}', [PmpExamController::class, 'take'])->whereNumber('attempt')->name('exams.pmp.take');
     Route::put('/exams/pmp/attempts/{attempt}/answer', [PmpExamController::class, 'answer'])->middleware('throttle:120,1')->whereNumber('attempt')->name('exams.pmp.answer');
     Route::post('/exams/pmp/attempts/{attempt}/submit', [PmpExamController::class, 'submit'])->middleware('throttle:pmp-exam-submit')->whereNumber('attempt')->name('exams.pmp.submit');
     Route::get('/exams/pmp/attempts/{attempt}/result', [PmpExamController::class, 'result'])->whereNumber('attempt')->name('exams.pmp.result');
     Route::get('/exams/pmp/attempts/{attempt}/review', [PmpExamController::class, 'review'])->whereNumber('attempt')->name('exams.pmp.review');
+    Route::post('/exams/pmp/attempts/{attempt}/questions/{question}/ai-help', [PmpExamController::class, 'aiHelp'])
+        ->middleware('throttle:5,1')->whereNumber('attempt')->whereNumber('question')->name('exams.pmp.ai-help');
     // Member workspace aliases reuse the public page queries and React components.
     // The public routes remain available to visitors and members.
     Route::get('/dashboard/learning', [LearningController::class, 'index'])->name('dashboard.learning.index');

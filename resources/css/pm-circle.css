@@ -1165,3 +1165,11 @@
     .pm-password-reset-submit { min-height: var(--control-touch); }
     .pm-password-reset-card .pm-auth-intro h1 { font-size: var(--text-h1); line-height: var(--line-h1); }
 }
+
+/* Shared public page shell: footer follows the page and stays at the viewport
+   bottom on short screens, without changing the existing page container. */
+.pm-app.pm-page-shell { display: flex; flex-direction: column; min-height: 100vh; }
+.pm-app.pm-page-shell > main { flex: 1 0 auto; min-width: 0; width: 100%; }
+.pm-app.pm-page-shell .pm-members-page { min-height: 0; }
+
+.pm-auth-shell > .pm-unified-footer { width: 100%; }

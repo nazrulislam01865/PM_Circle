@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Community;
 
 use App\Http\Controllers\Controller;
 use App\Domain\Community\Actions\PublishPost;
+use App\Domain\Community\Services\EngagementStats;
 use App\Http\Requests\Community\StorePostRequest;
 use App\Models\Post;
 use App\Models\Scenario;
@@ -76,18 +77,31 @@ class PostController extends Controller
         $post->load([
             'author:id,name',
             'author.profile' => fn ($q) => $q->where('visibility', 'public')->select('id', 'user_id', 'role', 'avatar_path')
-        ])->loadCount([
-            'comments',
-            'reactions',
-            'reactions as likes_count' => fn ($query) => $query->where('type', 'like'),
-            'reactions as loves_count' => fn ($query) => $query->where('type', 'love'),
         ]);
+        if (EngagementStats::readsEnabled()) {
+            $stats = \Illuminate\Support\Facades\DB::table('post_engagement_stats')
+                ->where('post_id', $post->id)->first();
+            foreach (['comments', 'reactions', 'likes', 'loves'] as $label) {
+                $column = match ($label) {
+                    'comments' => 'comments_count', 'reactions' => 'reactions_count',
+                    'likes' => 'like_count', 'loves' => 'love_count',
+                };
+                $post->setAttribute($label.'_count', (int) ($stats->{$column} ?? 0));
+            }
+        } else {
+            $post->loadCount([
+                'comments', 'reactions',
+                'reactions as likes_count' => fn ($query) => $query->where('type', 'like'),
+                'reactions as loves_count' => fn ($query) => $query->where('type', 'love'),
+            ]);
+        }
 
         $comments = $post->comments()
             ->whereNull('parent_id')
             ->with(['author:id,name', 'author.profile' => fn ($q) => $q->where('visibility', 'public')->select('id', 'user_id', 'avatar_path')])
-            ->withCount('likes')
-            ->with(['replies' => fn ($query) => $query->with(['author:id,name', 'author.profile' => fn ($q) => $q->where('visibility', 'public')->select('id', 'user_id', 'avatar_path')])->withCount('likes')])
+            ->withCount(['likes', 'replies'])
+            ->with(['replies' => fn ($query) => $query->orderBy('created_at')->orderBy('id')->limit(2)
+                ->with(['author:id,name', 'author.profile' => fn ($q) => $q->where('visibility', 'public')->select('id', 'user_id', 'avatar_path')])->withCount('likes')])
             ->oldest()
             ->paginate(12);
 
@@ -99,10 +113,13 @@ class PostController extends Controller
         $post->setAttribute('viewer_muted', (bool) ($post->viewer_is_author && $post->notifications_muted_at));
         $post->anonymizeForPublic();
 
-        $viewerCommentReactions = $request->user() ? \Illuminate\Support\Facades\DB::table('comment_likes')
-            ->where('user_id', $request->user()->id)
-            ->whereIn('comment_id', \Illuminate\Support\Facades\DB::table('comments')->where('post_id', $post->id)->select('id'))
-            ->pluck('type', 'comment_id') : collect();
+        $visibleCommentIds = $comments->getCollection()->flatMap(fn ($root) =>
+            $root->replies->pluck('id')->push($root->id))->all();
+        $viewerCommentReactions = $request->user() && $visibleCommentIds
+            ? \Illuminate\Support\Facades\DB::table('comment_likes')
+                ->where('user_id', $request->user()->id)
+                ->whereIn('comment_id', $visibleCommentIds)->pluck('type', 'comment_id')
+            : collect();
 
         return Inertia::render('community/PostShow', [
             'post' => $post,
@@ -120,10 +137,14 @@ class PostController extends Controller
                     ->from('post_hides')->whereColumn('post_hides.post_id', 'posts.id')
                     ->where('post_hides.user_id', $request->user()->id)))
                 ->when(app()->environment(['local', 'testing']) && config('pm-circle.demo_content_enabled'), fn ($q) => $q->whereNotNull('title'))
-                ->withCount('comments')
-                ->latest('published_at')
+                ->when(EngagementStats::readsEnabled(), fn ($query) => $query
+                    ->leftJoin('post_engagement_stats as related_stats', 'related_stats.post_id', '=', 'posts.id')
+                    ->select('posts.id', 'posts.title', 'posts.body')
+                    ->selectRaw('COALESCE(related_stats.comments_count, 0) AS comments_count'))
+                ->when(! EngagementStats::readsEnabled(), fn ($query) => $query->withCount('comments'))
+                ->latest('posts.published_at')
                 ->limit(2)
-                ->get(['id', 'title', 'body']),
+                ->get(['posts.id', 'posts.title', 'posts.body']),
         ]);
     }
 

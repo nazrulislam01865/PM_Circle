@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, Plus, Trash2, UploadCloud } from 'lucide-react';
-import { useState, type ChangeEvent } from 'react';
+import { useRef, useState, type ChangeEvent } from 'react';
 import { PMDropdown } from '@/components/pm/PMDropdown';
 
 export type EditorField = { key: string; label: string; kind?: 'textarea' | 'select' | 'route' | 'lines' | 'image'; choices?: { value: string; label: string }[] };
@@ -87,6 +87,7 @@ export function FeaturedSelector({ label, hint, options, selected, onChange, max
 }
 
 export function HomepageImageUploader({ value, onChange, variant = 'portrait' }: { value: string; onChange: (url: string) => void; variant?: 'portrait' | 'icon' }) {
+    const inputRef = useRef<HTMLInputElement>(null);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     async function upload(event: ChangeEvent<HTMLInputElement>) {
@@ -117,8 +118,12 @@ export function HomepageImageUploader({ value, onChange, variant = 'portrait' }:
     }
     return <div className={`pm-admin-upload ${variant === 'icon' ? 'pm-admin-upload-icon' : ''}`}>
         {value && <img src={value} alt={variant === 'icon' ? 'Selected icon preview' : 'Selected homepage portrait'}/>}
-        <label className="pm-admin-button pm-admin-button-quiet"><UploadCloud size={16}/>{busy ? 'Uploading…' : variant === 'icon' ? 'Upload icon' : 'Upload image'}
-            <input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={upload} className="pm-admin-file-input"/></label>
+        <button type="button" className="pm-admin-button pm-admin-button-quiet" disabled={busy}
+            onClick={() => inputRef.current?.click()}>
+            <UploadCloud size={16}/>{busy ? 'Uploading…' : variant === 'icon' ? 'Upload icon' : 'Upload image'}
+        </button>
+        <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" disabled={busy}
+            onChange={upload} className="pm-admin-file-input" hidden/>
         {value && <button type="button" className="pm-admin-button pm-admin-button-quiet" onClick={() => onChange('')}>Clear image</button>}
         {variant === 'icon' && <small className="pm-admin-hint">36 × 36 px display · transparent PNG recommended · max 2 MB</small>}
         {error && <span role="alert" className="pm-admin-error">{error}</span>}

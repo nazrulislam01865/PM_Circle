@@ -8,7 +8,7 @@ export function useExamStart() {
     const [starting, setStarting] = useState(false);
     const [startError, setStartError] = useState('');
 
-    const startExam = async () => {
+    const startExam = async (options?: { mode: 'focused'; domain: string }) => {
         if (busy.current) return;
         busy.current = true;
         setStarting(true);
@@ -17,9 +17,11 @@ export function useExamStart() {
             const token = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
             const response = await fetch(`${examBase}/start`, {
                 method: 'POST',
+                ...(options ? { body: JSON.stringify(options) } : {}),
                 credentials: 'same-origin',
                 headers: {
                     'Accept': 'application/json',
+                    ...(options ? { 'Content-Type': 'application/json' } : {}),
                     'X-Requested-With': 'XMLHttpRequest',
                     'X-CSRF-TOKEN': token,
                 },

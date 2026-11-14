@@ -13,7 +13,7 @@ export function DashboardPracticeCard({ dashboard, homePrototype = false }: { da
             </div><span className="pm-dash-mini-tag">{dashboard.plan === 'free' ? 'Free sample' : dashboard.plan === 'premium' ? 'Included with Premium' : 'Included with Pro'}</span>
         </div>
         {premium && <div className="pm-dash-practice-progress"><strong>4 of 7 decisions complete</strong><span><i /></span></div>}
-        <div className="pm-dash-practice-actions"><Link href={premium ? '/dashboard/features/simulations' : scenarioUrl} className="pm-dash-btn pm-dash-btn-primary">{premium ? 'Resume simulation' : dashboard.plan === 'free' ? 'Try free scenario' : 'Start scenario'} <ArrowRight size={22}/></Link>
+        <div className="pm-dash-practice-actions"><Link href={premium ? '/simulators/project' : scenarioUrl} className="pm-dash-btn pm-dash-btn-primary">{premium ? 'Resume simulation' : dashboard.plan === 'free' ? 'Try free scenario' : 'Start scenario'} <ArrowRight size={22}/></Link>
             <Link href={scenarioUrl} className="pm-dash-btn pm-dash-btn-white">{premium ? <ClipboardList size={22}/> : <MessageCircle size={22}/>} {premium ? "Today's scenario" : 'Join discussion'}</Link></div>
         </div>
         <img className="pm-dash-practice-image" src={premium ? '/images/dashboard/simulation-laptop.webp' : '/images/dashboard/practice-notebook.webp'} alt={premium ? 'Laptop showing an ERP simulation checklist' : 'Notebook showing the scope, time, cost and quality trade-offs'} loading="lazy"/>

@@ -3,6 +3,7 @@
 namespace App\Domain\Community\Queries;
 
 use App\Models\Post;
+use App\Domain\Community\Services\EngagementStats;
 use App\Models\User;
 use Illuminate\Pagination\Cursor;
 use Illuminate\Support\Facades\Crypt;
@@ -68,17 +69,28 @@ final class FeedQuery
                 'author.profile' => fn ($query) => $query->where('visibility', 'public')
                     ->select('id', 'user_id', 'role', 'avatar_path'),
             ])
-            ->withCount([
+            ->orderByDesc('posts.published_at')->orderByDesc('posts.id');
+
+        $columns = ['posts.id', 'posts.author_id', 'posts.title', 'posts.body', 'posts.image_path',
+            'posts.is_anonymous', 'posts.visibility', 'posts.ai_generated', 'posts.topic', 'posts.tags',
+            'posts.claps_count', 'posts.notifications_muted_at', 'posts.published_at'];
+        if (EngagementStats::readsEnabled()) {
+            $query->leftJoin('post_engagement_stats as engagement_stats',
+                'engagement_stats.post_id', '=', 'posts.id')
+                ->select($columns)
+                ->selectRaw('COALESCE(engagement_stats.comments_count, 0) AS comments_count')
+                ->selectRaw('COALESCE(engagement_stats.reactions_count, 0) AS reactions_count')
+                ->selectRaw('COALESCE(engagement_stats.like_count, 0) AS likes_count');
+        } else {
+            $query->withCount([
                 'comments', 'reactions',
                 'reactions as likes_count' => fn ($query) => $query->where('type', 'like'),
-            ])
-            ->orderByDesc('posts.published_at')->orderByDesc('posts.id');
+            ]);
+        }
 
         $page = $query->cursorPaginate(
             $token === null ? self::INITIAL_SIZE : self::NEXT_SIZE,
-            ['posts.id', 'posts.author_id', 'posts.title', 'posts.body', 'posts.image_path',
-                'posts.is_anonymous', 'posts.visibility', 'posts.ai_generated', 'posts.topic', 'posts.tags',
-                'posts.claps_count', 'posts.notifications_muted_at', 'posts.published_at'],
+            $columns,
             'cursor',
             $cursor,
         );

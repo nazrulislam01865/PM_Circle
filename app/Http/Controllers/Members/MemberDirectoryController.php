@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Members;
 
 use App\Domain\Billing\Actions\SetTemporaryMembership;
 use App\Http\Controllers\Controller;
+use App\Domain\Community\Services\EngagementStats;
 use App\Models\Profile;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -178,7 +179,13 @@ final class MemberDirectoryController extends Controller
                 ->when($viewer, fn ($query) => $query->whereNotExists(fn ($hidden) => $hidden->selectRaw('1')
                     ->from('post_hides')->whereColumn('post_hides.post_id', 'posts.id')
                     ->where('post_hides.user_id', $viewer->id)))
-                ->withCount(['comments', 'reactions'])->latest('published_at')->limit(8)->get(['id', 'author_id', 'title', 'body', 'image_path', 'topic', 'published_at', 'ai_generated']),
+                ->when(EngagementStats::readsEnabled(), fn ($query) => $query
+                    ->leftJoin('post_engagement_stats as profile_stats', 'profile_stats.post_id', '=', 'posts.id')
+                    ->select('posts.id', 'posts.author_id', 'posts.title', 'posts.body', 'posts.image_path', 'posts.topic', 'posts.published_at', 'posts.ai_generated')
+                    ->selectRaw('COALESCE(profile_stats.comments_count, 0) AS comments_count')
+                    ->selectRaw('COALESCE(profile_stats.reactions_count, 0) AS reactions_count'))
+                ->when(! EngagementStats::readsEnabled(), fn ($query) => $query->withCount(['comments', 'reactions']))
+                ->latest('posts.published_at')->limit(8)->get(['posts.id', 'posts.author_id', 'posts.title', 'posts.body', 'posts.image_path', 'posts.topic', 'posts.published_at', 'posts.ai_generated']),
         ]);
     }
 

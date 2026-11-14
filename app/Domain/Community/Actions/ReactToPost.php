@@ -2,16 +2,44 @@
 
 namespace App\Domain\Community\Actions;
 
+use App\Domain\Community\Services\EngagementStats;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
-class ReactToPost
+final class ReactToPost
 {
-    public function execute(User $user, Post $post, string $type): void
+    /** Desired-state operation: null removes a reaction, repeat requests make no change. */
+    public function execute(User $user, Post $post, ?string $type): int
     {
-        DB::table('post_reactions')->upsert([
-            ['post_id' => $post->id, 'user_id' => $user->id, 'type' => $type, 'created_at' => now(), 'updated_at' => now()],
-        ], ['post_id', 'user_id'], ['type', 'updated_at']);
+        if ($type !== null && ! in_array($type, EngagementStats::TYPES, true)) {
+            throw new InvalidArgumentException('Unsupported post reaction type.');
+        }
+        return DB::transaction(function () use ($user, $post, $type): int {
+            EngagementStats::lockReaction($user->id);
+            $old = DB::table('post_reactions')->where('post_id', $post->id)
+                ->where('user_id', $user->id)->value('type');
+
+            if ($old !== $type) {
+                if ($type === null) {
+                    DB::table('post_reactions')->where('post_id', $post->id)
+                        ->where('user_id', $user->id)->delete();
+                } elseif ($old === null) {
+                    DB::table('post_reactions')->insert([
+                        'post_id' => $post->id, 'user_id' => $user->id, 'type' => $type,
+                        'created_at' => now(), 'updated_at' => now(),
+                    ]);
+                } else {
+                    DB::table('post_reactions')->where('post_id', $post->id)
+                        ->where('user_id', $user->id)->update(['type' => $type, 'updated_at' => now()]);
+                }
+                EngagementStats::applyReaction($post->id, $old, $type);
+            }
+
+            return EngagementStats::readsEnabled()
+                ? (int) DB::table('post_engagement_stats')->where('post_id', $post->id)->value('reactions_count')
+                : (int) DB::table('post_reactions')->where('post_id', $post->id)->count();
+        }, 3);
     }
 }

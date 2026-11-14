@@ -9,6 +9,7 @@ import { Avatar } from '@/components/pm/Avatar';
 export type CommunityCommentData = {
     id: number; body: string; media_url?: string | null; created_at: string; likes_count: number;
     author: { name: string; profile?: { avatar_path?: string | null } | null }; replies: CommunityCommentData[];
+    replies_count?: number; viewer_reaction?: ReactionType | null;
 };
 const relativeTime = (created: string) => {
     const minutes = Math.max(1, Math.floor((Date.now() - Date.parse(created)) / 60000));
@@ -34,10 +35,38 @@ export function CommunityComment({ comment, postId, postAuthor, canInteract, lik
     const [replying, setReplying] = useState(false);
     const [expanded, setExpanded] = useState(false);
     const [newReplies, setNewReplies] = useState<CommunityCommentData[]>([]);
+    const [moreReplies, setMoreReplies] = useState<CommunityCommentData[]>([]);
+    const [hasMoreReplies, setHasMoreReplies] = useState((comment.replies_count ?? comment.replies?.length ?? 0) > (comment.replies?.length ?? 0));
+    const [loadingReplies, setLoadingReplies] = useState(false);
+    const [replyError, setReplyError] = useState('');
     const liked = likedIds.includes(comment.id);
-    const viewerReaction = viewerReactions?.[comment.id] ?? (liked ? 'like' : null);
+    const viewerReaction = comment.viewer_reaction ?? viewerReactions?.[comment.id] ?? (liked ? 'like' : null);
     const parentId = replyParentId ?? comment.id;
-    const replies = [...(comment.replies ?? []), ...newReplies];
+    const serverReplies = [...(comment.replies ?? []), ...moreReplies];
+    const replies = [...serverReplies, ...newReplies];
+    const replyTotal = Math.max(comment.replies_count ?? 0, replies.length);
+
+    const loadMoreReplies = async () => {
+        if (loadingReplies || !hasMoreReplies) return;
+        setLoadingReplies(true); setReplyError('');
+        try {
+            const after = serverReplies.at(-1)?.id;
+            const response = await fetch(`/posts/${postId}/comments/${comment.id}/replies${after ? `?after=${after}` : ''}`, {
+                headers: { Accept: 'application/json' }, credentials: 'same-origin',
+            });
+            if (!response.ok) throw new Error('Unable to load replies. Please retry.');
+            const result = await response.json() as { data: SavedComment[]; has_more: boolean };
+            setMoreReplies(previous => {
+                const known = new Set([...comment.replies.map(reply => reply.id), ...previous.map(reply => reply.id)]);
+                return [...previous, ...result.data.filter(reply => !known.has(reply.id)).map(displaySaved)];
+            });
+            setHasMoreReplies(result.has_more);
+        } catch (error) {
+            setReplyError(error instanceof Error ? error.message : 'Unable to load replies.');
+        } finally {
+            setLoadingReplies(false);
+        }
+    };
 
     const handleReply = (saved: SavedComment) => {
         const savedReply = displaySaved(saved);
@@ -61,15 +90,17 @@ export function CommunityComment({ comment, postId, postAuthor, canInteract, lik
                 avatarName={viewer.name} avatarSrc={viewer.avatar_path} replyToName={comment.author.name}
                 canInteract={canInteract} onJoin={() => router.visit('/login')} onCancel={() => setReplying(false)}
                 onCreated={handleReply}/>}
-            {!nested && replies.length > 0 && <div className="pm-thread-branch">
+            {!nested && (replies.length > 0 || hasMoreReplies) && <div className="pm-thread-branch">
                 <button type="button" className="pm-thread-toggle" aria-expanded={expanded} onClick={() => setExpanded(previous => !previous)}>
                     <ChevronDown size={15} className={expanded ? 'pm-rotate' : ''} aria-hidden="true"/>
-                    {expanded ? 'Hide' : 'View'} {replies.length} {replies.length === 1 ? 'reply' : 'replies'}
+                    {expanded ? 'Hide' : 'View'} {replyTotal} {replyTotal === 1 ? 'reply' : 'replies'}
                 </button>
                 {expanded && replies.map(child => <CommunityComment key={child.id} comment={child} postId={postId}
                     postAuthor={postAuthor} canInteract={canInteract} likedIds={likedIds} viewerReactions={viewerReactions}
                     nested demo={demo} replyParentId={comment.id} viewer={viewer} onCommentAdded={onCommentAdded}
                     onCreatedReply={saved => { setNewReplies(previous => [...previous, saved]); setExpanded(true); }}/>) }
+                {expanded && hasMoreReplies && <button type="button" className="pm-thread-toggle" disabled={loadingReplies} onClick={() => { void loadMoreReplies(); }}>{loadingReplies ? 'Loading replies...' : 'Load more replies'}</button>}
+                {expanded && replyError && <p role="alert">{replyError}</p>}
             </div>}
         </div>
     </div>;

@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import type { LearningPathCardData } from '@/types/learning';
 import { learningPathHref } from '@/types/learning';
 import { MemberDashboardLayout } from '@/layouts/pm/MemberDashboardLayout';
+import { SiteFooter } from '@/components/pm/SiteFooter';
 import type { LearningShell } from '@/types/learning';
 
 export const levels = ['All levels', 'Student & Beginner', 'Project Coordinator', 'Project Manager', 'Senior Project Manager', 'Project Director'];
@@ -15,12 +16,10 @@ export const activityIcon: Record<string, LucideIcon> = {
     lesson: Play, mcq: ClipboardList, short_answer: Pencil, scenario: Brain,
 };
 export function LearningLayout({ shell, children, catalog = false }: { shell: LearningShell; children: ReactNode; catalog?: boolean }) {
-    return <MemberDashboardLayout dashboard={shell} variant={catalog ? 'learning-catalog' : 'learning'}><div className="pm-learn-content">{children}</div><LearningFooter /></MemberDashboardLayout>;
+    return <MemberDashboardLayout dashboard={shell} variant={catalog ? 'learning-catalog' : 'learning'}><div className="pm-learn-content">{children}</div></MemberDashboardLayout>;
 }
 export function LearningFooter() {
-    return <footer className="pm-learn-footer" aria-label="Footer"><div className="pm-learn-footer-logo"><span className="pm-learn-footer-symbol">◉</span><span><strong>PM Circle</strong><small>by ITQAN</small></span></div>
-        <nav aria-label="Footer links"><Link href="/about">About</Link><Link href="/about">Help</Link><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link><Link href="/about">Contact</Link></nav>
-        <div className="pm-learn-social" aria-hidden="true"><span>in</span><span>▶</span><span>𝕏</span><span>◎</span></div></footer>;
+    return <SiteFooter/>;
 }
 export function LearningPanel({ title, action, children, className = '' }: { title?: string; action?: ReactNode; children: ReactNode; className?: string }) {
     return <section className={`pm-learn-panel ${className}`}>

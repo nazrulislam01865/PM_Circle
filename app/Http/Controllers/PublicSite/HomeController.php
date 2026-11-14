@@ -5,6 +5,7 @@ namespace App\Http\Controllers\PublicSite;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Onboarding\OnboardingController;
 use App\Models\HomePageContent;
+use App\Domain\Community\Services\EngagementStats;
 use App\Models\CareerJob;
 use App\Models\Post;
 use App\Models\Scenario;
@@ -61,22 +62,27 @@ class HomeController extends Controller
             ->when($viewerId, fn ($query) => $query->whereNotExists(fn ($hidden) => $hidden->selectRaw('1')
                 ->from('post_hides')->whereColumn('post_hides.post_id', 'posts.id')
                 ->where('post_hides.user_id', $viewerId)))
-            ->select(['id', 'author_id', 'title', 'body', 'image_path', 'is_anonymous', 'topic', 'ai_generated', 'published_at'])
+            ->select(['posts.id', 'posts.author_id', 'posts.title', 'posts.body', 'posts.image_path', 'posts.is_anonymous', 'posts.topic', 'posts.ai_generated', 'posts.published_at'])
             ->with([
                 'author:id,name',
                 'author.profile' => fn ($query) => $query->where('visibility', 'public')
                     ->select('id', 'user_id', 'role', 'avatar_path'),
             ])
-            ->withCount([
+            ->when(EngagementStats::readsEnabled(), fn ($query) => $query
+                ->leftJoin('post_engagement_stats as home_stats', 'home_stats.post_id', '=', 'posts.id')
+                ->selectRaw('COALESCE(home_stats.comments_count, 0) AS comments_count')
+                ->selectRaw('COALESCE(home_stats.like_count, 0) AS likes_count')
+                ->selectRaw('COALESCE(home_stats.reactions_count, 0) AS reactions_count'))
+            ->when(! EngagementStats::readsEnabled(), fn ($query) => $query->withCount([
                 'comments',
                 'reactions as likes_count' => fn ($query) => $query->where('type', 'like'),
                 'reactions as reactions_count',
-            ])
+            ]))
             ->when($viewerId, fn ($query) => $query->addSelect([
                 'viewer_reaction' => DB::table('post_reactions')->select('type')
                     ->whereColumn('post_id', 'posts.id')->where('user_id', $viewerId)->limit(1),
             ]))
-            ->latest('published_at')->limit(2)->get() : collect();
+            ->latest('posts.published_at')->limit(2)->get() : collect();
         $posts->each(fn (Post $post) => $post->anonymizeForPublic());
 
         $members = $visible('members') ? User::query()

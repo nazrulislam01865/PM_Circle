@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Community;
 
 use App\Http\Controllers\Controller;
 use App\Domain\Community\Actions\ReactToPost;
+use App\Domain\Community\Actions\ReactToComment;
+use App\Domain\Community\Services\EngagementStats;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use App\Models\Comment;
 use App\Models\Post;
 use Illuminate\Http\RedirectResponse;
@@ -27,6 +30,15 @@ class PostInteractionController extends Controller
         }
     }
 
+    private function ensureWritesOpen(): void
+    {
+        if (config('community.engagement_write_gate', false)) {
+            throw new HttpResponseException(response()->json([
+                'message' => 'Community interactions are briefly unavailable for maintenance. Please retry.',
+            ], 503)->header('Retry-After', '60'));
+        }
+    }
+
     /** Load only the visible comment preview when a member expands the card. */
     public function previewComments(Request $request, Post $post): JsonResponse
     {
@@ -34,8 +46,8 @@ class PostInteractionController extends Controller
         $sort = $request->query('sort') === 'newest' ? 'newest' : 'relevant';
         $query = $post->comments()->whereNull('parent_id')
             ->with(['author:id,name', 'author.profile:id,user_id,avatar_path,visibility'])
-            ->withCount('likes')
-            ->with(['replies' => fn ($replies) => $replies->oldest('id')->limit(2)
+            ->withCount(['likes', 'replies'])
+            ->with(['replies' => fn ($replies) => $replies->orderBy('created_at')->orderBy('id')->limit(2)
                 ->with(['author:id,name', 'author.profile:id,user_id,avatar_path,visibility'])->withCount('likes')]);
         if ($sort === 'relevant') {
             $query->orderByDesc('likes_count');
@@ -58,6 +70,7 @@ class PostInteractionController extends Controller
                 'media_url' => $comment->media_url,
                 'created_at' => $comment->created_at?->toIso8601String(),
                 'likes_count' => (int) $comment->likes_count,
+                'replies_count' => (int) ($comment->replies_count ?? 0),
                 'viewer_liked' => ($liked[$comment->id] ?? null) === 'like',
                 'viewer_reaction' => $liked[$comment->id] ?? null,
                 'author' => [
@@ -97,6 +110,7 @@ class PostInteractionController extends Controller
     public function comment(Request $request, Post $post): RedirectResponse|JsonResponse
     {
         $this->ensurePublic($post, $request);
+        $this->ensureWritesOpen();
         $data = $request->validate([
             'body' => ['nullable', 'required_without:media', 'string', 'min:2', 'max:3000'],
             'media' => ['nullable', 'file', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
@@ -105,10 +119,15 @@ class PostInteractionController extends Controller
         ]);
         $path = isset($data['media']) ? $data['media']->store('comment-media', 'local') : null;
         try {
-            $comment = $post->comments()->create([
-                'body' => $data['body'] ?? '', 'parent_id' => $data['parent_id'] ?? null,
-                'author_id' => $request->user()->id, 'media_path' => $path,
-            ]);
+            $comment = DB::transaction(function () use ($post, $request, $data, $path): Comment {
+                if (EngagementStats::writesEnabled()) {
+                    EngagementStats::lockMember($request->user()->id);
+                }
+                return $post->comments()->create([
+                    'body' => $data['body'] ?? '', 'parent_id' => $data['parent_id'] ?? null,
+                    'author_id' => $request->user()->id, 'media_path' => $path,
+                ]);
+            }, 3);
         } catch (\Throwable $exception) {
             if ($path) Storage::disk('local')->delete($path);
             throw $exception;
@@ -127,73 +146,106 @@ class PostInteractionController extends Controller
         return back();
     }
 
-    public function toggleCommentLike(Request $request, Post $post, Comment $comment): RedirectResponse|JsonResponse
+    public function toggleCommentLike(Request $request, Post $post, Comment $comment, ReactToComment $action): RedirectResponse|JsonResponse
     {
         $this->ensurePublic($post, $request);
+        $this->ensureWritesOpen();
         abort_unless($comment->post_id === $post->id && ! $comment->trashed(), 404);
-
-        $exists = $comment->likes()->where('user_id', $request->user()->id)->exists();
-        if ($exists) {
-            $comment->likes()->where('user_id', $request->user()->id)->delete();
-        } else {
-            DB::table('comment_likes')->insertOrIgnore([
-                'comment_id' => $comment->id, 'user_id' => $request->user()->id,
-                'created_at' => now(), 'updated_at' => now(),
-            ]);
-        }
+        $result = $action->execute($request->user(), $comment, null, true);
 
         return $request->expectsJson()
-            ? response()->json(['liked' => ! $exists, 'count' => $comment->likes()->count()])
+            ? response()->json(['liked' => $result['reaction'] === 'like', 'count' => $result['count']])
             : back();
     }
 
-    /** Same seven reactions as posts; the existing unique comment/user key prevents duplicates. */
-    public function reactToComment(Request $request, Post $post, Comment $comment): RedirectResponse|JsonResponse
+    public function reactToComment(Request $request, Post $post, Comment $comment, ReactToComment $action): RedirectResponse|JsonResponse
     {
         $this->ensurePublic($post, $request);
+        $this->ensureWritesOpen();
         abort_unless($comment->post_id === $post->id && ! $comment->trashed(), 404);
         $data = $request->validate(['type' => ['required', Rule::in(['like', 'love', 'care', 'haha', 'wow', 'sad', 'angry'])]]);
-        DB::table('comment_likes')->upsert([[
-            'comment_id' => $comment->id,
-            'user_id' => $request->user()->id,
-            'type' => $data['type'],
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]], ['comment_id', 'user_id'], ['type', 'updated_at']);
+        $result = $action->execute($request->user(), $comment, $data['type']);
 
-        return $request->expectsJson()
-            ? response()->json(['reaction' => $data['type'], 'count' => $comment->likes()->count()])
-            : back();
+        return $request->expectsJson() ? response()->json($result) : back();
     }
 
-    public function unreactToComment(Request $request, Post $post, Comment $comment): RedirectResponse|JsonResponse
+    public function unreactToComment(Request $request, Post $post, Comment $comment, ReactToComment $action): RedirectResponse|JsonResponse
     {
         $this->ensurePublic($post, $request);
+        $this->ensureWritesOpen();
         abort_unless($comment->post_id === $post->id && ! $comment->trashed(), 404);
-        $comment->likes()->where('user_id', $request->user()->id)->delete();
+        $result = $action->execute($request->user(), $comment, null);
 
-        return $request->expectsJson()
-            ? response()->json(['reaction' => null, 'count' => $comment->likes()->count()])
-            : back();
+        return $request->expectsJson() ? response()->json($result) : back();
     }
 
     public function react(Request $request, Post $post, ReactToPost $action): RedirectResponse|JsonResponse
     {
         $this->ensurePublic($post, $request);
+        $this->ensureWritesOpen();
         $data = $request->validate(['type' => ['required', Rule::in(['like', 'love', 'care', 'haha', 'wow', 'sad', 'angry'])]]);
-        $action->execute($request->user(), $post, $data['type']);
+        $count = $action->execute($request->user(), $post, $data['type']);
         return $request->expectsJson()
-            ? response()->json(['reaction' => $data['type'], 'count' => $post->reactions()->count()])
+            ? response()->json(['reaction' => $data['type'], 'count' => $count])
             : back();
     }
 
-    public function unreact(Request $request, Post $post): RedirectResponse|JsonResponse
+    public function unreact(Request $request, Post $post, ReactToPost $action): RedirectResponse|JsonResponse
     {
         $this->ensurePublic($post, $request);
-        $post->reactions()->where('user_id', $request->user()->id)->delete();
+        $this->ensureWritesOpen();
+        $count = $action->execute($request->user(), $post, null);
         return $request->expectsJson()
-            ? response()->json(['reaction' => null, 'count' => $post->reactions()->count()])
+            ? response()->json(['reaction' => null, 'count' => $count])
             : back();
+    }
+
+    /** Paginate one root's replies; never return the complete thread in one request. */
+    public function replies(Request $request, Post $post, Comment $comment): JsonResponse
+    {
+        $this->ensurePublic($post, $request);
+        abort_unless($comment->post_id === $post->id && $comment->parent_id === null && ! $comment->trashed(), 404);
+        $data = $request->validate(['after' => ['nullable', 'integer', 'min:1']]);
+        $after = null;
+        if (isset($data['after'])) {
+            $after = $comment->replies()->whereKey($data['after'])->first();
+            abort_unless($after, 422, 'Invalid reply cursor.');
+        }
+
+        $query = $comment->replies()->with([
+            'author:id,name', 'author.profile:id,user_id,avatar_path,visibility',
+        ])->withCount('likes');
+        if ($after) {
+            $query->where(fn ($builder) => $builder->where('created_at', '>', $after->created_at)
+                ->orWhere(fn ($same) => $same->where('created_at', '=', $after->created_at)
+                    ->where('id', '>', $after->id)));
+        }
+        $rows = $query->orderBy('created_at')->orderBy('id')->limit(6)->get();
+        $hasMore = $rows->count() > 5;
+        $rows = $rows->take(5);
+        $reactions = $request->user() && $rows->isNotEmpty()
+            ? DB::table('comment_likes')->where('user_id', $request->user()->id)
+                ->whereIn('comment_id', $rows->pluck('id'))->pluck('type', 'comment_id')
+            : collect();
+        $viewerId = $request->user()?->id;
+
+        return response()->json([
+            'data' => $rows->map(fn (Comment $reply) => [
+                'id' => $reply->id, 'body' => $reply->body, 'media_url' => $reply->media_url,
+                'created_at' => $reply->created_at?->toIso8601String(),
+                'likes_count' => (int) $reply->likes_count,
+                'viewer_liked' => $reactions->get($reply->id) === 'like',
+                'viewer_reaction' => $reactions->get($reply->id),
+                'author' => [
+                    'name' => $reply->author?->name ?? 'Member',
+                    'avatar_path' => $reply->author && ($reply->author->id === $viewerId
+                        || $reply->author->profile?->visibility === 'public')
+                        ? $reply->author->profile?->avatar_path : null,
+                ],
+                'replies' => [],
+            ])->values()->all(),
+            'has_more' => $hasMore,
+        ]);
     }
 
     public function save(Request $request, Post $post): RedirectResponse|JsonResponse

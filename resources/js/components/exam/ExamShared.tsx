@@ -18,8 +18,8 @@ export const examBase = '/exams/pmp';
 export const examResult = (id: number) => `${examBase}/attempts/${id}/result`;
 export const examReview = (id: number) => `${examBase}/attempts/${id}/review`;
 
-export function ExamPage({ shell, children }: { shell: DashboardShellData; children: ReactNode }) {
-    return <MemberDashboardLayout dashboard={shell}><div className="pm-exam pm-exam-page">{children}</div></MemberDashboardLayout>;
+export function ExamPage({ shell, children, className = '' }: { shell: DashboardShellData; children: ReactNode; className?: string }) {
+    return <MemberDashboardLayout dashboard={shell}><div className={`pm-exam pm-exam-page${className ? ` ${className}` : ''}`}>{children}</div></MemberDashboardLayout>;
 }
 
 type ExamBreadcrumbPart = string | { label: string; href?: string };

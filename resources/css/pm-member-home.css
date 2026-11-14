@@ -82,8 +82,8 @@
     background: var(--blue);
 }
 .pm-member-home-nav-group { position: relative; }
-.pm-member-home-nav-group > summary svg { transition: transform .15s ease; }
-.pm-member-home-nav-group[open] > summary svg { transform: rotate(180deg); }
+.pm-member-home-nav-group > summary .pm-nav-chevron { transition: transform .15s ease; }
+.pm-member-home-nav-group[open] > summary .pm-nav-chevron { transform: rotate(180deg); }
 .pm-member-home-submenu {
     display: none;
     position: absolute;
@@ -144,7 +144,7 @@
 .pm-member-home .pm-dash-composer-input { min-height: var(--control-height); background: var(--canvas); padding: var(--s2) var(--s3); font: var(--regular) var(--text-ui)/var(--line-ui) var(--font-ui); }
 .pm-member-home .pm-dash-composer-buttons { display: grid; grid-template-columns: minmax(124px, 150px); gap: var(--s2); margin: var(--s2) 0 0 54px; }
 .pm-member-home .pm-dash-composer-buttons > button { min-width: 0; width: 100%; margin: 0; }
-.pm-member-home .pm-dash-composer-buttons .pm-dash-btn svg { width: var(--icon); height: var(--icon); }
+.pm-member-home .pm-dash-composer-buttons .pm-dash-btn svg { width: var(--s4); height: var(--s4); flex: none; }
 .pm-member-home .pm-dash-composer-buttons .pm-dash-plan-pill { display: none; }
 .pm-member-home .pm-dash-composer-buttons .pm-dash-btn-disabled { color: var(--muted); background: var(--track); border-color: var(--border); }
 .pm-member-home .pm-dash-composer-buttons .pm-dash-btn-disabled:hover { background: var(--track); }
@@ -255,4 +255,39 @@
 @media (max-width: 650px) {
     /* Keep the member header branding visible alongside account controls. */
     .pm-member-home > .pm-member-home-header .pm-brand-copy { display: flex; }
+}
+
+/* Compact single-row composer on phones: avatar, prompt and action stay aligned.
+   Desktop keeps the existing two-row composition and behavior. */
+@media (max-width: 520px) {
+    .pm-member-home .pm-dash-composer {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        column-gap: var(--s2);
+        padding: var(--s3);
+    }
+    .pm-member-home .pm-dash-composer-top { min-width: 0; gap: var(--s2); }
+    .pm-member-home .pm-dash-composer-input {
+        min-width: 0;
+        min-height: var(--control-touch);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding-inline: var(--s2);
+    }
+    .pm-member-home .pm-dash-composer-buttons {
+        display: flex;
+        grid-template-columns: none;
+        grid-column: 2;
+        margin: 0;
+    }
+    .pm-member-home .pm-dash-composer-buttons > button {
+        width: auto;
+        min-width: 0;
+        min-height: var(--control-touch);
+        padding-inline: var(--s3);
+        gap: var(--s1);
+        white-space: nowrap;
+    }
 }

@@ -131,7 +131,7 @@ export default function Result({ shell, attempt, domains }: {
 
             <PracticeSummary attempt={attempt}/>
             <div className="pm-exam-report-actions">
-                <Link className="btn small pm-exam-report-action" href={`${examReview(attempt.id)}?filter=incorrect`}>
+                <Link className="btn small pm-exam-report-action" href={`${examReview(attempt.id)}?filter=missed`}>
                     <ClipboardCheck size={16} aria-hidden="true"/>Review Missed Questions
                 </Link>
                 <button type="button" className="btn secondary small pm-exam-report-action" onClick={() => void startExam()} disabled={starting}>

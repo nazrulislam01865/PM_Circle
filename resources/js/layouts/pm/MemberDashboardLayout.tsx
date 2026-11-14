@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { MemberHomeHeader } from '@/components/dashboard/MemberHomeHeader';
 import type { DashboardShellData } from '@/types/dashboard';
+import { SiteFooter } from '@/components/pm/SiteFooter';
 
 /** The same authenticated header and full-width shell on every member page.
  * Only the homepage has its own compact dashboard content treatment. */
@@ -16,5 +17,6 @@ export function MemberDashboardLayout({ dashboard, children, variant = 'dashboar
                 <main id="main-content" className="pm-dash-body">{children}</main>
             </div>
         </div>
+        <SiteFooter />
     </div>;
 }

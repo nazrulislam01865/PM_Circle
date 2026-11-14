@@ -32,11 +32,22 @@ class Post extends Model
         return [
             'tags' => 'array',
             'claps_count' => 'integer',
+            'comments_count' => 'integer',
+            'reactions_count' => 'integer',
+            'likes_count' => 'integer',
+            'loves_count' => 'integer',
             'published_at' => 'datetime',
             'ai_generated' => 'boolean',
             'notifications_muted_at' => 'datetime',
             'is_anonymous' => 'boolean',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::created(function (self $post): void {
+            \App\Domain\Community\Services\EngagementStats::ensureRow($post->id);
+        });
     }
 
     /** Mask author details before serializing anonymous public posts. */

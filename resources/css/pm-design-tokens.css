@@ -59,6 +59,9 @@
     --blue: #075eb5;
     --blue-hover: #084c91;
     --blue-soft: #e7f1fd;
+    --exam-nav-ink: #a33d21;
+    --exam-nav-soft: #fff0e7;
+    --exam-nav-hover: #ffe6d7;
     --canvas: #f4f7fa;
     --surface: #fff;
     --border: #dce4ee;
@@ -963,4 +966,17 @@
     --pm-interview-card-gap: var(--s4);
     --pm-interview-hero-height: 10.75rem;
     --pm-interview-score-size: var(--donut);
+}
+
+/* Shared marketing/contact footer tokens, defined once for both footer variants. */
+:root {
+    --pm-footer-navy: #092446;
+    --pm-footer-navy-deep: #061d3a;
+    --pm-footer-cta-blue: #0660ed;
+    --pm-footer-link-white: #ffffff;
+    --pm-footer-muted-white: #e3edfb;
+    --pm-footer-border-white: #4d6a8c;
+    --pm-contact-page-tint: #eaf4ff;
+    --pm-footer-status-online: #16a34a;
+    --pm-footer-status-offline: #7a899e;
 }

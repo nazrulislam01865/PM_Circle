@@ -1,19 +1,15 @@
-import { Link, usePage } from '@inertiajs/react';
-import { Brand } from '@/components/pm/Brand';
+import { PmpPublicFooter } from '@/components/exam/PmpPublicFooter';
+import { usePage } from '@inertiajs/react';
+import type { PmpPublicContent } from '@/types/pmp-public';
+import { shouldShowSiteFooter } from '@/components/pm/siteFooterVisibility';
 
-/** The existing public footer, shared by the site and public Discover PM journey. */
-export function SiteFooter({ pricingPrototype = false }: { pricingPrototype?: boolean }) {
-    const { siteNavigation } = usePage<{ siteNavigation?: { footer: { href: string; label: string }[] } }>().props;
-    const links = siteNavigation?.footer ?? [
-        { href: '/about', label: 'About' }, { href: '/community', label: 'Community guidelines' },
-        { href: '/privacy', label: 'Privacy' }, { href: '/terms', label: 'Terms' },
-    ];
-    return <footer className="pm-footer"><div className="pm-container pm-footer-inner">
-        <Brand small={!pricingPrototype} monogram={pricingPrototype} />
-        <nav aria-label="Footer">{links.filter(link => !pricingPrototype || link.href !== '/community').map(link =>
-            <Link key={link.href} href={link.href}>{link.label}</Link>)}
-            {pricingPrototype && <Link href="/about">Contact</Link>}
-        </nav>
-        {!pricingPrototype && <p>Building better project professionals together.</p>}
-    </div></footer>;
+/** Reusable footer for every existing public/learning page, with a compact contact variant. */
+export function SiteFooter({ pmpFooterContent, variant }: { pricingPrototype?: boolean; variant?: 'pmp' | 'contact'; pmpFooterContent?: PmpPublicContent['footer'] }) {
+    const page = usePage<{ siteFooter?: PmpPublicContent['footer'] }>();
+    const content = pmpFooterContent ?? page.props.siteFooter;
+
+    // Existing Laravel shared props provide the cached footer. Avoid additional frontend requests.
+    if (!shouldShowSiteFooter(page.url) || !content) return null;
+
+    return <PmpPublicFooter content={content} variant={variant ?? 'pmp'}/>;
 }

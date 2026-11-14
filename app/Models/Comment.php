@@ -14,6 +14,32 @@ class Comment extends Model
     protected $hidden = ['media_path'];
     protected $appends = ['media_url'];
 
+    private bool $wasActiveBeforeDeletion = false;
+    private bool $wasDeletedBeforeRestore = false;
+
+    protected static function booted(): void
+    {
+        static::created(fn (self $comment) =>
+            \App\Domain\Community\Services\EngagementStats::applyComment($comment->post_id, 1));
+        static::deleting(function (self $comment): void {
+            $comment->wasActiveBeforeDeletion = $comment->deleted_at === null;
+        });
+        static::deleted(function (self $comment): void {
+            if ($comment->wasActiveBeforeDeletion) {
+                \App\Domain\Community\Services\EngagementStats::applyComment($comment->post_id, -1);
+            }
+        });
+        static::restoring(function (self $comment): void {
+            $comment->wasDeletedBeforeRestore = $comment->deleted_at !== null;
+        });
+        static::restored(function (self $comment): void {
+            if ($comment->wasDeletedBeforeRestore) {
+                \App\Domain\Community\Services\EngagementStats::applyComment($comment->post_id, 1);
+            }
+        });
+    }
+
+
     public function getMediaUrlAttribute(): ?string
     {
         if (! $this->media_path) return null;

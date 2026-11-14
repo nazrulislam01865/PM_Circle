@@ -11,8 +11,8 @@ const primaryItems: Item[] = [
     { label: 'Learn & practice', href: '/dashboard/learning', icon: BookOpen },
     { label: 'Interview Preparation', href: '/interview-preparation', icon: Mic },
     { label: 'PMP Exam Simulator', href: '/exams/pmp', icon: ClipboardList, requires: 'plus' },
-    { label: 'Scrum / CSM Simulator', href: '/dashboard/features/scrum', icon: RefreshCcw, requires: 'plus' },
-    { label: 'Project Simulator', href: '/dashboard/features/simulations', icon: ChartNoAxesColumnIncreasing, requires: 'pro' },
+    { label: 'Scrum / CSM Simulator', href: '/simulators/scrum', icon: RefreshCcw, requires: 'plus' },
+    { label: 'Project Simulator', href: '/simulators/project', icon: ChartNoAxesColumnIncreasing, requires: 'pro' },
 ];
 const secondaryItems: Item[] = [
     { label: 'Achievements', href: '/dashboard/features/achievements', icon: Trophy },

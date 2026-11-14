@@ -77,7 +77,9 @@
 .pm-admin-string-row{display:flex;gap:var(--s2)}
 .pm-admin-upload{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s3)}
 .pm-admin-upload img{height:3.5rem;width:3.5rem;object-fit:cover;border-radius:var(--radius-control);border:1px solid var(--border)}
-.pm-admin-file-input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+/* The file picker is opened only by its own button. Keep it out of layout and hit testing;
+   the generic .pm-admin-field input rule must never expand this hidden input over the sidebar. */
+.pm-admin-file-input,.pm-admin-field input.pm-admin-file-input{display:none}
 .pm-admin-featured{border-top:1px solid var(--border);padding-top:var(--s5);display:grid;gap:var(--s3)}
 .pm-admin-featured p,.pm-admin-empty{font-size:var(--text-sm);color:var(--muted)}
 .pm-admin-featured-list{border:1px solid var(--border);border-radius:var(--radius-control);max-height:17rem;overflow-y:auto}
@@ -240,3 +242,35 @@
 .pm-admin-route-inputs>.pm-dropdown-trigger{font-size:var(--text-ui)}
 .pm-admin-featured>.pm-dropdown-trigger{width:100%}
 .pm-admin-master-code>.pm-admin-field{min-width:0}
+
+/* PMP public page CMS. Its section menu lives in the existing administration sidebar. */
+.pm-pmp-admin-workspace{min-width:0}
+.pm-pmp-admin-main{min-width:0;width:100%}
+.pm-pmp-admin-fields{display:grid;gap:var(--s5)}
+.pm-pmp-admin-main .pm-admin-field-grid{grid-template-columns:minmax(0,1fr)}
+.pm-pmp-admin-cards{display:grid;gap:var(--s4);min-width:0}
+.pm-pmp-admin-cards>h3,.pm-pmp-admin-column-values>h4{font-size:var(--text-h3);line-height:var(--line-h3)}
+.pm-pmp-admin-image{min-width:0}
+.pm-pmp-admin-icon-control{display:flex;align-items:center;gap:var(--s4);flex-wrap:wrap}
+.pm-pmp-admin-icon-control .pm-pmp-admin-image{flex:1 1 12rem}
+.pm-pmp-admin-icon-preview{width:36px;height:36px;flex:0 0 36px;display:grid;place-items:center;color:var(--blue)}
+.pm-pmp-admin-icon-preview svg{display:block;width:36px;height:36px}
+.pm-pmp-admin-feature-list{display:grid;gap:var(--s3)}
+.pm-pmp-admin-price-columns{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s4);align-items:start}
+.pm-pmp-admin-plan-column{min-width:0;align-content:start}
+.pm-pmp-admin-plan-column>.pm-admin-field{min-width:0}
+.pm-pmp-admin-plan-column .pm-admin-field textarea{min-height:4.25rem}
+.pm-pmp-admin-column-values{display:grid;gap:var(--s4);border-top:1px solid var(--border);padding-top:var(--s4);margin-top:var(--s2)}
+.pm-pmp-admin-checkbox{display:flex;align-items:center;gap:var(--s2);min-height:var(--control-height);font-size:var(--text-ui);cursor:pointer}
+.pm-pmp-admin-checkbox input{width:1.1rem;height:1.1rem;accent-color:var(--blue)}
+@media(max-width:90rem){.pm-pmp-admin-price-columns{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:48rem){.pm-pmp-admin-price-columns{grid-template-columns:minmax(0,1fr)}}
+
+/* Prevent the visibility label and its helper text from running together. */
+.pm-pmp-admin-main .pm-admin-visibility>span:first-child{display:grid;gap:var(--s1);min-width:0}
+
+/* PMP plan feature creation stays within its own panel and never overlays the sidebar. */
+.pm-pmp-admin-add-feature{display:grid;grid-template-columns:minmax(0,2fr) minmax(12rem,1fr) auto;align-items:end;gap:var(--s3);padding:var(--s4);border:1px solid var(--border);border-radius:var(--radius-card);background:var(--canvas)}
+.pm-pmp-admin-add-feature>.pm-admin-field{min-width:0}
+.pm-pmp-admin-add-feature .pm-admin-error{grid-column:1/-1}
+@media(max-width:64rem){.pm-pmp-admin-add-feature{grid-template-columns:minmax(0,1fr)}}

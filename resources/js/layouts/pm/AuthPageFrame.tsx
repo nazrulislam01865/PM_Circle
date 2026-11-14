@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { SiteHeader } from '@/components/pm/SiteHeader';
+import { SiteFooter } from '@/components/pm/SiteFooter';
 
 type AuthPageFrameProps = {
     children: ReactNode;
@@ -17,5 +18,6 @@ export function AuthPageFrame({ children, className = '' }: AuthPageFrameProps) 
             {children}
             <p className="pm-auth-bottom">Learn together. Practise daily. Grow your career.</p>
         </main>
+        <SiteFooter />
     </div>;
 }

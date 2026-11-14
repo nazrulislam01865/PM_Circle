@@ -21,6 +21,36 @@ function CommentEntry({ comment, postId, rootId, nested = false, canInteract, on
     viewer: { name: string; avatar_path?: string | null };
 }) {
     const [expanded, setExpanded] = useState(false);
+    const [initialServerReplies] = useState(() => comment.replies);
+    const [moreReplies, setMoreReplies] = useState<SavedComment[]>([]);
+    const [hasMoreReplies, setHasMoreReplies] = useState((comment.replies_count ?? initialServerReplies.length) > initialServerReplies.length);
+    const [loadingReplies, setLoadingReplies] = useState(false);
+    const [replyError, setReplyError] = useState('');
+    const serverReplies = [...initialServerReplies, ...moreReplies];
+    const serverIds = new Set(serverReplies.map(reply => reply.id));
+    const displayedReplies = [...serverReplies, ...comment.replies.filter(reply => !serverIds.has(reply.id))];
+    const replyTotal = Math.max(comment.replies_count ?? 0, displayedReplies.length);
+    const loadMoreReplies = async () => {
+        if (loadingReplies || !hasMoreReplies) return;
+        setLoadingReplies(true); setReplyError('');
+        try {
+            const after = serverReplies.at(-1)?.id;
+            const response = await fetch(`/posts/${postId}/comments/${rootId}/replies${after ? `?after=${after}` : ''}`, {
+                headers: { Accept: 'application/json' }, credentials: 'same-origin',
+            });
+            if (!response.ok) throw new Error('Unable to load replies. Please retry.');
+            const result = await response.json() as { data: SavedComment[]; has_more: boolean };
+            setMoreReplies(previous => {
+                const known = new Set([...initialServerReplies.map(reply => reply.id), ...previous.map(reply => reply.id)]);
+                return [...previous, ...result.data.filter(reply => !known.has(reply.id))];
+            });
+            setHasMoreReplies(result.has_more);
+        } catch (error) {
+            setReplyError(error instanceof Error ? error.message : 'Unable to load replies.');
+        } finally {
+            setLoadingReplies(false);
+        }
+    };
     return <div className={`pm-inline-comment-item${nested ? ' pm-inline-comment-item--nested' : ''}`}>
         <Avatar name={comment.author.name} src={comment.author.avatar_path} size={nested ? 32 : 36}/>
         <div className="pm-inline-comment-content">
@@ -38,13 +68,15 @@ function CommentEntry({ comment, postId, rootId, nested = false, canInteract, on
                 canInteract={canInteract} onJoin={onJoin} onCancel={() => onToggleReply(comment.id)}
                 onCreated={saved => { onCreatedReply(rootId, saved); setExpanded(true); onToggleReply(comment.id); }}/>
             }
-            {!nested && comment.replies.length > 0 && <div className="pm-inline-comment-branch">
+            {!nested && (comment.replies.length > 0 || hasMoreReplies) && <div className="pm-inline-comment-branch">
                 <button type="button" className="pm-inline-comment-replies-toggle" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
-                    {expanded ? 'Hide' : 'View'} {comment.replies.length} {comment.replies.length === 1 ? 'reply' : 'replies'}
+                    {expanded ? 'Hide' : 'View'} {replyTotal} {replyTotal === 1 ? 'reply' : 'replies'}
                 </button>
-                {expanded && comment.replies.map(reply => <CommentEntry key={reply.id} comment={reply} postId={postId}
+                {expanded && displayedReplies.map(reply => <CommentEntry key={reply.id} comment={reply} postId={postId}
                     rootId={rootId} nested viewer={viewer} canInteract={canInteract} onJoin={onJoin}
                     activeReply={activeReply} onToggleReply={onToggleReply} onCreatedReply={onCreatedReply}/>)}
+                {expanded && hasMoreReplies && <button type="button" className="pm-inline-comment-replies-toggle" disabled={loadingReplies} onClick={() => { void loadMoreReplies(); }}>{loadingReplies ? 'Loading replies...' : 'Load more replies'}</button>}
+                {expanded && replyError && <p role="alert">{replyError}</p>}
             </div>}
         </div>
     </div>;

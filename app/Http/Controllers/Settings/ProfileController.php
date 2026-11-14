@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
+use App\Domain\Community\Services\EngagementStats;
 use App\Jobs\AnalyzeProfileResume;
 use App\Domain\Billing\Queries\CurrentMemberPlan;
 use App\Services\Resume\ApplyProfileImport;
@@ -598,12 +599,19 @@ class ProfileController extends Controller
      */
     public function destroy(ProfileDeleteRequest $request): RedirectResponse
     {
+        abort_if(config('community.engagement_write_gate', false), 503,
+            'Account removal is briefly unavailable during engagement maintenance. Please retry.');
         $user = $request->user();
 
+        DB::transaction(function () use ($user): void {
+            if (EngagementStats::writesEnabled()) {
+                EngagementStats::lockMember($user->id);
+                EngagementStats::beforeMemberDeletion($user->id);
+            }
+            $user->delete();
+        }, 3);
+
         Auth::logout();
-
-        $user->delete();
-
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

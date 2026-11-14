@@ -13,6 +13,7 @@ export type SavedComment = {
     viewer_reaction?: import('@/components/home/HomeEngagement').ReactionType | null;
     author: { name: string; avatar_path?: string | null };
     replies: SavedComment[];
+    replies_count?: number;
 };
 
 const emojis = ['🙂', '😊', '❤️', '👍', '👏', '🙌', '🎉', '🤝', '💡', '🚀', '😮', '😢'];

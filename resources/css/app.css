@@ -24,6 +24,9 @@
 @import './pm-member-pages.css';
 @import './pm-site-header.css';
 @import './pm-exam-simulator.css';
+@import './pm-pmp-workspace.css';
+@import './pm-pmp-public.css';
+@import './pm-contact.css';
 @import './pm-trends.css';
 @import './pm-careers.css';
 @import './pm-ui-guideline.css';
@@ -39,6 +42,7 @@
 @import './pm-unified-post-card.css';
 @import './pm-community-consistency.css';
 @import './pm-comment-thread.css';
+@import './pm-header-prototype.css';
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';

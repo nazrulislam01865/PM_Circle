@@ -15,7 +15,7 @@ export function DashboardComposer({ name, plan, demo, compact = false }: { name:
                 <button type="button" className="pm-dash-composer-input" onClick={() => setOpen(true)}>Share a lesson, ask a question...</button>
             </div>
             <div className="pm-dash-composer-buttons">
-                <button type="button" onClick={() => setOpen(true)} className="pm-dash-btn pm-dash-btn-primary"><Pencil size={19}/> Post</button>
+                <button type="button" onClick={() => setOpen(true)} className="pm-dash-btn pm-dash-btn-primary"><Pencil size={16} aria-hidden="true"/> Post</button>
             </div>
         </div>
         <PostComposerDialog open={open} onClose={() => setOpen(false)} plan={plan}/>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Exam;
 use App\Domain\Billing\Queries\CurrentMemberPlan;
 use App\Domain\Learning\Queries\LearningOverview;
 use App\Http\Controllers\Controller;
+use App\Services\AI\PmpQuestionHelpService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -19,40 +20,180 @@ final class PmpExamController extends Controller
 {
     private const MAX_QUESTIONS = 180;
 
-    public function index(Request $request, CurrentMemberPlan $plans, LearningOverview $overview): Response
+    public function entry(Request $request, CurrentMemberPlan $plans): RedirectResponse
     {
-        $this->authorizeMember($request, $plans);
+        // Resolve access only on navigation, not on every shared header render.
+        return in_array($plans->code($request->user()), ['plus', 'pro'], true)
+            ? to_route('exams.pmp.index')
+            : to_route('pricing');
+    }
+
+    public function index(Request $request, CurrentMemberPlan $plans, LearningOverview $overview, PmpQuestionHelpService $ai): Response
+    {
+        $plan = $plans->details($request->user());
+        abort_unless(in_array($plan['code'], ['plus', 'pro'], true), 403,
+            'PMP simulator access requires an active Plus or Pro membership.');
+        $userId = (int) $request->user()->id;
         $questions = DB::table('pmp_exam_questions')->where('is_active', true)->count();
-        $attempts = DB::table('pmp_exam_attempts')->where('user_id', $request->user()->id)
-            ->orderByDesc('id')->limit(10)
-            ->get(['id', 'status', 'total_questions', 'correct_count', 'started_at', 'finished_at']);
+
+        // Capped history: exactly two batch queries for attempt/response summaries.
+        $recentPage = DB::table('pmp_exam_attempts')->where('user_id', $userId)
+            ->orderByDesc('id')->limit(41)
+            ->get(['id', 'status', 'question_ids', 'total_questions', 'correct_count',
+                'started_at', 'expires_at', 'finished_at']);
+        $recent = $recentPage->take(40);
+        $ids = $recent->pluck('id')->all();
+        $counts = empty($ids) ? collect() : DB::table('pmp_exam_attempt_answers')
+            ->whereIn('attempt_id', $ids)
+            ->groupBy('attempt_id')
+            ->select('attempt_id')
+            ->selectRaw('SUM(CASE WHEN choice IS NOT NULL THEN 1 ELSE 0 END) AS answered_count')
+            ->selectRaw('SUM(CASE WHEN marked_for_review THEN 1 ELSE 0 END) AS flagged_count')
+            ->get()->keyBy('attempt_id');
+
+        // All-time totals are exact even when the 40-row history window is full.
+        $examTotals = DB::table('pmp_exam_attempts')->where('user_id', $userId)
+            ->selectRaw("SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed")
+            ->selectRaw("SUM(CASE WHEN status = 'in_progress' AND expires_at > CURRENT_TIMESTAMP THEN 1 ELSE 0 END) AS in_progress")
+            ->first();
+
+        $completed = $recent->where('status', 'completed')->take(40);
+        $completedIds = $completed->pluck('id')->all();
+        $questionIds = $completed->flatMap(fn ($attempt) => json_decode($attempt->question_ids, true, 512, JSON_THROW_ON_ERROR))
+            ->unique()->values()->all();
+        $domains = empty($questionIds) ? collect() : DB::table('pmp_exam_questions')
+            ->whereIn('id', $questionIds)->pluck('domain', 'id');
+        $correctRows = empty($completedIds) ? collect() : DB::table('pmp_exam_attempt_answers as answers')
+            ->join('pmp_exam_questions as questions', 'questions.id', '=', 'answers.question_id')
+            ->whereIn('answers.attempt_id', $completedIds)
+            ->groupBy('answers.attempt_id', 'questions.domain')
+            ->selectRaw('answers.attempt_id AS attempt_id, questions.domain AS topic, SUM(CASE WHEN answers.choice = questions.correct_option THEN 1 ELSE 0 END) AS correct')
+            ->get();
+        $right = $correctRows->keyBy(fn ($row) => $row->attempt_id.'|'.$row->topic);
+        $topics = [];
+        foreach ($completed as $attempt) {
+            $totals = [];
+            foreach (json_decode($attempt->question_ids, true, 512, JSON_THROW_ON_ERROR) as $questionId) {
+                $domain = $domains->get((int) $questionId);
+                if ($domain !== null) {
+                    $totals[$domain] = ($totals[$domain] ?? 0) + 1;
+                }
+            }
+            foreach ($totals as $domain => $total) {
+                $topics[] = [
+                    'attemptId' => (int) $attempt->id, 'topic' => $domain,
+                    'total' => $total,
+                    'correct' => (int) ($right->get($attempt->id.'|'.$domain)->correct ?? 0),
+                ];
+            }
+        }
+
+        $ai->ensureInitialGrant($userId, $plan['code']);
 
         return Inertia::render('exam/Index', [
             'shell' => $overview->shell($request->user()),
             'availableQuestions' => min(self::MAX_QUESTIONS, $questions),
             'fullLength' => $questions >= self::MAX_QUESTIONS,
-            'attempts' => $attempts,
+            'planCode' => $plan['code'],
+            'planDetails' => $plan,
+            'targetExamDate' => DB::table('profiles')->where('user_id', $userId)->value('pmp_target_exam_date'),
+            'aiUsage' => $ai->summary($userId),
+            'attemptTotals' => [
+                'completed' => (int) ($examTotals->completed ?? 0),
+                'inProgress' => (int) ($examTotals->in_progress ?? 0),
+            ],
+            'historyNextCursor' => $recentPage->count() > 40 ? (int) $recent->last()->id : null,
+            'attempts' => $recent->map(function ($attempt) use ($counts) {
+                $summary = $counts->get($attempt->id);
+                return [
+                    'id' => (int) $attempt->id, 'status' => $attempt->status,
+                    'total_questions' => (int) $attempt->total_questions,
+                    'correct_count' => $attempt->correct_count === null ? null : (int) $attempt->correct_count,
+                    'started_at' => $attempt->started_at, 'expires_at' => $attempt->expires_at,
+                    'finished_at' => $attempt->finished_at,
+                    'answered_count' => (int) ($summary->answered_count ?? 0),
+                    'flagged_count' => (int) ($summary->flagged_count ?? 0),
+                ];
+            })->all(),
+            'topicAccuracy' => $topics,
         ]);
+    }
+
+    /** Cursor-paged private history; additional queries only when older records are requested. */
+    public function history(Request $request, CurrentMemberPlan $plans): JsonResponse
+    {
+        $this->authorizeMember($request, $plans);
+        $input = $request->validate(['before' => ['required', 'integer', 'min:1']]);
+        $records = DB::table('pmp_exam_attempts')
+            ->where('user_id', $request->user()->id)
+            ->where('id', '<', (int) $input['before'])
+            ->orderByDesc('id')->limit(41)
+            ->get(['id', 'status', 'total_questions', 'correct_count',
+                'started_at', 'expires_at', 'finished_at']);
+        $visible = $records->take(40);
+        $ids = $visible->pluck('id')->all();
+        $counts = empty($ids) ? collect() : DB::table('pmp_exam_attempt_answers')
+            ->whereIn('attempt_id', $ids)
+            ->groupBy('attempt_id')->select('attempt_id')
+            ->selectRaw('SUM(CASE WHEN choice IS NOT NULL THEN 1 ELSE 0 END) AS answered_count')
+            ->selectRaw('SUM(CASE WHEN marked_for_review THEN 1 ELSE 0 END) AS flagged_count')
+            ->get()->keyBy('attempt_id');
+
+        return response()->json([
+            'attempts' => $visible->map(function ($attempt) use ($counts): array {
+                $summary = $counts->get($attempt->id);
+                return [
+                    'id' => (int) $attempt->id, 'status' => $attempt->status,
+                    'total_questions' => (int) $attempt->total_questions,
+                    'correct_count' => $attempt->correct_count === null ? null : (int) $attempt->correct_count,
+                    'started_at' => $attempt->started_at, 'expires_at' => $attempt->expires_at,
+                    'finished_at' => $attempt->finished_at,
+                    'answered_count' => (int) ($summary->answered_count ?? 0),
+                    'flagged_count' => (int) ($summary->flagged_count ?? 0),
+                ];
+            })->values()->all(),
+            'nextCursor' => $records->count() > 40 ? (int) $visible->last()->id : null,
+        ]);
+    }
+
+    public function updateTargetDate(Request $request, CurrentMemberPlan $plans): JsonResponse
+    {
+        $this->authorizeMember($request, $plans);
+        $data = $request->validate([
+            'targetDate' => ['present', 'nullable', 'date_format:Y-m-d',
+                'after_or_equal:'.Carbon::now('Asia/Dhaka')->format('Y-m-d')],
+        ]);
+        $now = now();
+        DB::table('profiles')->upsert([[
+            'user_id' => $request->user()->id,
+            'pmp_target_exam_date' => $data['targetDate'],
+            'created_at' => $now, 'updated_at' => $now,
+        ]], ['user_id'], ['pmp_target_exam_date', 'updated_at']);
+        return response()->json(['targetDate' => $data['targetDate']]);
     }
 
     public function start(Request $request, CurrentMemberPlan $plans): JsonResponse|RedirectResponse
     {
         $this->authorizeMember($request, $plans);
+        $data = $request->validate([
+            'mode' => ['sometimes', 'in:focused,full'],
+            'domain' => ['required_if:mode,focused', 'nullable', 'in:People,Process,Business Environment'],
+        ]);
+        $focused = ($data['mode'] ?? 'full') === 'focused';
+        $domain = $focused ? $data['domain'] : null;
         $userId = $request->user()->id;
-        $id = DB::transaction(function () use ($userId) {
-            // Serialize concurrent start requests for this member; re-use an unfinished attempt.
+        $id = DB::transaction(function () use ($userId, $focused, $domain) {
+            // A new mock always gets a new immutable attempt. Existing answers and
+            // resumable attempts are retained, even under concurrent start requests.
             DB::table('users')->where('id', $userId)->lockForUpdate()->first(['id']);
-            $existing = DB::table('pmp_exam_attempts')->where('user_id', $userId)
-                ->where('status', 'in_progress')->latest('id')->first();
-            if ($existing && Carbon::parse($existing->expires_at)->isFuture()) {
-                return $existing->id;
+            $questionQuery = DB::table('pmp_exam_questions')->where('is_active', true);
+            if ($focused) {
+                $questionQuery->where('domain', $domain);
             }
-            if ($existing) {
-                $this->finishAttempt($existing->id, $userId);
-            }
-            $ids = DB::table('pmp_exam_questions')->where('is_active', true)
-                ->orderBy('id')->limit(self::MAX_QUESTIONS)->pluck('id')->map(fn ($id) => (int) $id)->all();
-            abort_if(count($ids) === 0, 409, 'The practice question bank has not been seeded.');
+            $ids = $questionQuery->orderBy('id')
+                ->limit($focused ? 15 : self::MAX_QUESTIONS)
+                ->pluck('id')->map(fn ($id) => (int) $id)->all();
+            abort_if(count($ids) === 0, 409, 'No active questions are available for this practice selection.');
             $count = count($ids);
             $minutes = $count === self::MAX_QUESTIONS ? 230 : max(10, (int) ceil($count * 230 / self::MAX_QUESTIONS));
             $now = now();
@@ -170,10 +311,31 @@ final class PmpExamController extends Controller
         ]);
     }
 
-    private function authorizeMember(Request $request, CurrentMemberPlan $plans): void
+    public function aiHelp(Request $request, int $attempt, int $question,
+        CurrentMemberPlan $plans, PmpQuestionHelpService $ai): JsonResponse
     {
-        abort_unless(in_array($plans->code($request->user()), ['plus', 'pro'], true), 403,
+        $this->authorizeMember($request, $plans);
+        $record = $this->ownedAttempt($attempt, $request->user()->id);
+        abort_unless($record->status === 'completed', 403, 'Finish your exam before requesting AI help.');
+        abort_unless(in_array($question, $this->questionIds($record), true), 404);
+        $item = DB::table('pmp_exam_questions')->where('id', $question)
+            ->first(['id', 'prompt', 'options', 'correct_option', 'explanation']);
+        abort_unless($item, 404);
+        $selected = DB::table('pmp_exam_attempt_answers')
+            ->where('attempt_id', $attempt)->where('question_id', $question)->value('choice');
+        try {
+            return response()->json($ai->explain((int) $request->user()->id, $attempt, $question, $item, $selected));
+        } catch (\RuntimeException $exception) {
+            return response()->json(['message' => 'AI question help is temporarily unavailable. Please try again.'], 503);
+        }
+    }
+
+    private function authorizeMember(Request $request, CurrentMemberPlan $plans): string
+    {
+        $code = $plans->code($request->user());
+        abort_unless(in_array($code, ['plus', 'pro'], true), 403,
             'PMP simulator access requires an active Plus or Pro membership.');
+        return $code;
     }
 
     private function ownedAttempt(int $attempt, int $userId): object

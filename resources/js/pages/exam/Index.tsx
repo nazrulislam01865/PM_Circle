@@ -1,44 +1,69 @@
-import { Head, Link } from '@inertiajs/react';
-import { BookOpenCheck, ChartNoAxesColumnIncreasing, ChevronRight, Clock3, FileText, Play, RotateCcw, Target, Trophy } from 'lucide-react';
-import { ExamBreadcrumb, ExamPage, examResult } from '@/components/exam/ExamShared';
-import type { DashboardShellData } from '@/types/dashboard';
+import { Head, usePage } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
+import { ExamPage } from '@/components/exam/ExamShared';
 import { useExamStart } from '@/components/exam/useExamStart';
+import {
+    PmpWorkspaceTabs, PmpOverview, PmpPerformance, PmpHistory, PmpAiUsage,
+    type PmpDashboardTab, type PmpWorkspaceAttempt, type PmpTopicRow,
+    type PmpPlanDetails, type PmpAiUsageData,
+} from '@/components/exam/PmpWorkspacePanels';
+import type { DashboardShellData } from '@/types/dashboard';
 
-type PreviousAttempt = { id: number; status: string; total_questions: number; correct_count: number | null; started_at: string; finished_at: string | null };
-export default function Index({ shell, availableQuestions, fullLength, attempts }: { shell: DashboardShellData; availableQuestions: number; fullLength: boolean; attempts: PreviousAttempt[] }) {
+type Props = {
+    shell: DashboardShellData;
+    availableQuestions: number;
+    fullLength: boolean;
+    planCode: string;
+    planDetails: PmpPlanDetails;
+    targetExamDate: string | null;
+    attemptTotals: { completed: number; inProgress: number };
+    aiUsage: PmpAiUsageData;
+    attempts: PmpWorkspaceAttempt[];
+    historyNextCursor: number | null;
+    topicAccuracy: PmpTopicRow[];
+};
+
+const dashboardTabs: PmpDashboardTab[] = ['overview', 'performance', 'history', 'ai'];
+
+/** Four prototype-matched views, one visible at a time. No navigation requests for tab changes. */
+export default function Index({ shell, availableQuestions, fullLength, planCode, planDetails,
+    targetExamDate, attemptTotals, aiUsage, attempts, topicAccuracy, historyNextCursor }: Props) {
+    const page = usePage();
+    const [active, setActive] = useState<PmpDashboardTab>(() => {
+        const requested = new URLSearchParams(page.url.split('?')[1]?.split('#')[0] ?? '').get('tab');
+        return dashboardTabs.find(tab => tab === requested) ?? 'overview';
+    });
     const { startExam, starting, startError } = useExamStart();
-    const duration = fullLength ? 230 : Math.max(10, Math.ceil(availableQuestions * 230 / 180));
-    return <ExamPage shell={shell}><Head title="PMP Exam Simulator" />
-        <ExamBreadcrumb />
-        <section className="pm-exam-intro">
-            <div className="pm-exam-intro-main"><h1>PMP® Exam Simulator</h1>
-                <p>Practise project management scenarios with timed questions, performance analysis, and detailed explanations.</p>
-                <div className="pm-exam-benefits">
-                    <div><span><Target/></span><div><strong>Real Exam Experience</strong><small>Practise scenario-based multiple-choice questions under a time limit</small></div></div>
-                    <div><span><Clock3/></span><div><strong>{fullLength ? 'Full-Length Practice Test' : 'Sample Practice Test'}</strong><small>{availableQuestions} questions &nbsp; | &nbsp; {duration} minutes{!fullLength ? ' · Sample bank; full 180-question set not yet available' : ' (3 hr 50 min)'}</small></div></div>
-                    <div><span><ChartNoAxesColumnIncreasing/></span><div><strong>Performance Analysis</strong><small>Overall score, domain results, and explanations after submission</small></div></div>
-                    <div><span><RotateCcw/></span><div><strong>Multiple Attempts</strong><small>Practise again to build your confidence</small></div></div>
-                </div>
-                <button className="btn pm-exam-start" type="button" disabled={!availableQuestions || starting}
-                    onClick={() => void startExam()}><Play size={20}/>Start PMP® Practice Exam <ChevronRight size={21}/></button>
-                {startError && <p className="helper pm-exam-start-error" role="alert">{startError}</p>}
-                {!availableQuestions && <p className="helper">The practice question bank is empty. Ask an administrator to run the PMP question seeder.</p>}
+    const onStart = () => void startExam();
+    const onFocus = (domain: string) => void startExam({ mode: 'focused', domain });
+
+    // Old review/history bookmarks used hash fragments. Keep them working without
+    // reintroducing continuous-page scrolling or exposing hidden sections.
+    useEffect(() => {
+        const bookmarked: Record<string, PmpDashboardTab> = {
+            '#pmp-overview': 'overview', '#pmp-performance': 'performance',
+            '#pmp-history': 'history', '#pmp-ai-usage': 'ai',
+        };
+        const tab = bookmarked[window.location.hash];
+        if (tab) setActive(tab);
+    }, []);
+
+    return <ExamPage shell={shell} className="pm-pmp-dashboard">
+        <Head title="My PMP Exam Simulator | PM Circle"/>
+        <div className="pm-pmp-workspace">
+            <PmpWorkspaceTabs active={active} onChange={setActive}/>
+            {startError && <p className="pm-pmp-action-error" role="alert">{startError}</p>}
+            <div className="pm-pmp-dashboard-main" id="pmp-dashboard-content" role="tabpanel" aria-labelledby={`pm-pmp-tab-${active}`} tabIndex={0}>
+                {active === 'overview' && <PmpOverview attempts={attempts} planCode={planCode} planDetails={planDetails}
+                    attemptTotals={attemptTotals} aiUsage={aiUsage} topics={topicAccuracy} targetExamDate={targetExamDate}
+                    availableQuestions={availableQuestions} fullLength={fullLength}
+                    onStart={onStart} onFocus={onFocus} starting={starting} onAi={() => setActive('ai')}/>}
+                {active === 'performance' && <PmpPerformance attempts={attempts} topics={topicAccuracy}
+                    onStart={onStart} onFocus={onFocus} starting={starting} canStart={availableQuestions > 0}/>}
+                {active === 'history' && <PmpHistory attempts={attempts} initialNextCursor={historyNextCursor}
+                    onStart={onStart} starting={starting} canStart={availableQuestions > 0}/>}
+                {active === 'ai' && <PmpAiUsage usage={aiUsage}/>}
             </div>
-            <div className="pm-exam-illustration"><img src="/images/exam/pmp-simulator-illustration.webp" alt="PMP practice checklist on a laptop beside a stopwatch" width="607" height="391" loading="eager" decoding="async"/></div>
-        </section>
-        <div className="pm-exam-home-grid"><section className="pm-exam-panel pm-exam-history"><header><h2>Your Practice Tests</h2><span>{attempts.length} recent attempts</span></header>
-            {attempts.length ? <div className="pm-exam-table-wrap"><table><thead><tr><th>Attempt</th><th>Date</th><th>Questions</th><th>Score</th><th>Status</th><th>Action</th></tr></thead><tbody>
-                {attempts.map((attempt, i) => <tr key={attempt.id}><td>Practice Exam {attempts.length - i}</td><td>{new Date(attempt.started_at).toLocaleDateString()}</td><td>{attempt.total_questions}</td>
-                    <td>{attempt.correct_count !== null ? `${Math.round(attempt.correct_count / attempt.total_questions * 100)}% (${attempt.correct_count}/${attempt.total_questions})` : '—'}</td>
-                    <td><span className={`pm-exam-status ${attempt.status === 'completed' ? 'is-complete' : ''}`}>{attempt.status === 'completed' ? 'Completed' : 'In progress'}</span></td>
-                    <td><Link href={attempt.status === 'completed' ? examResult(attempt.id) : `/exams/pmp/attempts/${attempt.id}`} className="pm-exam-table-link">{attempt.status === 'completed' ? 'View Result' : 'Continue'}</Link></td></tr>)}
-            </tbody></table></div> : <p className="pm-exam-empty">No attempts yet. Start a practice exam to see your progress here.</p>}</section>
-            <aside className="pm-exam-panel pm-exam-glance"><h2>ⓘ &nbsp;PMP® Exam at a Glance</h2>
-                <div><FileText/><span>Total Questions: <strong>{availableQuestions}{!fullLength && ' (sample)'}</strong></span></div>
-                <div><Clock3/><span>Exam Duration: <strong>{duration} minutes</strong></span></div>
-                <div><BookOpenCheck/><span>Question Types: <strong>Scenario-based multiple choice</strong></span></div>
-                <div><Trophy/><span>Practice Readiness: <strong>Target ≥ 70% (practice only)</strong></span></div>
-            </aside></div>
-        <p className="pm-exam-educational">PM Circle practice assessments are for learning and do not represent official PMP® certification.</p>
+        </div>
     </ExamPage>;
 }

@@ -91,7 +91,7 @@ export default function Catalog({ shell, paths, courses, practiceModules, isMemb
     // PMP now has a real sample practice workflow; Scrum remains a planned module.
     const examItems = useMemo<CatalogCard[]>(() => ([
         { id: 'pmp-simulator', title: 'PMP Exam Simulator', description: 'Timed PMP-style sample questions, answer tools and scored reviews for Plus and Pro.', category: 'Project Management', level: 'Advanced', minutes: 11, thumbnail: 6, accessTier: 'plus', progress: 0, href: '/exams/pmp', action: 'Open simulator', available: true },
-        { id: 'scrum-simulator', title: 'Scrum / CSM Simulator', description: 'Exam simulator content is not yet available.', category: 'Project Management', level: 'Intermediate', minutes: 0, thumbnail: 2, accessTier: 'plus', progress: 0, href: '/dashboard/features/scrum', action: 'View status', available: false },
+        { id: 'scrum-simulator', title: 'Scrum / CSM Simulator', description: 'Exam simulator content is not yet available.', category: 'Project Management', level: 'Intermediate', minutes: 0, thumbnail: 2, accessTier: 'plus', progress: 0, href: '/simulators/scrum', action: 'View status', available: false },
     ] as CatalogCard[]), []);
 
     const allItems = tab === 'paths' ? pathItems : tab === 'practice' ? practiceItems : tab === 'exams' ? examItems : courseItems;

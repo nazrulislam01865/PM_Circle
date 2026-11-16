@@ -27,7 +27,7 @@
     --pm-member-sidebar-expanded-width: 264px;
     --pm-member-sidebar-collapsed-width: 80px;
     --pm-member-sidebar-width: var(--pm-member-sidebar-expanded-width);
-    --pm-member-header-height: 67px;
+    --pm-member-header-height: var(--header-height);
     display: flex;
     min-height: 100vh;
     background: var(--pm-dash-bg);

@@ -33,7 +33,7 @@ final class PmpPublicPageController extends Controller
     public function update(UpdatePmpPublicPageRequest $request): RedirectResponse
     {
         $validated = $request->validated();
-        // The question selection workflow is not yet approved; never accept a custom question id.
+        // Public sample selection is managed in PMP exam settings, not in this page content.
         $validated['content']['sample']['question_id'] = null;
 
         DB::transaction(function () use ($validated, $request): void {

@@ -141,3 +141,56 @@
     .pm-comment-submit { min-height: var(--control-touch); }
     .pm-inline-comment-branch, .pm-thread-branch { padding-left: var(--s2); }
 }
+
+/* Daily Challenge replies reuse the post comment presentation and reaction bar.
+   Keep the original two-level discussion thread, without duplicate gray reply cards. */
+.pm-scenario-reply-thread {
+    margin: var(--s3) 0 var(--s3) var(--s4);
+    padding-left: var(--s3);
+    border-left: 2px solid var(--border);
+}
+.pm-scenario-reply-thread .pm-comment-compose,
+.pm-threaded-replies-wrap .pm-comment-compose { max-width: 100%; }
+.pm-threaded-replies-wrap {
+    margin-top: var(--s3);
+    padding-left: var(--s4);
+    border-left: 2px solid var(--border);
+}
+.pm-threaded-replies-wrap .pm-nested-reply-card {
+    min-width: 0;
+    background: transparent;
+    border-radius: 0;
+    padding: var(--s2) 0;
+    margin-top: 0;
+}
+.pm-threaded-replies-wrap .pm-nested-reply-card + .pm-nested-reply-card {
+    border-top: 1px solid var(--border);
+}
+.pm-nested-reply-card .pm-author-info-wrap { gap: var(--s2); align-items: center; }
+.pm-nested-reply-card .pm-author-meta strong {
+    color: var(--ink);
+    font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui);
+}
+.pm-nested-reply-card .pm-author-meta span {
+    color: var(--muted);
+    font: var(--regular) var(--text-xs)/var(--line-xs) var(--font-ui);
+}
+.pm-nested-reply-card .pm-scenario-reply-text {
+    margin: var(--s1) 0 var(--s1) calc(var(--avatar) + var(--s2));
+    color: var(--ink);
+    font: var(--regular) var(--text-body)/var(--line-body) var(--font-ui);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.pm-nested-reply-card .pm-comment-engagement {
+    padding-left: calc(var(--avatar) + var(--s2));
+}
+.pm-nested-reply-card .pm-comment-compose {
+    padding-left: calc(var(--avatar) + var(--s2));
+    margin-top: var(--s2);
+}
+@media (max-width: 42rem) {
+    .pm-scenario-reply-thread { margin-left: var(--s2); padding-left: var(--s2); }
+    .pm-threaded-replies-wrap { padding-left: var(--s2); }
+    .pm-nested-reply-card .pm-comment-compose { padding-left: 0; }
+}

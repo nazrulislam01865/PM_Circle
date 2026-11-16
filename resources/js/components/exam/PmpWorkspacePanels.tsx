@@ -9,6 +9,7 @@ import { examResult, examReview } from '@/components/exam/ExamShared';
 export type PmpWorkspaceAttempt = {
     id: number;
     status: string;
+    mode?: string | null;
     total_questions: number;
     correct_count: number | null;
     started_at: string;
@@ -132,10 +133,10 @@ function studyTopics(topics: PmpTopicRow[], completed: PmpWorkspaceAttempt[], ma
 }
 
 export function PmpOverview({ attempts, planCode, planDetails, targetExamDate, attemptTotals,
-    aiUsage, topics, availableQuestions, fullLength, onStart, onFocus, starting, onAi }: {
+    aiUsage, topics, availableQuestions, fullLength, fullQuestionCount, focusedQuestionCount, onStart, onFocus, starting, onAi }: {
     attempts: PmpWorkspaceAttempt[]; planCode: string; planDetails: PmpPlanDetails;
     targetExamDate: string | null; attemptTotals: { completed: number; inProgress: number };
-    aiUsage: PmpAiUsageData; topics: PmpTopicRow[]; availableQuestions: number; fullLength: boolean;
+    aiUsage: PmpAiUsageData; topics: PmpTopicRow[]; availableQuestions: number; fullLength: boolean; fullQuestionCount: number; focusedQuestionCount: number;
     onStart: () => void; onFocus: (domain: string) => void; starting: boolean; onAi: () => void;
 }) {
     const activeAttempt = attempts.find(isResumable);
@@ -187,7 +188,7 @@ export function PmpOverview({ attempts, planCode, planDetails, targetExamDate, a
                 <span className="pm-pmp-sample-tag"><Info size={13}/> Your exam activity</span></div>
             <div className="pm-pmp-heading-action"><PrimaryAction onClick={onStart} disabled={!availableQuestions || starting}>
                 <Play size={17} fill="currentColor"/> {starting ? 'Starting exam...' : 'Start a New Mock Exam'}
-            </PrimaryAction><span>{fullLength ? 'Unlimited 180-question mock attempts with active access' : `${availableQuestions} active practice questions available`}</span></div>
+            </PrimaryAction><span>{fullLength ? `Unlimited ${fullQuestionCount}-question mock attempts with active access` : `${availableQuestions} active practice questions available`}</span></div>
         </div>
         <div className="pm-pmp-overview-cards">
             <Panel><div className="pm-pmp-card-title"><IconTile><CalendarDays/></IconTile><strong>Current Plan · {planCode.toUpperCase()}</strong></div>
@@ -212,7 +213,7 @@ export function PmpOverview({ attempts, planCode, planDetails, targetExamDate, a
         </div>
         <Panel className="pm-pmp-continue"><h2>Continue your mock</h2>
             {activeAttempt ? <div className="pm-pmp-continue-row"><IconTile><FileCheck2/></IconTile>
-                <strong>{activeAttempt.total_questions === 180 ? 'Full Mock' : 'Practice'} #{activeAttempt.id}</strong>
+                <strong>{activeAttempt.mode === 'full' || (!activeAttempt.mode && activeAttempt.total_questions === fullQuestionCount) ? 'Full Mock' : 'Practice'} #{activeAttempt.id}</strong>
                 <div className="pm-pmp-continue-progress"><div><span>{answered} of {activeAttempt.total_questions} answered</span><span>{progress}%</span></div>
                     <PercentBar percent={progress}/></div>
                 <SecondaryLink href={`/exams/pmp/attempts/${activeAttempt.id}`}>Resume Exam <ArrowRight size={15}/></SecondaryLink>
@@ -234,7 +235,7 @@ export function PmpOverview({ attempts, planCode, planDetails, targetExamDate, a
                 {latest ? <Link href={`${examReview(latest.id)}?filter=missed`}><Target size={19}/>Review missed questions<ChevronRight size={18}/></Link>
                     : <span><Target size={19}/>Complete your first mock to review missed questions<ChevronRight size={18}/></span>}
                 {weakest ? <button type="button" onClick={() => onFocus(weakest.topic)} disabled={starting}>
-                    <Layers3 size={19}/>Practice 15 questions in {weakest.topic}<ChevronRight size={18}/></button>
+                    <Layers3 size={19}/>Practice {focusedQuestionCount} questions in {weakest.topic}<ChevronRight size={18}/></button>
                     : <span><Layers3 size={19}/>Complete a mock to identify weaker topics<ChevronRight size={18}/></span>}
                 <button type="button" onClick={onStart} disabled={!availableQuestions || starting}><Clock3 size={19}/>Take a timed mock<ChevronRight size={18}/></button>
             </div>
@@ -268,13 +269,13 @@ function ScoreTrend({ completed }: { completed: PmpWorkspaceAttempt[] }) {
     </svg>;
 }
 
-export function PmpPerformance({ attempts, topics, onStart, onFocus, starting, canStart }: {
+export function PmpPerformance({ attempts, topics, onStart, onFocus, starting, canStart, fullQuestionCount }: {
     attempts: PmpWorkspaceAttempt[]; topics: PmpTopicRow[]; onStart: () => void;
-    onFocus: (domain: string) => void; starting: boolean; canStart: boolean;
+    onFocus: (domain: string) => void; starting: boolean; canStart: boolean; fullQuestionCount: number;
 }) {
     const [limit, setLimit] = useState(5);
     const [mode, setMode] = useState<'full' | 'short'>('full');
-    const completed = attempts.filter(a => a.status === 'completed' && (mode === 'full' ? a.total_questions === 180 : a.total_questions !== 180));
+    const completed = attempts.filter(a => a.status === 'completed' && (mode === 'full' ? (a.mode === 'full' || (!a.mode && a.total_questions === fullQuestionCount)) : (a.mode === 'focused' || (!a.mode && a.total_questions !== fullQuestionCount))));
     const group = completed.slice(0, limit);
     const average = group.length ? Math.round(group.reduce((sum, a) => sum + valuePercent(a), 0) / group.length) : 0;
     const change = group.length > 1 ? valuePercent(group[0]) - valuePercent(group[group.length - 1]) : 0;
@@ -295,7 +296,7 @@ export function PmpPerformance({ attempts, topics, onStart, onFocus, starting, c
     return <Surface>
         <div className="pm-pmp-section-heading"><div><PagePill>PERFORMANCE</PagePill><h2>Performance and Preparation</h2>
             <div className="pm-pmp-performance-filters"><select aria-label="Exam category" value={mode} onChange={e => setMode(e.target.value as 'full' | 'short')}>
-                <option value="full">Full mocks (180 questions)</option><option value="short">Short practice</option>
+                <option value="full">Full mocks ({fullQuestionCount} questions)</option><option value="short">Short practice</option>
             </select><select aria-label="Performance history range" value={limit} onChange={e => setLimit(Number(e.target.value))}>
                 <option value={5}>Last 5 completed</option><option value={10}>Last 10 completed</option><option value={20}>Last 20 completed</option>
             </select></div></div><span className="pm-pmp-sample-tag"><Info size={14}/> Your practice data</span></div>
@@ -317,9 +318,9 @@ export function PmpPerformance({ attempts, topics, onStart, onFocus, starting, c
     </Surface>;
 }
 
-export function PmpHistory({ attempts, initialNextCursor, onStart, starting, canStart }: {
+export function PmpHistory({ attempts, initialNextCursor, onStart, starting, canStart, fullQuestionCount }: {
     attempts: PmpWorkspaceAttempt[]; initialNextCursor: number | null;
-    onStart: () => void; starting: boolean; canStart: boolean;
+    onStart: () => void; starting: boolean; canStart: boolean; fullQuestionCount: number;
 }) {
     const [status, setStatus] = useState('all');
     const [kind, setKind] = useState('all');
@@ -334,8 +335,8 @@ export function PmpHistory({ attempts, initialNextCursor, onStart, starting, can
     const rows = allAttempts.filter(attempt => {
         const expired = attempt.status === 'in_progress' && !isResumable(attempt);
         if (status !== 'all' && (status === 'expired' ? !expired : attempt.status !== status || expired)) return false;
-        if (kind === 'full' && attempt.total_questions !== 180) return false;
-        if (kind === 'short' && attempt.total_questions === 180) return false;
+        if (kind === 'full' && !(attempt.mode === 'full' || (!attempt.mode && attempt.total_questions === fullQuestionCount))) return false;
+        if (kind === 'short' && !(attempt.mode === 'focused' || (!attempt.mode && attempt.total_questions !== fullQuestionCount))) return false;
         if (period !== 'all' && now - storageDate(attempt.started_at).getTime() > Number(period) * 86400000) return false;
         return true;
     });
@@ -390,7 +391,7 @@ export function PmpHistory({ attempts, initialNextCursor, onStart, starting, can
                 <td><button className="pm-pmp-row-expand" type="button" aria-expanded={expanded === attempt.id}
                     onClick={() => setExpanded(old => old === attempt.id ? null : attempt.id)}>
                     <ChevronDown size={16} className={expanded === attempt.id ? 'is-open' : undefined}/>
-                    {attempt.total_questions === 180 ? 'Full Mock' : 'Practice'} #{attempt.id}</button></td>
+                    {attempt.mode === 'full' || (!attempt.mode && attempt.total_questions === fullQuestionCount) ? 'Full Mock' : 'Practice'} #{attempt.id}</button></td>
                 <td>{dateLabel(attempt.started_at, true)}</td><td>{timeLabel(attempt.started_at)}</td><td>{timeLabel(attempt.finished_at)}</td>
                 <td>{readableDuration(duration)}</td><td>{readableDuration(elapsed)}</td><td>{readableDuration(Math.max(0, duration - elapsed))}</td>
                 <td><strong>{attempt.status === 'completed' ? `${valuePercent(attempt)}%` : '—'}</strong></td>

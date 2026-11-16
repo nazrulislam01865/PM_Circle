@@ -66,6 +66,11 @@ export function MemberHomeHeader({ dashboard, active, actions, brandHref, joinLa
         close();
         event.currentTarget.closest('details')?.removeAttribute('open');
     };
+    // A clicked <summary> persists its open state; end mouse interactions
+    // when leaving the whole group, not while travelling into the submenu.
+    const closeDropdownOnMouseLeave = (event: MouseEvent<HTMLDetailsElement>) => {
+        event.currentTarget.open = false;
+    };
     const user = page.props.auth?.user;
     const isMember = Boolean(user && !user.is_admin && (user.onboarding_step ?? 0) >= 3);
     const pathname = active ?? page.url.split('?')[0].split('#')[0];
@@ -74,7 +79,6 @@ export function MemberHomeHeader({ dashboard, active, actions, brandHref, joinLa
     const isCommunity = pathname === '/community' || pathname.startsWith('/posts/');
     const isExam = pathname.startsWith('/exam-simulator/') || pathname.startsWith('/exams/') || pathname.startsWith('/simulators/scrum');
     const isLearning = !isExam && (pathname.startsWith('/dashboard/learning') || pathname === '/learning' || pathname.startsWith('/learning/') || pathname.startsWith('/interview-preparation') || pathname.startsWith('/simulators/project'));
-    const isCareers = pathname.startsWith('/careers') || pathname.startsWith('/dashboard/features/career');
     const isMembers = pathname === '/members' || pathname.startsWith('/members/');
     const name = dashboard?.member.name ?? user?.name ?? 'Member';
     const avatar = dashboard?.member.avatar_path ?? user?.avatar_path;
@@ -87,20 +91,26 @@ export function MemberHomeHeader({ dashboard, active, actions, brandHref, joinLa
         }
     };
 
-    return <header className={`pm-member-home-header pm-site-header${isMember ? '' : ' is-guest'}${!user ? ' has-guest-actions' : ''}`}>
+    return <header className={`pm-member-home-header pm-site-header${isMember ? '' : ' is-guest'}${!user ? ' has-guest-actions' : ''}${mobileOpen ? ' is-navigation-open' : ''}`}>
         <div className="pm-member-home-header-inner">
             <div className="pm-member-home-brand"><Brand href={brandHref ?? (isMember ? '/dashboard' : '/')} /></div>
             <nav id="pm-member-home-navigation" className={`pm-member-home-nav${mobileOpen ? ' is-open' : ''}`} aria-label="Main navigation">
-                <Link href={isMember ? '/dashboard' : '/'} className={navClass(isHome)} aria-current={isHome ? 'page' : undefined} onClick={close}>
-                    <Home className="pm-nav-icon" aria-hidden="true"/>Home
+                <Link href={isMember ? '/dashboard' : '/'} className={`${navClass(isHome)} pm-member-home-nav-home`} aria-label="Home" title="Home" aria-current={isHome ? 'page' : undefined} onClick={close}>
+                    <Home className="pm-nav-icon" aria-hidden="true"/>
                 </Link>
                 {daily && <Link className={navClass(isDaily)} aria-current={isDaily ? 'page' : undefined} href={isMember ? memberPath(daily.href) : daily.href} onClick={close}>
                     <CalendarCheck2 className="pm-nav-icon" aria-hidden="true"/>{daily.label}
                 </Link>}
-                {community && <Link className={navClass(isCommunity)} aria-current={isCommunity ? 'page' : undefined} href={isMember ? memberPath(community.href) : community.href} onClick={close}>
-                    <MessagesSquare className="pm-nav-icon" aria-hidden="true"/>{community.label === 'Community Feed' ? 'Community' : community.label}
-                </Link>}
-                {learning && <details className="pm-member-home-nav-group" onKeyDown={closeOnEscape}>
+                {(community || members) && <details className="pm-member-home-nav-group" onKeyDown={closeOnEscape} onMouseLeave={closeDropdownOnMouseLeave}>
+                    <summary className={isCommunity || isMembers ? 'is-current' : undefined} aria-label="Community menu" aria-current={isCommunity || isMembers ? 'page' : undefined}>
+                        <MessagesSquare className="pm-nav-icon" aria-hidden="true"/>Community<ChevronDown className="pm-nav-chevron" size={15} aria-hidden="true"/>
+                    </summary>
+                    <div className="pm-member-home-submenu">
+                        {community && <Link href={isMember ? memberPath(community.href) : community.href} onClick={closeDropdown}><MessagesSquare aria-hidden="true"/>Feed</Link>}
+                        {members && <Link href={members.href} onClick={closeDropdown}><UsersRound aria-hidden="true"/>Members</Link>}
+                    </div>
+                </details>}
+                {learning && <details className="pm-member-home-nav-group" onKeyDown={closeOnEscape} onMouseLeave={closeDropdownOnMouseLeave}>
                     <summary className={isLearning ? 'is-current' : undefined} aria-current={isLearning ? 'page' : undefined}>
                         <BookOpen className="pm-nav-icon" aria-hidden="true"/>{learning.label}<ChevronDown className="pm-nav-chevron" size={15} aria-hidden="true"/>
                     </summary>
@@ -110,7 +120,7 @@ export function MemberHomeHeader({ dashboard, active, actions, brandHref, joinLa
                         <Link href="/simulators/project" onClick={closeDropdown}><ClipboardCheck aria-hidden="true"/>Project Simulator</Link>
                     </div>
                 </details>}
-                <details className="pm-member-home-nav-group pm-member-home-exam-group" onKeyDown={closeOnEscape}>
+                <details className="pm-member-home-nav-group pm-member-home-exam-group" onKeyDown={closeOnEscape} onMouseLeave={closeDropdownOnMouseLeave}>
                     <summary className={isExam ? 'is-current' : undefined} aria-current={isExam ? 'page' : undefined}>
                         <ClipboardCheck className="pm-nav-icon" aria-hidden="true"/>Exam Simulator<ChevronDown className="pm-nav-chevron" size={15} aria-hidden="true"/>
                     </summary>
@@ -120,20 +130,9 @@ export function MemberHomeHeader({ dashboard, active, actions, brandHref, joinLa
                         <span className="pm-member-home-disabled-item" aria-disabled="true" title="BA Simulator is coming soon"><ChartNoAxesColumnIncreasing aria-hidden="true"/>BA Simulator</span>
                     </div>
                 </details>
-                {careers && <details className="pm-member-home-nav-group" onKeyDown={closeOnEscape}>
-                    <summary className={isCareers ? 'is-current' : undefined} aria-current={isCareers ? 'page' : undefined}>
-                        <BriefcaseBusiness className="pm-nav-icon" aria-hidden="true"/>{careers.label}<ChevronDown className="pm-nav-chevron" size={15} aria-hidden="true"/>
-                    </summary>
-                    <div className="pm-member-home-submenu">
-                        <Link href="/careers" onClick={closeDropdown}><BriefcaseBusiness aria-hidden="true"/>Browse Jobs</Link>
-                        <Link href="/dashboard/features/career" onClick={closeDropdown}><BookOpen aria-hidden="true"/>Career Tools</Link>
-                    </div>
-                </details>}
-                {members && <Link className={navClass(isMembers)} aria-current={isMembers ? 'page' : undefined} href={isMember ? memberPath(members.href) : members.href} onClick={close}>
-                    <UsersRound className="pm-nav-icon" aria-hidden="true"/>{members.label}
-                </Link>}
-                {!user && pathname === '/' && page.props.rewardPromotion && <a className="pm-header-profile-reward-badge" href="#pm-pathway-exams-title"><Gift className="pm-nav-icon" aria-hidden="true"/>{page.props.rewardPromotion.discountLabel}</a>}
+                {page.props.rewardPromotion && <a className="pm-header-profile-reward-badge" href={pathname === '/' ? '#pm-pathway-exams-title' : '/#pm-pathway-exams-title'} aria-label={`${page.props.rewardPromotion.discountLabel} profile completion reward — view exam offers`} onClick={close}><Gift className="pm-nav-icon" aria-hidden="true"/>{page.props.rewardPromotion.discountLabel}</a>}
                 <div className="pm-member-home-mobile-utilities" aria-label="More links">
+                    {careers && <><Link href="/careers" onClick={close}><BriefcaseBusiness aria-hidden="true"/>Careers</Link><Link href="/dashboard/features/career" onClick={close}><BookOpen aria-hidden="true"/>Career Tools</Link></>}
                     <Link href="/pm-trends" onClick={close}><Newspaper aria-hidden="true"/>Trends</Link>
                     <Link href="/help-center" onClick={close}><CircleHelp aria-hidden="true"/>Help Center</Link>
                     <Link href="/contact" onClick={close}><Mail aria-hidden="true"/>Contact Us</Link>
@@ -145,9 +144,10 @@ export function MemberHomeHeader({ dashboard, active, actions, brandHref, joinLa
                 <Link href="/login" className="pm-member-home-guest-login">Log in</Link>
                 <Link href="/register" className="pm-button pm-member-home-guest-join">{joinLabel}</Link>
             </div>}
-            <details className="pm-member-home-utility-group" onKeyDown={closeOnEscape}>
+            <details className="pm-member-home-utility-group" onKeyDown={closeOnEscape} onMouseLeave={closeDropdownOnMouseLeave}>
                 <summary aria-label="More PM Circle links"><Menu aria-hidden="true"/></summary>
                 <div className="pm-member-home-submenu pm-member-home-utility-submenu">
+                    {careers && <><Link href="/careers" onClick={closeDropdown}><BriefcaseBusiness aria-hidden="true"/>Careers</Link><Link href="/dashboard/features/career" onClick={closeDropdown}><BookOpen aria-hidden="true"/>Career Tools</Link></>}
                     <Link href="/pm-trends" onClick={closeDropdown}><Newspaper aria-hidden="true"/>Trends</Link>
                     <Link href="/help-center" onClick={closeDropdown}><CircleHelp aria-hidden="true"/>Help Center</Link>
                     <Link href="/contact" onClick={closeDropdown}><Mail aria-hidden="true"/>Contact Us</Link>

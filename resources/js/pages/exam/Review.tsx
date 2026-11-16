@@ -1,10 +1,9 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import {
-    ExamBreadcrumb, ExamExplanation, ExamOptionList, ExamPage, ExamStatus, ReviewFlag,
-    type ExamQuestion, type ExamResponses,
-} from '@/components/exam/ExamShared';
+import { ExamOptionList, ExamPage, ExamStatus, type ExamQuestion, type ExamResponses } from '@/components/exam/ExamShared';
+import { PmpReviewExplanation } from '@/components/exam/PmpReviewExplanation';
+import { reviewQuestionMetadata } from '@/components/exam/pmpReviewContent';
 import type { DashboardShellData } from '@/types/dashboard';
 
 type Filter = 'all' | 'missed' | 'unanswered' | 'flagged';
@@ -28,7 +27,7 @@ export default function Review({ shell, attempt, questions, responses }: {
     const [aiByQuestion, setAiByQuestion] = useState<Record<number, { explanation: string; nextStep: string }>>({});
     const [aiBusy, setAiBusy] = useState(false);
     const [aiError, setAiError] = useState('');
-    const answered = questions.filter(q => Boolean(responses[q.id]?.choice)).length;
+    const answered = useMemo(() => questions.filter(q => Boolean(responses[q.id]?.choice)).length, [questions, responses]);
     const filtered = useMemo(() => questions.filter(question => {
         const response = responses[question.id];
         if (filter === 'missed') return !response?.choice || response.choice !== question.correct;
@@ -37,6 +36,7 @@ export default function Review({ shell, attempt, questions, responses }: {
         return true;
     }), [questions, responses, filter]);
     const question = filtered[position] ?? null;
+    const metadata = question ? reviewQuestionMetadata(question) : null;
 
     const askAi = async () => {
         if (!question || aiBusy) return;
@@ -68,11 +68,15 @@ export default function Review({ shell, attempt, questions, responses }: {
         }
     };
 
-    return <ExamPage shell={shell}>
-        <Head title="PMP Question Review"/>
-        <ExamBreadcrumb parts={[{ label: 'PMP Exam Simulator', href: '/exams/pmp?tab=history' }, 'Question Review']}/>
+    return <ExamPage shell={shell} className="pm-exam-review-page">
+        <Head title="Question Review & Detailed Explanation | PM Circle"/>
+        <nav className="pm-review-breadcrumb" aria-label="Breadcrumb">
+            <Link href="/dashboard/learning">Learn &amp; Practice</Link><span aria-hidden="true">›</span>
+            <Link href="/exams/pmp?tab=history">PMP® Exam Simulator</Link><span aria-hidden="true">›</span>
+            <span aria-current="page">Question Review</span>
+        </nav>
         <div className="pm-exam-review-top"><h1>Question Review &amp; Detailed Explanation</h1>
-            <Link className="btn secondary pm-exam-action" href="/exams/pmp?tab=history"><ArrowLeft size={18}/>Back to Exam History</Link>
+            <Link className="pm-review-outline-button" href="/exams/pmp?tab=history"><ArrowLeft aria-hidden="true" size={15}/>Back to Exam History</Link>
         </div>
         <div className="pm-exam-review-grid"><aside className="pm-exam-review-side">
             <ExamStatus total={attempt.total} correct={attempt.correct} answered={answered}/>
@@ -83,29 +87,32 @@ export default function Review({ shell, attempt, questions, responses }: {
                         {item.label}
                     </button>)}
                 </div>
-                <p className="helper">{filtered.length} question{filtered.length === 1 ? '' : 's'} match this filter.</p>
-                <p className="helper">Missed includes both incorrect and unanswered questions.</p>
+                <p className="pm-review-filter-count" aria-live="polite">{filtered.length} question{filtered.length === 1 ? '' : 's'} match this filter.</p>
             </section>
         </aside>
-        {question ? <section className="pm-exam-panel pm-exam-review-question">
-            <header><div className="pm-exam-review-prevnext">
+        {question ? <section className="pm-exam-panel pm-exam-review-question" aria-label="Question review">
+            <header className="pm-review-question-header"><div className="pm-exam-review-prevnext">
                 <button type="button" aria-label="Previous filtered question" disabled={position === 0}
-                    onClick={() => { setPosition(i => i - 1); setAiError(''); }}><ChevronLeft/></button>
+                    onClick={() => { setPosition(i => i - 1); setAiError(''); }}><ChevronLeft size={17}/></button>
                 <button type="button" aria-label="Next filtered question" disabled={position === filtered.length - 1}
-                    onClick={() => { setPosition(i => i + 1); setAiError(''); }}><ChevronRight/></button>
+                    onClick={() => { setPosition(i => i + 1); setAiError(''); }}><ChevronRight size={17}/></button>
             </div><strong>Question {position + 1} of {filtered.length}</strong>
-                <span className="pm-exam-domain">Domain: {question.domain}</span>
-                <span className="pm-exam-difficulty">Difficulty: {question.difficulty}</span>
-                <ReviewFlag marked={responses[question.id]?.marked}/>
+                <div className="pm-review-question-badges"><span>{question.domain}</span><span>{question.difficulty}</span>
+                    {metadata?.approach && <span>{metadata.approach}</span>}
+                    {responses[question.id]?.marked && <span className="pm-review-marked">Flagged</span>}
+                </div>
             </header>
             <div className="pm-exam-review-main"><p className="pm-exam-question-prompt">{question.prompt}</p>
                 <ExamOptionList question={question} chosen={responses[question.id]?.choice} readonly reveal/>
                 {!responses[question.id]?.choice && <p className="pm-exam-review-unanswered">You left this question unanswered.</p>}
-                <ExamExplanation key={question.id} question={question}/>
+                <PmpReviewExplanation key={question.id} question={question}/>
                 <section className="pm-pmp-review-ai" aria-label="Additional AI question assistance">
-                    <button type="button" className="pm-pmp-secondary" disabled={aiBusy} onClick={() => void askAi()}>
-                        <Sparkles size={17}/>{aiBusy ? 'Getting AI help...' : 'Ask AI About This Answer'}
-                    </button>
+                    <div className="pm-review-question-footer">
+                        <button type="button" className="pm-review-outline-button" disabled={aiBusy} onClick={() => void askAi()}>
+                            {aiBusy ? 'Getting AI help…' : 'Ask AI About This Answer'}
+                        </button>
+                        <span className="pm-review-question-meta">{[question.code, metadata?.industry, 'Single Select'].filter(Boolean).join(' · ')}</span>
+                    </div>
                     {aiError && <p role="alert" className="pm-pmp-action-error">{aiError} <Link href="/exams/pmp?tab=ai">View AI Usage</Link></p>}
                     {aiByQuestion[question.id] && <div className="pm-pmp-ai-answer" role="status">
                         <strong>AI study help (educational guidance, not official PMP scoring)</strong>

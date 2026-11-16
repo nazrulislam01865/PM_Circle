@@ -4,9 +4,10 @@ import {
     PmpPublicSampleStudy, PmpPublicTestimonials, PmpPublicVideoStories,
 } from '@/components/exam/PmpPublicSections';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
+import type { ExamQuestion } from '@/components/exam/ExamShared';
 import type { PmpPublicContent } from '@/types/pmp-public';
 
-export default function PublicPmpExam({ content }: { content: PmpPublicContent }) {
+export default function PublicPmpExam({ content, sampleQuestion, sampleDurationSeconds }: { content: PmpPublicContent; sampleQuestion: ExamQuestion | null; sampleDurationSeconds: number }) {
     const { auth } = usePage<{ auth?: { user?: { is_admin?: boolean } | null } }>().props;
     const destination = auth?.user?.is_admin ? '/admin' : auth?.user ? '/membership' : '/register';
 
@@ -18,7 +19,7 @@ export default function PublicPmpExam({ content }: { content: PmpPublicContent }
             <div className="pm-pmp-public-container">
                 {content.sections.hero && <PmpPublicHero content={content.hero}/>}
                 {content.sections.benefits && <PmpPublicBenefits content={content.benefits}/>}
-                {(content.sections.sample || content.sections.ai) && <PmpPublicSampleStudy sample={content.sections.sample ? content.sample : null} ai={content.sections.ai ? content.ai : null}/>}
+                {(content.sections.sample || content.sections.ai) && <PmpPublicSampleStudy sample={content.sections.sample ? content.sample : null} ai={content.sections.ai ? content.ai : null} sampleQuestion={sampleQuestion} sampleDurationSeconds={sampleDurationSeconds}/>}
                 {content.sections.plans && <PmpPublicPlans content={content.plans} destination={destination}/>}
                 {content.sections.faq && <PmpPublicFaq content={content.faq}/>}
                 {content.sections.video && <PmpPublicVideoStories content={content.video}/>}

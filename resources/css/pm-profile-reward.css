@@ -70,16 +70,20 @@
     /* Navigation uses align-items: stretch; match the centered Exam Simulator pill. */
     align-self: center; flex: none;
     min-height: var(--control-height); padding-inline: var(--s4);
-    border: 0; border-radius: var(--radius-pill);
-    color: var(--exam-nav-ink); background: var(--exam-nav-soft);
+    border: 1px solid var(--reward-border); border-radius: var(--radius-pill);
+    color: var(--ink);
+    /* Match the pale cream background of the simulator discount notice. */
+    background: linear-gradient(105deg, var(--reward-surface-bright), var(--reward-surface));
     font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui);
     text-decoration: none; white-space: nowrap;
 }
 .pm-member-home-header .pm-header-profile-reward-badge .pm-nav-icon {
     width: var(--icon); height: var(--icon); flex: none; stroke-width: 2;
+    color: var(--reward-icon-ink);
 }
 .pm-member-home-header .pm-header-profile-reward-badge:is(:hover,:focus-visible) {
-    color: var(--exam-nav-ink); background: var(--exam-nav-hover);
+    color: var(--ink);
+    background: linear-gradient(105deg, var(--reward-surface), var(--reward-surface-bright));
 }
 /* Keep the destination heading visible beneath the sticky shared header. */
 .pm-home #pm-pathway-exams-title {
@@ -100,7 +104,7 @@
     .pm-member-home-header .pm-header-profile-reward-badge { min-height: var(--control-touch); }
 }
 /* The collapsed navigation is a vertical list, not a horizontal pill row. */
-@media (max-width: 1400px) {
+@media (max-width: 960px) {
     .pm-member-home-header .pm-member-home-nav .pm-header-profile-reward-badge {
         align-self: stretch;
         justify-content: flex-start;

@@ -18,7 +18,7 @@ function parsePhone(value: string, country: string): { code: string; local: stri
     return { code: preferred?.[0] ?? '+880', local: value.replace(/^\+/, '') };
 }
 
-export function ProfilePhoneField({ value, country, onChange }: { value: string; country: string; onChange: (value: string) => void }) {
+export function ProfilePhoneField({ value, country, onChange, error }: { value: string; country: string; onChange: (value: string) => void; error?: string }) {
     const parsed = useMemo(() => parsePhone(value, country), [value, country]);
     const [customCode, setCustomCode] = useState('');
     const [customMode, setCustomMode] = useState(false);
@@ -42,15 +42,17 @@ export function ProfilePhoneField({ value, country, onChange }: { value: string;
             </select>
         </div>
         <div className="pm-form-group pm-profile-phone-number">
-            <label htmlFor="pm-profile-phone" className="pm-label">Phone number (private, optional)</label>
+            <label htmlFor="pm-profile-phone" className="pm-label">Phone number <span aria-hidden="true">*</span> (private)</label>
             <div className="pm-profile-phone-number-wrap">
                 {!known && <input aria-label="Country calling code" className="pm-input pm-profile-custom-code" value={code}
                     onChange={(event) => setCustomCode(event.target.value.replace(/[^+\d]/g, '').slice(0, 5))}
                     onBlur={() => { if (/^\+\d{1,4}$/.test(code)) update(code, parsed.local); }} />}
                 <input id="pm-profile-phone" type="tel" inputMode="tel" autoComplete="tel-national" className="pm-input"
-                    placeholder="e.g. 1712 345678" value={parsed.local}
+                    placeholder="e.g. 1712 345678" value={parsed.local} required aria-required="true" aria-invalid={Boolean(error)}
+                    aria-describedby={error ? 'pm-profile-phone-error' : undefined}
                     onChange={(event) => update(code, event.target.value)} />
             </div>
+            {error && <span id="pm-profile-phone-error" role="alert" className="pm-profile-error">{error}</span>}
         </div>
     </div>;
 }

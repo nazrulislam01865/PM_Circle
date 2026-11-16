@@ -5,7 +5,6 @@ namespace App\Http\Controllers\PublicSite;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Onboarding\OnboardingController;
 use App\Models\HomePageContent;
-use App\Domain\Billing\Services\ProfileCompletionRewardService;
 use App\Domain\Community\Services\EngagementStats;
 use App\Domain\Community\Queries\PostReactionSummary;
 use App\Models\CareerJob;
@@ -120,7 +119,6 @@ class HomeController extends Controller
 
         return Inertia::render('public/Home', [
             'content' => $content,
-            'rewardPromotion' => $visible('pathway') ? app(ProfileCompletionRewardService::class)->publicPromotion() : null,
             'jobs' => $jobs,
             'isDemo' => $demo,
             'scenario' => $scenario,

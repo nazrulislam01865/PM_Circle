@@ -191,10 +191,10 @@ export default function PmpPublicPage({ content, version, selectedSection = 'her
                 {selected === 'benefits' && frame('What you get with PM Circle', 'Four fixed cards. Each can use its built-in icon or an uploaded image.', <>
                     {field('benefits.heading', 'Section heading')}{featureGroup('benefits.cards', 'Benefits', true)}
                 </>)}
-                {selected === 'sample' && frame('Sample question', 'Keep the existing paid-simulator UI. The approved question selector will be added later.', <>
+                {selected === 'sample' && frame('Sample question', 'Keep the existing paid-simulator UI. Select the public sample question in PMP exam management settings.', <>
                     {field('sample.heading', 'Section heading')}{field('sample.description', 'Supporting text', true)}
                     {image('sample.icon_image', 'Heading icon (32 × 32 px)')}
-                    <div className="pm-admin-notice">Question selection is reserved for a later release. The current built-in public sample remains unchanged.</div>
+                    <div className="pm-admin-notice">Choose an active question ID from PMP exam management settings, or leave blank there to use the built-in sample.</div>
                 </>)}
                 {selected === 'ai' && frame('AI study help', 'Four cards matching the benefit-card layout, with customizable icons.', <>
                     {field('ai.heading', 'Section heading')}{field('ai.description', 'Description', true)}

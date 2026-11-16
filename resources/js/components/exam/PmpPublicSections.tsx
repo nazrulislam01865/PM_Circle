@@ -7,6 +7,7 @@ import { Fragment, useEffect, useState, type ReactNode } from 'react';
 import type { PmpPublicContent, PmpFeature } from '@/types/pmp-public';
 import { PmpPublicIcon } from './PmpPublicIcon';
 import { PmpPublicSampleExam } from './PmpPublicSampleExam';
+import type { ExamQuestion } from './ExamShared';
 
 function SectionCard({ id, className = '', children }: { id?: string; className?: string; children: ReactNode }) {
     return <section id={id} className={`pm-pmp-public-card ${className}`.trim()}>{children}</section>;
@@ -44,14 +45,13 @@ export function PmpPublicBenefits({ content }: { content: PmpPublicContent['bene
     </section>;
 }
 
-export function PmpPublicSampleStudy({ sample, ai }: { sample: PmpPublicContent['sample'] | null; ai: PmpPublicContent['ai'] | null }) {
+export function PmpPublicSampleStudy({ sample, ai, sampleQuestion, sampleDurationSeconds }: { sample: PmpPublicContent['sample'] | null; ai: PmpPublicContent['ai'] | null; sampleQuestion: ExamQuestion | null; sampleDurationSeconds: number }) {
     return <>
         {sample && <SectionCard id="sample-question" className="pm-pmp-public-study-card">
             <div className="pm-pmp-public-study-column">
                 <h2>{sample.icon_image ? <img className="pm-pmp-public-icon-image" width="32" height="32" src={sample.icon_image} alt="" aria-hidden="true"/> : <ClipboardCheck aria-hidden="true"/>}{sample.heading}</h2>
                 <p className="pm-pmp-public-section-note">{sample.description}</p>
-                {/* Question bank selection will be introduced only after admin approval. */}
-                <PmpPublicSampleExam/>
+                <PmpPublicSampleExam sampleQuestion={sampleQuestion} sampleDurationSeconds={sampleDurationSeconds}/>
             </div>
         </SectionCard>}
         {ai && <SectionCard id="ai-study-help" className="pm-pmp-public-study-card pm-pmp-public-ai-cards">

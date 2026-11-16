@@ -8,6 +8,7 @@
     color-scheme: light;
     --font-ui: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --text-xs: .75rem;
+    --text-donut-label: .6875rem; /* Compact review circle label; keeps the text within the ring. */
     --line-xs: 1rem;
     --text-sm: .8125rem;
     --line-sm: 1.25rem;
@@ -44,7 +45,7 @@
     --radius-control: .5rem;
     --radius-card: .75rem;
     --radius-pill: 999px;
-    --header-height: 3.5rem;
+    --header-height: 5rem;
     --sidebar-width: 14rem;
     --content-width: 70rem;
     --control-height: 2.5rem;
@@ -984,4 +985,9 @@
     --pm-contact-page-tint: #eaf4ff;
     --pm-footer-status-online: #16a34a;
     --pm-footer-status-offline: #7a899e;
+}
+
+/* Mobile header follows one shared height used by its shell and sticky content. */
+@media (max-width: 880px) {
+    :root { --header-height: 4rem; }
 }

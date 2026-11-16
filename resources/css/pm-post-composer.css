@@ -1,4 +1,88 @@
 /* PM Circle community post editor: use shared member typography, surfaces and actions. */
+.pm-post-composer-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s3);
+    min-width: 0;
+    margin-bottom: var(--s3);
+    padding: var(--s5);
+    border: 1px solid color-mix(in srgb, var(--blue) 22%, var(--surface));
+    border-radius: var(--radius-card);
+    background: var(--blue-soft);
+    color: var(--ink);
+    font-family: var(--font-ui);
+}
+
+.pm-post-composer-card-heading {
+    display: flex;
+    align-items: center;
+    gap: var(--s4);
+}
+
+.pm-post-composer-card-heading .pm-avatar { flex: none; }
+
+.pm-post-composer-card-heading h2 {
+    margin: 0;
+    font: var(--bold) var(--text-h3)/var(--line-h3) var(--font-ui);
+}
+
+.pm-post-composer-card-prompt {
+    display: flex;
+    align-items: flex-start;
+    width: 100%;
+    min-height: calc(var(--s8) * 2);
+    padding: var(--s3) var(--s4);
+    border: 1px solid color-mix(in srgb, var(--blue) 18%, var(--surface));
+    border-radius: var(--radius-control);
+    background: var(--surface);
+    color: var(--muted);
+    font: var(--regular) var(--text-body)/var(--line-body) var(--font-ui);
+    text-align: left;
+    cursor: pointer;
+}
+
+.pm-post-composer-card-prompt:hover { border-color: var(--blue); }
+
+.pm-post-composer-card-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--s2);
+}
+
+.pm-post-composer-card-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s3);
+    min-height: var(--control-touch);
+    padding: var(--s2) var(--s4);
+    border: 0;
+    border-radius: var(--radius-control);
+    background: transparent;
+    color: var(--muted);
+    font: var(--medium) var(--text-ui)/var(--line-ui) var(--font-ui);
+    cursor: pointer;
+}
+
+.pm-post-composer-card-action svg { flex: none; }
+
+.pm-post-composer-card-action:is(.is-selected, :hover) {
+    background: color-mix(in srgb, var(--blue) 12%, var(--blue-soft));
+    color: var(--blue);
+}
+
+.pm-post-composer-card :is(.pm-post-composer-card-prompt, .pm-post-composer-card-action):focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 3px;
+}
+
+@media (max-width: 650px) {
+    .pm-post-composer-card { padding: var(--s4); }
+    .pm-post-composer-card-actions { gap: var(--s1); }
+    .pm-post-composer-card-action { padding-inline: var(--s2); gap: var(--s2); }
+}
+
 .pm-dashboard .pm-dash-composer { padding: var(--pm-member-section-gap, 16px); }
 .pm-dashboard .pm-dash-composer-buttons { margin-top: 10px; }
 .pm-dashboard .pm-dash-composer-note, .pm-dashboard .pm-dash-composer-submit { display: none; }

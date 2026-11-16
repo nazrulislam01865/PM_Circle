@@ -7,7 +7,7 @@ import type { DashboardShellData } from '@/types/dashboard';
 export type ExamQuestion = {
     id: number; domain: string; difficulty: string; prompt: string;
     options: Record<string, string>;
-    correct?: string; explanation?: string; otherOptions?: string | null;
+    code?: string; correct?: string; explanation?: string; otherOptions?: string | null;
     takeaway?: string | null; concepts?: string | null; references?: string | null;
 };
 export type ExamResponse = { choice: string | null; marked: boolean };
@@ -46,7 +46,7 @@ export function ExamStatus({ total, correct, answered }: { total: number; correc
         <h2>Review Summary</h2>
         <div className="pm-exam-summary-content">
             <div className="pm-exam-donut" style={{ '--exam-score': `${percentage}%`, '--exam-answered': `${total ? answered / total * 100 : 0}%` } as CSSProperties}>
-                <span><strong>{total}</strong>Questions</span>
+                <span><strong>{total}</strong><span className="pm-exam-donut-label">Questions</span></span>
             </div>
             <div className="pm-exam-summary-items"><span><i className="good"/>Correct ({correct})<strong>{percentage}%</strong></span>
                 <span><i className="bad"/>Incorrect ({wrong})<strong>{total ? Math.round(wrong / total * 100) : 0}%</strong></span>

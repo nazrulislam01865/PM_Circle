@@ -5,6 +5,7 @@ import { DashboardAvatar } from '@/components/dashboard/DashboardAvatar';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { PMDropdown } from '@/components/pm/PMDropdown';
 import type { DashboardPlan } from '@/types/dashboard';
+import { postComposerTypes, type PostComposerTopic } from './postComposerTypes';
 
 export type EditablePost = { id: number; body: string; image_path?: string | null; topic?: string; is_anonymous?: boolean; visibility?: string };
 const emojiList = ['🙂', '😊', '👏', '🙌', '🎉', '💡', '👍', '🚀', '❤️', '🤝', '💬', '✅'];
@@ -28,18 +29,19 @@ function editorText(root: HTMLElement): string {
     return Array.from(root.childNodes).map(walk).join('').replace(/\n{3,}/g, '\n\n').trim();
 }
 
-export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onUpdated }: {
+export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onUpdated, initialTopic = 'From my project' }: {
     open: boolean;
     onClose: () => void;
     plan?: DashboardPlan;
     editPost?: EditablePost | null;
     onUpdated?: (updated: { body: string; image_path: string | null }) => void;
+    initialTopic?: PostComposerTopic;
 }) {
     const { auth } = usePage<{ auth?: { user?: { name: string; avatar_path?: string | null } | null } }>().props;
     const name = auth?.user?.name ?? 'Member';
     const [identity, setIdentity] = useState('named');
     const [audience, setAudience] = useState('public');
-    const [topic, setTopic] = useState('From my project');
+    const [topic, setTopic] = useState<string>(initialTopic);
     const [body, setBody] = useState('');
     const [image, setImage] = useState<File | null>(null);
     const [removeImage, setRemoveImage] = useState(false);
@@ -57,15 +59,17 @@ export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onU
         if (!open) return;
         setIdentity(editPost?.is_anonymous ? 'anonymous' : 'named');
         setAudience(editPost?.visibility === 'members' ? 'members' : 'public');
-        setTopic(editPost?.topic ?? 'From my project');
+        setTopic(editPost?.topic ?? initialTopic);
         setBody(editPost?.body ?? '');
+        // A quick reopen can reuse the editor during the dialog's exit animation.
+        if (editor.current) editor.current.textContent = editPost?.body ?? '';
         setImage(null);
         setRemoveImage(false);
         setPollOptions(['', '']);
         setBusy(false);
         setEmojiOpen(false);
         setError('');
-    }, [open, editPost]);
+    }, [open, editPost, initialTopic]);
     useEffect(() => {
         if (!image) { setPreview(null); return; }
         const url = URL.createObjectURL(image);
@@ -169,7 +173,7 @@ export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onU
                     <button type="button" onClick={() => fileInput.current?.click()} aria-label="Attach image"><ImagePlus size={18}/></button>
                 </div>
                 {emojiOpen && <div className="pm-compose-emojis">{emojiList.map(emoji => <button key={emoji} type="button" onClick={() => insertText(emoji)}>{emoji}</button>)}</div>}
-                {!editing && <div className="pm-compose-types"><span>Post type</span>{[{ value: 'From my project', label: 'Post' }, { value: 'Ask the community', label: 'Question' }, { value: 'Poll', label: 'Poll' }].map(option => <button key={option.value} type="button" className={topic === option.value ? 'is-selected' : ''} aria-pressed={topic === option.value} onClick={() => setTopic(option.value)}>{option.label}</button>)}</div>}
+                {!editing && <div className="pm-compose-types"><span>Post type</span>{postComposerTypes.map(option => <button key={option.value} type="button" className={topic === option.value ? 'is-selected' : ''} aria-pressed={topic === option.value} onClick={() => setTopic(option.value)}>{option.editorLabel}</button>)}</div>}
                 {error && <p className="pm-post-action-error pm-compose-error" role="alert">{error}</p>}
                 <div className="pm-compose-footer"><span>{characterCount} / 5000</span><button className="pm-button" type="submit" disabled={!canSubmit}>{busy ? 'Saving…' : editing ? 'Save changes' : identity === 'anonymous' ? 'Submit for review' : 'Post'}</button></div>
             </form>

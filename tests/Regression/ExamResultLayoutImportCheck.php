@@ -20,8 +20,8 @@ $sample = $read('resources/js/components/exam/PmpPublicSampleExam.tsx');
 $nodeTest = $read('tests/Regression/examTimeAndFooter.test.mjs');
 
 $check(str_contains($result, 'className="pm-exam-result-page"')
-    && str_contains($result, '<OverallPerformance correct={attempt.correct} total={attempt.total}/>')
-    && str_contains($result, '<DomainPerformance domains={domains}/>')
+    && str_contains($result, '<OverallPerformance correct={attempt.correct} total={attempt.total} thresholds={readinessThresholds}/>')
+    && str_contains($result, '<DomainPerformance domains={domains} thresholds={readinessThresholds}/>')
     && str_contains($result, '<PracticeSummary attempt={attempt}/>'),
     'Result preserves live scoring and prototype sections inside the shared member page');
 $check(str_contains($css, '.pm-exam-page.pm-exam-result-page')

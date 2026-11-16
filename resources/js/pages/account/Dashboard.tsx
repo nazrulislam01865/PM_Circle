@@ -77,7 +77,7 @@ export default function Dashboard({ dashboard, flashStatus }: { dashboard: Dashb
         <div className="pm-dash-columns"><div className="pm-dash-center">
             <h1 className="sr-only">Member dashboard</h1>
             {flashStatus && <p role="status" className="pm-dashboard-flash">{flashStatus}</p>}
-            <DashboardComposer name={dashboard.member.name} plan={dashboard.isPreview ? 'free' : dashboard.plan} demo={dashboard.isDemo} compact />
+            <DashboardComposer name={dashboard.member.name} plan={dashboard.isPreview ? 'free' : dashboard.plan} demo={dashboard.isDemo} />
             <DashboardFeed dashboard={dashboard} />
         </div><aside ref={overviewRef} className="pm-dash-right" aria-label="Member overview">
             <MemberHomeOverview dashboard={dashboard}/>

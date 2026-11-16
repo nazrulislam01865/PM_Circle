@@ -230,7 +230,7 @@
 .pm-dashboard-shared-header .pm-dash-feed-to-top:hover { background: var(--primary-soft); }
 .pm-dashboard-shared-header #main-content { scroll-margin-top: var(--pm-member-header-height); }
 @media (max-width: 880px) {
-    .pm-dashboard-shared-header { --pm-member-header-height: 60px; }
+    .pm-dashboard-shared-header { --pm-member-header-height: var(--header-height); }
 }
 @media (max-width: 650px) {
     .pm-dashboard-shared-header {

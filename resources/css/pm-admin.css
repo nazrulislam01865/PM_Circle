@@ -274,3 +274,79 @@
 .pm-pmp-admin-add-feature>.pm-admin-field{min-width:0}
 .pm-pmp-admin-add-feature .pm-admin-error{grid-column:1/-1}
 @media(max-width:64rem){.pm-pmp-admin-add-feature{grid-template-columns:minmax(0,1fr)}}
+
+/* PMP bank editor: shared admin controls and design-token spacing. */
+.pm-pmp-bank-tabs { display: flex; gap: var(--s2, .5rem); flex-wrap: wrap; margin-block: var(--s4, 1rem); border-bottom: 1px solid var(--border, #dce4ee); }
+.pm-pmp-bank-tabs button { background: none; border: 0; padding: var(--s3, .75rem) var(--s4, 1rem); color: var(--muted, #4c5d74); font: inherit; cursor: pointer; }
+.pm-pmp-bank-tabs button.is-active { color: var(--blue, #075eb5); border-bottom: 2px solid currentColor; font-weight: 700; }
+.pm-pmp-bank-panel { margin-block-end: var(--s4, 1rem); padding: var(--s5, 1.25rem); display: grid; gap: var(--s4, 1rem); min-width: 0; }
+.pm-pmp-bank-panel h2 { font-size: var(--text-h3, 1.125rem); line-height: var(--line-h3, 1.5rem); font-weight: 600; }
+.pm-pmp-bank-description { display: flex; align-items: flex-start; gap: var(--s2, .5rem); font-size: var(--text-sm, .8125rem); line-height: var(--line-sm, 1.25rem); color: var(--muted, #4c5d74); }
+.pm-pmp-bank-description svg { flex: none; }
+.pm-pmp-bank-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--s3, .75rem); }
+.pm-pmp-bank-heading p { color: var(--muted, #4c5d74); font-size: var(--text-sm, .8125rem); }
+.pm-pmp-bank-form { display: grid; gap: var(--s4, 1rem); }
+.pm-pmp-bank-checkbox { display: flex; align-items: center; gap: var(--s2, .5rem); font-size: var(--text-ui, .875rem); }
+.pm-pmp-bank-checkbox input { accent-color: var(--blue, #075eb5); width: 1rem; height: 1rem; }
+.pm-pmp-bank-import, .pm-pmp-bank-filters { display: grid; grid-template-columns: minmax(0, 2fr) auto; align-items: end; gap: var(--s3, .75rem); }
+/* The picker and submit action share a row; label and guidance span both columns. */
+.pm-pmp-bank-import { grid-template-columns: minmax(0, 1fr) max-content; align-items: stretch; column-gap: var(--s3); row-gap: var(--s2); }
+.pm-pmp-bank-import > .pm-pmp-import-label,
+.pm-pmp-bank-import > .pm-pmp-import-hint,
+.pm-pmp-bank-import > .pm-pmp-import-error { grid-column: 1 / -1; }
+.pm-pmp-bank-import > .pm-admin-button { align-self: stretch; }
+.pm-pmp-bank-filters { grid-template-columns: minmax(0, 2fr) repeat(2, minmax(8rem, 1fr)) auto; }
+.pm-pmp-bank-import .pm-admin-button, .pm-pmp-bank-filters .pm-admin-button { align-self: end; }
+.pm-pmp-bank-table-wrap { overflow-x: auto; min-width: 0; }
+.pm-pmp-bank-table { border-collapse: collapse; width: 100%; text-align: left; font-size: var(--text-ui, .875rem); }
+.pm-pmp-bank-table th, .pm-pmp-bank-table td { border-bottom: 1px solid var(--border, #dce4ee); padding: var(--s3, .75rem); text-align: left; vertical-align: middle; }
+.pm-pmp-bank-table th { background: var(--canvas, #f4f7fa); white-space: nowrap; }
+.pm-pmp-bank-table td:first-child { min-width: 17rem; max-width: 30rem; }
+.pm-pmp-bank-table td small { display: block; color: var(--muted, #4c5d74); line-height: var(--line-sm, 1.25rem); overflow-wrap: anywhere; }
+.pm-pmp-bank-table td:first-child small { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.pm-pmp-bank-row-actions { display: flex; gap: var(--s2, .5rem); }
+.pm-pmp-bank-status { border-radius: var(--radius-pill, 999px); padding: var(--s1, .25rem) var(--s2, .5rem); background: var(--track, #e8eef5); }
+.pm-pmp-bank-status.is-active { background: var(--green-soft, #e9f6ef); color: var(--green, #187448); }
+.pm-pmp-bank-pagination { display: flex; gap: var(--s2, .5rem); flex-wrap: wrap; }
+.pm-pmp-bank-pagination a, .pm-pmp-bank-pagination span { padding: var(--s2, .5rem); border: 1px solid var(--border, #dce4ee); border-radius: var(--radius-control, .5rem); }
+.pm-pmp-bank-pagination .is-active { border-color: var(--blue, #075eb5); color: var(--blue, #075eb5); }
+.pm-pmp-bank-form .pm-admin-field textarea { width: 100%; min-height: 4rem; resize: vertical; }
+@media (max-width: 55rem) { .pm-pmp-bank-filters { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 42rem) { .pm-pmp-bank-import, .pm-pmp-bank-filters { grid-template-columns: minmax(0, 1fr); } .pm-pmp-bank-row-actions { flex-wrap: wrap; } }
+
+.pm-pmp-bank-panel .pm-admin-field > span { font-size:var(--text-ui); font-weight:var(--semibold); }
+
+/* Accessible import picker: one shared control for CSV and Excel question files. */
+.pm-pmp-import-field { display: grid; gap: var(--s2); min-width: 0; }
+.pm-pmp-import-label { color: var(--ink); font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui); }
+.pm-pmp-import-picker {
+    position: relative; display: flex; align-items: center; gap: var(--s3);
+    min-width: 0; min-height: var(--control-touch); padding: var(--s2);
+    border: 1px solid var(--control-border); border-radius: var(--radius-control);
+    background: var(--surface);
+}
+.pm-pmp-import-picker:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
+.pm-pmp-import-input {
+    position: absolute; width: 1px; height: 1px; opacity: 0;
+    overflow: hidden; pointer-events: none;
+}
+.pm-pmp-import-choose {
+    display: inline-flex; align-items: center; justify-content: center; gap: var(--s2);
+    min-height: var(--control-height); padding: var(--s2) var(--s3);
+    border: 1px solid var(--blue); border-radius: var(--radius-control);
+    color: var(--blue); background: var(--surface);
+    font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui);
+    cursor: pointer; white-space: nowrap;
+}
+.pm-pmp-import-choose:hover { background: var(--blue-soft); }
+.pm-pmp-import-filename { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; color: var(--muted); font: var(--regular) var(--text-ui)/var(--line-ui) var(--font-ui); }
+.pm-pmp-import-filename.is-selected { color: var(--ink); font-weight: var(--medium); }
+.pm-pmp-import-remove { margin-left: auto; display: inline-grid; place-items: center; flex: none; min-height: var(--control-compact); width: var(--control-compact); border: 0; border-radius: var(--radius-control); background: var(--track); color: var(--ink); cursor: pointer; }
+.pm-pmp-import-remove:hover { background: var(--blue-soft); }
+.pm-pmp-import-hint { color: var(--muted); font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui); }
+.pm-pmp-import-error { color: var(--red); font: var(--medium) var(--text-sm)/var(--line-sm) var(--font-ui); }
+@media (max-width: 42rem) {
+    .pm-pmp-import-picker { flex-wrap: wrap; }
+    .pm-pmp-import-filename { flex: 1 1 100%; }
+    .pm-pmp-bank-import .pm-admin-button { width: 100%; }
+}

@@ -3,6 +3,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { ArrowLeft, ArrowRight, Calculator, ChevronLeft, ChevronRight, Clock3, Flag, Highlighter, Info, Strikethrough, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ExamToolGuide } from '@/components/exam/ExamToolGuide';
+import { PmpSubmitReviewSummary } from '@/components/exam/PmpSubmitReviewSummary';
 import { ExamTimeProgress } from '@/components/exam/ExamTimeProgress';
 import { examSecondsUntilExpiry, examServerClockOffset } from '@/components/exam/examCountdownMath';
 import { ExamOptionList, Highlighted, examBase, examResult, type ExamQuestion, type ExamResponses, type ExamResponse } from '@/components/exam/ExamShared';
@@ -298,7 +299,7 @@ export default function Take({ attempt, questions, responses: initial }: {
                 if (!open) setConfirmSubmit(false);
                 if (open) setSubmitError('');
             }
-        }}><Dialog.Portal><Dialog.Overlay className="pm-exam-modal-overlay"/><Dialog.Content className="pm-exam-modal pm-exam-finish-modal" aria-describedby="pm-exam-finish-description">
+        }}><Dialog.Portal><Dialog.Overlay className="pm-exam-modal-overlay"/><Dialog.Content className={`pm-exam-modal pm-exam-finish-modal${confirmSubmit ? '' : ' pm-exam-finish-prototype'}`} aria-describedby="pm-exam-finish-description">
             {confirmSubmit ? <>
                 <Dialog.Title>Submit your exam?</Dialog.Title>
                 <Dialog.Description id="pm-exam-finish-description">
@@ -309,19 +310,18 @@ export default function Take({ attempt, questions, responses: initial }: {
                     <button type="button" className="btn secondary pm-exam-action" disabled={submitting} onClick={() => { setSubmitError(''); setConfirmSubmit(false); }}>Back to Summary</button>
                     <button type="button" className="btn pm-exam-action" disabled={submitting} onClick={() => void submit()}>{submitting ? 'Submitting…' : 'Confirm Submission'}</button>
                 </div>
-            </> : <>
-                <Dialog.Title>Review before submitting</Dialog.Title>
-                <Dialog.Description id="pm-exam-finish-description">You can review your answers or submit the exam now. Your timer keeps running.</Dialog.Description>
-                <div className="pm-exam-finish-counts"><span>{answeredCount} answered</span><span>{questions.length - answeredCount} unanswered</span><span>{markedCount} marked</span></div>
-                <div className="pm-exam-finish-marked"><strong>Marked questions</strong><div>{markedIndexes.length ? markedIndexes.map(i =>
-                    <button type="button" key={questions[i].id} onClick={() => startMarkedReview(i)} aria-label={`Review marked question ${i + 1}`}>{i + 1}</button>) : <span>No questions marked for review.</span>}</div></div>
-                {questions.length > answeredCount && <div className="pm-exam-finish-marked pm-exam-finish-unanswered"><strong>Unanswered questions</strong><div>{questions.flatMap((q, i) => !responses[q.id]?.choice ? [i] : []).map(i =>
-                    <button type="button" key={questions[i].id} disabled={!canVisit(i)} title={!canVisit(i) ? 'Answer earlier questions to unlock this question' : undefined} onClick={() => { setFinishOpen(false); goto(i); }} aria-label={`Return to unanswered question ${i + 1}`}>{i + 1}</button>)}</div></div>}
-                {submitError && <div className="alert error" role="alert">{submitError}</div>}
-                <div className="pm-exam-finish-actions"><button type="button" className="btn secondary pm-exam-action" disabled={submitting} onClick={() => { setFinishOpen(false); setReviewingMarked(false); }}>Return to Exam</button>
-                    <button type="button" className="btn secondary pm-exam-action pm-exam-review-marked-action" disabled={!markedCount || submitting} onClick={() => startMarkedReview()}>Review Marked Questions</button>
-                    <button type="button" className="btn pm-exam-action" disabled={submitting} onClick={() => { setSubmitError(''); setConfirmSubmit(true); }}>Submit Exam</button></div>
-            </>}
+            </> : <PmpSubmitReviewSummary
+                total={questions.length}
+                answeredCount={answeredCount}
+                markedIndexes={markedIndexes}
+                unansweredIndexes={questions.flatMap((q, i) => !responses[q.id]?.choice ? [i] : [])}
+                canVisit={canVisit}
+                submitting={submitting}
+                onClose={() => { setFinishOpen(false); setReviewingMarked(false); }}
+                onMarked={i => startMarkedReview(i)}
+                onUnanswered={i => { setFinishOpen(false); goto(i); }}
+                onSubmit={() => { setSubmitError(''); setConfirmSubmit(true); }}
+            />}
         </Dialog.Content></Dialog.Portal></Dialog.Root>
         <Dialog.Root open={calcOpen} onOpenChange={setCalcOpen}><Dialog.Portal><Dialog.Overlay className="pm-exam-modal-overlay"/><Dialog.Content className="pm-exam-modal pm-exam-calc"><Dialog.Close className="pm-exam-modal-close" aria-label="Close"><X/></Dialog.Close>
             <Dialog.Title>Calculator</Dialog.Title><Dialog.Description>Quick arithmetic during the practice exam.</Dialog.Description>

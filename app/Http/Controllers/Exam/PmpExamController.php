@@ -6,6 +6,7 @@ use App\Domain\Billing\Queries\CurrentMemberPlan;
 use App\Domain\Learning\Queries\LearningOverview;
 use App\Http\Controllers\Controller;
 use App\Services\AI\PmpQuestionHelpService;
+use App\Services\Exam\PmpExamSettings;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -18,8 +19,6 @@ use Inertia\Response;
 /** A bounded exam workflow: questions are retrieved in one query, scoring stays server-side. */
 final class PmpExamController extends Controller
 {
-    private const MAX_QUESTIONS = 180;
-
     public function entry(Request $request, CurrentMemberPlan $plans): RedirectResponse
     {
         // Resolve access only on navigation, not on every shared header render.
@@ -28,18 +27,19 @@ final class PmpExamController extends Controller
             : to_route('pricing');
     }
 
-    public function index(Request $request, CurrentMemberPlan $plans, LearningOverview $overview, PmpQuestionHelpService $ai): Response
+    public function index(Request $request, CurrentMemberPlan $plans, LearningOverview $overview, PmpQuestionHelpService $ai, PmpExamSettings $examSettings): Response
     {
         $plan = $plans->details($request->user());
         abort_unless(in_array($plan['code'], ['plus', 'pro'], true), 403,
             'PMP simulator access requires an active Plus or Pro membership.');
         $userId = (int) $request->user()->id;
+        $rules = $examSettings->get();
         $questions = DB::table('pmp_exam_questions')->where('is_active', true)->count();
 
         // Capped history: exactly two batch queries for attempt/response summaries.
         $recentPage = DB::table('pmp_exam_attempts')->where('user_id', $userId)
             ->orderByDesc('id')->limit(41)
-            ->get(['id', 'status', 'question_ids', 'total_questions', 'correct_count',
+            ->get(['id', 'status', 'mode', 'question_ids', 'total_questions', 'correct_count',
                 'started_at', 'expires_at', 'finished_at']);
         $recent = $recentPage->take(40);
         $ids = $recent->pluck('id')->all();
@@ -92,8 +92,9 @@ final class PmpExamController extends Controller
 
         return Inertia::render('exam/Index', [
             'shell' => $overview->shell($request->user()),
-            'availableQuestions' => min(self::MAX_QUESTIONS, $questions),
-            'fullLength' => $questions >= self::MAX_QUESTIONS,
+            'availableQuestions' => $rules['enabled'] ? min($rules['full_question_count'], $questions) : 0,
+            'fullLength' => $questions >= $rules['full_question_count'],
+            'examSettings' => $rules,
             'planCode' => $plan['code'],
             'planDetails' => $plan,
             'targetExamDate' => DB::table('profiles')->where('user_id', $userId)->value('pmp_target_exam_date'),
@@ -106,7 +107,7 @@ final class PmpExamController extends Controller
             'attempts' => $recent->map(function ($attempt) use ($counts) {
                 $summary = $counts->get($attempt->id);
                 return [
-                    'id' => (int) $attempt->id, 'status' => $attempt->status,
+                    'id' => (int) $attempt->id, 'status' => $attempt->status, 'mode' => $attempt->mode,
                     'total_questions' => (int) $attempt->total_questions,
                     'correct_count' => $attempt->correct_count === null ? null : (int) $attempt->correct_count,
                     'started_at' => $attempt->started_at, 'expires_at' => $attempt->expires_at,
@@ -128,7 +129,7 @@ final class PmpExamController extends Controller
             ->where('user_id', $request->user()->id)
             ->where('id', '<', (int) $input['before'])
             ->orderByDesc('id')->limit(41)
-            ->get(['id', 'status', 'total_questions', 'correct_count',
+            ->get(['id', 'status', 'mode', 'total_questions', 'correct_count',
                 'started_at', 'expires_at', 'finished_at']);
         $visible = $records->take(40);
         $ids = $visible->pluck('id')->all();
@@ -143,7 +144,7 @@ final class PmpExamController extends Controller
             'attempts' => $visible->map(function ($attempt) use ($counts): array {
                 $summary = $counts->get($attempt->id);
                 return [
-                    'id' => (int) $attempt->id, 'status' => $attempt->status,
+                    'id' => (int) $attempt->id, 'status' => $attempt->status, 'mode' => $attempt->mode,
                     'total_questions' => (int) $attempt->total_questions,
                     'correct_count' => $attempt->correct_count === null ? null : (int) $attempt->correct_count,
                     'started_at' => $attempt->started_at, 'expires_at' => $attempt->expires_at,
@@ -172,9 +173,11 @@ final class PmpExamController extends Controller
         return response()->json(['targetDate' => $data['targetDate']]);
     }
 
-    public function start(Request $request, CurrentMemberPlan $plans): JsonResponse|RedirectResponse
+    public function start(Request $request, CurrentMemberPlan $plans, PmpExamSettings $examSettings): JsonResponse|RedirectResponse
     {
         $this->authorizeMember($request, $plans);
+        $rules = $examSettings->get();
+        abort_unless($rules['enabled'], 409, 'New PMP attempts are temporarily disabled by the administrator.');
         $data = $request->validate([
             'mode' => ['sometimes', 'in:focused,full'],
             'domain' => ['required_if:mode,focused', 'nullable', 'in:People,Process,Business Environment'],
@@ -182,23 +185,31 @@ final class PmpExamController extends Controller
         $focused = ($data['mode'] ?? 'full') === 'focused';
         $domain = $focused ? $data['domain'] : null;
         $userId = $request->user()->id;
-        $id = DB::transaction(function () use ($userId, $focused, $domain) {
-            // A new mock always gets a new immutable attempt. Existing answers and
-            // resumable attempts are retained, even under concurrent start requests.
+        $id = DB::transaction(function () use ($userId, $focused, $domain, $rules) {
+            // A new mock snapshots both question IDs and current rules. Completed attempts
+            // never change when an administrator adjusts the live question bank or timer.
             DB::table('users')->where('id', $userId)->lockForUpdate()->first(['id']);
-            $questionQuery = DB::table('pmp_exam_questions')->where('is_active', true);
+            $query = DB::table('pmp_exam_questions')->where('is_active', true);
             if ($focused) {
-                $questionQuery->where('domain', $domain);
+                $query->where('domain', $domain);
             }
-            $ids = $questionQuery->orderBy('id')
-                ->limit($focused ? 15 : self::MAX_QUESTIONS)
-                ->pluck('id')->map(fn ($id) => (int) $id)->all();
-            abort_if(count($ids) === 0, 409, 'No active questions are available for this practice selection.');
+            $limit = $focused ? $rules['focused_question_count'] : $rules['full_question_count'];
+            $ids = $this->selectQuestionIds($query, $limit, $rules['shuffle_questions']);
+            abort_if($ids === [], 409, 'No active questions are available for this practice selection.');
+            // Prevent a concurrent admin edit from changing the answer key between
+            // question selection and insertion of this new attempt.
+            DB::table('pmp_exam_questions')->whereIn('id', $ids)->orderBy('id')->sharedLock()->get(['id']);
             $count = count($ids);
-            $minutes = $count === self::MAX_QUESTIONS ? 230 : max(10, (int) ceil($count * 230 / self::MAX_QUESTIONS));
+            $minutes = $focused ? $rules['focused_duration_minutes'] : $rules['full_duration_minutes'];
+            if (! $focused && $count < $rules['full_question_count']) {
+                $minutes = max(10, (int) ceil($count * $minutes / $rules['full_question_count']));
+            }
             $now = now();
             return DB::table('pmp_exam_attempts')->insertGetId([
-                'user_id' => $userId, 'status' => 'in_progress', 'question_ids' => json_encode($ids, JSON_THROW_ON_ERROR),
+                'user_id' => $userId, 'status' => 'in_progress',
+                'mode' => $focused ? 'focused' : 'full',
+                'rules_snapshot' => json_encode($rules, JSON_THROW_ON_ERROR),
+                'question_ids' => json_encode($ids, JSON_THROW_ON_ERROR),
                 'total_questions' => $count, 'started_at' => $now, 'expires_at' => $now->copy()->addMinutes($minutes),
                 'created_at' => $now, 'updated_at' => $now,
             ]);
@@ -294,6 +305,7 @@ final class PmpExamController extends Controller
                 'correct' => $record->correct_count, 'answered' => DB::table('pmp_exam_attempt_answers')->where('attempt_id', $attempt)->whereNotNull('choice')->count(),
                 'finishedAt' => $record->finished_at],
             'domains' => $this->domainScores($record),
+            'readinessThresholds' => $this->thresholds($record),
         ]);
     }
 
@@ -331,6 +343,27 @@ final class PmpExamController extends Controller
         }
     }
 
+    /** Bounded index reads avoid ORDER BY RANDOM() across the entire question bank. */
+    private function selectQuestionIds(\Illuminate\Database\Query\Builder $query, int $limit, bool $shuffle): array
+    {
+        if (! $shuffle) {
+            return $query->orderBy('id')->limit($limit)->pluck('id')->map(fn ($id) => (int) $id)->all();
+        }
+        $range = (clone $query)->selectRaw('MIN(id) AS first_id, MAX(id) AS last_id')->first();
+        if ($range?->first_id === null) {
+            return [];
+        }
+        $pivot = random_int((int) $range->first_id, (int) $range->last_id);
+        $ids = (clone $query)->where('id', '>=', $pivot)->orderBy('id')->limit($limit)->pluck('id')->all();
+        if (count($ids) < $limit) {
+            $ids = array_merge($ids, (clone $query)->where('id', '<', $pivot)->orderBy('id')
+                ->limit($limit - count($ids))->pluck('id')->all());
+        }
+        $ids = array_map('intval', $ids);
+        shuffle($ids);
+        return $ids;
+    }
+
     private function authorizeMember(Request $request, CurrentMemberPlan $plans): string
     {
         $code = $plans->code($request->user());
@@ -360,11 +393,21 @@ final class PmpExamController extends Controller
                 'id' => $row->id, 'domain' => $row->domain, 'difficulty' => $row->difficulty,
                 'prompt' => $row->prompt, 'options' => json_decode($row->options, true, 512, JSON_THROW_ON_ERROR),
             ];
-            return $includeAnswers ? [...$question, 'correct' => $row->correct_option,
+            return $includeAnswers ? [...$question, 'code' => $row->code, 'correct' => $row->correct_option,
                 'explanation' => $row->explanation, 'otherOptions' => $row->other_options,
                 'takeaway' => $row->takeaway, 'concepts' => $row->concepts,
                 'references' => $row->references] : $question;
         })->all();
+    }
+
+    private function thresholds(object $record): array
+    {
+        $snapshot = $record->rules_snapshot ? json_decode($record->rules_snapshot, true, 512, JSON_THROW_ON_ERROR) : [];
+        return [
+            'needs_improvement_below' => $snapshot['needs_improvement_below'] ?? 25,
+            'target_below' => $snapshot['target_below'] ?? 70,
+            'above_target_from' => $snapshot['above_target_from'] ?? 85,
+        ];
     }
 
     /** One grouped query for domain-level performance, no per-question reads. */

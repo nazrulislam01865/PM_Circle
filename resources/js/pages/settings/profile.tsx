@@ -195,15 +195,37 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
 
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setIsSaving(true);
-        router.patch(
-            ProfileController.update.url(),
-            {
+        // Keep the independent privacy-only editor usable for existing members
+        // without a phone; basic profile saves must provide one.
+        if (currentTab === 'edit') {
+            const digits = formData.phone.replace(/\D/g, '');
+            if (digits.length < 7 || digits.length > 15) {
+                setFormErrors((previous) => ({ ...previous, phone: digits.length === 0
+                    ? 'Phone number is required.'
+                    : 'Enter a valid phone number with 7 to 15 digits, including the country code.' }));
+                document.getElementById('pm-profile-phone')?.focus();
+                return;
+            }
+            setFormErrors((previous) => ({ ...previous, phone: '' }));
+        }
+        const payload = currentTab === 'privacy'
+            ? {
+                visibility: formData.visibility,
+                open_to_opportunities: formData.open_to_opportunities,
+                resume_employer_visibility: formData.resume_employer_visibility,
+                contact_visibility: formData.contact_visibility,
+                tab: 'privacy',
+            }
+            : {
                 ...formData,
                 skills: skillsList,
                 languages: formData.languages.map((language) => language.trim()).filter(Boolean),
                 tab: 'edit',
-            },
+            };
+        setIsSaving(true);
+        router.patch(
+            ProfileController.update.url(),
+            payload,
             {
                 preserveScroll: true,
                 onSuccess: () => setFormErrors({}),
@@ -887,8 +909,11 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                             />
                                         </div>
                                     </div>
-                                    <ProfilePhoneField value={formData.phone} country={formData.country}
-                                        onChange={(phone) => setFormData((previous) => ({ ...previous, phone }))} />
+                                    <ProfilePhoneField value={formData.phone} country={formData.country} error={formErrors.phone}
+                                        onChange={(phone) => {
+                                            setFormData((previous) => ({ ...previous, phone }));
+                                            if (formErrors.phone) setFormErrors((previous) => ({ ...previous, phone: '' }));
+                                        }} />
                                 </div>
                             </div>
 

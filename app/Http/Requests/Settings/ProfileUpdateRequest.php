@@ -4,6 +4,7 @@ namespace App\Http\Requests\Settings;
 
 use App\Concerns\ProfileValidationRules;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class ProfileUpdateRequest extends FormRequest
 {
@@ -25,7 +26,20 @@ class ProfileUpdateRequest extends FormRequest
         $rules['email'] = ['sometimes', ...$rules['email']];
 
         return array_merge($rules, [
-            'phone' => ['nullable', 'string', 'max:32', 'regex:/^[+()\d\s.-]*$/'],
+            // Basic-profile saves require a valid private contact number. Independent
+            // privacy-only PATCH requests may omit it to preserve existing controls.
+            'phone' => [
+                Rule::requiredIf(fn (): bool => $this->input('tab') === 'edit'
+                    || $this->hasAny(['headline', 'role', 'industry', 'country', 'city', 'about'])),
+                'string', 'max:32', 'regex:/^[+()\d\s.-]+$/',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (! is_string($value)) return;
+                    $digits = preg_replace('/\D/', '', $value);
+                    if (strlen($digits) < 7 || strlen($digits) > 15) {
+                        $fail('Enter a valid phone number with 7 to 15 digits, including the country code.');
+                    }
+                },
+            ],
             'headline' => ['nullable', 'string', 'max:180'],
             'role' => ['nullable', 'string', 'max:80'],
             'industry' => ['nullable', 'string', 'max:120'],

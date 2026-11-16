@@ -1,12 +1,16 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { Calculator, Clock3, Flag, Highlighter, Strikethrough, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { ExamExplanation, ExamOptionList, Highlighted } from './ExamShared';
+import { ExamExplanation, ExamOptionList, Highlighted, type ExamQuestion } from './ExamShared';
 import { ExamTimeProgress } from './ExamTimeProgress';
-import { pmpPublicSampleDurationSeconds, pmpPublicSampleQuestion as question } from './pmpPublicSampleQuestion';
+import { pmpPublicSampleDurationSeconds, pmpPublicSampleQuestion } from './pmpPublicSampleQuestion';
 
 /** Uses the actual paid simulator's question/option/explanation UI with local-only preview state. */
-export function PmpPublicSampleExam() {
+export function PmpPublicSampleExam({ sampleQuestion = null, sampleDurationSeconds = pmpPublicSampleDurationSeconds }: {
+    sampleQuestion?: ExamQuestion | null; sampleDurationSeconds?: number;
+}) {
+    const question = sampleQuestion ?? pmpPublicSampleQuestion;
+    const duration = Math.max(30, Math.min(900, sampleDurationSeconds));
     const previewRef = useRef<HTMLDivElement>(null);
     const [started, setStarted] = useState(false);
     const [choice, setChoice] = useState<string | null>(null);
@@ -17,8 +21,8 @@ export function PmpPublicSampleExam() {
     const [highlights, setHighlights] = useState<string[]>([]);
     const [reviewed, setReviewed] = useState(false);
     const [error, setError] = useState('');
-    const [deadline, setDeadline] = useState(() => Date.now() + pmpPublicSampleDurationSeconds * 1000);
-    const [seconds, setSeconds] = useState(pmpPublicSampleDurationSeconds);
+    const [deadline, setDeadline] = useState(() => Date.now() + duration * 1000);
+    const [seconds, setSeconds] = useState(duration);
     const [calcOpen, setCalcOpen] = useState(false);
     const [calculator, setCalculator] = useState({ a: '', b: '', op: '+' });
 
@@ -26,7 +30,7 @@ export function PmpPublicSampleExam() {
         const element = previewRef.current;
         if (!element) return;
         const start = () => {
-            setDeadline(Date.now() + pmpPublicSampleDurationSeconds * 1000);
+            setDeadline(Date.now() + duration * 1000);
             setStarted(true);
         };
         if (!('IntersectionObserver' in window)) { start(); return; }
@@ -35,7 +39,7 @@ export function PmpPublicSampleExam() {
         }, { threshold: 0.15 });
         observer.observe(element);
         return () => observer.disconnect();
-    }, []);
+    }, [duration]);
 
     useEffect(() => {
         if (!started || reviewed) return;
@@ -87,8 +91,8 @@ export function PmpPublicSampleExam() {
         setHighlights([]);
         setReviewed(false);
         setError('');
-        setSeconds(pmpPublicSampleDurationSeconds);
-        setDeadline(Date.now() + pmpPublicSampleDurationSeconds * 1000);
+        setSeconds(duration);
+        setDeadline(Date.now() + duration * 1000);
     }
 
     const a = Number(calculator.a);
@@ -108,7 +112,7 @@ export function PmpPublicSampleExam() {
             </div>
         </div>
         <div className="pm-exam-take-body">
-            <ExamTimeProgress secondsRemaining={seconds} durationSeconds={pmpPublicSampleDurationSeconds} label="Sample exam time remaining"/>
+            <ExamTimeProgress secondsRemaining={seconds} durationSeconds={duration} label="Sample exam time remaining"/>
             <div className="pm-exam-take-grid">
                 <section className="pm-exam-panel pm-exam-question-card" aria-label="Public sample exam question">
                     {marked && !finished && <div className="pm-exam-marked-banner"><Flag size={15} fill="currentColor"/><strong>Marked for review</strong><span>· You can review this question before checking your answer.</span></div>}

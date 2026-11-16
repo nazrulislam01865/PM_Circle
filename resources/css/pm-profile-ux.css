@@ -7,7 +7,8 @@
     --pm-profile-field-height: var(--field-height);
     font-family: var(--font);
     color: var(--pm-profile-ink);
-    padding-bottom: 112px;
+    /* The Save bar is in normal document flow; no fixed overlay reserve is needed. */
+    padding-bottom: var(--s6);
 }
 .pm-profile-page .pm-label {
     font-family: inherit;
@@ -66,17 +67,14 @@
 .pm-profile-phone-number-wrap .pm-profile-custom-code { flex: 0 0 90px; width: 90px; }
 .pm-profile-phone-number-wrap > input:last-child { min-width: 0; }
 .pm-profile-sticky-save {
-    position: fixed; bottom: var(--space-3); z-index: 26;
-    left: calc(var(--pm-member-sidebar-width) + var(--pm-member-content-inset));
-    right: var(--pm-member-content-inset);
-    margin-top: 0; padding: var(--space-3) var(--space-4);
+    /* Sticky inside the profile page, so it can never cover the separate footer. */
+    position: sticky; bottom: var(--space-3); z-index: 10;
+    width: 100%; box-sizing: border-box;
+    margin-top: var(--s4); padding: var(--space-3) var(--space-4);
     background: var(--surface); border: 1px solid var(--divider);
     box-shadow: 0 -4px 16px var(--pm-color-fx-537);
     border-radius: var(--card-radius);
     display: flex; gap: var(--space-4); align-items: center; justify-content: space-between;
-}
-.pm-dashboard:has(.pm-dash-sidebar.is-collapsed) .pm-profile-sticky-save {
-    left: calc(var(--pm-member-sidebar-collapsed-width) + var(--pm-member-content-inset));
 }
 .pm-profile-save-description { color: var(--muted); font-size: var(--type-small); line-height: var(--pm-line-height-20px); }
 .pm-profile-sticky-buttons { display: flex; gap: var(--space-3); align-items: center; flex-shrink: 0; }
@@ -95,7 +93,7 @@
 .pm-image-crop-alert { color: var(--warning); background: var(--warning-soft); padding: var(--space-3); border-radius: var(--radius); display: flex; gap: var(--space-2); align-items: start; }
 .pm-image-crop-loading { display: flex; align-items: center; justify-content: center; gap: var(--space-3); min-height: 120px; }
 @media (max-width: 650px) {
-    .pm-profile-sticky-save, .pm-dashboard:has(.pm-dash-sidebar.is-collapsed) .pm-profile-sticky-save { left: var(--space-3); right: var(--space-3); bottom: var(--space-2); }
+    .pm-profile-sticky-save { bottom: var(--space-2); }
 }
 @media (max-width: 760px) {
     .pm-profile-page .pm-form-row-2, .pm-profile-phone-field { grid-template-columns: minmax(0,1fr); }

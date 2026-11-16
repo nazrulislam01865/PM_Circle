@@ -26,6 +26,7 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
     const isMaster = active === '/admin/master-data';
     const isNavigation = active === '/admin/navigation';
     const isPmp = active === '/admin/exam-simulator/pmp';
+    const isPmpBank = active === '/admin/exam-simulator/pmp/questions';
     const [homeOpen, setHomeOpen] = useState(isHomepage);
     const [masterOpen, setMasterOpen] = useState(isMaster);
     const [navOpen, setNavOpen] = useState(isNavigation);
@@ -128,6 +129,10 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
                                 className="pm-admin-submenu-link" onClick={() => setMobileOpen(false)}>{contents}</Link>;
                     })}
                 </div>}
+                <Link href="/admin/exam-simulator/pmp/questions" aria-current={isPmpBank ? 'page' : undefined}
+                    className={`pm-admin-nav-link ${isPmpBank ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
+                    <ClipboardCheck size={18} aria-hidden="true"/><span>PMP questions &amp; settings</span>
+                </Link>
                 {adminGroup(<Route size={18} aria-hidden="true"/>, 'Navigation control', '/admin/navigation', navOpen, () => setNavOpen(value => !value), navigationGroups)}
                 {adminGroup(<Database size={18} aria-hidden="true"/>, 'Master data', '/admin/master-data', masterOpen, () => setMasterOpen(value => !value), dropdownGroups)}
                 <span className="pm-admin-nav-label pm-admin-nav-label-separate">QUICK LINKS</span>

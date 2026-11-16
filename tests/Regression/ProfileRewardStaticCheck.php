@@ -31,9 +31,14 @@ $assert(str_contains($css, 'var(--reward-surface)') && str_contains($tokens, '--
 
 $header = $read('resources/js/components/dashboard/MemberHomeHeader.tsx');
 $pathway = $read('resources/js/components/home/HomePathway.tsx');
-$assert(str_contains($header, 'className="pm-header-profile-reward-badge" href="#pm-pathway-exams-title"')
+$middleware = $read('app/Http/Middleware/HandleInertiaRequests.php');
+$assert(str_contains($middleware, "'rewardPromotion' => fn ()")
+    && str_contains($middleware, 'ProfileCompletionRewardService::class)->publicPromotion()')
+    && str_contains($header, 'page.props.rewardPromotion && <a')
+    && str_contains($header, "pathname === '/' ? '#pm-pathway-exams-title' : '/#pm-pathway-exams-title'")
+    && ! str_contains($header, "!user && pathname === '/' && page.props.rewardPromotion")
     && str_contains($pathway, 'id="pm-pathway-exams-title"'),
-    'Guest header reward links directly to the homepage exam section');
+    'Cached, enabled reward promotion appears on guest and member headers and links to the homepage offer');
 $assert(str_contains($css, 'color: var(--exam-nav-ink); background: var(--exam-nav-soft)')
     && str_contains($css, 'background: var(--exam-nav-hover)')
     && str_contains($css, 'scroll-margin-top: calc(var(--header-height) + var(--s4))'),
@@ -41,6 +46,6 @@ $assert(str_contains($css, 'color: var(--exam-nav-ink); background: var(--exam-n
 
 $assert(str_contains($css, 'align-self: center; flex: none;')
     && str_contains($css, 'min-height: var(--control-height); padding-inline: var(--s4);')
-    && str_contains($css, '@media (max-width: 1400px)')
+    && str_contains($css, '@media (max-width: 960px)')
     && str_contains($css, 'align-self: stretch;'),
     'Header reward stays vertically centered with the Exam Simulator pill and fills collapsed navigation rows');

@@ -13,6 +13,7 @@ type ExamResultAttempt = {
 };
 
 type DomainScore = { domain: string; total: number; correct: number };
+type Thresholds = { needs_improvement_below: number; target_below: number; above_target_from: number };
 type ReadinessLevel = 'needs-improvement' | 'below-target' | 'target' | 'above-target';
 
 const readinessBands: { key: ReadinessLevel; label: string }[] = [
@@ -24,10 +25,10 @@ const readinessBands: { key: ReadinessLevel; label: string }[] = [
 
 // These are educational practice bands, not official PMP examination ratings.
 // The practice readiness target (70%) matches the existing simulator guidance.
-function readinessLevel(percent: number): ReadinessLevel {
-    if (percent < 25) return 'needs-improvement';
-    if (percent < 70) return 'below-target';
-    if (percent < 85) return 'target';
+function readinessLevel(percent: number, thresholds: Thresholds): ReadinessLevel {
+    if (percent < thresholds.needs_improvement_below) return 'needs-improvement';
+    if (percent < thresholds.target_below) return 'below-target';
+    if (percent < thresholds.above_target_from) return 'target';
     return 'above-target';
 }
 
@@ -35,9 +36,9 @@ function scorePercent(correct: number, total: number): number {
     return total > 0 ? Math.round((correct / total) * 100) : 0;
 }
 
-function OverallPerformance({ correct, total }: { correct: number; total: number }) {
+function OverallPerformance({ correct, total, thresholds }: { correct: number; total: number; thresholds: Thresholds }) {
     const percent = scorePercent(correct, total);
-    const level = readinessLevel(percent);
+    const level = readinessLevel(percent, thresholds);
     const status = {
         'needs-improvement': 'Needs Improvement',
         'below-target': 'Below Practice Target',
@@ -63,7 +64,7 @@ function OverallPerformance({ correct, total }: { correct: number; total: number
     </div>;
 }
 
-function DomainPerformance({ domains }: { domains: DomainScore[] }) {
+function DomainPerformance({ domains, thresholds }: { domains: DomainScore[]; thresholds: Thresholds }) {
     const domainOrder = ['People', 'Process', 'Business Environment'];
     const orderedDomains = [...domains].sort((a, b) => {
         const first = domainOrder.indexOf(a.domain);
@@ -77,7 +78,7 @@ function DomainPerformance({ domains }: { domains: DomainScore[] }) {
         <h2>Performance by Domain</h2>
         {orderedDomains.length ? <div className="pm-exam-report-domains">
             {orderedDomains.map(domain => {
-                const level = readinessLevel(scorePercent(domain.correct, domain.total));
+                const level = readinessLevel(scorePercent(domain.correct, domain.total), thresholds);
                 const label = readinessBands.find(band => band.key === level)?.label;
                 return <div className="pm-exam-report-domain-row" key={domain.domain}>
                     <strong>{domain.domain}</strong>
@@ -103,10 +104,11 @@ function PracticeSummary({ attempt }: { attempt: ExamResultAttempt }) {
     </section>;
 }
 
-export default function Result({ shell, attempt, domains }: {
+export default function Result({ shell, attempt, domains, readinessThresholds }: {
     shell: DashboardShellData;
     attempt: ExamResultAttempt;
     domains: DomainScore[];
+    readinessThresholds: Thresholds;
 }) {
     const { startExam, starting, startError } = useExamStart();
     return <ExamPage shell={shell} className="pm-exam-result-page">
@@ -125,8 +127,8 @@ export default function Result({ shell, attempt, domains }: {
 
             <section className="pm-exam-panel pm-exam-report-card" aria-labelledby="pm-exam-overall-title">
                 <h2 id="pm-exam-overall-title">Overall Performance</h2>
-                <OverallPerformance correct={attempt.correct} total={attempt.total}/>
-                <DomainPerformance domains={domains}/>
+                <OverallPerformance correct={attempt.correct} total={attempt.total} thresholds={readinessThresholds}/>
+                <DomainPerformance domains={domains} thresholds={readinessThresholds}/>
             </section>
 
             <PracticeSummary attempt={attempt}/>

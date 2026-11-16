@@ -24,7 +24,7 @@ $assert(str_contains($controller, "'serverNow' => now()->toIso8601String()")
 $math = $read('resources/js/components/exam/examCountdownMath.ts');
 $policy = $read('resources/js/components/pm/siteFooterVisibility.ts');
 $assert(str_contains($paid, '<ExamTimeProgress secondsRemaining={seconds} durationSeconds={duration}/>')
-    && str_contains($sample, '<ExamTimeProgress secondsRemaining={seconds} durationSeconds={pmpPublicSampleDurationSeconds}'),
+    && str_contains($sample, '<ExamTimeProgress secondsRemaining={seconds} durationSeconds={duration}'),
     'Paid and public exams use one time-remaining progress component');
 $assert(str_contains($paid, 'Math.abs(attempt.durationSeconds)'),
     'Paid exam normalizes legacy negative duration before computing time remaining percentage');

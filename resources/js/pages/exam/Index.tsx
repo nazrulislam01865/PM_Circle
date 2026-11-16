@@ -13,6 +13,7 @@ type Props = {
     shell: DashboardShellData;
     availableQuestions: number;
     fullLength: boolean;
+    examSettings: { enabled: boolean; full_question_count: number; focused_question_count: number; };
     planCode: string;
     planDetails: PmpPlanDetails;
     targetExamDate: string | null;
@@ -26,7 +27,7 @@ type Props = {
 const dashboardTabs: PmpDashboardTab[] = ['overview', 'performance', 'history', 'ai'];
 
 /** Four prototype-matched views, one visible at a time. No navigation requests for tab changes. */
-export default function Index({ shell, availableQuestions, fullLength, planCode, planDetails,
+export default function Index({ shell, availableQuestions, fullLength, examSettings, planCode, planDetails,
     targetExamDate, attemptTotals, aiUsage, attempts, topicAccuracy, historyNextCursor }: Props) {
     const page = usePage();
     const [active, setActive] = useState<PmpDashboardTab>(() => {
@@ -56,12 +57,12 @@ export default function Index({ shell, availableQuestions, fullLength, planCode,
             <div className="pm-pmp-dashboard-main" id="pmp-dashboard-content" role="tabpanel" aria-labelledby={`pm-pmp-tab-${active}`} tabIndex={0}>
                 {active === 'overview' && <PmpOverview attempts={attempts} planCode={planCode} planDetails={planDetails}
                     attemptTotals={attemptTotals} aiUsage={aiUsage} topics={topicAccuracy} targetExamDate={targetExamDate}
-                    availableQuestions={availableQuestions} fullLength={fullLength}
+                    availableQuestions={availableQuestions} fullLength={fullLength} fullQuestionCount={examSettings.full_question_count} focusedQuestionCount={examSettings.focused_question_count}
                     onStart={onStart} onFocus={onFocus} starting={starting} onAi={() => setActive('ai')}/>}
                 {active === 'performance' && <PmpPerformance attempts={attempts} topics={topicAccuracy}
-                    onStart={onStart} onFocus={onFocus} starting={starting} canStart={availableQuestions > 0}/>}
+                    onStart={onStart} onFocus={onFocus} starting={starting} canStart={availableQuestions > 0} fullQuestionCount={examSettings.full_question_count}/>}
                 {active === 'history' && <PmpHistory attempts={attempts} initialNextCursor={historyNextCursor}
-                    onStart={onStart} starting={starting} canStart={availableQuestions > 0}/>}
+                    onStart={onStart} starting={starting} canStart={availableQuestions > 0} fullQuestionCount={examSettings.full_question_count}/>}
                 {active === 'ai' && <PmpAiUsage usage={aiUsage}/>}
             </div>
         </div>

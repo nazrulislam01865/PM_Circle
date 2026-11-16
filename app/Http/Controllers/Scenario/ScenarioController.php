@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Scenario;
 
 use App\Http\Controllers\Controller;
 use App\Models\Scenario;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -125,7 +126,8 @@ class ScenarioController extends Controller
                 'replies' => fn ($q) => $q->with([
                     'user:id,name',
                     'user.profile' => fn ($p) => $p->where('visibility', 'public')->select('id', 'user_id', 'role', 'avatar_path'),
-                ])->oldest(),
+                    ...($viewerId ? ['reactions' => fn ($reactions) => $reactions->where('user_id', $viewerId)] : []),
+                ])->withCount('reactions')->oldest(),
             ])
             ->withCount('reactions')
             ->orderByDesc('is_community_helpful')
@@ -146,7 +148,7 @@ class ScenarioController extends Controller
         ]);
     }
 
-    public function respond(Request $request, Scenario $scenario): RedirectResponse
+    public function respond(Request $request, Scenario $scenario): RedirectResponse|JsonResponse
     {
         abort_unless($scenario->status === 'published', 404);
         $validated = $request->validate([
@@ -170,7 +172,7 @@ class ScenarioController extends Controller
             ];
         }
 
-        $scenario->responses()->create([
+        $created = $scenario->responses()->create([
             'user_id' => $request->user()->id,
             'parent_id' => $validated['parent_id'] ?? null,
             'body' => $validated['body'],
@@ -181,6 +183,29 @@ class ScenarioController extends Controller
             'is_community_helpful' => false,
             'is_question' => str_ends_with(trim($validated['body']), '?'),
         ]);
+
+        if ($request->expectsJson() && $isReply) {
+            // Reuse the post comment editor without forcing a full Inertia reload.
+            // Return only public profile fields; never serialize the member's private profile.
+            $publicProfile = $request->user()->profile()->where('visibility', 'public')
+                ->first(['role', 'avatar_path']);
+
+            return response()->json(['reply' => [
+                'id' => $created->id,
+                'body' => $created->body,
+                'created_at' => $created->created_at->toISOString(),
+                'reactions_count' => 0,
+                'reactions' => [],
+                'user' => [
+                    'id' => $request->user()->id,
+                    'name' => $request->user()->name,
+                    'profile' => $publicProfile ? [
+                        'role' => $publicProfile->role,
+                        'avatar_path' => $publicProfile->avatar_path,
+                    ] : null,
+                ],
+            ]], 201);
+        }
 
         return back();
     }

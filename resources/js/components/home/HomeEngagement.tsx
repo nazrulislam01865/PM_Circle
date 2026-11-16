@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 export type ReactionType = 'like' | 'love' | 'care' | 'haha' | 'wow' | 'sad' | 'angry';
 export type RequestToJoin = (action: string) => void;
 
-const reactions: { type: ReactionType; label: string; Icon: ComponentType<{ size?: number; 'aria-hidden'?: boolean }> }[] = [
+export const reactionOptions: { type: ReactionType; label: string; Icon: ComponentType<{ size?: number; 'aria-hidden'?: boolean }> }[] = [
     { type: 'like', label: 'Like', Icon: ThumbsUp },
     { type: 'love', label: 'Love', Icon: Heart },
     { type: 'care', label: 'Care', Icon: HandHeart },
@@ -38,10 +38,11 @@ export function JoinCommunityDialog({ action, onClose, hasAccount }: {
     </Dialog>;
 }
 
-export function ReactionPicker({ endpoint, initial, total, canInteract, onJoin, label = 'post', onChanged }: {
+export function ReactionPicker({ endpoint, initial, total, canInteract, onJoin, label = 'post', onChanged, showCount = true }: {
     endpoint: string; initial?: ReactionType | null; total?: number;
     canInteract: boolean; onJoin: RequestToJoin; label?: string;
     onChanged?: (reaction: ReactionType | null, count: number) => void;
+    showCount?: boolean;
 }) {
     const [active, setActive] = useState<ReactionType | null>(initial ?? null);
     const [count, setCount] = useState(total ?? 0);
@@ -95,7 +96,7 @@ export function ReactionPicker({ endpoint, initial, total, canInteract, onJoin, 
             setError(reason instanceof Error ? reason.message : 'Unable to save your reaction.');
         } finally { setBusy(false); }
     };
-    const chosen = reactions.find(reaction => reaction.type === active);
+    const chosen = reactionOptions.find(reaction => reaction.type === active);
     const MainIcon = chosen?.Icon ?? ThumbsUp;
     return <div className="pm-home-reaction-root" ref={root} data-open={open ? 'true' : 'false'}>
         <button type="button" className={`pm-home-action pm-home-reaction-main${active ? ` is-${active}` : ''}`}
@@ -105,10 +106,10 @@ export function ReactionPicker({ endpoint, initial, total, canInteract, onJoin, 
             onClick={() => { if (touch.current) { setOpen(value => !value); touch.current = false; } else void react(active ?? 'like'); }}>
             <MainIcon size={19} aria-hidden={true}/>
             <span>{chosen?.label ?? 'Like'}</span>
-            {count > 0 && <span className="pm-home-reaction-count">{count}</span>}
+            {showCount && count > 0 && <span className="pm-home-reaction-count">{count}</span>}
         </button>
         <div className="pm-home-reaction-options" role="group" aria-label={`Choose reaction to ${label}`}>
-            {reactions.map(({ type, label: name, Icon }) => <button key={type} type="button"
+            {reactionOptions.map(({ type, label: name, Icon }) => <button key={type} type="button"
                 title={name} className={`pm-home-reaction-choice is-${type}`} disabled={busy}
                 aria-label={`${name} reaction`} aria-pressed={active === type}
                 onClick={() => { void react(type); }}><Icon size={23} aria-hidden={true}/></button>)}

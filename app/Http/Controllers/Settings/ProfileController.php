@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Domain\Community\Services\EngagementStats;
 use App\Jobs\AnalyzeProfileResume;
 use App\Domain\Billing\Queries\CurrentMemberPlan;
+use App\Domain\Billing\Services\ProfileCompletionRewardService;
+use App\Domain\Identity\Services\ProfileCompleteness;
 use App\Services\Resume\ApplyProfileImport;
 use App\Services\Resume\ProfileImportPresenter;
 use App\Services\Resume\ResumeTextExtractor;
@@ -85,16 +87,14 @@ class ProfileController extends Controller
             ? app(ProfileImportPresenter::class)->present($user, $recentImports->first(), $recentImports)
             : ['id' => null, 'status' => 'empty', 'step' => 1, 'filename' => null, 'comparisons' => [], 'warnings' => [], 'history' => []];
 
-        // Profile completeness (80% matching p3.png)
-        $completedFields = collect([$user->name, $profile->headline, $profile->role, $profile->industry,
-            $profile->country, $profile->city, $profile->about, $profile->avatar_path,
-            count($skills) ? 'skills' : null, $experiences->isNotEmpty() ? 'experience' : null]);
-        $completenessScore = $completedFields->filter(fn ($value) => filled($value))->count() * 10;
+        // The dashboard and profile must use the exact same server-side criteria.
+        $completenessScore = app(ProfileCompleteness::class)->percentage($user);
 
         return Inertia::render('settings/profile', [
             'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
             'activeTab' => $activeTab,
+            'profileReward' => app(ProfileCompletionRewardService::class)->forMember($user, $completenessScore),
             'profileData' => [
                 'id' => $user->id,
                 'name' => $user->name,

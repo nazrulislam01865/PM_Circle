@@ -1,0 +1,121 @@
+/* Reused across the dashboard, profile suite, homepage and admin.
+   Visual metrics/colors/type are centrally defined in pm-design-tokens.css. */
+.pm-profile-reward-card {
+    min-width: 0;
+    border: 1px solid var(--reward-border);
+    border-radius: var(--radius-card);
+    background: linear-gradient(115deg, var(--reward-surface), var(--reward-surface-bright));
+    padding: var(--s3);
+    color: var(--ink);
+}
+.pm-profile-reward-content { display: flex; align-items: flex-start; gap: var(--s3); min-width: 0; }
+.pm-profile-reward-icon {
+    width: var(--control-touch); height: var(--control-touch); flex: none;
+    border: 1px solid var(--reward-border); border-radius: var(--radius-control);
+    background: var(--reward-icon-bg); color: var(--reward-icon-ink);
+    display: grid; place-items: center;
+}
+.pm-profile-reward-main { flex: 1 1 0; min-width: 0; }
+.pm-profile-reward-main h2 {
+    margin: 0 0 var(--s1); font: var(--bold) var(--text-ui)/var(--line-ui) var(--font-ui); color: var(--ink);
+}
+.pm-profile-reward-main > p { margin: 0; font: var(--regular) var(--text-xs)/var(--line-xs) var(--font-ui); color: var(--ink); }
+.pm-profile-reward-complete {
+    display: inline-flex; align-items: center; gap: var(--s1); margin-top: var(--s2);
+    color: var(--blue); font: var(--semibold) var(--text-sm)/var(--line-sm) var(--font-ui);
+}
+.pm-profile-reward-code-row {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--s1);
+    background: var(--track); border-radius: var(--radius-control);
+    margin-top: var(--s2); min-height: var(--control-compact); overflow: hidden;
+}
+.pm-profile-reward-code {
+    font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui);
+    letter-spacing: .03em; font-variant-numeric: tabular-nums;
+    padding: var(--s1) var(--s2); min-width: 0; overflow-wrap: anywhere;
+}
+.pm-profile-reward-copy {
+    flex: none; display: inline-flex; align-items: center; justify-content: center;
+    gap: var(--s1); border: 0; border-radius: var(--radius-control);
+    padding: var(--s2); min-height: var(--control-compact); cursor: pointer;
+    color: var(--blue); background: var(--blue-soft);
+    font: var(--semibold) var(--text-xs)/var(--line-xs) var(--font-ui);
+}
+.pm-profile-reward-copy:hover { background: var(--track); }
+.pm-profile-reward-main > .pm-profile-reward-expiry {
+    display: flex; align-items: center; gap: var(--s1); color: var(--muted);
+    margin-top: var(--s2); font: var(--regular) var(--text-xs)/var(--line-xs) var(--font-ui);
+}
+.pm-profile-reward-main > .pm-profile-reward-error { color: var(--red); margin-top: var(--s1); }
+.pm-member-home .pm-dash-right .pm-profile-reward-card { padding: var(--s3); }
+.pm-profile-reward-dashboard:has(.pm-profile-reward-complete) .pm-profile-reward-content { align-items: center; }
+.pm-profile-reward-dashboard:has(.pm-profile-reward-complete) .pm-profile-reward-main h2 { margin-bottom: var(--s1); }
+.pm-profile-reward-profile { margin-bottom: var(--s3); }
+.pm-profile-reward-profile .pm-profile-reward-icon { width: var(--control-touch); height: var(--control-touch); }
+.pm-profile-reward-promotion {
+    display: flex; align-items: center; gap: var(--s3); min-height: var(--control-height);
+    margin: var(--s3) 27px 0; padding: var(--s2) var(--s4);
+    border: 1px solid var(--reward-border); border-radius: var(--radius-control);
+    background: linear-gradient(105deg, var(--reward-surface-bright), var(--reward-surface));
+    font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui); color: var(--ink);
+}
+.pm-profile-reward-promotion > svg { color: var(--reward-icon-ink); flex: none; }
+.pm-profile-reward-promotion > span { flex: 1 1 0; min-width: 0; }
+.pm-profile-reward-promotion > a {
+    display: inline-flex; align-items: center; gap: var(--s1); flex: none;
+    color: var(--blue); font-weight: var(--semibold); white-space: nowrap;
+}
+.pm-member-home-header .pm-header-profile-reward-badge {
+    display: inline-flex; align-items: center; justify-content: center; gap: var(--s2);
+    /* Navigation uses align-items: stretch; match the centered Exam Simulator pill. */
+    align-self: center; flex: none;
+    min-height: var(--control-height); padding-inline: var(--s4);
+    border: 0; border-radius: var(--radius-pill);
+    color: var(--exam-nav-ink); background: var(--exam-nav-soft);
+    font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui);
+    text-decoration: none; white-space: nowrap;
+}
+.pm-member-home-header .pm-header-profile-reward-badge .pm-nav-icon {
+    width: var(--icon); height: var(--icon); flex: none; stroke-width: 2;
+}
+.pm-member-home-header .pm-header-profile-reward-badge:is(:hover,:focus-visible) {
+    color: var(--exam-nav-ink); background: var(--exam-nav-hover);
+}
+/* Keep the destination heading visible beneath the sticky shared header. */
+.pm-home #pm-pathway-exams-title {
+    scroll-margin-top: calc(var(--header-height) + var(--s4));
+}
+.pm-profile-reward-admin-panel { display: grid; gap: var(--s5); }
+.pm-profile-reward-admin-intro { display: flex; gap: var(--s3); align-items: start; }
+.pm-profile-reward-admin-intro > svg { flex: none; color: var(--reward-icon-ink); }
+.pm-profile-reward-admin-intro h2 { font: var(--bold) var(--text-h3)/var(--line-h3) var(--font-ui); }
+.pm-profile-reward-admin-intro p { font: var(--regular) var(--text-ui)/var(--line-ui) var(--font-ui); color: var(--muted); margin-top: var(--s1); }
+.pm-profile-reward-admin-form { display: grid; gap: var(--s4); }
+.pm-profile-reward-admin-enabled { display: inline-flex; gap: var(--s2); align-items: center; font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui); }
+.pm-profile-reward-admin-enabled input { accent-color: var(--blue); width: var(--s4); height: var(--s4); }
+.pm-profile-reward-admin-note { display: flex; gap: var(--s2); color: var(--muted); font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui); }
+.pm-profile-reward-admin-note svg { color: var(--blue); flex: none; }
+.pm-profile-reward-admin-form > button { justify-self: start; }
+@media (pointer: coarse) {
+    .pm-member-home-header .pm-header-profile-reward-badge { min-height: var(--control-touch); }
+}
+/* The collapsed navigation is a vertical list, not a horizontal pill row. */
+@media (max-width: 1400px) {
+    .pm-member-home-header .pm-member-home-nav .pm-header-profile-reward-badge {
+        align-self: stretch;
+        justify-content: flex-start;
+        min-height: var(--control-touch);
+        padding-inline: var(--s3);
+        border-radius: var(--radius-control);
+    }
+}
+@media (max-width: 53rem) { .pm-profile-reward-promotion { margin-inline: var(--s1); } }
+@media (max-width: 42rem) {
+    .pm-profile-reward-promotion { flex-wrap: wrap; padding: var(--s3); }
+    .pm-profile-reward-promotion > span { flex-basis: calc(100% - var(--control-touch)); }
+    .pm-profile-reward-promotion > a { margin-left: calc(var(--s3) + var(--icon)); min-height: var(--control-touch); }
+    .pm-profile-reward-copy { min-height: var(--control-touch); }
+    .pm-profile-reward-code-row { flex-wrap: wrap; }
+}
+
+.pm-member-overview-completion-label strong { display: inline-flex; align-items: center; gap: var(--s1); }

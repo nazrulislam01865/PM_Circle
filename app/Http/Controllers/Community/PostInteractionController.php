@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Domain\Community\Actions\ReactToPost;
 use App\Domain\Community\Actions\ReactToComment;
 use App\Domain\Community\Services\EngagementStats;
+use App\Support\ProfileMediaUrl;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use App\Models\Comment;
@@ -198,6 +199,65 @@ class PostInteractionController extends Controller
         return $request->expectsJson()
             ? response()->json(['reaction' => null, 'count' => $count])
             : back();
+    }
+
+    /** On-demand reaction tabs and bounded, cursor-stable real member rows. */
+    public function reactionUsers(Request $request, Post $post): JsonResponse
+    {
+        $this->ensurePublic($post, $request);
+        $input = $request->validate([
+            'type' => ['nullable', Rule::in(EngagementStats::TYPES)],
+            'after' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        $counts = array_fill_keys(EngagementStats::TYPES, 0);
+        if (EngagementStats::readsEnabled()) {
+            $stats = DB::table('post_engagement_stats')->where('post_id', $post->id)
+                ->first(array_map(fn (string $type): string => $type.'_count', EngagementStats::TYPES));
+            foreach (EngagementStats::TYPES as $type) {
+                $counts[$type] = (int) ($stats->{$type.'_count'} ?? 0);
+            }
+        } else {
+            $grouped = DB::table('post_reactions')->where('post_id', $post->id)
+                ->whereIn('type', EngagementStats::TYPES)
+                ->select('type')->selectRaw('COUNT(*) AS total')->groupBy('type')->get();
+            foreach ($grouped as $row) {
+                $counts[$row->type] = (int) $row->total;
+            }
+        }
+
+        $rows = DB::table('post_reactions as r')
+            ->join('users as users', 'users.id', '=', 'r.user_id')
+            ->leftJoin('profiles as profile', 'profile.user_id', '=', 'users.id')
+            ->where('r.post_id', $post->id)
+            ->whereIn('r.type', EngagementStats::TYPES)
+            ->when(isset($input['type']), fn ($query) => $query->where('r.type', $input['type']))
+            ->when(isset($input['after']), fn ($query) => $query->where('r.id', '<', $input['after']))
+            ->orderByDesc('r.id')->limit(21)
+            ->get(['r.id', 'r.type', 'users.id as user_id', 'users.name', 'users.status', 'users.is_admin',
+                'users.email_verified_at', 'profile.avatar_path', 'profile.visibility']);
+
+        $hasMore = $rows->count() > 20;
+        $page = $rows->take(20);
+
+        return response()->json([
+            'total' => array_sum($counts),
+            'counts' => $counts,
+            'data' => $page->map(static function ($row): array {
+                $publicProfile = $row->visibility === 'public' && $row->status === 'active'
+                    && ! $row->is_admin && (! config('pm-circle.email_verification_required')
+                        || $row->email_verified_at !== null);
+
+                return [
+                    'id' => (int) $row->id,
+                    'type' => $row->type,
+                    'name' => $row->name,
+                    'avatar_url' => $publicProfile ? ProfileMediaUrl::for($row->avatar_path, 'avatar') : null,
+                    'profile_url' => $publicProfile ? '/members/'.$row->user_id : null,
+                ];
+            })->values()->all(),
+            'next_cursor' => $hasMore ? (int) $page->last()->id : null,
+        ])->header('Cache-Control', 'private, no-store');
     }
 
     /** Paginate one root's replies; never return the complete thread in one request. */

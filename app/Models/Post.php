@@ -73,10 +73,20 @@ class Post extends Model
                 $visible->where('posts.visibility', 'public');
                 if ($viewerId) $visible->orWhere('posts.visibility', 'members');
             });
+        if ($viewerId && $tab === 'hidden') {
+            return $query->whereExists(fn ($hidden) => $hidden->selectRaw('1')
+                ->from('post_hides')->whereColumn('post_hides.post_id', 'posts.id')
+                ->where('post_hides.user_id', $viewerId));
+        }
         if ($viewerId) {
             $query->whereNotExists(fn ($hidden) => $hidden->selectRaw('1')
                 ->from('post_hides')->whereColumn('post_hides.post_id', 'posts.id')
                 ->where('post_hides.user_id', $viewerId));
+        }
+        if ($tab === 'saved' || $tab === 'hidden') {
+            return $viewerId ? $query->whereExists(fn ($saves) => $saves->selectRaw('1')
+                ->from('post_saves')->whereColumn('post_saves.post_id', 'posts.id')
+                ->where('post_saves.user_id', $viewerId)) : $query->whereRaw('1 = 0');
         }
 
         if ($tab === 'mine') {

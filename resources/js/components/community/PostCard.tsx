@@ -5,6 +5,7 @@ import { Avatar } from '@/components/pm/Avatar';
 import { PostContent } from '@/components/community/PostContent';
 import { PostActionMenu } from '@/components/community/PostActionMenu';
 import { PostPoll } from '@/components/community/PostPoll';
+import type { ReactionCounts } from '@/components/community/PostReactions';
 
 export type PostPreview = {
     id: number;
@@ -16,11 +17,12 @@ export type PostPreview = {
     claps_count?: number;
     likes_count?: number;
     reactions_count?: number;
+    reaction_breakdown?: ReactionCounts;
     viewer_reaction?: ReactionType | null;
     comments_count: number;
     published_at: string | null;
     ai_generated?: boolean; is_anonymous?: boolean; visibility?: string;
-    viewer_is_author?: boolean; viewer_muted?: boolean; viewer_saved?: boolean; viewer_vote?: number | null;
+    viewer_is_author?: boolean; viewer_muted?: boolean; viewer_saved?: boolean; viewer_hidden?: boolean; viewer_vote?: number | null;
     poll_options?: { id: number; label: string; votes_count: number }[];
     author: {
         name: string;
@@ -37,14 +39,16 @@ export function PostCard({
     isGuest = true,
     onJoin = () => {},
     onReactionChange,
-    onCommentAdded, onSavedChange, onRemoved, onUpdated, onMuteChange, mode = 'feed',
+    onCommentAdded, onSavedChange, onHiddenChange, onRemoved, onUpdated, onMuteChange, mode = 'feed',
 }: {
     post: PostPreview;
     isGuest?: boolean;
     onJoin?: RequestToJoin;
     onReactionChange?: (reaction: ReactionType | null, count: number) => void;
     onCommentAdded?: () => void;
-    onSavedChange?: (saved: boolean) => void; onRemoved?: () => void;
+    onSavedChange?: (saved: boolean) => void;
+    onHiddenChange?: (hidden: boolean) => void;
+    onRemoved?: () => void;
     onUpdated?: (updated: { body: string; image_path: string | null }) => void;
     onMuteChange?: (muted: boolean) => void;
     mode?: 'feed' | 'detail';
@@ -71,16 +75,16 @@ export function PostCard({
                         <small>Posted {formattedDate}{categoryLabel && <> · <span className="pm-post-category-inline">{categoryLabel}</span></>}</small>
                     </div>
                 </div>
-                {!isGuest && <PostActionMenu post={{ id: post.id, body: post.body, image_path: post.image_path, topic: post.topic, is_anonymous: post.is_anonymous, visibility: post.visibility }} isOwner={Boolean(post.viewer_is_author)} muted={Boolean(post.viewer_muted)} authorName={post.author.name}
-                    onRemoved={onRemoved} onUpdated={onUpdated} onMuteChange={onMuteChange} />}
+                {!isGuest && <PostActionMenu post={{ id: post.id, body: post.body, image_path: post.image_path, topic: post.topic, is_anonymous: post.is_anonymous, visibility: post.visibility }} isOwner={Boolean(post.viewer_is_author)} muted={Boolean(post.viewer_muted)} hidden={Boolean(post.viewer_hidden)} authorName={post.author.name}
+                    onRemoved={onRemoved} onUpdated={onUpdated} onMuteChange={onMuteChange} onHiddenChange={onHiddenChange} />}
             </header>
 
             <div className="pm-post-card-main pm-post-aligned-content">
-                {post.title && (mode === 'detail' ? <h1 className="pm-card-title">{post.title}</h1> : <h3 className="pm-card-title"><Link href={`/posts/${post.id}`}>{post.title}</Link></h3>)}
-                {mode === 'detail' ? <PostContent className="pm-card-body" body={post.body} image={post.image_path}/>
+                {post.title && (mode === 'detail' ? <h1 className="pm-card-title">{post.title}</h1> : <h3 className="pm-card-title">{post.viewer_hidden ? post.title : <Link href={`/posts/${post.id}`}>{post.title}</Link>}</h3>)}
+                {mode === 'detail' || post.viewer_hidden ? <PostContent className="pm-card-body" body={post.body} image={post.image_path}/>
                     : <Link href={`/posts/${post.id}`} className="pm-unified-post-body-link" aria-label={`View discussion by ${post.author.name}`}><PostContent className="pm-card-body" body={post.body} image={post.image_path}/></Link>}
             </div>
-            {post.topic === 'Poll' && post.poll_options && <PostPoll postId={post.id} options={post.poll_options} selected={post.viewer_vote} canInteract={!isGuest} onJoin={onJoin}/>}
+            {!post.viewer_hidden && post.topic === 'Poll' && post.poll_options && <PostPoll postId={post.id} options={post.poll_options} selected={post.viewer_vote} canInteract={!isGuest} onJoin={onJoin}/>}
 
             {post.ai_generated && <p className="pm-ai-disclosure">AI-generated community content</p>}
             {post.tags && post.tags.length > 0 && (
@@ -94,9 +98,9 @@ export function PostCard({
             )}
 
             <footer className="pm-card-action-bar">
-                <PostEngagementActions postId={post.id} initial={post.viewer_reaction}
-                    total={post.reactions_count ?? post.likes_count ?? 0} comments={post.comments_count}
-                    canInteract={!isGuest} onJoin={onJoin} onReactionChange={onReactionChange} onCommentAdded={onCommentAdded} showSave saved={Boolean(post.viewer_saved)} onSavedChange={onSavedChange} inlineComments={mode === 'feed'} />
+                {post.viewer_hidden ? <span className="pm-post-hidden-hint">Hidden post · Use the post menu to unhide before interacting.</span> : <PostEngagementActions postId={post.id} initial={post.viewer_reaction}
+                    total={post.reactions_count ?? post.likes_count ?? 0} breakdown={post.reaction_breakdown} comments={post.comments_count}
+                    canInteract={!isGuest} onJoin={onJoin} onReactionChange={onReactionChange} onCommentAdded={onCommentAdded} showSave saved={Boolean(post.viewer_saved)} onSavedChange={onSavedChange} inlineComments={mode === 'feed'} />}
                 {isGuest && mode === 'feed' && <Link href={`/posts/${post.id}`} className="pm-read-discussion-link">Read discussion →</Link>}
             </footer>
         </article>

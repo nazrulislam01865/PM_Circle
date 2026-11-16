@@ -3,6 +3,7 @@
 namespace App\Domain\Dashboard\Queries;
 
 use App\Domain\Billing\Queries\CurrentMemberPlan;
+use App\Domain\Identity\Services\ProfileCompleteness;
 use App\Models\User;
 
 /** The one member navigation data contract shared by all signed-in pages. */
@@ -20,7 +21,7 @@ final class MemberShell
                 'name' => $user->name,
                 'role' => $user->profile?->role,
                 'avatar_path' => $user->profile?->avatar_path,
-                'completion' => 0,
+                'completion' => app(ProfileCompleteness::class)->percentage($user),
             ],
             'isDemo' => app()->environment(['local', 'testing']) && config('pm-circle.demo_content_enabled'),
         ];

@@ -73,7 +73,7 @@
 .pm-member-home .pm-dash-feed-text-block .pm-dash-feed-body {margin:0;font:var(--regular) var(--text-body)/var(--line-body) var(--font-ui)}
 .pm-member-home .pm-dash-feed-author .pm-post-actions-root {margin-left:auto}
 .pm-discussion-card .pm-post-actions-root {margin-left:auto}
-.pm-engagement-actions .pm-post-save-action {margin-left:auto}
+.pm-engagement-actions .pm-post-save-action {margin-left:0}
 .pm-member-home .pm-dash-feed-actions .pm-engagement-shell {width:100%}
 @media(max-width:600px){.pm-member-home .pm-dash-feed-text-block{margin-left:0}}
 .pm-discussion-card .pm-author-meta small {display:block;color:var(--muted);font:var(--regular) var(--text-xs)/var(--line-xs) var(--font-ui);margin-top:2px}

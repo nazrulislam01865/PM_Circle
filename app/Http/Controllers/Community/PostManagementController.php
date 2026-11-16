@@ -95,6 +95,16 @@ final class PostManagementController extends Controller
         return $request->expectsJson() ? response()->json(['hidden' => true]) : back();
     }
 
+    /** Restore a post in the current member's own hidden list (idempotent). */
+    public function unhide(Request $request, Post $post): RedirectResponse|JsonResponse
+    {
+        $this->visible($request, $post);
+        DB::table('post_hides')->where('post_id', $post->id)
+            ->where('user_id', $request->user()->id)->delete();
+
+        return $request->expectsJson() ? response()->json(['hidden' => false]) : back();
+    }
+
     public function report(Request $request, Post $post): RedirectResponse|JsonResponse
     {
         $this->visible($request, $post);

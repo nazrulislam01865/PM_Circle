@@ -1,6 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { useEffect, useState, type ReactNode } from 'react';
-import { ChevronDown, ChevronRight, Database, ExternalLink, Flag, House, LayoutDashboard, LogOut, Menu, PanelTop, ClipboardCheck, Route, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Database, ExternalLink, Flag, House, LayoutDashboard, LogOut, Menu, PanelTop, ClipboardCheck, Gift, Route, X } from 'lucide-react';
 import { Brand } from '@/components/pm/Brand';
 import { homepageSections, type HomepageSection, type HomepageSectionVisibility } from '@/components/admin/homepage-sections';
 import { pmpPublicSections } from '@/components/admin/pmp-public-sections';
@@ -78,6 +78,10 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
                     <LayoutDashboard size={18} aria-hidden="true"/> <span>Overview</span>
                 </Link>
                 <Link href="/admin/post-reports" className={`pm-admin-nav-link ${active === "/admin/post-reports" ? "is-active" : ""}`} onClick={() => setMobileOpen(false)}><Flag size={18} aria-hidden="true"/><span>Community moderation</span></Link>
+                <Link href="/admin/profile-rewards" aria-current={active === '/admin/profile-rewards' ? 'page' : undefined}
+                    className={`pm-admin-nav-link ${active === '/admin/profile-rewards' ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
+                    <Gift size={18} aria-hidden="true"/><span>Profile rewards</span>
+                </Link>
                 <div className={`pm-admin-nav-parent ${isHomepage ? 'is-current-group' : ''}`}>
                     <Link href="/admin/homepage" className={`pm-admin-nav-link pm-admin-nav-parent-link ${isHomepage ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
                         <PanelTop size={18} aria-hidden="true"/><span className="pm-admin-nav-text">Homepage control</span>

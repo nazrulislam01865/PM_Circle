@@ -17,15 +17,17 @@ type Props = {
     post: EditablePost;
     isOwner: boolean;
     muted?: boolean;
+    hidden?: boolean;
     canInteract?: boolean;
     onJoin?: (action: string) => void;
     onRemoved?: () => void;
     onUpdated?: (updated: { body: string; image_path: string | null }) => void;
     onMuteChange?: (muted: boolean) => void;
+    onHiddenChange?: (hidden: boolean) => void;
     authorName?: string;
 };
 
-export function PostActionMenu({ post, isOwner, muted = false, canInteract = true, onJoin, onRemoved, onUpdated, onMuteChange, authorName = 'a community member' }: Props) {
+export function PostActionMenu({ post, isOwner, muted = false, hidden = false, canInteract = true, onJoin, onRemoved, onUpdated, onMuteChange, onHiddenChange, authorName = 'a community member' }: Props) {
     const [reportOpen, setReportOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
@@ -68,13 +70,21 @@ export function PostActionMenu({ post, isOwner, muted = false, canInteract = tru
                 {isOwner && <DropdownMenuItem className="pm-post-menu-item" disabled={busy} onSelect={() => setEditOpen(true)}><Pencil size={17}/>Edit post</DropdownMenuItem>}
                 <DropdownMenuItem className="pm-post-menu-item" onSelect={() => { void copyLink(); }}><Link2 size={17}/>Copy link</DropdownMenuItem>
                 {isOwner ? <>
+                    {hidden && <DropdownMenuItem className="pm-post-menu-item" disabled={busy}
+                        onSelect={() => { void action('hide', 'DELETE').then(result => { if (result) onHiddenChange?.(false); }); }}>
+                        <EyeOff size={17}/>Unhide post
+                    </DropdownMenuItem>}
                     <DropdownMenuItem className="pm-post-menu-item" disabled={busy} onSelect={() => { void action('mute', 'POST').then(result => { if (result) { setLocalMuted(result.muted); onMuteChange?.(result.muted); } }); }}>
                         {localMuted ? <Bell size={17}/> : <BellOff size={17}/>} {localMuted ? 'Turn on notifications' : 'Turn off notifications'}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator className="pm-post-menu-separator" />
                     <DropdownMenuItem className="pm-post-menu-item is-danger" disabled={busy} onSelect={() => setDeleteOpen(true)}><Trash2 size={17}/>Delete post</DropdownMenuItem>
                 </> : <>
-                    <DropdownMenuItem className="pm-post-menu-item" disabled={busy} onSelect={() => checkAccess('hide a post', () => { void action('hide', 'POST').then(result => { if (result) onRemoved?.(); }); })}><EyeOff size={17}/>Hide post</DropdownMenuItem>
+                    <DropdownMenuItem className="pm-post-menu-item" disabled={busy} onSelect={() => checkAccess(hidden ? 'unhide a post' : 'hide a post', () => {
+                        void action('hide', hidden ? 'DELETE' : 'POST').then(result => {
+                            if (result) { if (onHiddenChange) onHiddenChange(!hidden); else onRemoved?.(); }
+                        });
+                    })}><EyeOff size={17}/>{hidden ? 'Unhide post' : 'Hide post'}</DropdownMenuItem>
                     <DropdownMenuSeparator className="pm-post-menu-separator" />
                     <DropdownMenuItem className="pm-post-menu-item is-danger" disabled={busy} onSelect={() => checkAccess('report a post', () => { setError(''); setReportOpen(true); })}><Flag size={17}/>Report post</DropdownMenuItem>
                 </>}
@@ -85,7 +95,7 @@ export function PostActionMenu({ post, isOwner, muted = false, canInteract = tru
         {editOpen && <PostComposerDialog open={editOpen} onClose={() => setEditOpen(false)} editPost={post} onUpdated={onUpdated}/>}
         <Dialog open={reportOpen} onOpenChange={setReportOpen}><DialogContent className="pm-post-report-dialog" aria-describedby="pm-report-description">
             <DialogTitle className="pm-post-report-title">Report post</DialogTitle>
-            <form onSubmit={event => { event.preventDefault(); void action('report', 'POST', { reason, details }).then(result => { if (result) { setReportOpen(false); setDetails(''); onRemoved?.(); } }); }}>
+            <form onSubmit={event => { event.preventDefault(); void action('report', 'POST', { reason, details }).then(result => { if (result) { setReportOpen(false); setDetails(''); if (hidden) setNotice('Report submitted.'); else if (onHiddenChange) onHiddenChange(true); else onRemoved?.(); } }); }}>
                 <div className="pm-post-report-content"><h3>Why are you reporting this post?</h3><p id="pm-report-description">Post by {authorName}</p>
                     <div className="pm-post-report-reasons" role="radiogroup" aria-label="Report reason">{reasons.map(item => <label className="pm-post-report-choice" key={item.value}><input type="radio" name={`reason-${post.id}`} value={item.value} checked={reason === item.value} onChange={() => setReason(item.value)}/>{item.label}</label>)}</div>
                     <label className="pm-post-report-detail-label" htmlFor={`pm-report-details-${post.id}`}>Additional details (optional)</label>

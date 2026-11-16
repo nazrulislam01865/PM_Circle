@@ -14,6 +14,7 @@ import {
     MessagesSquare,
     Monitor,
     Newspaper,
+    Gift,
     UsersRound,
     X,
 } from 'lucide-react';
@@ -49,6 +50,7 @@ export function MemberHomeHeader({ dashboard, active, actions, brandHref, joinLa
     const page = usePage<{
         auth?: { user?: { name: string; avatar_path?: string | null; onboarding_step?: number; is_admin?: boolean } | null };
         siteNavigation?: { header?: NavigationLink[] };
+        rewardPromotion?: { discountLabel: string } | null;
     }>();
     const [mobileOpen, setMobileOpen] = useState(false);
     const configured = page.props.siteNavigation?.header ?? defaultLinks;
@@ -130,6 +132,7 @@ export function MemberHomeHeader({ dashboard, active, actions, brandHref, joinLa
                 {members && <Link className={navClass(isMembers)} aria-current={isMembers ? 'page' : undefined} href={isMember ? memberPath(members.href) : members.href} onClick={close}>
                     <UsersRound className="pm-nav-icon" aria-hidden="true"/>{members.label}
                 </Link>}
+                {!user && pathname === '/' && page.props.rewardPromotion && <a className="pm-header-profile-reward-badge" href="#pm-pathway-exams-title"><Gift className="pm-nav-icon" aria-hidden="true"/>{page.props.rewardPromotion.discountLabel}</a>}
                 <div className="pm-member-home-mobile-utilities" aria-label="More links">
                     <Link href="/pm-trends" onClick={close}><Newspaper aria-hidden="true"/>Trends</Link>
                     <Link href="/help-center" onClick={close}><CircleHelp aria-hidden="true"/>Help Center</Link>

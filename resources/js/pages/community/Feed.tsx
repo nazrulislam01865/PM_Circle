@@ -16,7 +16,8 @@ import { PostCard, type PostPreview } from '@/components/community/PostCard';
 import { VirtualizedFeed } from '@/components/community/VirtualizedFeed';
 import { useSlidingFeed, type FeedPage } from '@/hooks/community/useSlidingFeed';
 import { JoinCommunityDialog } from '@/components/home/HomeEngagement';
-import { FeedScopeTabs, type FeedScope } from '@/components/community/FeedScopeTabs';
+import { FeedScopeTabs, type FeedScope, type FeedScopeCounts } from '@/components/community/FeedScopeTabs';
+import { useFeedScopeCounts } from '@/hooks/community/useFeedScopeCounts';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
 
 type Props = {
@@ -24,6 +25,7 @@ type Props = {
     activeTopic: string;
     virtualFeedEnabled: boolean;
     feedTab: FeedScope;
+    feedScopeCounts: FeedScopeCounts;
     search?: string | null;
     todayScenario?: {
         id: number;
@@ -33,7 +35,7 @@ type Props = {
     } | null;
 };
 
-export default function Feed({ posts, activeTopic, feedTab, search, todayScenario, virtualFeedEnabled }: Props) {
+export default function Feed({ posts, activeTopic, feedTab, feedScopeCounts, search, todayScenario, virtualFeedEnabled }: Props) {
     const { auth, emailVerificationRequired } = usePage<{
         emailVerificationRequired?: boolean;
         auth: {
@@ -74,6 +76,7 @@ export default function Feed({ posts, activeTopic, feedTab, search, todayScenari
         };
     }, []);
     const feed = useSlidingFeed(posts, { tab: feedTab, topic: activeTopic, search, context: 'community', viewerId: auth?.user?.id ?? 0 });
+    const { counts, updateSaved, updateHidden } = useFeedScopeCounts(feedScopeCounts);
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -156,7 +159,7 @@ export default function Feed({ posts, activeTopic, feedTab, search, todayScenari
                                     <Link className="pm-feed-scope-tab" href="/login">Following</Link>
                                     <Link className="pm-feed-scope-tab" href="/login">My posts</Link>
                                 </nav>
-                            ) : <FeedScopeTabs active={feedTab} hrefFor={(tab) => `/community?${new URLSearchParams({ tab, ...(activeTopic !== 'All' ? { topic: activeTopic } : {}), ...(search ? { search } : {}) })}`} />}
+                            ) : <FeedScopeTabs active={feedTab} counts={counts} hrefFor={(tab) => `/community?${new URLSearchParams({ tab, ...(activeTopic !== 'All' ? { topic: activeTopic } : {}), ...(search ? { search } : {}) })}`} />}
                         </div>
 
                         {/* Guest Join Callout Banner */}
@@ -185,10 +188,25 @@ export default function Feed({ posts, activeTopic, feedTab, search, todayScenari
                                     <PostCard post={post} isGuest={isGuest} onJoin={setJoinAction}
                                         onReactionChange={(reaction, count) => feed.updateItem(post.id, { viewer_reaction: reaction, reactions_count: count })}
                                         onCommentAdded={() => feed.updateItem(post.id, { comments_count: post.comments_count + 1 })}
-                                        onSavedChange={saved => feed.updateItem(post.id, { viewer_saved: saved })}
+                                        onSavedChange={saved => {
+                                            updateSaved(Boolean(post.viewer_saved), saved, Boolean(post.viewer_hidden));
+                                            if (feedTab === 'saved' && !saved) {
+                                                feed.removeItem(post.id);
+                                                if (counts.saved <= 1) router.get('/community', { tab: 'all', ...(activeTopic !== 'All' ? { topic: activeTopic } : {}), ...(search ? { search } : {}) }, { preserveScroll: true });
+                                            } else feed.updateItem(post.id, { viewer_saved: saved });
+                                        }}
+                                        onHiddenChange={hidden => {
+                                            updateHidden(Boolean(post.viewer_hidden), hidden, Boolean(post.viewer_saved));
+                                            feed.removeItem(post.id);
+                                            if (feedTab === 'hidden' && !hidden && counts.hidden <= 1) router.get('/community', { tab: 'all', ...(activeTopic !== 'All' ? { topic: activeTopic } : {}), ...(search ? { search } : {}) }, { preserveScroll: true });
+                                        }}
                                         onUpdated={updated => feed.updateItem(post.id, updated)}
                                         onMuteChange={muted => feed.updateItem(post.id, { viewer_muted: muted })}
-                                        onRemoved={() => feed.removeItem(post.id)} />
+                                        onRemoved={() => {
+                                            if (post.viewer_hidden) updateHidden(true, false, Boolean(post.viewer_saved));
+                                            else if (post.viewer_saved) updateSaved(true, false, false);
+                                            feed.removeItem(post.id);
+                                        }} />
                                     {index === 0 && isGuest && (
                                         <div className="pm-inline-guest-prompt">
                                             <div className="pm-inline-guest-header"><Lock size={16} /> Join the community to add your response</div>
@@ -202,7 +220,7 @@ export default function Feed({ posts, activeTopic, feedTab, search, todayScenari
                                     )}
                                 </>} />
                         ) : (
-                            <div className="pm-panel pm-empty"><p>No discussions found in this topic. Try another search or category.</p></div>
+                            <div className="pm-panel pm-empty"><p>{feedTab === 'saved' ? 'No saved posts yet. Use Save on a discussion to find it here.' : feedTab === 'hidden' ? 'No hidden posts. Posts you hide will appear here until you unhide them.' : 'No discussions found in this topic. Try another search or category.'}</p></div>
                         )}
                         {(feed.hasMore || feed.loading || feed.error) && (
                             <div className="pm-load-more-center" aria-live="polite">

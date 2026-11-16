@@ -198,12 +198,12 @@ final class MemberDirectoryController extends Controller
             'follower_id' => $request->user()->id, 'followed_id' => $member->id,
             'created_at' => now(), 'updated_at' => now(),
         ]);
-        return back();
+        return $request->expectsJson() ? response()->json(['following' => true]) : back();
     }
 
     public function unfollow(Request $request, User $member)
     {
         DB::table('member_follows')->where('follower_id', $request->user()->id)->where('followed_id', $member->id)->delete();
-        return back();
+        return $request->expectsJson() ? response()->json(['following' => false]) : back();
     }
 }

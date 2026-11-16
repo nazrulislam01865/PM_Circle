@@ -43,6 +43,8 @@
 @import './pm-community-consistency.css';
 @import './pm-comment-thread.css';
 @import './pm-header-prototype.css';
+@import './pm-profile-reward.css';
+@import './pm-post-reactions.css';
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';

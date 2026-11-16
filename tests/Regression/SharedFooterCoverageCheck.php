@@ -28,7 +28,9 @@ $assert(str_contains($public, '<SiteFooter') && str_contains($member, '<SiteFoot
     && str_contains($auth, '<SiteFooter'), 'Guest, member and authentication shells have one shared footer');
 $assert(str_contains($siteFooter, 'shouldShowSiteFooter(page.url)'), 'Footer visibility is decided once for all layouts');
 $assert(str_contains($visibility, "path === '/dashboard'") && str_contains($visibility, "path === '/'")
-    && str_contains($visibility, 'exams|exam-simulator|simulators'), 'Home and all exam simulator views are excluded');
+    && str_contains($visibility, 'attempts') && str_contains($visibility, 'return true;')
+    && ! str_contains($visibility, 'exams|exam-simulator|simulators'),
+    'Home and active exam are excluded; simulator landings, reports and review pages have the footer');
 $assert(str_contains($learning, '<MemberDashboardLayout') && ! str_contains($learning, '<LearningFooter />'),
     'Learning member pages do not render a second footer');
 $assert(str_contains($read('resources/js/components/discover-pm/DiscoverShell.tsx'), '<SiteFooter />'),

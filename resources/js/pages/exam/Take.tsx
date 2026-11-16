@@ -1,8 +1,10 @@
 import { Head, router } from '@inertiajs/react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { ArrowLeft, ArrowRight, Calculator, ChevronLeft, ChevronRight, Clock3, Flag, Highlighter, Info, Strikethrough, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ExamToolGuide } from '@/components/exam/ExamToolGuide';
+import { ExamTimeProgress } from '@/components/exam/ExamTimeProgress';
+import { examSecondsUntilExpiry, examServerClockOffset } from '@/components/exam/examCountdownMath';
 import { ExamOptionList, Highlighted, examBase, examResult, type ExamQuestion, type ExamResponses, type ExamResponse } from '@/components/exam/ExamShared';
 import { SiteHeader } from '@/components/pm/SiteHeader';
 
@@ -18,7 +20,7 @@ function localTools(id: number): { strikes: Strikes; highlights: Highlights } {
 }
 
 export default function Take({ attempt, questions, responses: initial }: {
-    attempt: { id: number; expiresAt: string; total: number; durationSeconds: number };
+    attempt: { id: number; expiresAt: string; serverNow?: string; total: number; durationSeconds: number };
     questions: ExamQuestion[]; responses: ExamResponses;
 }) {
     const [index, setIndex] = useState(0);
@@ -34,7 +36,8 @@ export default function Take({ attempt, questions, responses: initial }: {
     const [calcOpen, setCalcOpen] = useState(false);
     const [savingError, setSavingError] = useState('');
     const [tools, setTools] = useState(() => localTools(attempt.id));
-    const [seconds, setSeconds] = useState(() => Math.max(0, Math.ceil((Date.parse(attempt.expiresAt) - Date.now()) / 1000)));
+    const serverClockOffset = useMemo(() => examServerClockOffset(attempt.serverNow, Date.now()), [attempt.id, attempt.serverNow]);
+    const [seconds, setSeconds] = useState(() => examSecondsUntilExpiry(attempt.expiresAt, Date.now(), serverClockOffset));
     const pending = useRef(new Map<number, Promise<void>>());
     const submittingRef = useRef(false);
     const failedSaveIds = useRef(new Set<number>());
@@ -44,9 +47,11 @@ export default function Take({ attempt, questions, responses: initial }: {
     const [calculator, setCalculator] = useState({ a: '', b: '', op: '+' });
 
     useEffect(() => {
-        const t = window.setInterval(() => setSeconds(Math.max(0, Math.ceil((Date.parse(attempt.expiresAt) - Date.now()) / 1000))), 1000);
+        const tick = () => setSeconds(examSecondsUntilExpiry(attempt.expiresAt, Date.now(), serverClockOffset));
+        tick();
+        const t = window.setInterval(tick, 1000);
         return () => window.clearInterval(t);
-    }, [attempt.expiresAt]);
+    }, [attempt.expiresAt, serverClockOffset]);
     useEffect(() => { try { localStorage.setItem(`pm-exam-tools-${attempt.id}`, JSON.stringify(tools)); } catch { /* Optional device preference */ } }, [attempt.id, tools]);
     useEffect(() => {
         if (seconds === 0 && !timedOut.current) {
@@ -220,7 +225,15 @@ export default function Take({ attempt, questions, responses: initial }: {
             setSubmitting(false);
         }
     };
-    const duration = attempt.durationSeconds || Math.max(1, seconds);
+    // Keep the starting duration stable throughout the attempt; a countdown value
+    // must never be reused as the denominator as it changes every second.
+    const duration = useMemo(() => {
+        // The server supplies the full original attempt duration, not time left on reload.
+        // Normalize legacy negative Carbon 3 differences without restarting the progress bar.
+        if (Number.isFinite(attempt.durationSeconds) && attempt.durationSeconds !== 0) return Math.abs(attempt.durationSeconds);
+        const initialRemaining = examSecondsUntilExpiry(attempt.expiresAt, Date.now(), serverClockOffset);
+        return Number.isFinite(initialRemaining) && initialRemaining > 0 ? initialRemaining : 1;
+    }, [attempt.id, attempt.durationSeconds, attempt.expiresAt, serverClockOffset]);
     const navigator = questions.slice(navStart, navStart + 20);
     const mm = (n: number) => String(Math.floor(n)).padStart(2, '0');
     const time = `${mm(seconds / 3600)}:${mm((seconds % 3600) / 60)}:${mm(seconds % 60)}`;
@@ -237,7 +250,7 @@ export default function Take({ attempt, questions, responses: initial }: {
                 <button className="btn secondary pm-exam-action" type="button" onClick={() => setFinishOpen(true)}>Finish Exam</button></>}</div></div>
         <div className="pm-exam-take-body">
         {guideOpen ? <ExamToolGuide/> : <>
-            <div className="pm-exam-progress" role="progressbar" aria-label="Exam time elapsed" aria-valuenow={Math.max(0, duration - seconds)} aria-valuemin={0} aria-valuemax={duration}><span style={{width:`${Math.min(100, Math.max(0, (duration - seconds) / duration * 100))}%`}}/></div>
+            <ExamTimeProgress secondsRemaining={seconds} durationSeconds={duration}/>
             <div className="pm-exam-take-grid"><section className="pm-exam-panel pm-exam-question-card">
                 {(selected.marked || (reviewingMarked && markedPosition >= 0)) && <div className="pm-exam-marked-banner"><Flag size={15} fill="currentColor"/>
                     {reviewingMarked && markedPosition >= 0 ? <><strong>Reviewing marked questions</strong><span>· {markedPosition + 1} of {markedCount} · You can change your answers.</span></>

@@ -21,6 +21,7 @@ use App\Http\Controllers\Settings\ProfileController as SettingsProfileController
 use App\Http\Controllers\PublicSite\HomeController;
 use App\Http\Controllers\PublicSite\ContactController;
 use App\Http\Controllers\Admin\HomepageController;
+use App\Http\Controllers\Admin\ProfileRewardSettingsController;
 use App\Http\Controllers\Admin\PmpPublicPageController as AdminPmpPublicPageController;
 use App\Http\Controllers\PublicSite\PmpPublicPageController;
 use App\Http\Controllers\Admin\MasterDataController;
@@ -47,6 +48,8 @@ Route::middleware(['auth', 'pm.admin', 'verified'])->prefix('admin')->name('admi
     Route::get('/post-reports', [PostModerationController::class, 'index'])->name('post-reports.index');
     Route::post('/post-reviews/{post}', [PostModerationController::class, 'reviewPost'])->middleware('throttle:30,1')->name('post-reviews.update');
     Route::patch('/post-reports/{report}', [PostModerationController::class, 'update'])->middleware('throttle:30,1')->whereNumber('report')->name('post-reports.update');
+    Route::get('/profile-rewards', [ProfileRewardSettingsController::class, 'edit'])->name('profile-rewards.edit');
+    Route::put('/profile-rewards', [ProfileRewardSettingsController::class, 'update'])->middleware('throttle:10,1')->name('profile-rewards.update');
     Route::get('/homepage', [HomepageController::class, 'edit'])->name('homepage.edit');
     Route::get('/exam-simulator/pmp', [AdminPmpPublicPageController::class, 'edit'])->name('pmp-public.edit');
     Route::put('/exam-simulator/pmp', [AdminPmpPublicPageController::class, 'update'])->middleware('throttle:20,1')->name('pmp-public.update');
@@ -77,6 +80,7 @@ Route::get('/profile-media/{kind}/{filename}', [SettingsProfileController::class
 Route::get('/post-media/{filename}', [PostController::class, 'media'])->where('filename', '[a-zA-Z0-9._-]+')->name('posts.media');
 Route::get('/posts/{post}/media/{filename}', [PostController::class, 'privateMedia'])->where('filename', '[a-zA-Z0-9._-]+')->name('posts.private-media');
 Route::get('/posts/{post}', [PostController::class, 'show'])->name('posts.show');
+Route::get('/posts/{post}/reactions/users', [PostInteractionController::class, 'reactionUsers'])->middleware('throttle:60,1')->name('posts.reactions.users');
 Route::get('/posts/{post}/comments/preview', [PostInteractionController::class, 'previewComments'])->middleware('throttle:60,1')->name('posts.comments.preview');
 Route::get('/posts/{post}/comments/{comment}/replies', [PostInteractionController::class, 'replies'])->middleware('throttle:60,1')->name('posts.comments.replies');
 Route::get('/posts/{post}/comments/{comment}/media/{filename}', [PostInteractionController::class, 'commentMedia'])
@@ -173,6 +177,7 @@ Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded'])->group(func
     Route::delete('/posts/{post}', [PostManagementController::class, 'destroy'])->middleware('throttle:20,1')->name('posts.destroy');
     Route::post('/posts/{post}/mute', [PostManagementController::class, 'mute'])->middleware('throttle:30,1')->name('posts.mute');
     Route::post('/posts/{post}/hide', [PostManagementController::class, 'hide'])->middleware('throttle:30,1')->name('posts.hide');
+    Route::delete('/posts/{post}/hide', [PostManagementController::class, 'unhide'])->middleware('throttle:30,1')->name('posts.unhide');
     Route::post('/posts/{post}/report', [PostManagementController::class, 'report'])->middleware('throttle:10,1')->name('posts.report');
     Route::post('/posts/{post}/poll-votes', [PostPollController::class, 'vote'])->middleware('throttle:30,1')->name('posts.poll-vote');
     Route::post('/posts/{post}/comments', [PostInteractionController::class, 'comment'])->middleware('throttle:20,1')->name('posts.comments');

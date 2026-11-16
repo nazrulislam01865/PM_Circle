@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Community;
 use App\Http\Controllers\Controller;
 use App\Domain\Community\Actions\PublishPost;
 use App\Domain\Community\Services\EngagementStats;
+use App\Domain\Community\Queries\PostReactionSummary;
+use App\Domain\Community\Queries\FeedTabAvailability;
 use App\Http\Requests\Community\StorePostRequest;
 use App\Models\Post;
 use App\Models\Scenario;
@@ -22,7 +24,7 @@ class PostController extends Controller
         $validated = $request->validate([
             'topic' => ['nullable', 'in:All,Questions,I learned,From my project,Ask the community'],
             'search' => ['nullable', 'string', 'max:80'],
-            'tab' => ['nullable', 'in:all,following,mine'],
+            'tab' => ['nullable', 'in:all,following,mine,saved,hidden'],
         ]);
         $topic = $validated['topic'] ?? 'All';
         $tab = $validated['tab'] ?? 'all';
@@ -35,6 +37,7 @@ class PostController extends Controller
             'posts' => $feed->page($tab, $topic, $search, $request->user()),
             'activeTopic' => $topic,
             'feedTab' => $tab,
+            'feedScopeCounts' => app(FeedTabAvailability::class)->forViewer($request->user()),
             'search' => $search,
             'todayScenario' => $todayScenario,
             'virtualFeedEnabled' => (bool) config('pm-circle.virtual_feed_enabled', true),
@@ -45,7 +48,7 @@ class PostController extends Controller
     public function feedPage(Request $request, \App\Domain\Community\Queries\FeedQuery $feed): \Illuminate\Http\JsonResponse
     {
         $validated = $request->validate([
-            'tab' => ['nullable', 'in:all,following,mine'],
+            'tab' => ['nullable', 'in:all,following,mine,saved,hidden'],
             'topic' => ['nullable', 'in:All,Questions,I learned,From my project,Ask the community'],
             'search' => ['nullable', 'string', 'max:80'],
             'cursor' => ['required', 'string', 'max:4096'],
@@ -95,6 +98,14 @@ class PostController extends Controller
                 'reactions as loves_count' => fn ($query) => $query->where('type', 'love'),
             ]);
         }
+
+        // One per-post read for the detail page; the feed uses a batched projection.
+        if (EngagementStats::readsEnabled()) {
+            foreach (EngagementStats::TYPES as $type) {
+                $post->setAttribute($type.'_count', (int) ($stats->{$type.'_count'} ?? 0));
+            }
+        }
+        PostReactionSummary::attach(collect([$post]));
 
         $comments = $post->comments()
             ->whereNull('parent_id')

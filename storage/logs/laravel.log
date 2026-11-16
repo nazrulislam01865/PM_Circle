@@ -1,0 +1,8 @@
+[2026-11-16 06:44:10] local.ERROR: Type of Illuminate\Database\Migrations\Migration@anonymous::$withinTransaction must not be defined (as in class Illuminate\Database\Migrations\Migration) {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Type of Illuminate\\Database\\Migrations\\Migration@anonymous::$withinTransaction must not be defined (as in class Illuminate\\Database\\Migrations\\Migration) at /Applications/XAMPP/xamppfiles/htdocs/laravel/PM_Circle/database/migrations/2026_11_16_000003_index_personal_post_scopes.php:7)
+[stacktrace]
+#0 {main}
+"} 
+[2026-11-16 06:44:10] local.ERROR: Type of Illuminate\Database\Migrations\Migration@anonymous::$withinTransaction must not be defined (as in class Illuminate\Database\Migrations\Migration) {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Type of Illuminate\\Database\\Migrations\\Migration@anonymous::$withinTransaction must not be defined (as in class Illuminate\\Database\\Migrations\\Migration) at /Applications/XAMPP/xamppfiles/htdocs/laravel/PM_Circle/database/migrations/2026_11_16_000003_index_personal_post_scopes.php:7)
+[stacktrace]
+#0 {main}
+"} 

@@ -81,6 +81,7 @@ final class FeedQuery
                 ->selectRaw('COALESCE(engagement_stats.comments_count, 0) AS comments_count')
                 ->selectRaw('COALESCE(engagement_stats.reactions_count, 0) AS reactions_count')
                 ->selectRaw('COALESCE(engagement_stats.like_count, 0) AS likes_count');
+            PostReactionSummary::selectStats($query, 'engagement_stats');
         } else {
             $query->withCount([
                 'comments', 'reactions',
@@ -105,6 +106,7 @@ final class FeedQuery
         }
 
         // Batched viewer state. Never serialize private author IDs for anonymous posts.
+        PostReactionSummary::attach($posts);
         $ids = $posts->pluck('id')->all();
         $viewerReactions = $viewer && $ids
             ? DB::table('post_reactions')->where('user_id', $viewer->getKey())
@@ -134,6 +136,7 @@ final class FeedQuery
             }
             $post->setAttribute('viewer_reaction', $viewerReactions->get($post->id));
             $post->setAttribute('viewer_saved', in_array($post->id, $viewerSaved, true));
+            $post->setAttribute('viewer_hidden', $tab === 'hidden');
             $post->setAttribute('viewer_is_author', (bool) ($viewer && $post->author_id === $viewer->id));
             $post->setAttribute('viewer_muted', (bool) ($viewer && $post->author_id === $viewer->id && $post->notifications_muted_at));
             $post->makeHidden('notifications_muted_at');
@@ -172,7 +175,9 @@ final class FeedQuery
                 'publishedAt' => $post['published_at'] ?? null,
                 'comments' => $post['comments_count'] ?? 0,
                 'reactions' => $post['reactions_count'] ?? 0,
+                'reactionBreakdown' => $post['reaction_breakdown'] ?? [],
                 'saved' => (bool) ($post['viewer_saved'] ?? false),
+                'hidden' => (bool) ($post['viewer_hidden'] ?? false),
                 'isOwner' => (bool) ($post['viewer_is_author'] ?? false),
                 'isMuted' => (bool) ($post['viewer_muted'] ?? false),
                 'pollOptions' => $post['poll_options'] ?? [],

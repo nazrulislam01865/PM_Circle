@@ -1,6 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Check, Crown, Search, UsersRound, Zap, Plus } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Avatar } from '@/components/pm/Avatar';
 import { PMDropdown, type PMDropdownOption } from '@/components/pm/PMDropdown';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
@@ -26,6 +26,9 @@ type Props = {
 export default function Directory({ members, search, filters, filterOptions }: Props) {
     const [term, setTerm] = useState(search);
     const [submittingMember, setSubmittingMember] = useState<number | null>(null);
+    const [followStates, setFollowStates] = useState<Record<number, { following: boolean; followers: number }>>({});
+    const [followError, setFollowError] = useState('');
+    useEffect(() => { setFollowStates({}); setFollowError(''); }, [members.data]);
     const viewer = usePage<{ auth?: { user?: { id: number } | null } }>().props.auth?.user;
 
     const visit = (next: Partial<Filters> & { search?: string }) => {
@@ -37,16 +40,38 @@ export default function Directory({ members, search, filters, filterOptions }: P
         event.preventDefault();
         visit({ search: term.trim() });
     };
-    const toggleFollowing = (member: Member) => {
+    const toggleFollowing = async (member: Member) => {
         if (!viewer) { router.visit('/login'); return; }
         if (submittingMember !== null || member.id === viewer.id) return;
+        const current = followStates[member.id] ?? { following: member.is_following, followers: member.followers_count };
         setSubmittingMember(member.id);
-        const path = `/members/${member.id}/follow`;
-        const options = { preserveScroll: true, onFinish: () => setSubmittingMember(null) };
-        if (member.is_following) router.delete(path, options);
-        else router.post(path, {}, options);
+        setFollowError('');
+        try {
+            const response = await fetch(`/members/${member.id}/follow`, {
+                method: current.following ? 'DELETE' : 'POST', credentials: 'same-origin',
+                headers: {
+                    Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
+                },
+            });
+            if (response.redirected) throw new Error('Complete your member setup before following other members.');
+            if (!response.ok) {
+                throw new Error(response.status === 419 ? 'Session expired. Refresh and try again.'
+                    : response.status === 429 ? 'Too many requests. Please try again shortly.'
+                    : 'Could not update following. Please try again.');
+            }
+            const result = await response.json() as { following: boolean };
+            setFollowStates(previous => ({ ...previous, [member.id]: {
+                following: result.following,
+                followers: Math.max(0, current.followers + (result.following === current.following ? 0 : result.following ? 1 : -1)),
+            } }));
+        } catch (reason) {
+            setFollowError(reason instanceof Error ? reason.message : 'Could not update following.');
+        } finally { setSubmittingMember(null); }
     };
     const isFiltered = Boolean(search || filters.role || filters.industry || filters.location || filters.tab === 'following');
+    const displayed = filters.tab === 'following' ? members.data.filter(member => (followStates[member.id]?.following ?? member.is_following)) : members.data;
+    const visibleTotal = filters.tab === 'following' ? Math.max(0, members.total - members.data.filter(member => member.is_following && followStates[member.id]?.following === false).length) : members.total;
 
     return <PublicLayout>
         <Head title="Members" />
@@ -84,7 +109,7 @@ export default function Directory({ members, search, filters, filterOptions }: P
             </nav>
 
             <div className="pm-members-subheading">
-                <span>{members.total.toLocaleString()} {members.total === 1 ? 'member' : 'members'}</span>
+                <span>{visibleTotal.toLocaleString()} {visibleTotal === 1 ? 'member' : 'members'}</span>
                 <div className="pm-members-sort"><span>Sort:</span>
                     <PMDropdown id="members-sort" aria-label="Sort members" placeholder="Recently joined" value={filters.sort}
                         onValueChange={(sort) => visit({ sort: sort as Filters['sort'] })}
@@ -92,8 +117,9 @@ export default function Directory({ members, search, filters, filterOptions }: P
                 </div>
             </div>
 
-            {members.data.length ? <div className="pm-members-list">
-                {members.data.map((member) => <article key={member.id} className="pm-members-row">
+            {followError && <p className="pm-members-error" role="alert">{followError}</p>}
+            {displayed.length ? <div className="pm-members-list">
+                {displayed.map((member) => <article key={member.id} className="pm-members-row">
                     <div className="pm-members-person">
                         <Avatar name={member.name} src={member.profile.avatar_path} size={56} />
                         <div className="pm-members-person-info">
@@ -107,13 +133,17 @@ export default function Directory({ members, search, filters, filterOptions }: P
                             <p className="pm-members-meta">{[member.profile.industry, [member.profile.city, member.profile.country].filter(Boolean).join(', ')].filter(Boolean).join(' · ') || member.profile.headline || 'PM Circle member'}</p>
                         </div>
                     </div>
-                    <div className="pm-members-counts"><span>{member.followers_count.toLocaleString()} followers</span><span aria-hidden="true">·</span><span>{member.contributions_count.toLocaleString()} contributions</span></div>
+                    <div className="pm-members-counts"><span>{(followStates[member.id]?.followers ?? member.followers_count).toLocaleString()} followers</span><span aria-hidden="true">·</span><span>{member.contributions_count.toLocaleString()} contributions</span></div>
                     <div className="pm-members-actions">
-                        {viewer?.id !== member.id && <button type="button" className="pm-members-follow" disabled={submittingMember === member.id}
-                            aria-label={`${member.is_following ? 'Unfollow' : 'Follow'} ${member.name}`} onClick={() => toggleFollowing(member)}>
-                            {member.is_following ? <Check size={16} aria-hidden="true"/> : <Plus size={16} aria-hidden="true"/>}
-                            {member.is_following ? 'Following' : 'Follow'}
-                        </button>}
+                        {viewer?.id !== member.id ? <button type="button"
+                            className={`pm-members-follow${(followStates[member.id]?.following ?? member.is_following) ? ' is-following' : ''}`}
+                            disabled={submittingMember === member.id}
+                            aria-pressed={followStates[member.id]?.following ?? member.is_following}
+                            aria-label={`${(followStates[member.id]?.following ?? member.is_following) ? 'Unfollow' : 'Follow'} ${member.name}`}
+                            onClick={() => { void toggleFollowing(member); }}>
+                            {(followStates[member.id]?.following ?? member.is_following) ? <Check size={16} aria-hidden="true"/> : <Plus size={16} aria-hidden="true"/>}
+                            {(followStates[member.id]?.following ?? member.is_following) ? 'Following' : 'Follow'}
+                        </button> : <span className="pm-members-follow-placeholder" aria-hidden="true" />}
                         <Link className="pm-members-profile-button" href={`/members/${member.id}`}>View profile</Link>
                     </div>
                 </article>)}

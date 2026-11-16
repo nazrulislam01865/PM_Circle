@@ -3,8 +3,11 @@
 namespace App\Domain\Dashboard\Queries;
 
 use App\Domain\Community\Queries\FeedQuery;
+use App\Domain\Community\Queries\FeedTabAvailability;
 use App\Models\User;
 use App\Domain\Billing\Queries\CurrentMemberPlan;
+use App\Domain\Billing\Services\ProfileCompletionRewardService;
+use App\Domain\Identity\Services\ProfileCompleteness;
 
 /** Read-only, privacy-limited projection. Demo figures never grant entitlements. */
 final class DashboardOverview
@@ -21,11 +24,7 @@ final class DashboardOverview
         }
 
         $profile = $user->profile;
-        $filled = collect([
-            filled($user->name), filled($profile?->role), filled($profile?->years_experience),
-            filled($profile?->headline), filled($profile?->bio),
-        ])->filter()->count();
-        $completion = $filled * 20;
+        $completion = app(ProfileCompleteness::class)->percentage($user);
 
         $feed ??= app(FeedQuery::class);
         $feedPage = $feed->page($feedTab, 'All', null, $user, null, true);
@@ -38,6 +37,7 @@ final class DashboardOverview
                 'isDemo' => $isDemo,
                 'isPreview' => $preview,
                 'member' => ['id' => $user->getKey(), 'name' => $user->name, 'role' => $profile?->role, 'avatar_path' => $profile?->avatar_path, 'completion' => $completion],
+                'reward' => app(ProfileCompletionRewardService::class)->forMember($user, $completion),
                 'scenario' => null,
                 'learning' => $stats['learning'],
                 'overview' => $stats['overview'],
@@ -48,6 +48,7 @@ final class DashboardOverview
                     'has_more' => $feedPage['has_more'],
                 ],
                 'feedTab' => $feedTab,
+                'feedScopeCounts' => app(FeedTabAvailability::class)->forViewer($user),
             ],
         ];
     }

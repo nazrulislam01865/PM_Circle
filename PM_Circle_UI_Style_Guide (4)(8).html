@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PM Circle UI Style Guide</title>
+<style>
+/* PM Circle UI tokens. Keep component styles tied to these values. */
+:root {
+  color-scheme: light;
+  --font-ui: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --text-xs: .75rem;   --line-xs: 1rem;
+  --text-sm: .8125rem; --line-sm: 1.25rem;
+  --text-ui: .875rem;  --line-ui: 1.25rem;
+  --text-body: .9375rem; --line-body: 1.5rem;
+  --text-h6: .875rem;  --line-h6: 1.25rem;
+  --text-h5: .9375rem; --line-h5: 1.375rem;
+  --text-h4: 1rem;     --line-h4: 1.5rem;
+  --text-h3: 1.125rem; --line-h3: 1.5rem;
+  --text-h2: 1.25rem;  --line-h2: 1.75rem;
+  --text-h1: 1.75rem;  --line-h1: 2.25rem;
+  --text-stat: 2rem;   --line-stat: 2.25rem;
+  --regular: 400; --medium: 500; --semibold: 600; --bold: 700;
+  --s1: .25rem; --s2: .5rem; --s3: .75rem; --s4: 1rem;
+  --s5: 1.25rem; --s6: 1.5rem; --s8: 2rem; --s10: 2.5rem;
+  --radius-control: .5rem; --radius-card: .75rem; --radius-pill: 999px;
+  --header-height: 3.5rem; --sidebar-width: 14rem; --content-width: 70rem;
+  --control-height: 2.5rem; --control-compact: 2rem; --control-touch: 2.75rem;
+  --icon: 1.25rem; --avatar: 2rem; --bar-height: .5rem; --donut: 7.5rem;
+  --ink: #172842; --muted: #4c5d74; --blue: #075eb5; --blue-hover: #084c91;
+  --blue-soft: #e7f1fd; --canvas: #f4f7fa; --surface: #fff;
+  --border: #dce4ee; --control-border: #8597ab; --track: #e8eef5;
+  --green: #187448; --green-soft: #e9f6ef; --red: #b33d4e;
+  --red-soft: #fceff0; --neutral: #7a899e; --focus: #0866c4;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: var(--regular) var(--text-body)/var(--line-body) var(--font-ui); background: var(--canvas); color: var(--ink); }
+h1,h2,h3,h4,h5,h6,p { margin: 0; }
+h1 { font-size: var(--text-h1); line-height: var(--line-h1); font-weight: var(--bold); letter-spacing: -.025em; }
+h2 { font-size: var(--text-h2); line-height: var(--line-h2); font-weight: var(--bold); letter-spacing: -.015em; }
+h3 { font-size: var(--text-h3); line-height: var(--line-h3); font-weight: var(--semibold); }
+h4 { font-size: var(--text-h4); line-height: var(--line-h4); font-weight: var(--semibold); }
+h5 { font-size: var(--text-h5); line-height: var(--line-h5); font-weight: var(--semibold); }
+h6 { font-size: var(--text-h6); line-height: var(--line-h6); font-weight: var(--semibold); }
+.ui { font-size: var(--text-ui); line-height: var(--line-ui); }
+.small { font-size: var(--text-sm); line-height: var(--line-sm); }
+.caption { font-size: var(--text-xs); line-height: var(--line-xs); }
+.muted { color: var(--muted); }
+.numeric { font-variant-numeric: tabular-nums; }
+a { color: var(--blue); text-underline-offset: .18em; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+[id] { scroll-margin-top: calc(var(--header-height) + var(--s4)); }
+.skip { position: absolute; left: var(--s4); top: var(--s2); z-index: 3; background: white; padding: var(--s2) var(--s3); transform: translateY(-200%); }
+.skip:focus { transform: none; }
+.icon { width: var(--icon); height: var(--icon); flex: none; vertical-align: middle; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.header { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: var(--s4); min-height: var(--header-height); background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 var(--s6); }
+.brand { display: flex; align-items: center; gap: var(--s2); flex: 0 0 calc(var(--sidebar-width) - var(--s6) - var(--s4)); color: var(--ink); text-decoration: none; font-weight: var(--bold); font-size: var(--text-h3); }
+.logo { width: var(--avatar); aspect-ratio: 1; border: .375rem solid var(--blue); border-right-color: #3889da; border-radius: 50%; }
+.top-nav { display: flex; align-items: center; gap: var(--s1); flex-wrap: wrap; }
+.top-nav a { padding: var(--s2); color: var(--ink); text-decoration: none; font-weight: var(--semibold); }
+.top-nav a:hover { color: var(--blue); }
+.header .guide-link { margin-left: auto; }
+.shell { display: grid; grid-template-columns: var(--sidebar-width) minmax(0,1fr); }
+.sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: var(--s4) var(--s3); }
+.sidebar nav { position: sticky; top: calc(var(--header-height) + var(--s4)); display: grid; gap: var(--s1); }
+.nav-item { display: flex; align-items: center; gap: var(--s3); min-height: var(--control-touch); padding: var(--s2) var(--s3); border-radius: var(--radius-control); color: var(--ink); text-decoration: none; font-weight: var(--medium); }
+.nav-item:hover { background: var(--canvas); }
+.nav-item[aria-current] { color: var(--blue); background: var(--blue-soft); font-weight: var(--bold); }
+main { width: min(100%, var(--content-width)); margin-inline: auto; padding: var(--s6) var(--s8) var(--s10); min-width: 0; }
+.stack { display: grid; gap: var(--s4); }
+.page-head { display: flex; justify-content: space-between; align-items: center; gap: var(--s4); flex-wrap: wrap; }
+.page-head p { margin-top: var(--s1); }
+.crumbs { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
+.crumbs a { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: var(--s5); min-width: 0; }
+.results-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--s4); }
+.card-title { margin-bottom: var(--s3); }
+.actions { display: flex; gap: var(--s2); align-items: center; flex-wrap: wrap; }
+.button { display: inline-flex; align-items: center; justify-content: center; gap: var(--s2); min-height: var(--control-height); padding: .5rem var(--s3); border: 1px solid var(--control-border); border-radius: var(--radius-control); font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui); background: var(--surface); color: var(--ink); text-decoration: none; text-align: center; cursor: pointer; }
+.button:hover { background: var(--canvas); }
+.button.primary { color: white; background: var(--blue); border-color: var(--blue); }
+.button.primary:hover { background: var(--blue-hover); }
+.button.secondary { color: var(--blue); border-color: var(--blue); }
+.button.compact { min-height: var(--control-compact); padding-block: var(--s1); }
+.button:disabled { background: var(--track); color: var(--muted); border-color: var(--border); cursor: default; }
+.badge { display: inline-flex; align-items: center; padding: var(--s1) var(--s2); border-radius: var(--radius-pill); font: var(--semibold) var(--text-xs)/var(--line-xs) var(--font-ui); background: var(--track); color: var(--muted); }
+.success { background: var(--green-soft); color: var(--green); }
+.danger { background: var(--red-soft); color: var(--red); }
+.stat { font-size: var(--text-stat); line-height: var(--line-stat); font-weight: var(--bold); letter-spacing: -.025em; }
+.score { display: grid; justify-items: start; align-content: center; gap: var(--s2); }
+.score .actions { margin-top: var(--s2); }
+.summary-content { display: flex; align-items: center; gap: var(--s4); flex-wrap: wrap; }
+.donut { width: var(--donut); aspect-ratio: 1; flex: none; border-radius: 50%; background: conic-gradient(var(--green) 0 25%, var(--red) 25%); display: grid; place-items: center; }
+.donut > div { width: 76%; aspect-ratio: 1; border-radius: 50%; background: var(--surface); display: grid; align-content: center; justify-items: center; }
+.legend { flex: 1 1 9rem; margin: 0; padding: 0; list-style: none; display: grid; gap: var(--s2); }
+.legend li { display: flex; align-items: center; gap: var(--s2); }
+.legend strong { margin-left: auto; }
+.dot { width: .625rem; aspect-ratio: 1; border-radius: 3px; background: var(--neutral); flex: none; }
+.dot.good { background: var(--green); } .dot.bad { background: var(--red); }
+.domains { display: grid; grid-template-columns: minmax(10rem, auto) minmax(0,1fr) max-content; gap: var(--s3) var(--s4); align-items: center; }
+meter { display: block; width: 100%; height: var(--bar-height); appearance: none; background: var(--track); border-radius: var(--radius-pill); }
+meter::-webkit-meter-bar { height: var(--bar-height); background: var(--track); border: 0; border-radius: var(--radius-pill); }
+meter::-webkit-meter-optimum-value { background: var(--blue); border-radius: var(--radius-pill); }
+meter::-moz-meter-bar { background: var(--blue); border-radius: var(--radius-pill); }
+.guide { margin-top: var(--s10); padding-top: var(--s6); border-top: 1px solid var(--border); }
+.guide-intro { margin-top: var(--s1); max-width: 68ch; }
+.sample-type { display: grid; gap: var(--s2); margin-bottom: var(--s4); }
+.scroll-table { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; text-align: left; }
+th, td { padding: var(--s2) var(--s3); border-bottom: 1px solid var(--border); vertical-align: top; }
+thead { background: var(--canvas); }
+tr:last-child td { border-bottom: 0; }
+code { font-size: var(--text-sm); overflow-wrap: anywhere; }
+.form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: var(--s4); }
+.field { display: grid; align-content: start; gap: var(--s1); }
+.field label, fieldset legend { font-weight: var(--semibold); }
+.field input,.field select,.field textarea { width: 100%; min-height: var(--control-height); padding: var(--s2) var(--s3); border: 1px solid var(--control-border); border-radius: var(--radius-control); color: var(--ink); background: var(--surface); font: inherit; }
+.field textarea { min-height: 6rem; resize: vertical; }
+.field [aria-invalid="true"] { border-color: var(--red); }
+.error { color: var(--red); }
+fieldset { margin: 0; padding: 0; border: 0; }
+.choice { display: flex; align-items: center; min-height: var(--control-touch); gap: var(--s2); }
+.choice input { width: 1rem; height: 1rem; margin: 0; accent-color: var(--blue); }
+.example-panel { display: grid; gap: var(--s2); max-width: 38rem; padding: var(--s4); border: 1px solid var(--border); border-radius: var(--radius-card); }
+.feed-post { max-width: 38rem; }
+.feed-meta { display: flex; gap: var(--s2); align-items: center; }
+.avatar { display: grid; place-items: center; width: var(--avatar); aspect-ratio: 1; border-radius: 50%; background: var(--blue-soft); color: var(--blue); font-weight: var(--bold); flex: none; }
+.feed-actions { border-top: 1px solid var(--border); padding-top: var(--s2); }
+.swatches { display: flex; gap: var(--s3); flex-wrap: wrap; }
+.color { border: 1px solid var(--border); border-radius: var(--radius-control); overflow: hidden; min-width: 7.5rem; }
+.color i { display: block; height: var(--s6); background: var(--swatch); }
+.color span { display: block; padding: var(--s2); }
+details > summary { cursor: pointer; color: var(--blue); font-weight: var(--semibold); }
+details p { margin-top: var(--s2); }
+@media (max-width: 64rem) {
+  :root { --sidebar-width: 11rem; }
+  main { padding-inline: var(--s5); }
+  .header { gap: var(--s3); padding-inline: var(--s4); }
+}
+@media (max-width: 53rem) {
+  .shell { grid-template-columns: minmax(0,1fr); }
+  .sidebar, .top-nav { display: none; }
+  .brand { flex-basis: auto; }
+}
+@media (max-width: 42rem) {
+  :root { --text-h1: 1.5rem; --line-h1: 2rem; --control-height: var(--control-touch); }
+  main { padding: var(--s4); }
+  .card { padding: var(--s4); }
+  .results-grid,.form-grid { grid-template-columns: minmax(0,1fr); }
+  .domains { grid-template-columns: minmax(0,1fr) auto; gap: var(--s2) var(--s3); }
+  .domains meter { grid-column: 1 / -1; grid-row: var(--mobile-row); margin-bottom: var(--s2); }
+}
+@media (pointer: coarse) { .button, .button.compact { min-height: var(--control-touch); } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="home-icon" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10H3zM9 20v-6h6v6"/></symbol>
+  <symbol id="book-icon" viewBox="0 0 24 24"><path d="M12 6v15M12 6C9 3 5 3 2 4v15c4-1 7-1 10 2 3-3 6-3 10-2V4c-3-1-7-1-10 2Z"/></symbol>
+  <symbol id="exam-icon" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="16" rx="2"/><path d="M9 5V3h6v2M9 10h6m-6 4h6m-6 4h4"/></symbol>
+  <symbol id="grid-icon" viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></symbol>
+</svg>
+<header class="header">
+  <a class="brand" href="#exam"><span class="logo" aria-hidden="true"></span>PM Circle</a>
+  <nav class="top-nav ui" aria-label="Guide sections">
+    <a href="#exam">Exam result</a><a href="#typography">Typography</a><a href="#layout">Layout</a><a href="#components">Components</a>
+  </nav>
+  <a class="button guide-link" href="#guide">UI style guide</a>
+</header>
+<div class="shell">
+<aside class="sidebar">
+  <nav aria-label="Reference navigation">
+    <a class="nav-item ui" href="#exam"><svg class="icon" aria-hidden="true"><use href="#home-icon"/></svg>Overview</a>
+    <a class="nav-item ui" href="#domains"><svg class="icon" aria-hidden="true"><use href="#book-icon"/></svg>Domain performance</a>
+    <a class="nav-item ui" href="#exam" aria-current="location"><svg class="icon" aria-hidden="true"><use href="#exam-icon"/></svg>PMP Exam Simulator</a>
+    <a class="nav-item ui" href="#guide"><svg class="icon" aria-hidden="true"><use href="#grid-icon"/></svg>UI style guide</a>
+  </nav>
+</aside>
+<main id="main" tabindex="-1">
+<section class="stack" id="exam" aria-labelledby="exam-title">
+  <nav class="crumbs small muted" aria-label="Breadcrumb"><a href="#exam">Learn &amp; Practice</a><span aria-hidden="true">›</span><a href="#exam">PMP® Exam Simulator</a><span aria-hidden="true">›</span><span aria-current="page">Exam result</span></nav>
+  <div class="page-head">
+    <div><h1 id="exam-title">Exam Result &amp; Performance Analysis</h1><p class="muted">Your practice attempt has been submitted and scored.</p></div>
+    <a class="button secondary" href="#simulator-example">← Simulator home</a>
+  </div>
+  <div class="results-grid">
+    <section class="card">
+      <h2 class="card-title">Review Summary</h2>
+      <div class="summary-content">
+        <div class="donut" aria-hidden="true"><div><span class="stat numeric">8</span><span class="caption muted">Questions</span></div></div>
+        <ul class="legend ui numeric">
+          <li><span class="dot good" aria-hidden="true"></span>Correct (2) <strong>25%</strong></li>
+          <li><span class="dot bad" aria-hidden="true"></span>Incorrect (6) <strong>75%</strong></li>
+          <li><span class="dot" aria-hidden="true"></span>Unanswered (0) <strong>0%</strong></li>
+        </ul>
+      </div>
+    </section>
+    <section class="card score">
+      <span class="badge success">✓ Submitted</span>
+      <h2>Overall Score</h2>
+      <div class="stat numeric">25%</div>
+      <p class="muted">2 of 8 practice questions answered correctly.</p>
+      <div class="actions"><a class="button primary" href="#review-example">Review All Questions →</a><a class="button secondary" href="#simulator-example">Take Another Exam</a></div>
+    </section>
+  </div>
+  <section class="card" id="domains">
+    <h2 class="card-title">Domain Performance</h2>
+    <div class="domains ui numeric">
+      <strong id="business">Business Environment</strong><meter min="0" max="2" value="1" aria-labelledby="business" style="--mobile-row:2"></meter><span>1 / 2 correct</span>
+      <strong id="people">People</strong><meter min="0" max="2" value="1" aria-labelledby="people" style="--mobile-row:4"></meter><span>1 / 2 correct</span>
+      <strong id="process">Process</strong><meter min="0" max="4" value="0" aria-labelledby="process" style="--mobile-row:6"></meter><span>0 / 4 correct</span>
+    </div>
+  </section>
+  <p class="small muted">Use this practice score to track your preparation.</p>
+</section>
+
+<section class="guide stack" id="guide" aria-labelledby="guide-title">
+  <div><h2 id="guide-title">PM Circle UI Style Guide</h2><p class="guide-intro muted">A compact system type scale for the simulator, feed, member pages, and forms. The result screen above shows the components in context. The CSS variables in this file are the source for the values below.</p></div>
+
+  <section class="card" id="typography">
+    <h3 class="card-title">Typography</h3>
+    <div class="sample-type">
+      <div style="font:var(--bold) var(--text-h1)/var(--line-h1) var(--font-ui);letter-spacing:-.025em">H1 · Page title</div>
+      <h2>H2 · Section title</h2><h3>H3 · Subsection title</h3><h4>H4 · Card group heading</h4><h5>H5 · Nested heading</h5><h6>H6 · Deeply nested heading</h6>
+      <p>Paragraph text is used for explanations, feed posts, and longer instructions.</p>
+      <p class="ui">UI text is used for labels, navigation, and controls.</p>
+      <p class="small muted">Small text is used for timestamps, breadcrumbs, and help.</p>
+      <p class="caption muted">Caption text is used for short metadata and chart labels.</p>
+    </div>
+    <div class="scroll-table"><table class="ui">
+      <thead><tr><th scope="col">Role</th><th scope="col">Size / line height</th><th scope="col">Weight</th><th scope="col">Use</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">H1</th><td>28 / 36 px</td><td>700</td><td>Page title. 24 / 32 px at ≤ 672 px.</td></tr>
+        <tr><th scope="row">H2</th><td>20 / 28 px</td><td>700</td><td>Major section or result card title.</td></tr>
+        <tr><th scope="row">H3</th><td>18 / 24 px</td><td>600</td><td>Subsection.</td></tr>
+        <tr><th scope="row">H4</th><td>16 / 24 px</td><td>600</td><td>Heading within a subsection.</td></tr>
+        <tr><th scope="row">H5</th><td>15 / 22 px</td><td>600</td><td>Nested heading.</td></tr>
+        <tr><th scope="row">H6</th><td>14 / 20 px</td><td>600</td><td>Deepest heading level.</td></tr>
+        <tr><th scope="row">Paragraph</th><td>15 / 24 px</td><td>400</td><td>Explanations and reading text.</td></tr>
+        <tr><th scope="row">UI text</th><td>14 / 20 px</td><td>400–600</td><td>Navigation, buttons, table cells. Active navigation uses 700.</td></tr>
+        <tr><th scope="row">Small</th><td>13 / 20 px</td><td>400</td><td>Breadcrumbs and supporting text.</td></tr>
+        <tr><th scope="row">Caption</th><td>12 / 16 px</td><td>400–600</td><td>Short metadata and status badges.</td></tr>
+        <tr><th scope="row">Statistic</th><td>32 / 36 px</td><td>700</td><td>Score and question count. Use tabular numerals.</td></tr>
+      </tbody>
+    </table></div>
+    <p class="small muted">Values assume a 16 px browser default. The CSS uses rem units. Choose heading levels by section hierarchy and use one H1 per page.</p>
+  </section>
+
+  <section class="card" id="layout">
+    <h3 class="card-title">Layout, spacing, and sizing</h3>
+    <div class="scroll-table"><table class="ui">
+      <thead><tr><th scope="col">Element</th><th scope="col">Default</th><th scope="col">Layout rule</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Spacing scale</th><td>4, 8, 12, 16, 20, 24, 32, 40 px</td><td>8 px between controls, 16 px between cards, 24–32 px for page spacing.</td></tr>
+        <tr><th scope="row">Header</th><td>56 px minimum height</td><td>Allow room for text resizing and wrapping.</td></tr>
+        <tr><th scope="row">Sidebar</th><td>224 px wide, 44 px row minimum</td><td>176 px at ≤ 1024 px. Hide the rail at ≤ 848 px. The guide remains available in the header.</td></tr>
+        <tr><th scope="row">Content area</th><td>1120 px maximum, including padding</td><td>32 px side padding, 20 px at ≤ 1024 px, 16 px at ≤ 672 px.</td></tr>
+        <tr><th scope="row">Results grid</th><td>5:7 columns, 16 px gap</td><td>Stack cards at ≤ 672 px. Let card height follow its content.</td></tr>
+        <tr><th scope="row">Card</th><td>20 px padding, 12 px radius, 1 px border</td><td>16 px padding at ≤ 672 px.</td></tr>
+        <tr><th scope="row">Buttons and inputs</th><td>40 px minimum height, 8 px radius</td><td>44 px at ≤ 672 px. Keep buttons at least 44 px on touch pointers.</td></tr>
+        <tr><th scope="row">Compact button</th><td>32 px minimum height</td><td>Use for secondary desktop actions. Touch pointers use 44 px.</td></tr>
+        <tr><th scope="row">Icons and avatars</th><td>20 px icon, 32 px avatar token</td><td>Center icons in the control hit area. Pair status icons with text.</td></tr>
+        <tr><th scope="row">Charts</th><td>120 px donut, 8 px progress bar</td><td>Show counts and labels alongside the visuals. Move domain bars below labels on narrow screens.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="card stack" id="components">
+    <h3>Component examples</h3>
+    <div class="actions">
+      <a class="button primary" href="#review-example">Primary action</a><a class="button secondary" href="#simulator-example">Secondary action</a><a class="button compact" href="#typography">Compact action</a><button class="button" type="button" disabled>Disabled</button>
+    </div>
+    <div class="actions"><span class="badge success">Submitted</span><span class="badge danger">Incorrect</span><span class="badge">Unanswered</span><a class="ui" href="#layout">Text link</a></div>
+    <div class="form-grid">
+      <div class="field"><label class="ui" for="name">Display name</label><input id="name" placeholder="e.g. Aminul Islam" aria-describedby="name-hint"><span class="small muted" id="name-hint">Shown on your member profile.</span></div>
+      <div class="field"><label class="ui" for="domain">Exam domain</label><select id="domain"><option>All domains</option><option>People</option><option>Process</option><option>Business Environment</option></select></div>
+      <div class="field"><label class="ui" for="email">Email</label><input type="email" id="email" value="aminul.example" aria-invalid="true" aria-describedby="email-error"><span class="small error" id="email-error">Enter a valid email address.</span></div>
+      <div class="field"><label class="ui" for="note">Notes</label><textarea id="note" placeholder="Add a practice note"></textarea></div>
+      <fieldset class="ui"><legend>Preferences</legend><label class="choice"><input type="checkbox"> Show marked questions first</label></fieldset>
+      <fieldset class="ui"><legend>View</legend><label class="choice"><input type="radio" name="view" checked> All questions</label><label class="choice"><input type="radio" name="view"> Incorrect only</label></fieldset>
+    </div>
+    <article class="card feed-post stack" aria-label="Sample community post">
+      <div class="feed-meta">
+        <span class="avatar caption" aria-hidden="true">PC</span>
+        <div><div class="ui"><strong>PM Circle</strong></div><div class="small muted">Community Feed · 2 hours ago</div></div>
+      </div>
+      <p>When a project has fixed milestones and changing requirements, how do you decide which parts to plan upfront?</p>
+      <div class="actions feed-actions"><span class="small muted">12 likes · 4 replies</span><a class="button compact" href="#review-example">Read discussion example</a></div>
+    </article>
+    <div class="example-panel" id="review-example">
+      <h4>Question review example</h4>
+      <details><summary class="ui">View an explanation</summary><p class="ui muted">A hybrid approach can use planned regulatory milestones alongside iterative interface delivery.</p></details>
+    </div>
+    <div class="example-panel" id="simulator-example">
+      <h4>Simulator action examples</h4>
+      <p class="small muted">The results buttons link to examples within this reference file.</p>
+      <a class="ui" href="#exam">Back to sample exam result</a>
+    </div>
+  </section>
+
+  <section class="card stack" id="colors">
+    <h3>Color and accessibility</h3>
+    <div class="swatches ui">
+      <div class="color" style="--swatch:var(--blue)"><i></i><span>Action blue<br><code>#075eb5</code></span></div>
+      <div class="color" style="--swatch:var(--ink)"><i></i><span>Text<br><code>#172842</code></span></div>
+      <div class="color" style="--swatch:var(--muted)"><i></i><span>Muted text<br><code>#4c5d74</code></span></div>
+      <div class="color" style="--swatch:var(--canvas)"><i></i><span>Page canvas<br><code>#f4f7fa</code></span></div>
+      <div class="color" style="--swatch:var(--border)"><i></i><span>Card border<br><code>#dce4ee</code></span></div>
+      <div class="color" style="--swatch:var(--green)"><i></i><span>Correct<br><code>#187448</code></span></div>
+      <div class="color" style="--swatch:var(--red)"><i></i><span>Incorrect<br><code>#b33d4e</code></span></div>
+    </div>
+    <p class="ui muted">Use visible focus rings, link field errors to their inputs, and pair chart colors with counts or status text. Use <code>.button</code>, <code>.card</code>, <code>.badge</code>, and <code>.field</code> as the starting classes for other pages.</p>
+  </section>
+</section>
+</main>
+</div>
+</body>
+</html>

@@ -5,7 +5,9 @@ namespace App\Http\Controllers\PublicSite;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Onboarding\OnboardingController;
 use App\Models\HomePageContent;
+use App\Domain\Billing\Services\ProfileCompletionRewardService;
 use App\Domain\Community\Services\EngagementStats;
+use App\Domain\Community\Queries\PostReactionSummary;
 use App\Models\CareerJob;
 use App\Models\Post;
 use App\Models\Scenario;
@@ -68,11 +70,11 @@ class HomeController extends Controller
                 'author.profile' => fn ($query) => $query->where('visibility', 'public')
                     ->select('id', 'user_id', 'role', 'avatar_path'),
             ])
-            ->when(EngagementStats::readsEnabled(), fn ($query) => $query
+            ->when(EngagementStats::readsEnabled(), fn ($query) => PostReactionSummary::selectStats($query
                 ->leftJoin('post_engagement_stats as home_stats', 'home_stats.post_id', '=', 'posts.id')
                 ->selectRaw('COALESCE(home_stats.comments_count, 0) AS comments_count')
                 ->selectRaw('COALESCE(home_stats.like_count, 0) AS likes_count')
-                ->selectRaw('COALESCE(home_stats.reactions_count, 0) AS reactions_count'))
+                ->selectRaw('COALESCE(home_stats.reactions_count, 0) AS reactions_count'), 'home_stats'))
             ->when(! EngagementStats::readsEnabled(), fn ($query) => $query->withCount([
                 'comments',
                 'reactions as likes_count' => fn ($query) => $query->where('type', 'like'),
@@ -83,6 +85,7 @@ class HomeController extends Controller
                     ->whereColumn('post_id', 'posts.id')->where('user_id', $viewerId)->limit(1),
             ]))
             ->latest('posts.published_at')->limit(2)->get() : collect();
+        PostReactionSummary::attach($posts);
         $posts->each(fn (Post $post) => $post->anonymizeForPublic());
 
         $members = $visible('members') ? User::query()
@@ -117,6 +120,7 @@ class HomeController extends Controller
 
         return Inertia::render('public/Home', [
             'content' => $content,
+            'rewardPromotion' => $visible('pathway') ? app(ProfileCompletionRewardService::class)->publicPromotion() : null,
             'jobs' => $jobs,
             'isDemo' => $demo,
             'scenario' => $scenario,

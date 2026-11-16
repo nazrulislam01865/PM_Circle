@@ -2,6 +2,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { Calculator, Clock3, Flag, Highlighter, Strikethrough, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { ExamExplanation, ExamOptionList, Highlighted } from './ExamShared';
+import { ExamTimeProgress } from './ExamTimeProgress';
 import { pmpPublicSampleDurationSeconds, pmpPublicSampleQuestion as question } from './pmpPublicSampleQuestion';
 
 /** Uses the actual paid simulator's question/option/explanation UI with local-only preview state. */
@@ -107,9 +108,7 @@ export function PmpPublicSampleExam() {
             </div>
         </div>
         <div className="pm-exam-take-body">
-            <div className="pm-exam-progress" role="progressbar" aria-label="Sample exam time elapsed" aria-valuemin={0} aria-valuemax={pmpPublicSampleDurationSeconds} aria-valuenow={pmpPublicSampleDurationSeconds - seconds}>
-                <span style={{ width: `${(pmpPublicSampleDurationSeconds - seconds) / pmpPublicSampleDurationSeconds * 100}%` }}/>
-            </div>
+            <ExamTimeProgress secondsRemaining={seconds} durationSeconds={pmpPublicSampleDurationSeconds} label="Sample exam time remaining"/>
             <div className="pm-exam-take-grid">
                 <section className="pm-exam-panel pm-exam-question-card" aria-label="Public sample exam question">
                     {marked && !finished && <div className="pm-exam-marked-banner"><Flag size={15} fill="currentColor"/><strong>Marked for review</strong><span>· You can review this question before checking your answer.</span></div>}

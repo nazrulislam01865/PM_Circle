@@ -1,18 +1,22 @@
 import { router } from '@inertiajs/react';
 import { Bookmark, MessageCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { InlinePostComments } from './InlinePostComments';
 import { EngagementActionBar } from './EngagementActionBar';
+import { PostReactionSummary, type ReactionCounts } from './PostReactions';
 import { HomeCommentAction, HomeShareAction, ReactionPicker, type ReactionType, type RequestToJoin } from '@/components/home/HomeEngagement';
+
+const EMPTY_REACTION_COUNTS: ReactionCounts = {};
 
 // Preserve open discussion state when a post leaves the virtual window.
 const openCommentPosts = new Set<number>();
 
 /** A single interaction contract for homepage, dashboard and public community posts. */
-export function PostEngagementActions({ postId, initial, total, comments, canInteract, onJoin, showSave = false, saved = false, inlineComments = true, onReactionChange, onCommentAdded, onSavedChange }: {
+export function PostEngagementActions({ postId, initial, total, breakdown = EMPTY_REACTION_COUNTS, comments, canInteract, onJoin, showSave = false, saved = false, inlineComments = true, onReactionChange, onCommentAdded, onSavedChange }: {
     postId: number;
     initial?: ReactionType | null;
     total: number;
+    breakdown?: ReactionCounts;
     comments: number;
     canInteract: boolean;
     onJoin: RequestToJoin;
@@ -23,6 +27,26 @@ export function PostEngagementActions({ postId, initial, total, comments, canInt
     onCommentAdded?: () => void;
     onSavedChange?: (saved: boolean) => void;
 }) {
+    const [summaryTotal, setSummaryTotal] = useState(total);
+    const [summaryCounts, setSummaryCounts] = useState<ReactionCounts>(breakdown);
+    const lastReaction = useRef<ReactionType | null>(initial ?? null);
+    useEffect(() => {
+        setSummaryTotal(total);
+        setSummaryCounts(breakdown);
+        lastReaction.current = initial ?? null;
+    }, [postId, breakdown]);
+    const handleReactionChange = (reaction: ReactionType | null, count: number) => {
+        const before = lastReaction.current;
+        lastReaction.current = reaction;
+        setSummaryTotal(count);
+        setSummaryCounts(current => {
+            const next = { ...current };
+            if (before) next[before] = Math.max(0, (next[before] ?? 0) - 1);
+            if (reaction) next[reaction] = (next[reaction] ?? 0) + 1;
+            return next;
+        });
+        onReactionChange?.(reaction, count);
+    };
     const [expanded, setExpanded] = useState(() => openCommentPosts.has(postId));
     const toggleExpanded = () => setExpanded(previous => {
         if (previous) openCommentPosts.delete(postId);
@@ -44,7 +68,6 @@ export function PostEngagementActions({ postId, initial, total, comments, canInt
         }
         setSaveBusy(true);
         setSaveError('');
-        onSavedChange(!saved);
         try {
             const response = await fetch(`${url}/save`, {
                 method: saved ? 'DELETE' : 'POST',
@@ -58,20 +81,23 @@ export function PostEngagementActions({ postId, initial, total, comments, canInt
             const result = await response.json() as { saved: boolean };
             onSavedChange(result.saved);
         } catch (reason) {
-            onSavedChange(saved);
             setSaveError(reason instanceof Error ? reason.message : 'Could not update saved post.');
         } finally { setSaveBusy(false); }
     };
     return <div className="pm-engagement-shell"><EngagementActionBar>
-        <ReactionPicker endpoint={`${url}/reactions`} initial={initial} total={total} canInteract={canInteract} onJoin={onJoin} onChanged={onReactionChange} />
+        <ReactionPicker endpoint={`${url}/reactions`} initial={initial} total={total} canInteract={canInteract} onJoin={onJoin} onChanged={handleReactionChange} showCount={false} />
         {inlineComments ? <button type="button" className="pm-home-action" aria-expanded={expanded} aria-controls={`inline-comments-${postId}`}
             onClick={() => { if (!canInteract) onJoin('comment on a discussion'); else toggleExpanded(); }}>
             <MessageCircle size={19} aria-hidden="true"/> {commentCount} {commentCount === 1 ? 'comment' : 'comments'}
         </button> : <HomeCommentAction label={commentCount === 1 ? 'comment' : 'comments'} count={commentCount} href={`${url}#post-comments`} canInteract={canInteract} onJoin={onJoin} />}
         <HomeShareAction href={url} canInteract={canInteract} onJoin={onJoin} />
-        {showSave && <button type="button" className="pm-home-action pm-post-save-action" aria-pressed={saved} onClick={() => { void toggleSave(); }} disabled={saveBusy}>
-            <Bookmark size={19} fill={saved ? 'currentColor' : 'none'} aria-hidden="true" /> {saved ? 'Saved' : 'Save'}
-        </button>}
+        <span className="pm-post-engagement-trailing">
+            <PostReactionSummary postId={postId} total={summaryTotal} counts={summaryCounts}
+                onRefresh={(count, counts) => { setSummaryTotal(count); setSummaryCounts(counts); }} />
+            {showSave && <button type="button" className="pm-home-action pm-post-save-action" aria-pressed={saved} onClick={() => { void toggleSave(); }} disabled={saveBusy}>
+                <Bookmark size={19} fill={saved ? 'currentColor' : 'none'} aria-hidden="true" /> {saved ? 'Saved' : 'Save'}
+            </button>}
+        </span>
         {saveError && <span className="pm-home-reaction-error" role="alert">{saveError}</span>}
     </EngagementActionBar>
         {inlineComments && expanded && <InlinePostComments postId={postId} canInteract={canInteract} onJoin={onJoin}

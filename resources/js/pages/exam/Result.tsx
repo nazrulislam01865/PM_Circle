@@ -109,7 +109,7 @@ export default function Result({ shell, attempt, domains }: {
     domains: DomainScore[];
 }) {
     const { startExam, starting, startError } = useExamStart();
-    return <ExamPage shell={shell}>
+    return <ExamPage shell={shell} className="pm-exam-result-page">
         <Head title="Exam Result Report"/>
         <div className="pm-exam-report">
             <nav className="pm-exam-report-breadcrumb" aria-label="Breadcrumb">

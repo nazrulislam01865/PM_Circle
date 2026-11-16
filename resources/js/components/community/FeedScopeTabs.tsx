@@ -1,17 +1,25 @@
 import { Link } from '@inertiajs/react';
 
-export type FeedScope = 'all' | 'following' | 'mine';
+export type FeedScope = 'all' | 'following' | 'mine' | 'saved' | 'hidden';
+export type FeedScopeCounts = { saved: number; hidden: number };
 
-const scopes: { value: FeedScope; label: string }[] = [
+const baseScopes: { value: FeedScope; label: string }[] = [
     { value: 'all', label: 'All' },
     { value: 'following', label: 'Following' },
     { value: 'mine', label: 'My posts' },
 ];
 
-export function FeedScopeTabs({ active, hrefFor }: {
+/** Only add private tabs when the member has at least one visible item in that list. */
+export function FeedScopeTabs({ active, hrefFor, counts = { saved: 0, hidden: 0 } }: {
     active: FeedScope;
     hrefFor: (scope: FeedScope) => string;
+    counts?: FeedScopeCounts;
 }) {
+    const scopes = [
+        ...baseScopes,
+        ...(counts.saved > 0 ? [{ value: 'saved' as const, label: 'Saved' }] : []),
+        ...(counts.hidden > 0 ? [{ value: 'hidden' as const, label: 'Hidden' }] : []),
+    ];
     return <nav className="pm-feed-scope-tabs" aria-label="Filter community posts">
         {scopes.map(scope => <Link
             key={scope.value}

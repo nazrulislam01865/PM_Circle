@@ -13,10 +13,10 @@ const portraitByName: Record<string, string> = {
     'Alex Rivera': 'alex', 'Fatima Khan': 'fatima', 'Sara Ahmed': 'sara',
     'Daniel Chen': 'daniel', 'Meera Das': 'meera',
 };
-export function Avatar({ name, size = 42, src }: { name: string; size?: number; src?: string | null }) {
+export function Avatar({ name, size = 42, src, disableDemoFallback = false }: { name: string; size?: number; src?: string | null; disableDemoFallback?: boolean }) {
     const index = Array.from(name).reduce((value, char) => value + char.charCodeAt(0), 0) % swatches.length;
     const initials = name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
-    const portrait = src || (portraitByName[name] ? `/images/demo/${portraitByName[name]}.webp` : null);
+    const portrait = src || (!disableDemoFallback && portraitByName[name] ? `/images/demo/${portraitByName[name]}.webp` : null);
     const [failed, setFailed] = useState<string | null>(null);
     const uploaded = portrait?.match(/^\/storage\/profile-avatars\/([a-zA-Z0-9._-]+)$/);
     const mediaUrl = uploaded ? `/profile-media/avatar/${encodeURIComponent(uploaded[1])}` : portrait;

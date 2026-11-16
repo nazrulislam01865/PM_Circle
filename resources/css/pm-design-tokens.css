@@ -73,6 +73,11 @@
     --red-soft: #fceff0;
     --neutral: #7a899e;
     --focus: #0866c4;
+    --reward-surface: #fff7e6;
+    --reward-surface-bright: #fffdf6;
+    --reward-border: #f2dfbb;
+    --reward-icon-bg: #f8ce65;
+    --reward-icon-ink: #a56800;
 
     --primary: var(--blue);
     --primary-hover: var(--blue-hover);

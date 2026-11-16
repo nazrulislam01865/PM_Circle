@@ -6,6 +6,8 @@ import {
     type LucideIcon,
 } from 'lucide-react';
 import type { HomePathwayContent } from '@/types/home';
+import type { RewardPromotionData } from '@/types/reward';
+import { ProfileRewardPromotion } from '@/components/rewards/ProfileCompletionReward';
 import { HomeContentIcon, type HomepageIconAssets } from '@/components/home/HomeContentIcon';
 
 /** Known icon keys are mapped to the existing icon library; content is supplied by Laravel. */
@@ -36,7 +38,7 @@ function CareerSteps({ content, iconAssets }: { content: HomePathwayContent['ste
     </section>;
 }
 
-function ExamCarousel({ content, iconAssets }: { content: HomePathwayContent['exams']; iconAssets?: HomepageIconAssets }) {
+function ExamCarousel({ content, iconAssets, promotion, isMember }: { content: HomePathwayContent['exams']; iconAssets?: HomepageIconAssets; promotion: RewardPromotionData | null; isMember: boolean }) {
     const scroller = useRef<HTMLDivElement>(null);
     const [activeIndex, setActiveIndex] = useState(0);
     const items = content.items;
@@ -69,6 +71,7 @@ function ExamCarousel({ content, iconAssets }: { content: HomePathwayContent['ex
             </div>
             <Link href="/pricing" className="pm-pathway-compare">{content.compare_label} <ArrowRight aria-hidden="true" size={19}/></Link>
         </div>
+        <ProfileRewardPromotion promotion={promotion} isMember={isMember} />
         {items.length > 0 && <>
             <div className="pm-pathway-carousel-shell">
                 <button type="button" className="pm-pathway-arrow" aria-label="Previous exam simulator" onClick={() => goTo(activeIndex - 1)}>
@@ -123,11 +126,11 @@ function ProfessionalSkillsBanner({ content }: { content: HomePathwayContent['ba
 }
 
 /** Replaces the former statistics panel; the remaining homepage is untouched. */
-export function HomePathway({ content, iconAssets }: { content?: HomePathwayContent; iconAssets?: HomepageIconAssets }) {
+export function HomePathway({ content, iconAssets, promotion = null, isMember = false }: { content?: HomePathwayContent; iconAssets?: HomepageIconAssets; promotion?: RewardPromotionData | null; isMember?: boolean }) {
     if (!content) return null;
     return <div className="pm-pathway-band"><div className="pm-pathway-container">
         <CareerSteps content={content.steps} iconAssets={iconAssets}/>
-        <ExamCarousel content={content.exams} iconAssets={iconAssets}/>
+        <ExamCarousel content={content.exams} iconAssets={iconAssets} promotion={promotion} isMember={isMember}/>
         <ProfessionalSkillsBanner content={content.banner}/>
     </div></div>;
 }

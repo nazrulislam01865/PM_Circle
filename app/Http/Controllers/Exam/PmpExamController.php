@@ -225,8 +225,9 @@ final class PmpExamController extends Controller
 
         return Inertia::render('exam/Take', [
             'attempt' => ['id' => $record->id, 'expiresAt' => Carbon::parse($record->expires_at)->toIso8601String(),
+                'serverNow' => now()->toIso8601String(),
                 'total' => $record->total_questions,
-                'durationSeconds' => Carbon::parse($record->expires_at)->diffInSeconds(Carbon::parse($record->started_at))],
+                'durationSeconds' => (int) round(Carbon::parse($record->started_at)->diffInSeconds(Carbon::parse($record->expires_at), true))],
             'questions' => $this->questions($record, false),
             'responses' => $this->responses($record->id),
         ]);

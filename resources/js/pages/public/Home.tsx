@@ -8,12 +8,14 @@ import { HomeCommunitySection } from '@/components/home/HomeCommunitySection';
 import { CareerHighlights } from '@/components/home/CareerHighlights';
 import { HomePathway } from '@/components/home/HomePathway';
 import type { HomeContent, HomeMember, HomeCareerJob } from '@/types/home';
+import type { RewardPromotionData } from '@/types/reward';
 import type { HomepageIconAssets } from '@/components/home/HomeContentIcon';
 import { JoinCommunityDialog } from '@/components/home/HomeEngagement';
 import { useState } from 'react';
 
 type Props = {
     content: HomeContent;
+    rewardPromotion: RewardPromotionData | null;
     iconAssets?: HomepageIconAssets;
     isDemo: boolean;
     scenario: ScenarioSummary | null;
@@ -23,7 +25,7 @@ type Props = {
     jobs: HomeCareerJob[];
 };
 
-export default function Home({ content, iconAssets, isDemo, scenario, scenarioResponses, posts, members, jobs }: Props) {
+export default function Home({ content, iconAssets, isDemo, scenario, scenarioResponses, posts, members, jobs, rewardPromotion }: Props) {
     const { auth, emailVerificationRequired } = usePage<{ auth: { user: { onboarding_step: number; email_verified_at: string | null; is_admin?: boolean } | null }; emailVerificationRequired?: boolean }>().props;
     const [joinAction, setJoinAction] = useState<string | null>(null);
     const canInteract = Boolean(auth?.user && !auth.user.is_admin && auth.user.onboarding_step >= 3 && (!emailVerificationRequired || auth.user.email_verified_at));
@@ -39,7 +41,7 @@ export default function Home({ content, iconAssets, isDemo, scenario, scenarioRe
                 <div className="pm-hero-actions"><Link href={auth?.user && (!hero?.primary_url || hero.primary_url === '/register') ? (auth.user.is_admin ? '/admin' : '/dashboard') : (hero?.primary_url || '/register')} className="pm-button">{hero?.primary_label}</Link>
                     <Link href={hero?.secondary_url || '/community'} className="pm-button pm-button-outline">{hero?.secondary_label}</Link></div>
             </div><CommunityOrbit people={people} content={hero}/></div></section>}
-            {visible('pathway') && <HomePathway content={content.pathway} iconAssets={iconAssets}/>}
+            {visible('pathway') && <HomePathway content={content.pathway} iconAssets={iconAssets} promotion={rewardPromotion} isMember={Boolean(auth?.user && !auth.user.is_admin)}/>}
             {(visible('scenario') || visible('community') || visible('members') || visible('skills')) && <div className={`pm-container pm-home-showcases ${!(visible('scenario') || visible('community')) || !(visible('members') || visible('skills')) ? 'pm-home-showcases-single' : ''}`}>
                 <div className="pm-home-main">
                     {visible('scenario') && <ScenarioPreview scenario={scenario} responses={scenarioResponses ?? []} content={content.scenario} canInteract={canInteract} onJoin={setJoinAction}/>}

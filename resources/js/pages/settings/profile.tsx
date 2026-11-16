@@ -36,6 +36,8 @@ import {
 } from 'lucide-react';
 import { MemberDashboardLayout } from '@/layouts/pm/MemberDashboardLayout';
 import type { DashboardShellData } from '@/types/dashboard';
+import type { ProfileRewardData } from '@/types/reward';
+import { ProfileCompletionReward } from '@/components/rewards/ProfileCompletionReward';
 
 type ExperienceItem = {
     id?: number;
@@ -62,6 +64,7 @@ type ProjectItem = {
 
 type ProfilePageProps = {
     activeTab: 'overview' | 'edit' | 'imports' | 'privacy';
+    profileReward: ProfileRewardData | null;
     status?: string;
     profileData: {
         id: number;
@@ -107,7 +110,7 @@ type ProfilePageProps = {
     };
 };
 
-export default function Profile({ activeTab: initialTab = 'overview', profileData }: ProfilePageProps) {
+export default function Profile({ activeTab: initialTab = 'overview', profileData, profileReward }: ProfilePageProps) {
     const { memberShell } = usePage<{ memberShell?: DashboardShellData }>().props;
 
     const dashboardShell: DashboardShellData = memberShell || {
@@ -614,19 +617,21 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                         </div>
 
                                         <div className="pm-progress-text">
-                                            <strong>Great progress!</strong> Add a work sample to make your profile stand out.
+                                            {profileData.completeness === 100 ? 'Your profile is complete.' : <><strong>Great progress!</strong> Add a work sample to make your profile stand out.</>}
                                         </div>
                                     </div>
 
-                                    <button
+                                    {profileData.completeness < 100 && <button
                                         type="button"
                                         className="pm-btn pm-btn-secondary pm-btn-sm w-full"
                                         onClick={() => changeTab('edit')}
                                     >
                                         Add a work sample →
-                                    </button>
+                                    </button>}
                                 </div>
                             </div>
+
+                            <ProfileCompletionReward reward={profileReward} variant="profile" />
 
                             {/* Visibility Widget */}
                             <div className="pm-card">

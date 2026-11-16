@@ -12,11 +12,12 @@ $files = [
         'Last 5 completed', 'Exam History', 'AI Usage',
     ],
     'resources/js/pages/exam/Review.tsx' => [
-        'Back to Exam History', 'missed', 'unanswered', 'flagged', 'Ask AI About This Answer',
+        'Back to Exam History', 'missed', 'unanswered', 'flagged', 'PmpQuestionAiChat',
     ],
     'app/Http/Controllers/Exam/PmpExamController.php' => [
         'updateTargetDate', 'aiHelp', 'where(\'user_id\'', 'DB::transaction',
     ],
+    'resources/js/components/exam/PmpQuestionAiChat.tsx' => ['Ask AI About This Answer'],
     'resources/js/components/dashboard/MemberHomeHeader.tsx' => ['PMP Exam Simulator', '/exams/pmp/enter'],
 ];
 foreach ($files as $relative => $fragments) {

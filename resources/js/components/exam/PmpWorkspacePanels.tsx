@@ -23,7 +23,8 @@ export type PmpPlanDetails = {
     starts_at: string | null; ends_at: string | null;
 };
 export type PmpAiUsageData = {
-    allocated: number; used: number; remaining: number;
+    allocated: number; used: number; reserved?: number; remaining: number;
+    configured?: boolean; reset_at?: string;
     activity: { kind: string; tokens: number }[];
 };
 export type PmpTopicRow = { attemptId: number; topic: string; total: number; correct: number };
@@ -132,11 +133,12 @@ function studyTopics(topics: PmpTopicRow[], completed: PmpWorkspaceAttempt[], ma
     })).sort((a, b) => a.percent - b.percent);
 }
 
-export function PmpOverview({ attempts, planCode, planDetails, targetExamDate, attemptTotals,
-    aiUsage, topics, availableQuestions, fullLength, fullQuestionCount, focusedQuestionCount, onStart, onFocus, starting, onAi }: {
+export function PmpOverview({ attempts, planCode, planDetails, targetExamDate, attemptTotals, aiUsage,
+    topics, availableQuestions, fullLength, fullQuestionCount, focusedQuestionCount, onStart, onFocus, starting, onAi }: {
     attempts: PmpWorkspaceAttempt[]; planCode: string; planDetails: PmpPlanDetails;
-    targetExamDate: string | null; attemptTotals: { completed: number; inProgress: number };
-    aiUsage: PmpAiUsageData; topics: PmpTopicRow[]; availableQuestions: number; fullLength: boolean; fullQuestionCount: number; focusedQuestionCount: number;
+    targetExamDate: string | null; attemptTotals: { completed: number; inProgress: number; practiceCompleted: number; latestScore: number | null };
+    aiUsage: PmpAiUsageData;
+    topics: PmpTopicRow[]; availableQuestions: number; fullLength: boolean; fullQuestionCount: number; focusedQuestionCount: number;
     onStart: () => void; onFocus: (domain: string) => void; starting: boolean; onAi: () => void;
 }) {
     const activeAttempt = attempts.find(isResumable);
@@ -202,12 +204,15 @@ export function PmpOverview({ attempts, planCode, planDetails, targetExamDate, a
             <Panel><div className="pm-pmp-card-title"><IconTile><Layers3/></IconTile><strong>Mock Exams</strong></div>
                 <div className="pm-pmp-dual-stats"><div><strong>{attemptTotals.completed}</strong><small>completed</small></div>
                     <div><strong>{attemptTotals.inProgress}</strong><small>in progress</small></div></div>
-                <p className="pm-pmp-muted">Latest score: <strong>{latest ? `${valuePercent(latest)}%` : 'No completed mock yet'}</strong></p>
+                <p className="pm-pmp-muted">Latest score: <strong>{attemptTotals.latestScore !== null ? `${attemptTotals.latestScore}%` : 'No completed mock yet'}</strong></p>
+                {attemptTotals.practiceCompleted > 0 && <p className="pm-pmp-muted">Focused practice completed: <strong>{attemptTotals.practiceCompleted}</strong></p>}
             </Panel>
             <Panel><div className="pm-pmp-card-title"><IconTile><Sparkles/></IconTile><strong>AI Tokens</strong></div>
-                <div className="pm-pmp-dual-stats"><div><strong>{aiUsage.used.toLocaleString()}</strong><small>used</small></div>
-                    <div><strong>{aiUsage.remaining.toLocaleString()}</strong><small>remaining</small></div></div>
-                <p className="pm-pmp-muted">{aiUsage.allocated ? `${aiUsage.allocated.toLocaleString()} allocated` : 'No AI tokens have been allocated yet.'}</p>
+                <div className="pm-pmp-dual-stats"><div><strong>{aiUsage.used.toLocaleString('en-US')}</strong><small>used</small></div>
+                    <div><strong>{aiUsage.remaining.toLocaleString('en-US')}</strong><small>remaining</small></div></div>
+                <p className="pm-pmp-muted">{aiUsage.configured === false
+                    ? 'AI token usage has not been configured for this plan.'
+                    : `${aiUsage.allocated.toLocaleString('en-US')} tokens allocated for this billing cycle.`}</p>
                 <button type="button" className="pm-pmp-secondary" onClick={onAi}>View AI Usage</button>
             </Panel>
         </div>
@@ -414,36 +419,45 @@ export function PmpHistory({ attempts, initialNextCursor, onStart, starting, can
     </Surface>;
 }
 
-export function PmpAiUsage({ usage }: { usage: PmpAiUsageData }) {
+export function PmpAiUsage({ usage, onRefresh, loading = false, error = '' }: {
+    usage: PmpAiUsageData; onRefresh?: () => void; loading?: boolean; error?: string;
+}) {
     const percent = usage.allocated ? Math.min(100, Math.round(usage.used / usage.allocated * 100)) : 0;
     const labels: Record<string, string> = {
         question_explanation: 'Question explanations', follow_up: 'Follow-up questions',
-        study_insight: 'Study insights',
     };
     return <Surface className="pm-pmp-ai-surface">
         <div className="pm-pmp-ai-top"><span>PMP® Exam Simulator</span><span className="pm-pmp-status is-completed">AI Usage</span>
-            <small><Info size={14}/> Server-recorded credits; no sample balances</small></div>
+            <small><Info size={14}/> Server-recorded token activity</small></div>
         <Panel><div className="pm-pmp-ai-lead"><IconTile><Sparkles/></IconTile><div><h2>AI Usage</h2>
-            <p>Track the tokens actually allocated and consumed by PM Circle. Payments and refills are not available yet.</p></div></div>
-            <div className="pm-pmp-ai-stats">{[
-                { label: 'Allocated', value: usage.allocated, icon: <Layers3/> },
-                { label: 'Used', value: usage.used, icon: <Coins/> },
-                { label: 'Remaining', value: usage.remaining, icon: <Clock3/> },
-            ].map(item => <div key={item.label}><IconTile>{item.icon}</IconTile><span>
-                <strong>{item.value.toLocaleString('en-US')}</strong><small>{item.label}</small></span></div>)}</div>
-            <div className="pm-pmp-ai-usage"><div><strong>{percent}% usage</strong>
-                <span>{usage.used.toLocaleString('en-US')} of {usage.allocated.toLocaleString('en-US')} allocated tokens used</span></div>
-                <PercentBar percent={percent}/></div>
-            <Panel className="pm-pmp-ai-ledger"><h2>Activity Ledger</h2><p>Recorded token usage by AI feature.</p>
-                <div className="pm-pmp-ai-ledger-head"><span>AI feature</span><span>Tokens used</span></div>
-                {(['question_explanation', 'follow_up', 'study_insight'] as const).map(kind => {
-                    const tokens = usage.activity.find(item => item.kind === kind)?.tokens ?? 0;
-                    return <div className="pm-pmp-ai-ledger-row" key={kind}><IconTile><CircleHelp/></IconTile>
-                        <div><strong>{labels[kind]}</strong></div><b>{tokens.toLocaleString('en-US')}</b>
-                    </div>;
-                })}
-            </Panel>
-            {usage.allocated === 0 && <p className="pm-pmp-muted" role="note">No AI tokens have been granted to this account. AI assistance will become available only after the credit service is configured. Exam-taking and existing question explanations remain available.</p>}
+            <p>Track the PMP AI tokens allocated and consumed during your current billing cycle.</p></div>
+            {onRefresh && <button type="button" className="pm-pmp-secondary pm-pmp-ai-refresh" onClick={onRefresh} disabled={loading}>
+                {loading ? 'Refreshing…' : 'Refresh usage'}
+            </button>}</div>
+            {error && <p className="pm-pmp-action-error" role="alert">{error}</p>}
+            {usage.configured === false ? <p className="pm-pmp-muted" role="status">
+                AI usage information is unavailable until your plan's PMP AI limits are configured.
+            </p> : <>
+                <div className="pm-pmp-ai-stats">{[
+                    { label: 'Allocated', value: usage.allocated, icon: <Layers3/> },
+                    { label: 'Used', value: usage.used, icon: <Coins/> },
+                    { label: 'Remaining', value: usage.remaining, icon: <Clock3/> },
+                ].map(item => <div key={item.label}><IconTile>{item.icon}</IconTile><span>
+                    <strong>{item.value.toLocaleString('en-US')}</strong><small>{item.label}</small></span></div>)}</div>
+                <div className="pm-pmp-ai-usage"><div><strong>{percent}% usage</strong>
+                    <span>{usage.used.toLocaleString('en-US')} of {usage.allocated.toLocaleString('en-US')} allocated tokens used</span></div>
+                    <PercentBar percent={percent}/></div>
+                <Panel className="pm-pmp-ai-ledger"><h2>Activity Ledger</h2><p>Completed PMP tutoring requests in this billing cycle.</p>
+                    <div className="pm-pmp-ai-ledger-head"><span>AI feature</span><span>Tokens used</span></div>
+                    {(['question_explanation', 'follow_up'] as const).map(kind => {
+                        const tokens = usage.activity.find(item => item.kind === kind)?.tokens ?? 0;
+                        return <div className="pm-pmp-ai-ledger-row" key={kind}><IconTile><CircleHelp/></IconTile>
+                            <div><strong>{labels[kind]}</strong></div><b>{tokens.toLocaleString('en-US')}</b>
+                        </div>;
+                    })}
+                </Panel>
+                {Boolean(usage.reserved) && <p className="pm-pmp-muted" role="status">{(usage.reserved ?? 0).toLocaleString('en-US')} tokens are temporarily reserved for replies in progress.</p>}
+            </>}
         </Panel>
     </Surface>;
 }

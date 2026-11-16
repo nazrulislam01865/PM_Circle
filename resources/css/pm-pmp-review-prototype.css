@@ -263,3 +263,89 @@
     .pm-exam-review-page .pm-review-reference-secondary { grid-template-columns: minmax(0,1fr); }
     .pm-exam-submit-review-actions .btn { flex: 1 1 auto; }
 }
+
+/* Completed-question AI chat. All typography, colors and spacing use shared PM Circle tokens. */
+.pm-exam-review-page .pm-pmp-review-ai { width: 100%; min-width: 0; justify-items: stretch; }
+.pm-exam-review-page .pm-review-question-footer .pm-review-ai-toggle { display: inline-flex; gap: var(--s2); }
+.pm-exam-review-page .pm-review-ai-chat {
+    display: grid; gap: var(--s3); width: 100%; min-width: 0;
+    padding: var(--s4); border: 1px solid var(--border);
+    border-radius: var(--radius-control); background: var(--surface);
+}
+.pm-exam-review-page .pm-review-ai-chat-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: var(--s3); padding-bottom: var(--s2); border-bottom: 1px solid var(--border);
+}
+.pm-exam-review-page .pm-review-ai-chat-header h3 {
+    display: flex; align-items: center; gap: var(--s2); margin: 0 0 var(--s1);
+    color: var(--ink); font-size: var(--text-h4); line-height: var(--line-h4); font-weight: var(--bold);
+}
+.pm-exam-review-page .pm-review-ai-chat-header h3 svg { color: var(--blue); }
+.pm-exam-review-page .pm-review-ai-chat-header p,
+.pm-exam-review-page .pm-review-ai-disclaimer { margin: 0; color: var(--muted); font-size: var(--text-xs); line-height: var(--line-sm); }
+.pm-exam-review-page .pm-review-ai-refresh {
+    flex: none; padding: var(--s1) var(--s2); border: 1px solid var(--border);
+    border-radius: var(--radius-control); background: var(--surface); color: var(--blue);
+    font: var(--semibold) var(--text-xs)/var(--line-xs) var(--font-ui); cursor: pointer;
+}
+.pm-exam-review-page .pm-review-ai-refresh:hover { background: var(--blue-soft); }
+.pm-exam-review-page .pm-review-ai-refresh:disabled { opacity: .5; cursor: not-allowed; }
+.pm-exam-review-page .pm-review-ai-transcript {
+    display: flex; flex-direction: column; gap: var(--s3); min-width: 0;
+    min-height: 120px; max-height: 390px; overflow-y: auto; overscroll-behavior: contain;
+    padding: var(--s3); border: 1px solid var(--border);
+    border-radius: var(--radius-control); background: var(--canvas);
+}
+.pm-exam-review-page .pm-review-ai-empty {
+    max-width: 440px; margin: auto; color: var(--muted); text-align: center;
+    font-size: var(--text-sm); line-height: var(--line-sm);
+}
+.pm-exam-review-page .pm-review-ai-message {
+    display: grid; gap: var(--s1); align-self: flex-start;
+    max-width: 88%; padding: var(--s3); overflow-wrap: anywhere;
+    border: 1px solid var(--border); border-radius: var(--radius-control);
+    background: var(--surface); color: var(--ink);
+}
+.pm-exam-review-page .pm-review-ai-message.is-member { align-self: flex-end; background: var(--blue-soft); }
+.pm-exam-review-page .pm-review-ai-message>strong { font-size: var(--text-xs); line-height: var(--line-xs); color: var(--blue); }
+.pm-exam-review-page .pm-review-ai-message>p { margin: 0; font-size: var(--text-sm); line-height: var(--line-body); white-space: pre-wrap; }
+.pm-exam-review-page .pm-review-ai-next { padding-top: var(--s2); border-top: 1px solid var(--border); }
+.pm-exam-review-page .pm-review-ai-message.is-pending>p:last-child,
+.pm-exam-review-page .pm-review-ai-loading { display: flex; align-items: center; gap: var(--s2); }
+.pm-exam-review-page .pm-review-ai-composer { display: grid; gap: var(--s2); min-width: 0; }
+.pm-exam-review-page .pm-review-ai-composer label { color: var(--ink); font: var(--semibold) var(--text-sm)/var(--line-sm) var(--font-ui); }
+.pm-exam-review-page .pm-review-ai-composer textarea {
+    width: 100%; min-width: 0; min-height: 76px; max-height: 180px; padding: var(--s3);
+    resize: vertical; border: 1px solid var(--border); border-radius: var(--radius-control);
+    background: var(--surface); color: var(--ink); font: var(--regular) var(--text-ui)/var(--line-ui) var(--font-ui);
+}
+.pm-exam-review-page .pm-review-ai-composer textarea:focus-visible {
+    outline: 2px solid var(--focus); outline-offset: 1px; border-color: var(--blue);
+}
+.pm-exam-review-page .pm-review-ai-composer-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--s2); }
+.pm-exam-review-page .pm-review-ai-composer-bottom p { margin: 0; color: var(--muted); font-size: var(--text-xs); line-height: var(--line-sm); }
+.pm-exam-review-page .pm-review-ai-send {
+    display: inline-flex; align-items: center; justify-content: center; gap: var(--s2);
+    min-height: var(--control-compact); padding: var(--s2) var(--s4);
+    border: 1px solid var(--blue); border-radius: var(--radius-control);
+    background: var(--blue); color: var(--surface);
+    font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui); cursor: pointer;
+}
+.pm-exam-review-page .pm-review-ai-send:disabled { opacity: .5; cursor: not-allowed; }
+.pm-exam-review-page .pm-review-ai-send:not(:disabled):hover { filter: brightness(.93); }
+.pm-exam-review-page .pm-review-ai-error,
+.pm-exam-review-page .pm-review-ai-notice { display: flex; gap: var(--s2); align-items: flex-start; margin: 0; padding: var(--s2) var(--s3); background: var(--warning-soft); border-radius: var(--radius-control); color: var(--ink); font-size: var(--text-sm); }
+.pm-exam-review-page .pm-review-ai-error { background: var(--red-soft); }
+.pm-exam-review-page .pm-review-ai-spin { flex: none; animation: pm-review-ai-spin .9s linear infinite; }
+@keyframes pm-review-ai-spin { to { transform: rotate(360deg); } }
+.pm-exam-review-page .pm-review-ai-send:focus-visible,
+.pm-exam-review-page .pm-review-ai-refresh:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+@media (max-width: 650px) {
+    .pm-exam-review-page .pm-review-ai-chat { padding: var(--s3); }
+    .pm-exam-review-page .pm-review-ai-chat-header { flex-wrap: wrap; }
+    .pm-exam-review-page .pm-review-ai-message { max-width: 96%; }
+    .pm-exam-review-page .pm-review-ai-send { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .pm-exam-review-page .pm-review-ai-spin { animation: none; }
+}

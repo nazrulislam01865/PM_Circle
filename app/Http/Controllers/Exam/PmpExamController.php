@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Exam;
 
+use App\Domain\AI\Services\PmpAiUsageReadModel;
 use App\Domain\Billing\Queries\CurrentMemberPlan;
 use App\Domain\Learning\Queries\LearningOverview;
 use App\Http\Controllers\Controller;
@@ -27,7 +28,7 @@ final class PmpExamController extends Controller
             : to_route('pricing');
     }
 
-    public function index(Request $request, CurrentMemberPlan $plans, LearningOverview $overview, PmpQuestionHelpService $ai, PmpExamSettings $examSettings): Response
+    public function index(Request $request, CurrentMemberPlan $plans, LearningOverview $overview, PmpQuestionHelpService $ai, PmpExamSettings $examSettings, PmpAiUsageReadModel $usage): Response
     {
         $plan = $plans->details($request->user());
         abort_unless(in_array($plan['code'], ['plus', 'pro'], true), 403,
@@ -52,10 +53,20 @@ final class PmpExamController extends Controller
             ->get()->keyBy('attempt_id');
 
         // All-time totals are exact even when the 40-row history window is full.
+        // Full mock counters must not include focused-practice attempts.
+        // Older attempts have no mode, so they are treated as historical mocks.
         $examTotals = DB::table('pmp_exam_attempts')->where('user_id', $userId)
-            ->selectRaw("SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed")
-            ->selectRaw("SUM(CASE WHEN status = 'in_progress' AND expires_at > CURRENT_TIMESTAMP THEN 1 ELSE 0 END) AS in_progress")
+            ->selectRaw("SUM(CASE WHEN (mode = 'full' OR mode IS NULL) AND status = 'completed' THEN 1 ELSE 0 END) AS completed")
+            ->selectRaw("SUM(CASE WHEN (mode = 'full' OR mode IS NULL) AND status = 'in_progress' AND expires_at > CURRENT_TIMESTAMP THEN 1 ELSE 0 END) AS in_progress")
+            ->selectRaw("SUM(CASE WHEN mode = 'focused' AND status = 'completed' THEN 1 ELSE 0 END) AS practice_completed")
             ->first();
+        $latestMock = DB::table('pmp_exam_attempts')->where('user_id', $userId)
+            ->where('status', 'completed')
+            ->where(fn ($query) => $query->where('mode', 'full')->orWhereNull('mode'))
+            ->orderByDesc('finished_at')->orderByDesc('id')
+            ->first(['total_questions', 'correct_count']);
+        $latestMockScore = $latestMock && $latestMock->correct_count !== null && $latestMock->total_questions > 0
+            ? (int) round(100 * $latestMock->correct_count / $latestMock->total_questions) : null;
 
         $completed = $recent->where('status', 'completed')->take(40);
         $completedIds = $completed->pluck('id')->all();
@@ -98,10 +109,12 @@ final class PmpExamController extends Controller
             'planCode' => $plan['code'],
             'planDetails' => $plan,
             'targetExamDate' => DB::table('profiles')->where('user_id', $userId)->value('pmp_target_exam_date'),
-            'aiUsage' => $ai->summary($userId),
+            'aiUsage' => $ai->enabled() ? $ai->summary($userId) : $usage->summary($request->user()),
             'attemptTotals' => [
                 'completed' => (int) ($examTotals->completed ?? 0),
                 'inProgress' => (int) ($examTotals->in_progress ?? 0),
+                'practiceCompleted' => (int) ($examTotals->practice_completed ?? 0),
+                'latestScore' => $latestMockScore,
             ],
             'historyNextCursor' => $recentPage->count() > 40 ? (int) $recent->last()->id : null,
             'attempts' => $recent->map(function ($attempt) use ($counts) {
@@ -331,6 +344,27 @@ final class PmpExamController extends Controller
         $record = $this->ownedAttempt($attempt, $request->user()->id);
         abort_unless($record->status === 'completed', 403, 'Finish your exam before requesting AI help.');
         abort_unless(in_array($question, $this->questionIds($record), true), 404);
+        if (config('pm-ai.enabled')) {
+            // The new credit engine requires an explicit tariff consent and request key.
+            // The legacy one-click endpoint must never silently spend independent service credits.
+            if (! $request->has('client_request_key') || ! $request->has('accepted_max_credits')) {
+                return response()->json(['code' => 'AI_CONFIRMATION_REQUIRED',
+                    'message' => 'Confirm the displayed credit price using the new AI request contract.'], 428);
+            }
+            $values = $request->validate([
+                'client_request_key' => ['required', 'uuid'],
+                'accepted_max_credits' => ['required', 'integer', 'min:0', 'max:100000'],
+            ]);
+            try {
+                $receipt = app(\App\Domain\AI\Services\AiGateway::class)->submit($request->user(), [
+                    'feature' => 'pmp_explain', 'subject' => ['attempt_id' => $attempt, 'question_id' => $question],
+                    ...$values,
+                ]);
+                return response()->json($receipt, in_array($receipt['status'], ['completed', 'failed'], true) ? 200 : 202);
+            } catch (\App\Domain\AI\Support\AiFailure $exception) {
+                return response()->json(['code' => $exception->safeCode], $exception->httpStatus);
+            }
+        }
         $item = DB::table('pmp_exam_questions')->where('id', $question)
             ->first(['id', 'prompt', 'options', 'correct_option', 'explanation']);
         abort_unless($item, 404);
@@ -396,7 +430,8 @@ final class PmpExamController extends Controller
             return $includeAnswers ? [...$question, 'code' => $row->code, 'correct' => $row->correct_option,
                 'explanation' => $row->explanation, 'otherOptions' => $row->other_options,
                 'takeaway' => $row->takeaway, 'concepts' => $row->concepts,
-                'references' => $row->references] : $question;
+                'references' => $row->references, 'approach' => $row->approach,
+                'industry' => $row->industry] : $question;
         })->all();
     }
 

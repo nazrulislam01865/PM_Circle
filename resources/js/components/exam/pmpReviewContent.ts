@@ -5,7 +5,7 @@ type ContentRecord = Record<string, unknown>;
 type Concept = { title: string; description?: string };
 type Reference = {
     source?: string; title?: string; chapter?: string; section?: string;
-    page?: string; pageLabel?: string; pageRange?: string; examDomain?: string; task?: string; focus?: string;
+    page?: string; pageLabel?: string; pageRange?: string; examDomain?: string; task?: string; focus?: string; ecoReference?: string;
 };
 
 function objectValue(value: string | null | undefined): ContentRecord | null {
@@ -70,7 +70,7 @@ export function referenceContent(raw: string | null | undefined): { sources: Ref
         return [{
             source: text(entry.source), title: text(entry.title), chapter: text(entry.chapter),
             section: text(entry.section), page: text(entry.page), pageLabel: text(entry.pageLabel), pageRange: text(entry.pageRange),
-            examDomain: text(entry.examDomain), task: text(entry.task), focus: text(entry.focus),
+            examDomain: text(entry.examDomain), task: text(entry.task), focus: text(entry.focus), ecoReference: text(entry.ecoReference),
         }];
     }) : [];
     return { sources, performanceDomain: text(data.performanceDomain), knowledgeArea: text(data.knowledgeArea) };
@@ -79,6 +79,6 @@ export function referenceContent(raw: string | null | undefined): { sources: Ref
 /** Metadata is shown only when the question author actually supplied it. */
 export function reviewQuestionMetadata(question: ExamQuestion) {
     const concepts = conceptsContent(question.concepts);
-    return { approach: concepts.approach, industry: concepts.industry };
+    return { approach: question.approach ?? concepts.approach, industry: question.industry ?? concepts.industry };
 }
 

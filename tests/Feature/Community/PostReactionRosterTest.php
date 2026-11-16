@@ -21,7 +21,7 @@ final class PostReactionRosterTest extends TestCase
         config()->set('community.engagement_stats_writes', false);
     }
 
-    private function post(string $visibility = 'public', string $status = 'published'): Post
+    private function createTestPost(string $visibility = 'public', string $status = 'published'): Post
     {
         $author = User::factory()->create(['onboarding_step' => 3]);
 
@@ -36,7 +36,7 @@ final class PostReactionRosterTest extends TestCase
 
     public function test_popup_lists_real_reactors_and_filters_by_type_with_profile_privacy(): void
     {
-        $post = $this->post();
+        $post = $this->createTestPost();
         $rafi = User::factory()->create(['name' => 'Rafi Hasan']);
         $sara = User::factory()->create(['name' => 'Sara Ahmed']);
         $rafi->profile()->create(['visibility' => 'public', 'avatar_path' => 'rafi.png']);
@@ -65,7 +65,7 @@ final class PostReactionRosterTest extends TestCase
 
     public function test_roster_paginates_by_indexed_reaction_id_without_duplicates(): void
     {
-        $post = $this->post();
+        $post = $this->createTestPost();
         $members = User::factory()->count(25)->create();
         DB::table('post_reactions')->insert($members->map(fn (User $member) => [
             'post_id' => $post->id,
@@ -89,8 +89,8 @@ final class PostReactionRosterTest extends TestCase
 
     public function test_unpublished_hidden_and_member_only_post_reactions_cannot_be_enumerated(): void
     {
-        $draft = $this->post(status: 'pending_review');
-        $private = $this->post(visibility: 'members');
+        $draft = $this->createTestPost(status: 'pending_review');
+        $private = $this->createTestPost(visibility: 'members');
         $this->getJson("/posts/{$draft->id}/reactions/users")->assertNotFound();
         $this->getJson("/posts/{$private->id}/reactions/users")->assertNotFound();
 
@@ -103,7 +103,7 @@ final class PostReactionRosterTest extends TestCase
 
     public function test_feed_breakdown_uses_actual_reaction_rows(): void
     {
-        $post = $this->post();
+        $post = $this->createTestPost();
         $members = User::factory()->count(3)->create();
         foreach ($members as $index => $member) {
             DB::table('post_reactions')->insert([

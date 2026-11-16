@@ -17,6 +17,8 @@ final class PmpPersonalDashboardTest extends TestCase
         parent::setUp();
         $this->withoutVite();
         config()->set('pm-circle.temporary_paid_access_enabled', true);
+        // Legacy AI assertions must not depend on the developer's gateway .env setting.
+        config()->set('pm-ai.enabled', false);
         config()->set('pm-pmp.ai_help_enabled', false);
     }
 
@@ -46,7 +48,7 @@ final class PmpPersonalDashboardTest extends TestCase
     public function test_signed_in_eligible_member_enters_the_dashboard_not_the_public_page(): void
     {
         $this->actingAs($this->member())
-            ->get('/exam-simulator/pmp')->assertRedirect('/exams/pmp');
+            ->get('/exam-simulator/pmp')->assertRedirect('/exams/pmp/enter');
         $this->get('/exam-simulator/pmp?preview=1')->assertRedirect('/exams/pmp/enter');
         $this->get('/exams/pmp/enter')->assertRedirect('/exams/pmp');
         $free = User::factory()->create(['onboarding_step' => 3]);
@@ -121,6 +123,29 @@ final class PmpPersonalDashboardTest extends TestCase
         $this->postJson("/exams/pmp/attempts/{$attemptId}/questions/{$questionId}/ai-help")
             ->assertNotFound();
     }
+    public function test_new_ai_gateway_requires_explicit_member_confirmation(): void
+    {
+        config()->set('pm-ai.enabled', true);
+        $owner = $this->member();
+        $other = $this->member();
+        $this->seedQuestions();
+        $attemptUrl = $this->actingAs($owner)->postJson('/exams/pmp/start')->assertOk()->json('takeUrl');
+        $attemptId = (int) basename($attemptUrl);
+        $questionId = (int) DB::table('pmp_exam_questions')->value('id');
+        $this->postJson("/exams/pmp/attempts/{$attemptId}/submit")->assertOk();
+
+        // No silent credits or token reservations from an outdated one-click client.
+        $this->postJson("/exams/pmp/attempts/{$attemptId}/questions/{$questionId}/ai-help")
+            ->assertStatus(428)->assertJsonPath('code', 'AI_CONFIRMATION_REQUIRED');
+        $this->assertDatabaseCount('ai_requests', 0);
+        $this->assertDatabaseCount('ai_request_allocations', 0);
+
+        // Ownership is enforced before the gateway consent check.
+        $this->actingAs($other)
+            ->postJson("/exams/pmp/attempts/{$attemptId}/questions/{$questionId}/ai-help")
+            ->assertNotFound();
+    }
+
     public function test_history_uses_a_member_scoped_cursor_and_bounded_pages(): void
     {
         $owner = $this->member();

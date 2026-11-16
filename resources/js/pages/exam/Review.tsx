@@ -3,6 +3,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ExamOptionList, ExamPage, ExamStatus, type ExamQuestion, type ExamResponses } from '@/components/exam/ExamShared';
 import { PmpReviewExplanation } from '@/components/exam/PmpReviewExplanation';
+import { PmpQuestionAiChat } from '@/components/exam/PmpQuestionAiChat';
 import { reviewQuestionMetadata } from '@/components/exam/pmpReviewContent';
 import type { DashboardShellData } from '@/types/dashboard';
 
@@ -24,9 +25,6 @@ export default function Review({ shell, attempt, questions, responses }: {
         : requested === 'unanswered' || requested === 'flagged' ? requested : 'all';
     const [filter, setFilter] = useState<Filter>(initial);
     const [position, setPosition] = useState(0);
-    const [aiByQuestion, setAiByQuestion] = useState<Record<number, { explanation: string; nextStep: string }>>({});
-    const [aiBusy, setAiBusy] = useState(false);
-    const [aiError, setAiError] = useState('');
     const answered = useMemo(() => questions.filter(q => Boolean(responses[q.id]?.choice)).length, [questions, responses]);
     const filtered = useMemo(() => questions.filter(question => {
         const response = responses[question.id];
@@ -37,36 +35,6 @@ export default function Review({ shell, attempt, questions, responses }: {
     }), [questions, responses, filter]);
     const question = filtered[position] ?? null;
     const metadata = question ? reviewQuestionMetadata(question) : null;
-
-    const askAi = async () => {
-        if (!question || aiBusy) return;
-        setAiBusy(true);
-        setAiError('');
-        try {
-            const token = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
-            const response = await fetch(`/exams/pmp/attempts/${attempt.id}/questions/${question.id}/ai-help`, {
-                method: 'POST', credentials: 'same-origin',
-                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': token },
-            });
-            if (!response.ok) {
-                const errors: Record<number, string> = {
-                    402: 'There are no AI credits available for this account.',
-                    409: 'An AI explanation is already being prepared. Try again shortly.',
-                    419: 'Session expired. Refresh the page.',
-                    429: 'Too many AI requests. Try again later.',
-                    503: 'AI question help is not configured or is temporarily unavailable.',
-                };
-                throw new Error(errors[response.status] ?? 'AI help could not be loaded. Please try again.');
-            }
-            const result: { explanation?: string; nextStep?: string } = await response.json();
-            if (!result.explanation) throw new Error('AI returned an incomplete explanation.');
-            setAiByQuestion(old => ({ ...old, [question.id]: { explanation: result.explanation ?? '', nextStep: result.nextStep ?? '' } }));
-        } catch (error) {
-            setAiError(error instanceof Error ? error.message : 'Unable to load AI help.');
-        } finally {
-            setAiBusy(false);
-        }
-    };
 
     return <ExamPage shell={shell} className="pm-exam-review-page">
         <Head title="Question Review & Detailed Explanation | PM Circle"/>
@@ -83,7 +51,7 @@ export default function Review({ shell, attempt, questions, responses }: {
             <section className="pm-exam-panel pm-exam-review-filter"><h2>Filter Questions</h2>
                 <div className="pm-pmp-review-filter-actions" role="group" aria-label="Review question filters">
                     {filters.map(item => <button key={item.value} type="button" className={filter === item.value ? 'is-active' : undefined}
-                        aria-pressed={filter === item.value} onClick={() => { setFilter(item.value); setPosition(0); setAiError(''); }}>
+                        aria-pressed={filter === item.value} onClick={() => { setFilter(item.value); setPosition(0); }}>
                         {item.label}
                     </button>)}
                 </div>
@@ -93,9 +61,9 @@ export default function Review({ shell, attempt, questions, responses }: {
         {question ? <section className="pm-exam-panel pm-exam-review-question" aria-label="Question review">
             <header className="pm-review-question-header"><div className="pm-exam-review-prevnext">
                 <button type="button" aria-label="Previous filtered question" disabled={position === 0}
-                    onClick={() => { setPosition(i => i - 1); setAiError(''); }}><ChevronLeft size={17}/></button>
+                    onClick={() => setPosition(i => i - 1)}><ChevronLeft size={17}/></button>
                 <button type="button" aria-label="Next filtered question" disabled={position === filtered.length - 1}
-                    onClick={() => { setPosition(i => i + 1); setAiError(''); }}><ChevronRight size={17}/></button>
+                    onClick={() => setPosition(i => i + 1)}><ChevronRight size={17}/></button>
             </div><strong>Question {position + 1} of {filtered.length}</strong>
                 <div className="pm-review-question-badges"><span>{question.domain}</span><span>{question.difficulty}</span>
                     {metadata?.approach && <span>{metadata.approach}</span>}
@@ -106,20 +74,8 @@ export default function Review({ shell, attempt, questions, responses }: {
                 <ExamOptionList question={question} chosen={responses[question.id]?.choice} readonly reveal/>
                 {!responses[question.id]?.choice && <p className="pm-exam-review-unanswered">You left this question unanswered.</p>}
                 <PmpReviewExplanation key={question.id} question={question}/>
-                <section className="pm-pmp-review-ai" aria-label="Additional AI question assistance">
-                    <div className="pm-review-question-footer">
-                        <button type="button" className="pm-review-outline-button" disabled={aiBusy} onClick={() => void askAi()}>
-                            {aiBusy ? 'Getting AI help…' : 'Ask AI About This Answer'}
-                        </button>
-                        <span className="pm-review-question-meta">{[question.code, metadata?.industry, 'Single Select'].filter(Boolean).join(' · ')}</span>
-                    </div>
-                    {aiError && <p role="alert" className="pm-pmp-action-error">{aiError} <Link href="/exams/pmp?tab=ai">View AI Usage</Link></p>}
-                    {aiByQuestion[question.id] && <div className="pm-pmp-ai-answer" role="status">
-                        <strong>AI study help (educational guidance, not official PMP scoring)</strong>
-                        <p>{aiByQuestion[question.id].explanation}</p>
-                        {aiByQuestion[question.id].nextStep && <p><strong>Next step:</strong> {aiByQuestion[question.id].nextStep}</p>}
-                    </div>}
-                </section>
+                <PmpQuestionAiChat key={question.id} attemptId={attempt.id} questionId={question.id}
+                    questionMeta={[question.code, metadata?.industry, 'Single Select'].filter(Boolean).join(' · ')}/>
             </div>
         </section> : <section className="pm-exam-panel pm-exam-review-question"><p className="pm-pmp-empty">No questions match this filter. Choose another status.</p></section>}
         </div>

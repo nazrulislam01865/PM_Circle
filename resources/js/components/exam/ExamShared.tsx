@@ -8,6 +8,7 @@ export type ExamQuestion = {
     id: number; domain: string; difficulty: string; prompt: string;
     options: Record<string, string>;
     code?: string; correct?: string; explanation?: string; otherOptions?: string | null;
+    approach?: string | null; industry?: string | null;
     takeaway?: string | null; concepts?: string | null; references?: string | null;
 };
 export type ExamResponse = { choice: string | null; marked: boolean };

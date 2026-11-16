@@ -15,6 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Payment callbacks use cryptographic gateway verification, not a browser CSRF session.
+        $middleware->validateCsrfTokens(except: ['webhooks/payments/*']);
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
         $middleware->alias([
             'pm.onboarded' => \App\Http\Middleware\EnsureOnboarded::class,

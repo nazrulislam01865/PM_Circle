@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\SavePmpExamQuestionRequest;
 use App\Http\Requests\Admin\UpdatePmpExamSettingsRequest;
 use App\Services\Exam\PmpExamSettings;
 use App\Services\Exam\PmpQuestionImporter;
+use App\Services\Exam\PmpQuestionContent;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +27,7 @@ final class PmpExamBankController extends Controller
             'search' => ['nullable', 'string', 'max:100'],
             'domain' => ['nullable', Rule::in(['People', 'Process', 'Business Environment'])],
             'status' => ['nullable', Rule::in(['all', 'active', 'inactive'])],
+            'review_status' => ['nullable', Rule::in(PmpQuestionContent::REVIEW_STATUSES)],
             'page' => ['nullable', 'integer', 'min:1'],
         ]);
         $query = DB::table('pmp_exam_questions');
@@ -40,14 +42,26 @@ final class PmpExamBankController extends Controller
         if (($filters['status'] ?? 'all') !== 'all') {
             $query->where('is_active', $filters['status'] === 'active');
         }
+        if (! empty($filters['review_status'])) {
+            $query->where('review_status', $filters['review_status']);
+        }
         $questions = $query->orderByDesc('id')->paginate(20)->withQueryString();
         $questions->through(fn ($q) => [
             'id' => (int) $q->id,
             'code' => $q->code, 'domain' => $q->domain, 'difficulty' => $q->difficulty,
             'prompt' => $q->prompt, 'options' => json_decode($q->options, true, 512, JSON_THROW_ON_ERROR),
-            'correct_option' => $q->correct_option, 'explanation' => $q->explanation,
+            'correct_option' => $q->correct_option, 'correct_answer_text' => $q->correct_answer_text, 'explanation' => $q->explanation,
             'other_options' => $q->other_options, 'takeaway' => $q->takeaway,
             'concepts' => $q->concepts, 'references' => $q->references,
+            'eco_task_id' => $q->eco_task_id, 'eco_task_focus' => $q->eco_task_focus,
+            'approach' => $q->approach,
+            'option_rationales' => $q->option_rationales ? json_decode($q->option_rationales, true, 512, JSON_THROW_ON_ERROR) : null,
+            'pmbok_performance_domain' => $q->pmbok_performance_domain,
+            'legacy_knowledge_area' => $q->legacy_knowledge_area, 'industry' => $q->industry,
+            'question_type' => $q->question_type, 'reference_publication' => $q->reference_publication,
+            'reference_section' => $q->reference_section, 'reference_heading' => $q->reference_heading,
+            'reference_pdf_page' => $q->reference_pdf_page, 'eco_reference' => $q->eco_reference,
+            'review_status' => $q->review_status,
             'is_active' => (bool) $q->is_active,
         ]);
         $stats = DB::table('pmp_exam_questions')->selectRaw('COUNT(*) AS total')
@@ -57,7 +71,8 @@ final class PmpExamBankController extends Controller
             'settings' => $settings->get(),
             'stats' => ['total' => (int) ($stats->total ?? 0), 'active' => (int) ($stats->active ?? 0)],
             'questions' => $questions,
-            'filters' => ['search' => $filters['search'] ?? '', 'domain' => $filters['domain'] ?? '', 'status' => $filters['status'] ?? 'all'],
+            'filters' => ['search' => $filters['search'] ?? '', 'domain' => $filters['domain'] ?? '', 'status' => $filters['status'] ?? 'all',
+                'review_status' => $filters['review_status'] ?? ''],
         ]);
     }
 
@@ -70,8 +85,10 @@ final class PmpExamBankController extends Controller
     public function store(SavePmpExamQuestionRequest $request): RedirectResponse
     {
         $data = $request->validated();
-        $data['options'] = json_encode($data['options'], JSON_THROW_ON_ERROR);
-        $data['explanation'] ??= '';
+        $data = PmpQuestionContent::forDatabase($data);
+        if ($data['is_active'] && $data['review_status'] !== 'Approved') {
+            throw ValidationException::withMessages(['review_status' => 'Only approved questions can be activated.']);
+        }
         try {
             DB::table('pmp_exam_questions')->insert([
                 ...$data, 'created_at' => now(), 'updated_at' => now(),
@@ -95,9 +112,11 @@ final class PmpExamBankController extends Controller
             if (DB::table('pmp_exam_attempts')->whereJsonContains('question_ids', $question)->exists()) {
                 throw ValidationException::withMessages(['question' => 'This question is used by an attempt. Deactivate it and create a new question code instead of changing its content or answer.']);
             }
-            $data['options'] = json_encode($data['options'], JSON_THROW_ON_ERROR);
-            $data['explanation'] ??= '';
-            DB::table('pmp_exam_questions')->where('id', $question)->update([...$data, 'updated_at' => now()]);
+            $prepared = PmpQuestionContent::forDatabase($data, $existing->review_status);
+            if ($prepared['is_active'] && $prepared['review_status'] !== 'Approved') {
+                throw ValidationException::withMessages(['review_status' => 'Only approved questions can be activated.']);
+            }
+            DB::table('pmp_exam_questions')->where('id', $question)->update([...$prepared, 'updated_at' => now()]);
         });
         return back()->with('status', 'Question updated.');
     }
@@ -105,9 +124,16 @@ final class PmpExamBankController extends Controller
     public function toggle(Request $request, int $question): RedirectResponse
     {
         $data = $request->validate(['is_active' => ['required', 'boolean']]);
-        $affected = DB::table('pmp_exam_questions')->where('id', $question)
-            ->update(['is_active' => $data['is_active'], 'updated_at' => now()]);
-        abort_unless($affected, 404);
+        DB::transaction(function () use ($question, $data): void {
+            $record = DB::table('pmp_exam_questions')->where('id', $question)->lockForUpdate()->first(['id', 'review_status']);
+            abort_unless($record, 404);
+            if ($data['is_active'] && $record->review_status !== 'Approved') {
+                throw ValidationException::withMessages(['review_status' => 'Approve the question before activating it.']);
+            }
+            DB::table('pmp_exam_questions')->where('id', $question)->update([
+                'is_active' => $data['is_active'], 'updated_at' => now(),
+            ]);
+        });
         return back()->with('status', $data['is_active'] ? 'Question activated.' : 'Question deactivated. Existing attempts are preserved.');
     }
 
@@ -121,7 +147,7 @@ final class PmpExamBankController extends Controller
     {
         return response()->download(
             resource_path('templates/pmp-question-import.xlsx'),
-            'pm-circle-pmp-question-template.xlsx',
+            'PM_Circle_PMP_Question_Bank.xlsx',
             ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
         );
     }

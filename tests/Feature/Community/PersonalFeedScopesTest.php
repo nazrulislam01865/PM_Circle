@@ -26,7 +26,7 @@ final class PersonalFeedScopesTest extends TestCase
         return User::factory()->create(['onboarding_step' => 3]);
     }
 
-    private function post(User $author, string $visibility = 'public'): Post
+    private function createTestPost(User $author, string $visibility = 'public'): Post
     {
         return Post::create([
             'author_id' => $author->id,
@@ -42,10 +42,10 @@ final class PersonalFeedScopesTest extends TestCase
         $viewer = $this->member();
         $other = $this->member();
         $author = $this->member();
-        $saved = $this->post($author);
-        $hidden = $this->post($author);
-        $savedAndHidden = $this->post($author);
-        $unrelated = $this->post($author);
+        $saved = $this->createTestPost($author);
+        $hidden = $this->createTestPost($author);
+        $savedAndHidden = $this->createTestPost($author);
+        $unrelated = $this->createTestPost($author);
 
         foreach ([$saved, $savedAndHidden] as $post) {
             DB::table('post_saves')->insert([
@@ -83,7 +83,7 @@ final class PersonalFeedScopesTest extends TestCase
     {
         $viewer = $this->member();
         $other = $this->member();
-        $post = $this->post($other);
+        $post = $this->createTestPost($other);
         DB::table('post_hides')->insert([
             ['post_id' => $post->id, 'user_id' => $viewer->id, 'created_at' => now()],
             ['post_id' => $post->id, 'user_id' => $other->id, 'created_at' => now()],

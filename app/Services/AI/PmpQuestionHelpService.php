@@ -15,7 +15,8 @@ final class PmpQuestionHelpService
 
     public function enabled(): bool
     {
-        return (bool) config('pm-pmp.ai_help_enabled')
+        return ! config('pm-ai.enabled')
+            && (bool) config('pm-pmp.ai_help_enabled')
             && filled(config('pm-pmp.ai_api_key'));
     }
 

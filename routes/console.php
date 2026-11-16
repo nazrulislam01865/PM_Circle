@@ -12,3 +12,103 @@ Artisan::command('inspire', function () {
 if (config('jobspy.enabled')) {
     Schedule::command('careers:fetch')->twiceDaily(8, 20)->withoutOverlapping();
 }
+
+// Durable request rows are also the transactional outbox; a missed dispatch is recovered safely.
+Artisan::command('ai:recover', function (): void {
+    $pending = \Illuminate\Support\Facades\DB::table('ai_requests')
+        ->where('status', 'queued')->where('lease_until', '<', now())
+        ->orderBy('id')->limit(100)->get(['id', 'feature_code', 'dispatch_count']);
+    foreach ($pending as $row) {
+        if ($row->dispatch_count >= 5) {
+            app(\App\Domain\AI\Services\AiExecutionService::class)
+                ->fail($row->id, 'QUEUE_DELIVERY_FAILED');
+            continue;
+        }
+        $claimed = \Illuminate\Support\Facades\DB::table('ai_requests')
+            ->where('id', $row->id)->where('status', 'queued')
+            ->where('lease_until', '<', now())->update([
+                'lease_until' => now()->addSeconds(config('pm-ai.lease_seconds')),
+                'dispatch_count' => $row->dispatch_count + 1, 'updated_at' => now(),
+            ]);
+        if ($claimed) {
+            \App\Domain\AI\Jobs\ExecuteAiRequest::dispatch($row->id)
+                ->onQueue(in_array($row->feature_code, ['scenario_generate', 'trend_draft'], true)
+                    ? config('pm-ai.editorial_queue') : config('pm-ai.queue'));
+        }
+    }
+    // A running request that outlived its lease is ambiguous, NOT assumed refundable.
+    \Illuminate\Support\Facades\DB::table('ai_requests')->where('status', 'running')
+        ->where('lease_until', '<', now())->update([
+            'status' => 'provider_status_unknown', 'error_code' => 'RECONCILING',
+            'updated_at' => now(),
+        ]);
+    $this->info('AI recovery scan completed; unresolved provider calls remain held for reconciliation.');
+})->purpose('Safely recover queued AI jobs and flag ambiguous provider outcomes');
+
+Artisan::command('ai:expire-grants', function (): void {
+    $this->info('Expired grants: '.app(\App\Domain\AI\Services\AiCreditService::class)->expire());
+})->purpose('Expire only available credits through auditable ledger events');
+
+Artisan::command('ai:grant-cycles', function (): void {
+    $this->info('New paid subscription cycle grants: '.
+        app(\App\Domain\AI\Services\AiSubscriptionGrantService::class)->grantDueCycles());
+})->purpose('Idempotently grant approved credits for verified paid subscription cycles');
+
+Artisan::command('ai:prepare-scenarios', function (): void {
+    if (! config('pm-ai.editorial_enabled')) {
+        return;
+    }
+    $service = app(\App\Domain\AI\Services\AiEditorialService::class);
+    for ($offset = 1; $offset <= 7; $offset++) {
+        $service->queueScenarioSlot(now('Asia/Dhaka')->addDays($offset)->toDateString());
+    }
+})->purpose('Create only unique future daily challenge drafts for human review');
+
+Artisan::command('ai:publish-approved', function (): void {
+    if (! config('pm-ai.editorial_enabled')) {
+        return;
+    }
+    $drafts = \Illuminate\Support\Facades\DB::table('ai_editorial_drafts')
+        ->where('feature', 'scenario_generate')->where('status', 'approved')
+        ->where('publication_at', '<=', now())->orderBy('id')->limit(30)->get();
+    $service = app(\App\Domain\AI\Services\AiEditorialService::class);
+    foreach ($drafts as $draft) {
+        $approver = \App\Models\User::find($draft->reviewed_by);
+        if ($approver && $approver->is_admin) {
+            $service->publish($approver, $draft->id, 'Scheduled publication of previously approved draft');
+        }
+    }
+})->purpose('Publish due challenges ONLY after recorded staff approval');
+
+Artisan::command('ai:admin-permission {user_id} {permission}', function (): void {
+    $permission = (string) $this->argument('permission');
+    $allowed = [
+        'ai.view_reports', 'ai.manage_features', 'ai.manage_prompts',
+        'ai.manage_prices', 'ai.manage_quotas', 'ai.manage_credits',
+        'ai.manage_editorial', 'ai.manage_packages',
+    ];
+    $userId = (int) $this->argument('user_id');
+    $user = \App\Models\User::find($userId);
+    if (! $user?->is_admin || ! in_array($permission, $allowed, true)) {
+        $this->error('Requires an existing admin account and an allowlisted AI permission.');
+        return;
+    }
+    \Illuminate\Support\Facades\DB::table('ai_admin_permissions')->insertOrIgnore([
+        'user_id' => $userId, 'permission' => $permission, 'created_at' => now(),
+    ]);
+    app(\App\Domain\AI\Services\AiAdminAccess::class)->audit(null,
+        'permissions.bootstrap', 'users', $userId, null, ['permission' => $permission],
+        'Explicit server-console administrative privilege assignment');
+    $this->info('AI permission assigned from server console.');
+})->purpose('Server-only bootstrap for granular AI administrative permissions');
+
+if (config('pm-ai.enabled')) {
+    Schedule::command('ai:recover')->everyFiveMinutes()->withoutOverlapping();
+    Schedule::command('ai:expire-grants')->hourly()->withoutOverlapping();
+    Schedule::command('ai:grant-cycles')->everyFifteenMinutes()->withoutOverlapping();
+}
+if (config('pm-ai.enabled') && config('pm-ai.editorial_enabled')) {
+    Schedule::command('ai:prepare-scenarios')->dailyAt(config('pm-ai.daily_editorial_time'))
+        ->timezone('Asia/Dhaka')->withoutOverlapping();
+    Schedule::command('ai:publish-approved')->everyFifteenMinutes()->withoutOverlapping();
+}

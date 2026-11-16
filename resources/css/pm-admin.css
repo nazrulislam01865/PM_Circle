@@ -295,7 +295,7 @@
 .pm-pmp-bank-import > .pm-pmp-import-hint,
 .pm-pmp-bank-import > .pm-pmp-import-error { grid-column: 1 / -1; }
 .pm-pmp-bank-import > .pm-admin-button { align-self: stretch; }
-.pm-pmp-bank-filters { grid-template-columns: minmax(0, 2fr) repeat(2, minmax(8rem, 1fr)) auto; }
+.pm-pmp-bank-filters { grid-template-columns: minmax(0, 2fr) repeat(3, minmax(8rem, 1fr)) auto; }
 .pm-pmp-bank-import .pm-admin-button, .pm-pmp-bank-filters .pm-admin-button { align-self: end; }
 .pm-pmp-bank-table-wrap { overflow-x: auto; min-width: 0; }
 .pm-pmp-bank-table { border-collapse: collapse; width: 100%; text-align: left; font-size: var(--text-ui, .875rem); }
@@ -350,3 +350,11 @@
     .pm-pmp-import-filename { flex: 1 1 100%; }
     .pm-pmp-bank-import .pm-admin-button { width: 100%; }
 }
+
+/* PMP source-workbook editor: compact sections using the shared admin design tokens. */
+.pm-pmp-bank-form-section { display: grid; gap: var(--s3, .75rem); min-width: 0; padding-block: var(--s2, .5rem) var(--s4, 1rem); border-bottom: 1px solid var(--border, #dce4ee); }
+.pm-pmp-bank-form-section h3 { color: var(--ink, #172b4d); font-size: var(--text-h4, 1rem); font-weight: var(--semibold, 600); }
+.pm-pmp-bank-form-section > p { color: var(--muted, #4c5d74); font-size: var(--text-sm, .8125rem); }
+.pm-pmp-bank-form-section .pm-admin-field { min-width: 0; }
+.pm-pmp-bank-form-section .pm-admin-field input[readonly] { background: var(--canvas, #f4f7fa); color: var(--muted, #4c5d74); cursor: default; }
+.pm-pmp-bank-row-actions button[disabled] { opacity: .5; cursor: not-allowed; }

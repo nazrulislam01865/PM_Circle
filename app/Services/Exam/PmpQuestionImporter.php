@@ -11,10 +11,7 @@ use Illuminate\Validation\ValidationException;
 /** Strict, atomic CSV/XLSX import; no macros or spreadsheet formulas are executed. */
 final class PmpQuestionImporter
 {
-    public const HEADERS = [
-        'code', 'domain', 'difficulty', 'question', 'option_a', 'option_b', 'option_c', 'option_d',
-        'correct', 'explanation', 'other_options', 'takeaway', 'concepts', 'references', 'active',
-    ];
+    public const HEADERS = PmpQuestionContent::WORKBOOK_HEADERS;
 
     public function import(UploadedFile $file): int
     {
@@ -36,9 +33,24 @@ final class PmpQuestionImporter
             throw ValidationException::withMessages(['file' => 'The header row contains duplicate column names.']);
         }
         $headerLookup = array_flip($headers);
-        foreach (['domain', 'question', 'option_a', 'option_b', 'option_c', 'option_d', 'correct'] as $required) {
-            if (! array_key_exists($required, $headerLookup)) {
-                throw ValidationException::withMessages(['file' => "Missing required column: {$required}. Download the Excel template to see the exact headings."]);
+        $isWorkbook = array_key_exists('question_id', $headerLookup);
+        if ($isWorkbook) {
+            $expected = array_map(static fn (string $header): string => strtolower(trim(
+                preg_replace('/[^a-z0-9]+/i', '_', $header), '_'
+            )), PmpQuestionContent::WORKBOOK_HEADERS);
+            if ($headers !== $expected) {
+                throw ValidationException::withMessages([
+                    'file' => 'The Question Bank must contain exactly the original 30 columns in their original order, with no renamed, missing, or extra columns.',
+                ]);
+            }
+        }
+        $required = $isWorkbook
+            ? array_map(static fn (string $header): string => strtolower(trim(preg_replace('/[^a-z0-9]+/i', '_', $header), '_')),
+                PmpQuestionContent::WORKBOOK_HEADERS)
+            : ['domain', 'question', 'option_a', 'option_b', 'option_c', 'option_d', 'correct'];
+        foreach ($required as $header) {
+            if (! array_key_exists($header, $headerLookup)) {
+                throw ValidationException::withMessages(['file' => "Missing required column: {$header}. Download the Excel template for the exact headings."]);
             }
         }
 
@@ -47,46 +59,103 @@ final class PmpQuestionImporter
         $seen = [];
         foreach (array_slice($rows, 1) as $index => $row) {
             $line = $index + 2;
+            if (trim(implode('', $row)) === '') {
+                continue;
+            }
             foreach ($row as $cell) {
                 if (! preg_match('//u', (string) $cell)) {
                     $errors[] = "Row {$line}: text must be UTF-8. Save Excel exports as CSV UTF-8.";
                     break;
                 }
             }
-            $value = fn (string $key): string => trim((string) ($row[$headerLookup[$key] ?? -1] ?? ''));
-            if (trim(implode('', $row)) === '') {
-                continue;
-            }
+            $value = static fn (string $key): string => trim((string) ($row[$headerLookup[$key] ?? -1] ?? ''));
+            $correct = strtoupper($value($isWorkbook ? 'correct_option' : 'correct'));
+            $options = [
+                'A' => $value('option_a'), 'B' => $value('option_b'),
+                'C' => $value('option_c'), 'D' => $value('option_d'),
+            ];
             $prompt = $value('question');
-            $code = $value('code') ?: 'pmp-'.substr(hash('sha256', $prompt), 0, 24);
-            $active = strtolower($value('active'));
-            $active = $active === '' ? '0' : $active;
+            $code = $isWorkbook ? $value('question_id') : ($value('code') ?: 'pmp-'.substr(hash('sha256', $prompt), 0, 24));
             $data = [
                 'code' => $code,
-                'domain' => $value('domain'),
+                'domain' => $value($isWorkbook ? 'exam_domain' : 'domain'),
                 'difficulty' => $value('difficulty') ?: 'Moderate',
                 'prompt' => $prompt,
-                'options' => ['A' => $value('option_a'), 'B' => $value('option_b'), 'C' => $value('option_c'), 'D' => $value('option_d')],
-                'correct_option' => strtoupper($value('correct')),
-                'explanation' => $value('explanation'),
-                'other_options' => $value('other_options') ?: null,
-                'takeaway' => $value('takeaway') ?: null,
-                'concepts' => $value('concepts') ?: null,
-                'references' => $value('references') ?: null,
-                'is_active' => in_array($active, ['1', 'yes', 'true'], true),
+                'options' => $options,
+                'correct_option' => $correct,
+                'correct_answer_text' => $isWorkbook ? $value('correct_answer') : ($options[$correct] ?? null),
+                'explanation' => $value($isWorkbook ? 'why_correct' : 'explanation'),
+                'other_options' => $isWorkbook ? null : ($value('other_options') ?: null),
+                'takeaway' => $value($isWorkbook ? 'key_takeaway' : 'takeaway') ?: null,
+                'concepts' => $value($isWorkbook ? 'related_concepts' : 'concepts') ?: null,
+                'references' => $isWorkbook ? null : ($value('references') ?: null),
+                'is_active' => false,
             ];
-            $validator = Validator::make($data, [
+            if ($isWorkbook) {
+                $rationales = [
+                    'A' => $value('rationale_a'), 'B' => $value('rationale_b'),
+                    'C' => $value('rationale_c'), 'D' => $value('rationale_d'),
+                ];
+                $data += [
+                    'eco_task_id' => $value('eco_task_id') ?: null,
+                    'eco_task_focus' => $value('eco_task_focus') ?: null,
+                    'approach' => $value('approach') ?: null,
+                    'option_rationales' => $rationales,
+                    'pmbok_performance_domain' => $value('pmbok_8_performance_domain') ?: null,
+                    'legacy_knowledge_area' => $value('legacy_knowledge_area') ?: null,
+                    'industry' => $value('industry') ?: null,
+                    'question_type' => $value('question_type'),
+                    'reference_publication' => $value('reference_publication') ?: null,
+                    'reference_section' => $value('reference_section') ?: null,
+                    'reference_heading' => $value('reference_heading') ?: null,
+                    'reference_pdf_page' => $value('reference_pdf_page') ?: null,
+                    'eco_reference' => $value('eco_reference') ?: null,
+                    'review_status' => $value('review_status'),
+                ];
+                $data['other_options'] = PmpQuestionContent::otherOptionRationales($rationales, $correct);
+                $data['references'] = PmpQuestionContent::referenceSummary($data);
+                if (isset($options[$correct]) && PmpQuestionContent::cleanAnswer($value('correct_answer'))
+                    !== PmpQuestionContent::cleanAnswer($options[$correct])) {
+                    $errors[] = "Row {$line}: Correct Answer must match Option {$correct}.";
+                }
+            } else {
+                $active = strtolower($value('active') ?: '0');
+                if (! in_array($active, ['1', '0', 'yes', 'no', 'true', 'false'], true)) {
+                    $errors[] = "Row {$line}: active must be yes/no or 1/0.";
+                }
+                $data['is_active'] = in_array($active, ['1', 'yes', 'true'], true);
+                $data['review_status'] = $data['is_active'] ? 'Approved' : 'Editorial draft';
+            }
+
+            $rules = [
                 'code' => ['required', 'regex:/^[a-zA-Z0-9_-]+$/', 'max:70'],
                 'domain' => ['required', Rule::in(['People', 'Process', 'Business Environment'])],
                 'difficulty' => ['required', Rule::in(['Easy', 'Moderate', 'Hard'])],
                 'prompt' => ['required', 'string', 'max:10000'],
                 'options.*' => ['required', 'string', 'max:3000'],
                 'correct_option' => ['required', Rule::in(['A', 'B', 'C', 'D'])],
-                'explanation' => ['string', 'max:20000'],
-            ]);
-            if (! in_array($active, ['1', '0', 'yes', 'no', 'true', 'false'], true)) {
-                $errors[] = "Row {$line}: active must be yes/no or 1/0.";
+                'correct_answer_text' => ['required', 'string', 'max:3000'],
+                'explanation' => ['nullable', 'string', 'max:20000'],
+            ];
+            if ($isWorkbook) {
+                $rules += [
+                    'eco_task_id' => ['nullable', 'string', 'max:24'],
+                    'eco_task_focus' => ['nullable', 'string', 'max:255'],
+                    'approach' => ['required', Rule::in(PmpQuestionContent::APPROACHES)],
+                    'option_rationales.*' => ['nullable', 'string', 'max:3000'],
+                    'pmbok_performance_domain' => ['nullable', 'string', 'max:150'],
+                    'legacy_knowledge_area' => ['nullable', 'string', 'max:150'],
+                    'industry' => ['nullable', 'string', 'max:120'],
+                    'question_type' => ['required', Rule::in(['Single Select'])],
+                    'reference_publication' => ['nullable', 'string', 'max:255'],
+                    'reference_section' => ['nullable', 'string', 'max:100'],
+                    'reference_heading' => ['nullable', 'string', 'max:255'],
+                    'reference_pdf_page' => ['nullable', 'integer', 'between:1,32767'],
+                    'eco_reference' => ['nullable', 'string', 'max:350'],
+                    'review_status' => ['required', Rule::in(PmpQuestionContent::REVIEW_STATUSES)],
+                ];
             }
+            $validator = Validator::make($data, $rules);
             if ($validator->fails()) {
                 $errors[] = "Row {$line}: ".$validator->errors()->first();
             }
@@ -100,7 +169,7 @@ final class PmpQuestionImporter
             }
         }
         if ($errors !== []) {
-            throw ValidationException::withMessages(['file' => implode(' ', $errors)]);
+            throw ValidationException::withMessages(['file' => implode(' ', array_slice($errors, 0, 12))]);
         }
         if ($prepared === []) {
             throw ValidationException::withMessages(['file' => 'No valid question rows were found.']);
@@ -118,6 +187,7 @@ final class PmpQuestionImporter
             foreach (array_chunk($prepared, 200) as $chunk) {
                 DB::table('pmp_exam_questions')->insert(array_map(fn ($data) => [
                     ...$data, 'options' => json_encode($data['options'], JSON_THROW_ON_ERROR),
+                    'option_rationales' => isset($data['option_rationales']) ? json_encode($data['option_rationales'], JSON_THROW_ON_ERROR) : null,
                     'created_at' => $now, 'updated_at' => $now,
                 ], $chunk));
             }
@@ -210,8 +280,17 @@ final class PmpQuestionImporter
         $relationships = $this->zip($path, 'xl/_rels/workbook.xml.rels', true);
         if ($workbook !== '' && $relationships !== '') {
             $bookPath = $this->document($workbook);
-            $firstSheet = $bookPath->query('//*[local-name()="sheets"]/*[local-name()="sheet"]')->item(0);
-            $relationId = $firstSheet?->getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id');
+            $sheets = $bookPath->query('//*[local-name()="sheets"]/*[local-name()="sheet"]');
+            $questionSheet = null;
+            foreach ($sheets as $sheet) {
+                if ($sheet->getAttribute('name') === 'Question Bank') {
+                    $questionSheet = $sheet;
+                    break;
+                }
+            }
+            // Older single-sheet CSV-export workbooks remain supported.
+            $questionSheet ??= $sheets->item(0);
+            $relationId = $questionSheet?->getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id');
             if ($relationId) {
                 $relationsPath = $this->document($relationships);
                 foreach ($relationsPath->query('//*[local-name()="Relationship"]') as $relation) {
@@ -236,6 +315,10 @@ final class PmpQuestionImporter
         foreach ($xpath->query('//*[local-name()="sheetData"]/*[local-name()="row"]') as $row) {
             $cells = [];
             foreach ($xpath->query('./*[local-name()="c"]', $row) as $cell) {
+                // Question content must be literal. Do not trust calculated or formula-backed answer keys.
+                if ($xpath->query('./*[local-name()="f"]', $cell)->length > 0) {
+                    throw ValidationException::withMessages(['file' => 'Question Bank values must be plain text or numbers, not spreadsheet formulas.']);
+                }
                 preg_match('/^[A-Z]+/', $cell->getAttribute('r'), $match);
                 $letters = $match[0] ?? '';
                 $position = 0;

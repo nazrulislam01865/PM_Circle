@@ -112,7 +112,7 @@ final class PmpExamAdminManagementTest extends TestCase
         $this->actingAs($this->admin());
         $this->get('/admin/exam-simulator/pmp/questions/template')
             ->assertOk()
-            ->assertDownload('pm-circle-pmp-question-template.xlsx');
+            ->assertDownload('PM_Circle_PMP_Question_Bank.xlsx');
 
         $template = resource_path('templates/pmp-question-import.xlsx');
         $this->assertFileExists($template);
@@ -120,8 +120,10 @@ final class PmpExamAdminManagementTest extends TestCase
             'file' => new UploadedFile($template, 'pm-circle-pmp-question-template.xlsx',
                 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true),
         ])->assertRedirect();
+        $this->assertSame(100, DB::table('pmp_exam_questions')->count());
         $this->assertDatabaseHas('pmp_exam_questions', [
-            'code' => 'pmp-example-001', 'correct_option' => 'B', 'is_active' => false,
+            'code' => 'PMC-PMP-0001', 'correct_option' => 'C',
+            'review_status' => 'Editorial draft', 'is_active' => false,
         ]);
     }
 
@@ -153,4 +155,151 @@ final class PmpExamAdminManagementTest extends TestCase
             'needs_improvement_below' => 80, 'target_below' => 70,
         ]))->assertSessionHasErrors('target_below');
     }
+
+    public function test_official_thirty_column_excel_template_imports_complete_editorial_metadata(): void
+    {
+        $this->actingAs($this->admin());
+        $template = resource_path('templates/pmp-question-import.xlsx');
+        $this->post('/admin/exam-simulator/pmp/questions/import', [
+            'file' => new UploadedFile($template, 'pm-circle-pmp-question-template.xlsx',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true),
+        ])->assertRedirect();
+
+        $question = DB::table('pmp_exam_questions')->where('code', 'PMC-PMP-0001')->first();
+        $this->assertNotNull($question);
+        $this->assertSame('Editorial draft', $question->review_status);
+        $this->assertFalse((bool) $question->is_active);
+        $this->assertSame('Single Select', $question->question_type);
+        $this->assertSame('Hybrid', $question->approach);
+        $this->assertNotEmpty($question->eco_task_id);
+        $this->assertNotEmpty($question->reference_publication);
+        $this->assertNotEmpty($question->pmbok_performance_domain);
+        $this->assertSame('C', $question->correct_option);
+        $this->assertSame(json_decode($question->options, true)['C'], $question->correct_answer_text);
+        $this->assertSame(4, count(json_decode($question->option_rationales, true, 512, JSON_THROW_ON_ERROR)));
+        $this->assertStringContainsString('A:', $question->other_options);
+        $this->patch("/admin/exam-simulator/pmp/questions/{$question->id}/status", [
+            'is_active' => true,
+        ])->assertSessionHasErrors('review_status');
+        $this->assertDatabaseHas('pmp_exam_questions', ['id' => $question->id, 'is_active' => false]);
+        $this->assertSame(100, DB::table('pmp_exam_questions')->count());
+    }
+
+    public function test_official_workbook_rejects_mismatched_answer_without_partial_insert(): void
+    {
+        $this->actingAs($this->admin());
+        $headers = \App\Services\Exam\PmpQuestionContent::WORKBOOK_HEADERS;
+        $row = [
+            'pmp-import-01', 'People', 'I-01', 'Agree outcome', 'Moderate', 'Hybrid',
+            'What should the PM do first?', 'Option one', 'Option two', 'Option three', 'Option four',
+            'B', 'Option two', 'Correct rationale', 'Incorrect A', 'Correct B', 'Incorrect C', 'Incorrect D',
+            'Takeaway', 'Concept 1; Concept 2', 'Stakeholders', 'Stakeholder Management',
+            'Healthcare', 'Single Select', 'PMBOK Guide', '2.1', 'Stakeholders', 30,
+            'July 2026 ECO', 'Editorial draft',
+        ];
+        $makeCsv = static function (array $rows): string {
+            $handle = fopen('php://temp', 'w+');
+            foreach ($rows as $values) {
+                fputcsv($handle, $values, ',', '"', '');
+            }
+            rewind($handle);
+            $csv = stream_get_contents($handle);
+            fclose($handle);
+            return $csv;
+        };
+        $wrong = $row;
+        $wrong[0] = 'pmp-import-02';
+        $wrong[12] = 'This does not match Option B';
+        $this->post('/admin/exam-simulator/pmp/questions/import', [
+            'file' => UploadedFile::fake()->createWithContent('pmp-official.csv', $makeCsv([$headers, $row, $wrong])),
+        ])->assertSessionHasErrors('file');
+        $this->assertDatabaseMissing('pmp_exam_questions', ['code' => 'pmp-import-01']);
+
+        $this->post('/admin/exam-simulator/pmp/questions/import', [
+            'file' => UploadedFile::fake()->createWithContent('pmp-official.csv', $makeCsv([$headers, $row])),
+        ])->assertRedirect();
+        $question = DB::table('pmp_exam_questions')->where('code', 'pmp-import-01')->first();
+        $this->assertNotNull($question);
+        $this->assertSame('I-01', $question->eco_task_id);
+        $this->assertSame('Option two', $question->correct_answer_text);
+        $this->assertSame(30, (int) $question->reference_pdf_page);
+        $this->assertSame('Editorial draft', $question->review_status);
+        $this->assertSame('A: Incorrect A', explode("\n", $question->other_options)[0]);
+        $this->assertFalse((bool) $question->is_active);
+    }
+
+    public function test_exact_supplied_excel_preserves_each_of_30_columns_for_all_100_rows(): void
+    {
+        $this->actingAs($this->admin());
+        $template = resource_path('templates/pmp-question-import.xlsx');
+        $this->post('/admin/exam-simulator/pmp/questions/import', [
+            'file' => new UploadedFile($template, 'PM_Circle_PMP_Question_Bank.xlsx',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true),
+        ])->assertSessionHasNoErrors()->assertRedirect();
+
+        // The supplied Question Bank has exactly 30 fields; compare each stored
+        // field for EVERY row instead of just checking the import count.
+        $method = new \ReflectionMethod(\App\Services\Exam\PmpQuestionImporter::class, 'xlsx');
+        $rows = $method->invoke(app(\App\Services\Exam\PmpQuestionImporter::class), $template);
+        $this->assertSame(\App\Services\Exam\PmpQuestionContent::WORKBOOK_HEADERS, $rows[0]);
+        $this->assertCount(101, $rows);
+        $questions = DB::table('pmp_exam_questions')->get()->keyBy('code');
+        $this->assertCount(100, $questions);
+
+        foreach (array_slice($rows, 1) as $index => $source) {
+            $record = $questions->get($source[0]);
+            $this->assertNotNull($record, 'Missing Question ID at row '.($index + 2));
+            $options = json_decode($record->options, true, 512, JSON_THROW_ON_ERROR);
+            $rationales = json_decode($record->option_rationales, true, 512, JSON_THROW_ON_ERROR);
+            $stored = [
+                $record->code, $record->domain, $record->eco_task_id, $record->eco_task_focus,
+                $record->difficulty, $record->approach, $record->prompt,
+                $options['A'], $options['B'], $options['C'], $options['D'],
+                $record->correct_option, $record->correct_answer_text, $record->explanation,
+                $rationales['A'], $rationales['B'], $rationales['C'], $rationales['D'],
+                $record->takeaway, $record->concepts, $record->pmbok_performance_domain,
+                $record->legacy_knowledge_area, $record->industry, $record->question_type,
+                $record->reference_publication, $record->reference_section,
+                $record->reference_heading, (string) $record->reference_pdf_page,
+                $record->eco_reference, $record->review_status,
+            ];
+            $this->assertCount(30, $stored);
+            foreach ($stored as $col => $value) {
+                $this->assertSame((string) ($source[$col] ?? ''), (string) ($value ?? ''),
+                    sprintf('Question Bank %s row %d col %d (%s)',
+                        $source[0], $index + 2, $col + 1,
+                        \App\Services\Exam\PmpQuestionContent::WORKBOOK_HEADERS[$col]));
+            }
+            $this->assertFalse((bool) $record->is_active);
+        }
+    }
+
+    public function test_manual_question_creation_stores_correct_answer_as_separate_source_field(): void
+    {
+        $this->actingAs($this->admin());
+        $payload = $this->question('manual-source-test');
+        $payload['correct_answer_text'] = 'Analyze impact';
+        $this->post('/admin/exam-simulator/pmp/questions', $payload)
+            ->assertSessionHasNoErrors()->assertRedirect();
+        $this->assertDatabaseHas('pmp_exam_questions', [
+            'code' => 'manual-source-test', 'correct_option' => 'B',
+            'correct_answer_text' => 'Analyze impact',
+        ]);
+        $invalid = $this->question('manual-mismatch-test');
+        $invalid['correct_answer_text'] = 'Ignore';
+        $this->post('/admin/exam-simulator/pmp/questions', $invalid)
+            ->assertSessionHasErrors('correct_answer_text');
+        $this->assertDatabaseMissing('pmp_exam_questions', ['code' => 'manual-mismatch-test']);
+    }
+
+    public function test_30_column_import_rejects_extra_headers_without_silent_data_loss(): void
+    {
+        $this->actingAs($this->admin());
+        $headers = [...\App\Services\Exam\PmpQuestionContent::WORKBOOK_HEADERS, 'Unknown Column'];
+        $content = implode(',', $headers)."\n".implode(',', array_fill(0, 31, 'test'))."\n";
+        $this->post('/admin/exam-simulator/pmp/questions/import', [
+            'file' => UploadedFile::fake()->createWithContent('altered.csv', $content),
+        ])->assertSessionHasErrors('file');
+    }
+
 }

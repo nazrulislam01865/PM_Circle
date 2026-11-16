@@ -28,12 +28,6 @@ final class PublicContactTest extends TestCase
         Mail::fake();
 
         Http::preventStrayRequests();
-        Http::fake([
-            'https://www.google.com/recaptcha/api/siteverify' => Http::response([
-                'success' => true,
-                'hostname' => 'localhost',
-            ]),
-        ]);
     }
 
     private function validContact(array $overrides = []): array
@@ -62,6 +56,14 @@ final class PublicContactTest extends TestCase
             ->assertSessionHasErrors(['name', 'email', 'topic', 'subject', 'message', 'recaptcha_token']);
 
         Http::assertNothingSent();
+
+        // Success is scoped to this test so rejection/outage tests use only their own mocks.
+        Http::fake([
+            'https://www.google.com/recaptcha/api/siteverify' => Http::response([
+                'success' => true,
+                'hostname' => 'localhost',
+            ]),
+        ]);
 
         $this->post('/contact', $this->validContact())->assertRedirect(route('contact'));
 

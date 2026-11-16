@@ -64,6 +64,7 @@ export function PmpReviewExplanation({ question }: { question: ExamQuestion }) {
                             {source.examDomain && <div><dt>Exam domain</dt><dd>{source.examDomain}</dd></div>}
                             {source.task && <div><dt>ECO task</dt><dd>{source.task}</dd></div>}
                             {source.focus && <div><dt>Task focus</dt><dd>{source.focus}</dd></div>}
+                            {source.ecoReference && <div><dt>ECO reference</dt><dd>{source.ecoReference}</dd></div>}
                         </dl>
                     </div>)} </div> : <p className="pm-review-empty-detail">No references have been provided for this question.</p>}
                 {(references.performanceDomain || references.knowledgeArea) && <div className="pm-review-reference-secondary">

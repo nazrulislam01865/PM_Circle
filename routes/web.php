@@ -146,6 +146,8 @@ Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded'])->group(func
 
     Route::get('/exams/pmp/enter', [PmpExamController::class, 'entry'])->name('exams.pmp.entry');
     Route::get('/exams/pmp', [PmpExamController::class, 'index'])->name('exams.pmp.index');
+    Route::get('/exams/pmp/ai-usage', \App\Http\Controllers\Exam\PmpAiUsageController::class)
+        ->middleware('throttle:30,1')->name('exams.pmp.ai-usage');
     Route::get('/exams/pmp/history', [PmpExamController::class, 'history'])->middleware('throttle:30,1')->name('exams.pmp.history');
     Route::put('/exams/pmp/target-date', [PmpExamController::class, 'updateTargetDate'])->middleware('throttle:20,1')->name('exams.pmp.target-date');
     Route::post('/exams/pmp/start', [PmpExamController::class, 'start'])->middleware('throttle:pmp-exam-start')->name('exams.pmp.start');
@@ -154,6 +156,9 @@ Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded'])->group(func
     Route::post('/exams/pmp/attempts/{attempt}/submit', [PmpExamController::class, 'submit'])->middleware('throttle:pmp-exam-submit')->whereNumber('attempt')->name('exams.pmp.submit');
     Route::get('/exams/pmp/attempts/{attempt}/result', [PmpExamController::class, 'result'])->whereNumber('attempt')->name('exams.pmp.result');
     Route::get('/exams/pmp/attempts/{attempt}/review', [PmpExamController::class, 'review'])->whereNumber('attempt')->name('exams.pmp.review');
+    Route::get('/exams/pmp/attempts/{attempt}/questions/{question}/ai-chat',
+        [\App\Http\Controllers\Exam\PmpQuestionChatController::class, 'show'])
+        ->middleware('throttle:30,1')->whereNumber('attempt')->whereNumber('question')->name('exams.pmp.ai-chat');
     Route::post('/exams/pmp/attempts/{attempt}/questions/{question}/ai-help', [PmpExamController::class, 'aiHelp'])
         ->middleware('throttle:5,1')->whereNumber('attempt')->whereNumber('question')->name('exams.pmp.ai-help');
     // Member workspace aliases reuse the public page queries and React components.
@@ -206,3 +211,89 @@ Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded'])->group(func
 });
 
 require __DIR__.'/settings.php';
+
+// Standalone authenticated JSON contracts for background AI interactions. No public API mirror.
+Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded', 'throttle:60,1'])
+    ->prefix('ai')->name('ai.')->group(function (): void {
+        Route::get('/features', [\App\Http\Controllers\AI\AiRequestController::class, 'features'])->name('features');
+        Route::get('/wallet', [\App\Http\Controllers\AI\AiWalletController::class, 'show'])->name('wallet');
+        Route::get('/wallet/ledger', [\App\Http\Controllers\AI\AiWalletController::class, 'ledger'])->name('ledger');
+        Route::get('/limits', [\App\Http\Controllers\AI\AiWalletController::class, 'limits'])->name('limits');
+        Route::get('/usage', [\App\Http\Controllers\AI\AiRequestController::class, 'history'])->name('usage');
+        Route::post('/requests', [\App\Http\Controllers\AI\AiRequestController::class, 'store'])
+            ->middleware('throttle:6,1')->name('requests.store');
+        Route::get('/requests/{uuid}', [\App\Http\Controllers\AI\AiRequestController::class, 'show'])
+            ->whereUuid('uuid')->name('requests.show');
+        Route::get('/conversations', [\App\Http\Controllers\AI\AiConversationController::class, 'index'])->name('conversations.index');
+        Route::get('/conversations/{conversation}', [\App\Http\Controllers\AI\AiConversationController::class, 'show'])
+            ->whereNumber('conversation')->name('conversations.show');
+        Route::post('/conversations/{conversation}/messages', [\App\Http\Controllers\AI\AiConversationController::class, 'message'])
+            ->whereNumber('conversation')->middleware('throttle:6,1')->name('conversations.messages');
+        Route::get('/resume-drafts', [\App\Http\Controllers\AI\AiResumeDraftController::class, 'index'])
+            ->name('resume-drafts.index');
+        Route::post('/resume-drafts/{draft}/approve', [\App\Http\Controllers\AI\AiResumeDraftController::class, 'approve'])
+            ->whereNumber('draft')->name('resume-drafts.approve');
+        Route::delete('/resume-drafts/{draft}', [\App\Http\Controllers\AI\AiResumeDraftController::class, 'discard'])
+            ->whereNumber('draft')->name('resume-drafts.discard');
+        Route::post('/resumes/{resume}/revoke-consent', [\App\Http\Controllers\AI\AiResumeDraftController::class, 'revokeConsent'])
+            ->whereNumber('resume')->name('resumes.revoke-consent');
+        Route::delete('/conversations/{conversation}', [\App\Http\Controllers\AI\AiConversationController::class, 'destroy'])
+            ->whereNumber('conversation')->name('conversations.destroy');
+    });
+
+Route::middleware(['auth', 'pm.admin', 'verified', 'throttle:60,1'])
+    ->prefix('admin/ai')->name('admin.ai.')->group(function (): void {
+        $management = \App\Http\Controllers\Admin\AI\AiManagementController::class;
+        $limits = \App\Http\Controllers\Admin\AI\AiQuotaAdminController::class;
+        $editorial = \App\Http\Controllers\Admin\AI\AiEditorialController::class;
+        $credits = \App\Http\Controllers\Admin\AI\AiCreditAdminController::class;
+        Route::get('/', [$management, 'index'])->name('index');
+        Route::get('/usage', [$management, 'usage'])->name('usage');
+        Route::put('/features', [$management, 'saveFeature'])->name('features.save');
+        Route::post('/prompts', [$management, 'publishPrompt'])->name('prompts.publish');
+        Route::post('/model-prices', [$management, 'publishPrice'])->name('model-prices.publish');
+        $dashboard = \App\Http\Controllers\Admin\AI\AiUsageDashboardController::class;
+        Route::get('/usage-management', [$dashboard, 'index'])->name('usage-management');
+        Route::get('/usage-management/members', [$dashboard, 'members'])
+            ->middleware('throttle:20,1')->name('usage-management.members');
+        Route::get('/usage-management/members/{user}', [$dashboard, 'member'])
+            ->whereNumber('user')->middleware('throttle:20,1')->name('usage-management.member');
+        Route::get('/chat-limits', [$limits, 'index'])->name('chat-limits');
+        Route::get('/chat-limits/preview', [$limits, 'preview'])->name('chat-limits.preview');
+        Route::post('/chat-limits/policies', [$limits, 'publishPolicy'])->name('chat-limits.policies');
+        Route::post('/chat-limits/overrides', [$limits, 'override'])->name('chat-limits.overrides');
+        Route::post('/chat-limits/overrides/{override}/revoke', [$limits, 'revokeOverride'])
+            ->whereNumber('override')->name('chat-limits.overrides.revoke');
+        Route::post('/allowances', [$limits, 'publishAllowance'])->name('allowances');
+        Route::get('/editorial', [$editorial, 'index'])->name('editorial');
+        Route::post('/editorial/scenarios', [$editorial, 'generateScenario'])->name('editorial.scenarios');
+        Route::post('/editorial/trends', [$editorial, 'generateTrend'])->name('editorial.trends');
+        Route::post('/editorial/trend-sources', [$editorial, 'verifyTrendSource'])->name('editorial.sources');
+        Route::post('/editorial/scenarios/{scenario}/rubrics', [$editorial, 'publishRubric'])
+            ->whereNumber('scenario')->name('editorial.rubric');
+        Route::get('/editorial/{draft}', [$editorial, 'show'])->whereNumber('draft')->name('editorial.show');
+        Route::patch('/editorial/{draft}', [$editorial, 'edit'])->whereNumber('draft')->name('editorial.edit');
+        Route::post('/editorial/{draft}/approve', [$editorial, 'approve'])->whereNumber('draft')->name('editorial.approve');
+        Route::post('/editorial/{draft}/publish', [$editorial, 'publish'])->whereNumber('draft')->name('editorial.publish');
+        Route::get('/packages', [$credits, 'packages'])->name('packages');
+        Route::post('/packages', [$credits, 'publishPackage'])->name('packages.publish');
+        Route::post('/packages/{package}/disable', [$credits, 'disablePackage'])
+            ->whereNumber('package')->name('packages.disable');
+        Route::post('/credits/grants', [$credits, 'grant'])->name('credits.grant');
+        Route::get('/credits/reconciliation', [$credits, 'reconcile'])->name('credits.reconcile');
+        Route::post('/requests/{uuid}/refund-unknown', [$credits, 'resolveUnknown'])
+            ->whereUuid('uuid')->name('requests.refund-unknown');
+    });
+
+Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded', 'throttle:10,1'])
+    ->prefix('billing')->name('billing.ai.')->group(function (): void {
+        $controller = \App\Http\Controllers\Billing\AiCreditCheckoutController::class;
+        Route::get('/ai-packages', [$controller, 'packages'])->name('packages');
+        Route::post('/ai-checkout', [$controller, 'checkout'])->name('checkout');
+        Route::get('/ai-orders/{uuid}', [$controller, 'order'])->whereUuid('uuid')->name('orders');
+    });
+// Signature and independently verified transaction are mandatory; default adapter always rejects.
+Route::post('/webhooks/payments/{provider}',
+    [\App\Http\Controllers\Billing\AiCreditCheckoutController::class, 'webhook'])
+    ->middleware('throttle:60,1')->where('provider', '[a-z0-9_-]{2,40}')
+    ->name('webhooks.ai-payments');

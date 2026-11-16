@@ -159,18 +159,10 @@ class ScenarioController extends Controller
 
         $isReply = !empty($validated['parent_id']);
 
+        // Community posting is independent of paid AI review. A score is persisted only
+        // after an explicitly requested, validated rubric evaluation completes.
         $aiScore = null;
         $aiFeedback = null;
-
-        // Structured rubric simulation for non-replies
-        if (!$isReply) {
-            $aiScore = 8;
-            $aiFeedback = [
-                'strength' => 'Identifies immediate constraints and proposes a structured assessment.',
-                'consider' => 'Clarify decision authority and sponsor sign-off before making trade-offs.',
-                'next_step' => 'Document options with formal time and cost impacts in the change log.',
-            ];
-        }
 
         $created = $scenario->responses()->create([
             'user_id' => $request->user()->id,

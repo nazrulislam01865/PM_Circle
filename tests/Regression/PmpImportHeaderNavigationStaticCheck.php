@@ -3,7 +3,7 @@
 $root = dirname(__DIR__, 2);
 $contents = static fn (string $name): string => file_get_contents($root.'/'.$name) ?: '';
 $mustContain = [
-    'app/Http/Controllers/Admin/PmpExamBankController.php' => ["resource_path('templates/pmp-question-import.xlsx')", 'pm-circle-pmp-question-template.xlsx'],
+    'app/Http/Controllers/Admin/PmpExamBankController.php' => ["resource_path('templates/pmp-question-import.xlsx')", 'PM_Circle_PMP_Question_Bank.xlsx'],
     'app/Http/Requests/Admin/ImportPmpExamQuestionsRequest.php' => ['mimes:csv,txt,xlsx'],
     'app/Services/Exam/PmpQuestionImporter.php' => ["'xlsx' =>", "'csv' =>", 'DB::transaction', 'count($rows) > 1001'],
     'resources/js/pages/admin/PmpQuestionBank.tsx' => ['Download Excel template', 'pm-pmp-import-picker', 'Choose file', '.xlsx,.csv'],

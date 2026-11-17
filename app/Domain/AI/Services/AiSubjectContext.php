@@ -50,15 +50,17 @@ final class AiSubjectContext
                     'question_references' => mb_substr((string) $question->references, 0, 1200)],
                 'message' => $message];
         }
-        if (in_array($feature, ['scenario_review', 'scenario_comment_review'], true)) {
+        if (in_array($feature, ['scenario_review', 'scenario_comment_review', 'daily_challenge_review'], true)) {
             $responseId = (int) ($subject['response_id'] ?? 0);
             $record = DB::table('scenario_responses as sr')
                 ->join('scenarios as s', 's.id', '=', 'sr.scenario_id')
                 ->where('sr.id', $responseId)->where('sr.user_id', $user->id)
-                ->where('s.status', 'published')
+                ->when($feature !== 'daily_challenge_review', fn ($query) => $query->where('s.status', 'published'))
+                ->when($feature === 'daily_challenge_review', fn ($query) => $query->where('s.ai_generated', true)
+                    ->whereNotNull('s.daily_slot')->whereIn('s.status', ['published', 'closed']))
                 ->first(['sr.id', 'sr.parent_id', 'sr.body', 's.id as scenario_id',
                     's.title', 's.situation', 's.known_facts']);
-            if (! $record || ($feature === 'scenario_review' && $record->parent_id !== null)) {
+            if (! $record || (in_array($feature, ['scenario_review', 'daily_challenge_review'], true) && $record->parent_id !== null)) {
                 throw new AiFailure('SUBJECT_NOT_ACCESSIBLE', 404);
             }
             $rubric = DB::table('scenario_rubric_versions')->where('scenario_id', $record->scenario_id)

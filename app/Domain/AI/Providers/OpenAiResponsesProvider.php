@@ -33,7 +33,10 @@ final class OpenAiResponsesProvider implements AiProvider
     public function generate(string $model, string $instructions, array $context,
         array $schema, int $maxOutputTokens, bool $useExternalModeration = true): array
     {
-        $key = config('pm-ai.api_key');
+        $feature = (string) ($context['_ai_feature_code'] ?? '');
+        unset($context['_ai_feature_code']);
+        $daily = in_array($feature, ['scenario_generate', 'daily_challenge_review'], true);
+        $key = config($daily ? 'pm-ai.daily_challenge_api_key' : 'pm-ai.api_key');
         if (! is_string($key) || $key === '') {
             throw new AiFailure('PROVIDER_NOT_CONFIGURED', 503);
         }
@@ -69,8 +72,9 @@ final class OpenAiResponsesProvider implements AiProvider
                 'strict' => true, 'schema' => $schema,
             ]],
         ];
-        if ($isPmp && str_starts_with($model, 'gpt-5-nano')) {
-            $body['reasoning'] = ['effort' => config('pm-ai.pmp_reasoning_effort', 'minimal')];
+        if (($isPmp || $daily) && str_starts_with($model, 'gpt-5-nano')) {
+            $body['reasoning'] = ['effort' => $daily ? config('pm-ai.daily_challenge_reasoning_effort', 'minimal')
+                : config('pm-ai.pmp_reasoning_effort', 'minimal')];
             $body['text']['verbosity'] = 'low';
         }
         try {

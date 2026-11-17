@@ -46,10 +46,12 @@ final class AiGateway
         }
         // Testing-only temporary grants cannot be mistaken for a paid entitlement.
         if ($this->plans->details($user)['source'] === 'complimentary'
-            && ! config('pm-ai.allow_demo_credit_grants')) {
+            && ! config('pm-ai.allow_demo_credit_grants')
+            && $featureCode !== 'daily_challenge_review') {
             throw new AiFailure('NOT_ENTITLED', 403);
         }
-        if (DB::table('ai_credit_orders')->where('user_id', $user->id)
+        if ($featureCode !== 'daily_challenge_review'
+            && DB::table('ai_credit_orders')->where('user_id', $user->id)
             ->where('status', 'reversal_review')->exists()) {
             throw new AiFailure('PAYMENT_REVIEW_REQUIRED', 403);
         }
@@ -61,8 +63,13 @@ final class AiGateway
         if ($feature->credit_tariff > $max) {
             throw new AiFailure('PRICE_CHANGED', 409);
         }
-        if (! config('pm-ai.api_key')) {
+        if (! config($featureCode === 'daily_challenge_review'
+            ? 'pm-ai.daily_challenge_api_key' : 'pm-ai.api_key')) {
             throw new AiFailure('PROVIDER_NOT_CONFIGURED', 503);
+        }
+        if ($featureCode === 'daily_challenge_review'
+            && ((int) $feature->credit_tariff !== 0 || $feature->model !== 'gpt-5-nano')) {
+            throw new AiFailure('INVALID_FEATURE_CONFIGURATION', 503);
         }
         $rateKey = 'ai-admission:'.$user->id;
         if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($rateKey,
@@ -98,12 +105,14 @@ final class AiGateway
             if ($duplicate) {
                 return $this->receipt($duplicate);
             }
-            if ($feature->daily_limit !== null) {
+            if ($feature->daily_limit !== null || $featureCode === 'daily_challenge_review') {
                 $usedToday = DB::table('ai_requests')->where('user_id', $user->id)
                     ->where('feature_code', $featureCode)
                     ->where('created_at', '>=', now('UTC')->startOfDay())
                     ->whereNotIn('status', ['failed', 'cancelled'])->count();
-                if ($usedToday >= $feature->daily_limit) {
+                if ($usedToday >= ($featureCode === 'daily_challenge_review'
+                    ? (int) app(\App\Domain\DailyChallenge\Services\DailyChallengeSettings::class)
+                        ->get()->max_reviews_per_user_daily : (int) $feature->daily_limit)) {
                     throw new AiFailure('FEATURE_DAILY_LIMIT_REACHED', 429);
                 }
             }
@@ -242,7 +251,11 @@ final class AiGateway
             ->where('version', $settings->prompt_version)->whereNotNull('published_at')->first();
         $price = DB::table('ai_model_prices')->where('model', $settings->model)
             ->where('effective_from', '<=', now())->orderByDesc('effective_from')->first();
-        if (! $prompt || ! $price || ! config('pm-ai.api_key')) {
+        if ($feature === 'scenario_generate' && $settings->model !== 'gpt-5-nano') {
+            throw new AiFailure('INVALID_FEATURE_CONFIGURATION', 503);
+        }
+        if (! $prompt || ! $price || ! config($feature === 'scenario_generate'
+            ? 'pm-ai.daily_challenge_api_key' : 'pm-ai.api_key')) {
             throw new AiFailure('EDITORIAL_NOT_CONFIGURED', 503);
         }
         return DB::transaction(function () use ($feature, $draftId, $context, $settings, $prompt, $price): array {

@@ -17,6 +17,7 @@ class ScenarioResponse extends Model
         'is_question',
         'ai_score',
         'ai_feedback',
+        'ai_review_status',
         'likes_count',
         'loves_count',
     ];

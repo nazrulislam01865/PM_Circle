@@ -37,7 +37,7 @@ final class AiManagementController extends Controller
         $data = $request->validate([
             'code' => ['required', Rule::in(array_keys(AiFeatureCatalog::FEATURES))],
             'enabled' => ['required', 'boolean'],
-            'min_plan' => ['required', Rule::in(['plus', 'pro', 'staff'])],
+            'min_plan' => ['required', Rule::in(['free', 'plus', 'pro', 'staff'])],
             'model' => ['required', Rule::in(config('pm-ai.allowed_models'))],
             'max_input_chars' => ['required', 'integer', 'between:100,20000'],
             'max_output_tokens' => ['required', 'integer', 'between:50,5000'],
@@ -47,6 +47,16 @@ final class AiManagementController extends Controller
             'reason' => ['required', 'string', 'min:8', 'max:500'],
         ]);
         $code = $data['code'];
+        if ($data['min_plan'] === 'free' && $code !== 'daily_challenge_review') {
+            abort(422, 'Only the free Daily Challenge evaluation feature permits this plan.');
+        }
+        if ($code === 'daily_challenge_review'
+            && ($data['min_plan'] !== 'free' || $data['credit_tariff'] !== 0 || $data['model'] !== 'gpt-5-nano')) {
+            abort(422, 'Daily Challenge AI review must remain free and use gpt-5-nano.');
+        }
+        if ($code === 'scenario_generate' && $data['model'] !== 'gpt-5-nano') {
+            abort(422, 'Daily Challenge generation must use gpt-5-nano.');
+        }
         if (in_array($code, ['scenario_generate', 'trend_draft'], true)
             && $data['min_plan'] !== 'staff') {
             abort(422, 'Editorial models must be staff-only.');

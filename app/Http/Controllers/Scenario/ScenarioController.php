@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Scenario;
 
 use App\Http\Controllers\Controller;
+use App\Domain\DailyChallenge\Jobs\QueueDailyChallengeReview;
+use App\Domain\DailyChallenge\Services\DailyChallengeSettings;
+use Throwable;
 use App\Models\Scenario;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -37,7 +40,7 @@ class ScenarioController extends Controller
 
         $query = Scenario::query()->whereIn('status', ['published', 'closed'])
             ->whereNotNull('published_at')->where('published_at', '<=', now())
-            ->select(['id', 'slug', 'title', 'summary', 'topics', 'status', 'published_at'])
+            ->select(['id', 'slug', 'title', 'summary', 'topics', 'status', 'published_at', 'expires_at', 'daily_slot'])
             ->withCount([
                 'responses as responses_count' => fn ($q) => $q->whereNull('parent_id'),
                 'reactions as likes_count' => fn ($q) => $q->where('type', 'like'),
@@ -46,8 +49,11 @@ class ScenarioController extends Controller
                 ->whereRaw('LOWER(title) LIKE ?', ['%'.mb_strtolower($search).'%'])
                 ->orWhereRaw('LOWER(summary) LIKE ?', ['%'.mb_strtolower($search).'%'])))
             ->when($topic !== '', fn ($q) => $q->whereJsonContains('topics', $topic))
-            ->when($tab === 'open' || $status === 'open', fn ($q) => $q->where('status', 'published'))
-            ->when($status === 'closed', fn ($q) => $q->where('status', 'closed'))
+            ->when($tab === 'open' || $status === 'open', fn ($q) => $q->where('status', 'published')
+                ->where(fn ($expiry) => $expiry->whereNull('expires_at')->orWhere('expires_at', '>', now())))
+            ->when($status === 'closed', fn ($q) => $q->where(fn ($closed) => $closed
+                ->where('status', 'closed')->orWhere(fn ($expired) => $expired
+                    ->whereNotNull('expires_at')->where('expires_at', '<=', now()))))
             ->when($tab === 'mine', function ($q) use ($viewerId) {
                 $q->when($viewerId, fn ($items) => $items->whereHas('responses', fn ($responses) => $responses->where('user_id', $viewerId)),
                     fn ($items) => $items->whereRaw('1 = 0'));
@@ -80,8 +86,14 @@ class ScenarioController extends Controller
         $statusCounts = Scenario::query()->whereIn('status', ['published', 'closed'])
             ->where('published_at', '<=', now())
             ->selectRaw('status, COUNT(*) AS total')->groupBy('status')->pluck('total', 'status');
+        $today = now('Asia/Dhaka')->toDateString();
         $latestSlug = Scenario::query()->where('status', 'published')
-            ->where('published_at', '<=', now())->orderByDesc('published_at')->value('slug');
+            ->where('published_at', '<=', now())
+            ->where(fn ($todayQuery) => $todayQuery->where('daily_slot', $today)
+                ->orWhere(fn ($manual) => $manual->whereNull('daily_slot')
+                    ->whereDate('published_at', now()->toDateString())))
+            ->where(fn ($open) => $open->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->orderByDesc('published_at')->value('slug');
 
         return Inertia::render('scenarios/Index', [
             'scenarios' => $scenarios,
@@ -102,7 +114,11 @@ class ScenarioController extends Controller
 
     public function show(Scenario $scenario, Request $request): Response
     {
-        abort_unless(in_array($scenario->status, ['published', 'closed'], true), 404);
+        abort_unless(in_array($scenario->status, ['published', 'closed'], true)
+            && $scenario->published_at?->lte(now()), 404);
+        if ($scenario->expires_at && $scenario->expires_at->lte(now())) {
+            $scenario->status = 'closed';
+        }
 
         $viewerId = $request->user()?->id;
         $scenario->loadCount(['reactions as reactions_count' => fn ($query) => $query
@@ -150,7 +166,10 @@ class ScenarioController extends Controller
 
     public function respond(Request $request, Scenario $scenario): RedirectResponse|JsonResponse
     {
-        abort_unless($scenario->status === 'published', 404);
+        abort_unless($scenario->status === 'published' && $scenario->published_at?->lte(now()), 404);
+        if ($scenario->expires_at && $scenario->expires_at->lte(now())) {
+            return back()->withErrors(['body' => 'This challenge has expired. You can still read existing responses.']);
+        }
         $validated = $request->validate([
             'body' => ['required', 'string', 'min:2', 'max:10000'],
             'parent_id' => ['nullable', 'integer', Rule::exists('scenario_responses', 'id')
@@ -163,6 +182,10 @@ class ScenarioController extends Controller
         // after an explicitly requested, validated rubric evaluation completes.
         $aiScore = null;
         $aiFeedback = null;
+        $settings = app(DailyChallengeSettings::class)->get();
+        $reviewRequested = ! $isReply && (bool) $scenario->ai_generated && (bool) $scenario->daily_slot
+            && $settings->enabled && $settings->auto_review
+            && app(DailyChallengeSettings::class)->isReady();
 
         $created = $scenario->responses()->create([
             'user_id' => $request->user()->id,
@@ -170,11 +193,21 @@ class ScenarioController extends Controller
             'body' => $validated['body'],
             'ai_score' => $aiScore,
             'ai_feedback' => $aiFeedback,
+            'ai_review_status' => $reviewRequested ? 'queued' : null,
             'likes_count' => 0,
             'loves_count' => 0,
             'is_community_helpful' => false,
             'is_question' => str_ends_with(trim($validated['body']), '?'),
         ]);
+
+        if ($reviewRequested) {
+            try {
+                QueueDailyChallengeReview::dispatch($created->id)->onQueue(config('pm-ai.queue'));
+            } catch (Throwable $e) {
+                $created->update(['ai_review_status' => 'failed']);
+                report(new \RuntimeException('Daily Challenge review queue dispatch failed: '.$e::class));
+            }
+        }
 
         if ($request->expectsJson() && $isReply) {
             // Reuse the post comment editor without forcing a full Inertia reload.

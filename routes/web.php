@@ -265,6 +265,13 @@ Route::middleware(['auth', 'pm.admin', 'verified', 'throttle:60,1'])
         Route::post('/chat-limits/overrides/{override}/revoke', [$limits, 'revokeOverride'])
             ->whereNumber('override')->name('chat-limits.overrides.revoke');
         Route::post('/allowances', [$limits, 'publishAllowance'])->name('allowances');
+        $daily = \App\Http\Controllers\Admin\DailyChallenge\DailyChallengeController::class;
+        Route::get('/daily-challenge', [$daily, 'index'])->name('daily-challenge.index');
+        Route::put('/daily-challenge', [$daily, 'update'])->name('daily-challenge.update');
+        Route::post('/daily-challenge/generate', [$daily, 'generate'])
+            ->middleware('throttle:5,1')->name('daily-challenge.generate');
+        Route::put('/daily-challenge/{scenario}/expires', [$daily, 'expire'])
+            ->whereNumber('scenario')->name('daily-challenge.expires');
         Route::get('/editorial', [$editorial, 'index'])->name('editorial');
         Route::post('/editorial/scenarios', [$editorial, 'generateScenario'])->name('editorial.scenarios');
         Route::post('/editorial/trends', [$editorial, 'generateTrend'])->name('editorial.trends');

@@ -51,7 +51,7 @@ final class AiRequestController extends Controller
             return response()->json(['enabled' => false, 'features' => []]);
         }
         $features = DB::table('ai_features')->where('enabled', true)
-            ->whereNotIn('code', ['scenario_generate', 'trend_draft'])
+            ->whereNotIn('code', ['scenario_generate', 'trend_draft', 'daily_challenge_review'])
             ->get(['code', 'min_plan', 'credit_tariff', 'tariff_version', 'max_input_chars']);
         $plan = $plans->code($request->user());
         $rank = ['free' => 0, 'plus' => 1, 'pro' => 2];

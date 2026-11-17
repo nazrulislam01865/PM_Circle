@@ -15,7 +15,7 @@ final class StartAiRequestRequest extends FormRequest
         return [
             'client_request_key' => ['required', 'uuid', 'max:120'],
             'feature' => ['required', 'string', Rule::in(array_diff(array_keys(AiFeatureCatalog::FEATURES),
-                ['scenario_generate', 'trend_draft']))],
+                ['scenario_generate', 'trend_draft', 'daily_challenge_review']))],
             'subject' => ['sometimes', 'array:attempt_id,question_id,response_id,resume_id,section'],
             'subject.attempt_id' => ['sometimes', 'integer', 'min:1'],
             'subject.question_id' => ['sometimes', 'integer', 'min:1'],

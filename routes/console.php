@@ -58,8 +58,10 @@ Artisan::command('ai:prepare-scenarios', function (): void {
     if (! config('pm-ai.editorial_enabled')) {
         return;
     }
+    $policy = app(\App\Domain\DailyChallenge\Services\DailyChallengeSettings::class);
+    if (! $policy->get()->enabled || ! $policy->isReady()) return;
     $service = app(\App\Domain\AI\Services\AiEditorialService::class);
-    for ($offset = 1; $offset <= 7; $offset++) {
+    for ($offset = 0; $offset <= 7; $offset++) {
         $service->queueScenarioSlot(now('Asia/Dhaka')->addDays($offset)->toDateString());
     }
 })->purpose('Create only unique future daily challenge drafts for human review');
@@ -79,6 +81,28 @@ Artisan::command('ai:publish-approved', function (): void {
         }
     }
 })->purpose('Publish due challenges ONLY after recorded staff approval');
+
+
+Artisan::command('daily-challenge:publish', function (): void {
+    $policy = app(\App\Domain\DailyChallenge\Services\DailyChallengeSettings::class);
+    if (! $policy->get()->enabled || ! $policy->get()->auto_publish || ! $policy->isReady()) return;
+    $editorial = app(\App\Domain\AI\Services\AiEditorialService::class);
+    $ids = \Illuminate\Support\Facades\DB::table('ai_editorial_drafts')
+        ->where('feature', 'scenario_generate')->where('status', 'pending_review')
+        ->where('publication_at', '<=', now())->orderBy('publication_at')->limit(20)->pluck('id');
+    foreach ($ids as $id) {
+        try {
+            $editorial->publishAutomatedScenario((int) $id);
+        } catch (\Throwable $e) {
+            // A failed draft must not prevent other due slots from publishing.
+            report(new \RuntimeException('Daily Challenge slot '.$id.' could not publish: '.$e::class));
+        }
+    }
+})->purpose('Publish completed AI daily challenge drafts only when administrator enabled automatic publication');
+
+Artisan::command('daily-challenge:expire', function (): void {
+    $this->info('Expired challenges closed: '.app(\App\Domain\DailyChallenge\Services\DailyChallengeSettings::class)->closeExpired());
+})->purpose('Close daily discussions at their pinned UTC expiry without deleting their history');
 
 Artisan::command('ai:admin-permission {user_id} {permission}', function (): void {
     $permission = (string) $this->argument('permission');
@@ -107,8 +131,11 @@ if (config('pm-ai.enabled')) {
     Schedule::command('ai:expire-grants')->hourly()->withoutOverlapping();
     Schedule::command('ai:grant-cycles')->everyFifteenMinutes()->withoutOverlapping();
 }
+Schedule::command('daily-challenge:expire')->everyMinute()->withoutOverlapping();
 if (config('pm-ai.enabled') && config('pm-ai.editorial_enabled')) {
     Schedule::command('ai:prepare-scenarios')->dailyAt(config('pm-ai.daily_editorial_time'))
         ->timezone('Asia/Dhaka')->withoutOverlapping();
+    Schedule::command('ai:prepare-scenarios')->hourly()->withoutOverlapping();
+    Schedule::command('daily-challenge:publish')->everyFiveMinutes()->withoutOverlapping();
     Schedule::command('ai:publish-approved')->everyFifteenMinutes()->withoutOverlapping();
 }

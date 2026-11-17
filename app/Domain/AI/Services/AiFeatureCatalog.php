@@ -11,6 +11,7 @@ final class AiFeatureCatalog
         'pmp_explain' => ['family' => 'feature:pmp', 'min_plan' => 'plus', 'chat' => true],
         'pmp_followup' => ['family' => 'feature:pmp', 'min_plan' => 'plus', 'chat' => true],
         'scenario_review' => ['family' => 'feature:scenario', 'min_plan' => 'plus', 'chat' => false],
+        'daily_challenge_review' => ['family' => 'feature:daily_challenge', 'min_plan' => 'free', 'chat' => false],
         'scenario_comment_review' => ['family' => 'feature:scenario', 'min_plan' => 'plus', 'chat' => false],
         'ask_ai' => ['family' => 'feature:ask_ai', 'min_plan' => 'plus', 'chat' => true],
         'resume_analyze' => ['family' => 'feature:resume', 'min_plan' => 'pro', 'chat' => false],
@@ -59,7 +60,7 @@ final class AiFeatureCatalog
             'pmp_explain' => $object(['explanation' => $str(), 'nextStep' => $optionalText]),
             'pmp_followup' => $object(['answer' => $str(), 'nextStep' => $optionalText]),
             'ask_ai' => $object(['answer' => $str(), 'nextStep' => $str()]),
-            'scenario_review', 'scenario_comment_review' => $object([
+            'scenario_review', 'scenario_comment_review', 'daily_challenge_review' => $object([
                 'criteria' => ['type' => 'array', 'items' => $object(['key' => $str(),
                     'points' => ['type' => 'integer'], 'evidence' => $str()])],
                 'strengths' => $strings(), 'gaps' => $strings(), 'next_actions' => $strings(),
@@ -83,7 +84,27 @@ final class AiFeatureCatalog
     public function validate(string $feature, array $result, ?array $rubric = null): array
     {
         $this->validateShape($result, $this->schema($feature));
-        if (in_array($feature, ['scenario_review', 'scenario_comment_review'], true)) {
+        if ($feature === 'scenario_generate') {
+            $criteria = $result['rubric_criteria'];
+            $keys = array_column($criteria, 'key');
+            if (count($criteria) < 2 || count($criteria) > 5
+                || count(array_unique($keys)) !== count($keys)
+                || count($result['known_facts']) < 2 || count($result['known_facts']) > 8
+                || count($result['topics']) < 1 || count($result['topics']) > 5
+                || mb_strlen($result['title']) > 180 || mb_strlen($result['summary']) > 1500
+                || mb_strlen($result['situation']) > 6000 || mb_strlen($result['learner_prompt']) > 1500
+                || array_sum(array_column($criteria, 'max_points')) !== 10) {
+                throw new AiFailure('INVALID_AI_RESPONSE', 503);
+            }
+            foreach ($criteria as $criterion) {
+                if (! preg_match('/^[a-z][a-z0-9_]{0,59}$/', $criterion['key'])
+                    || $criterion['max_points'] < 1 || $criterion['max_points'] > 10
+                    || mb_strlen($criterion['description']) > 500) {
+                    throw new AiFailure('INVALID_AI_RESPONSE', 503);
+                }
+            }
+        }
+        if (in_array($feature, ['scenario_review', 'scenario_comment_review', 'daily_challenge_review'], true)) {
             if (! $rubric || ! is_array($rubric['criteria'] ?? null)) {
                 throw new AiFailure('RUBRIC_MISSING', 422);
             }
@@ -103,6 +124,9 @@ final class AiFeatureCatalog
                 }
                 $seen[$key] = true;
                 $sum += $criterion['points'];
+            }
+            if ($feature === 'daily_challenge_review' && (int) ($rubric['max_score'] ?? -1) !== 10) {
+                throw new AiFailure('INVALID_RUBRIC', 503);
             }
             $result['total_score'] = $sum; // Deterministic Laravel sum; never model-authored score.
         }

@@ -47,7 +47,7 @@ final class AiExecutionService
                 // Context is rechecked against server-owned records, never taken from a client transcript.
                 $context = $this->contexts->resolve($user, $request->feature_code,
                     $payload['subject'], $payload['message'], (bool) $payload['consent']);
-                if (in_array($request->feature_code, ['scenario_review', 'scenario_comment_review'], true)
+                if (in_array($request->feature_code, ['scenario_review', 'scenario_comment_review', 'daily_challenge_review'], true)
                     && isset($payload['context']['rubric_id'])
                     && $payload['context']['rubric_id'] !== $context['rubric_id']) {
                     $pinned = DB::table('scenario_rubric_versions')->where('id',
@@ -103,9 +103,17 @@ final class AiExecutionService
                     ."Only discuss why an option is correct when the member asks about options. "
                     ."Keep the direct answer to 2-4 short sentences. Set nextStep to null when unnecessary.";
             }
+            // Local-only generation smoke test for a restricted Responses-only key.
+            // Keep moderation on for member answers and in all non-local environments.
+            $skipDailyGenerationModeration = $request->feature_code === 'scenario_generate'
+                && app()->environment('local')
+                && (bool) config('pm-ai.daily_challenge_skip_generation_moderation', false);
+            $useExternalModeration = (! $isPmpTutor || (bool) config('pm-ai.pmp_external_moderation'))
+                && ! $skipDailyGenerationModeration;
+            $context['_ai_feature_code'] = $request->feature_code;
             $result = $this->provider->generate($request->model, $instructions, $context,
                 $this->catalog->schema($request->feature_code), (int) $request->max_output_tokens,
-                ! $isPmpTutor || (bool) config('pm-ai.pmp_external_moderation'));
+                $useExternalModeration);
             $rubric = $context['rubric'] ?? null;
             $validated = $this->catalog->validate($request->feature_code, $result['result'], $rubric);
             $cost = $this->cost($result, json_decode($request->model_price_snapshot, true));
@@ -145,7 +153,7 @@ final class AiExecutionService
                             'created_at' => now(), 'updated_at' => now(),
                         ]);
                     }
-                    if (in_array($row->feature_code, ['scenario_review', 'scenario_comment_review'], true)) {
+                    if (in_array($row->feature_code, ['scenario_review', 'scenario_comment_review', 'daily_challenge_review'], true)) {
                         $this->saveScenarioReview($row, $context, $validated);
                     }
                     $this->quotas->finish($id, true);
@@ -200,6 +208,10 @@ final class AiExecutionService
                 DB::table('ai_editorial_drafts')->where('id', $row->subject_id)
                     ->where('status', 'queued')->update(['status' => 'failed', 'updated_at' => now()]);
             }
+            if ($row->feature_code === 'daily_challenge_review') {
+                DB::table('scenario_responses')->where('id', $row->subject_id)
+                    ->whereNull('ai_score')->update(['ai_review_status' => 'failed']);
+            }
             DB::table('ai_requests')->where('id', $id)->update([
                 'status' => 'failed', 'error_code' => mb_substr($code, 0, 80),
                 'lease_until' => null, 'completed_at' => now(), 'updated_at' => now(),
@@ -237,6 +249,7 @@ final class AiExecutionService
             'revision' => $revision, 'created_at' => now(), 'updated_at' => now(),
         ]);
         DB::table('scenario_responses')->where('id', $request->subject_id)->update([
+            'ai_review_status' => 'completed',
             'ai_score' => $result['total_score'], 'ai_feedback' => json_encode($result),
         ]);
     }

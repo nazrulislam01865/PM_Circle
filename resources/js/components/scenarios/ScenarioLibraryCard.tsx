@@ -9,6 +9,8 @@ export type LibraryScenario = {
     topics: string[];
     status: 'published' | 'closed';
     published_at: string;
+    expires_at?: string | null;
+    daily_slot?: string | null;
     responses_count: number;
     likes_count: number;
     viewer_liked?: boolean;
@@ -43,7 +45,7 @@ export function ScenarioLibraryCard({ scenario, featured, canInteract, onJoin, h
         <div className="pm-challenge-item-content">
             {featured && <span className="pm-challenge-today">Today's scenario</span>}
             <Link href={link} className="pm-challenge-item-title">{scenario.title}</Link>
-            <p className="pm-challenge-item-meta">{scenario.status === 'published' ? 'Open for discussion' : 'Discussion closed'}</p>
+            <p className="pm-challenge-item-meta">{scenario.status === 'published' && (!scenario.expires_at || new Date(scenario.expires_at).getTime() > Date.now()) ? 'Open for discussion' : 'Discussion closed'}</p>
             <p className="pm-challenge-item-summary">{scenario.summary}</p>
             <div className="pm-challenge-item-bottom">
                 <div className="pm-challenge-topics">

@@ -23,11 +23,19 @@ class HomeController extends Controller
         $demo = app()->environment(['local', 'testing']) && config('pm-circle.demo_content_enabled');
         $visible = fn (string $section): bool => data_get($content, 'sections.'.$section, true) !== false;
         $scenarioId = data_get($content, 'scenario.featured_id');
+        $dailySettings = DB::table('daily_challenge_settings')->where('id', 1)->first();
+        $dailyToday = $dailySettings?->enabled && $dailySettings?->auto_publish
+            ? Scenario::query()->where('status', 'published')->where('ai_generated', true)
+                ->where('daily_slot', now('Asia/Dhaka')->toDateString())
+                ->where('published_at', '<=', now())
+                ->where('expires_at', '>', now())->value('id') : null;
+        $scenarioId = $dailyToday ?: $scenarioId;
         $featuredMembers = array_slice((array) data_get($content, 'members.featured_ids', []), 0, 3);
         $viewerId = auth()->user()?->is_admin === true ? null : auth()->id();
 
         $scenario = $visible('scenario') ? Scenario::query()->where('status', 'published')
             ->when($scenarioId, fn ($query) => $query->whereKey($scenarioId))
+            ->where('published_at', '<=', now())
             ->select(['id', 'slug', 'title', 'summary', 'topics'])
             ->withCount(['reactions as reactions_count' => fn ($query) => $query
                 ->whereIn('type', ['like', 'love', 'care', 'haha', 'wow', 'sad', 'angry'])])

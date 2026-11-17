@@ -7,10 +7,16 @@ return [
     'editorial_enabled' => (bool) env('PM_AI_EDITORIAL_ENABLED', false),
     'subscription_grants_enabled' => (bool) env('PM_AI_SUBSCRIPTION_GRANTS_ENABLED', false),
     'api_key' => env('OPENAI_API_KEY'),
+    // Dedicated restricted key for Daily Challenge only. Never expose it through an admin response.
+    'daily_challenge_api_key' => env('OPENAI_DAILY_CHALLENGE_API_KEY'),
+    'daily_challenge_reasoning_effort' => 'minimal',
+    // Local debugging ONLY: permit generated editorial challenges with a Responses-only key.
+    // Never skips moderation for member-submitted answers or in deployed environments.
+    'daily_challenge_skip_generation_moderation' => (bool) env('PM_AI_DAILY_CHALLENGE_SKIP_GENERATION_MODERATION', false),
     // Exam-only restricted API keys may omit /moderations. All other features retain external moderation.
     'pmp_external_moderation' => (bool) env('PM_AI_PMP_EXTERNAL_MODERATION', false),
     'endpoint' => 'https://api.openai.com/v1',
-    'allowed_models' => array_values(array_filter(array_map('trim', explode(',', (string) env('PM_AI_ALLOWED_MODELS', 'gpt-4.1-mini,gpt-4.1'))))),
+    'allowed_models' => array_values(array_filter(array_map('trim', explode(',', (string) env('PM_AI_ALLOWED_MODELS', 'gpt-4.1-mini,gpt-4.1,gpt-5-nano'))))),
     'timeout_seconds' => min(45, max(8, (int) env('PM_AI_TIMEOUT_SECONDS', 25))),
     'lease_seconds' => max(120, (int) env('PM_AI_LEASE_SECONDS', 300)),
     'max_requests_per_minute' => max(1, (int) env('PM_AI_MAX_REQUESTS_PER_MINUTE', 6)),

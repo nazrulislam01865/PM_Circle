@@ -4,12 +4,13 @@ namespace App\Domain\AI\Services;
 
 use App\Domain\AI\Support\AiFailure;
 use App\Models\User;
+use App\Domain\DailyChallenge\Services\DailyChallengeSettings;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-/** AI drafts are strictly private until human approval and a separately scheduled publication. */
+/** AI drafts remain private until staff publication or the explicitly enabled daily auto-publish policy. */
 final class AiEditorialService
 {
     public function __construct(private readonly AiGateway $gateway,
@@ -25,7 +26,9 @@ final class AiEditorialService
             throw new AiFailure('INVALID_PUBLICATION_DATE', 422);
         }
         $slot = 'daily-scenario:'.$date;
-        $publishAt = $localDate->setTime(8, 0)->utc();
+        $time = app(DailyChallengeSettings::class)->get()->publish_time;
+        [$hour, $minute] = array_map('intval', explode(':', $time));
+        $publishAt = $localDate->setTime($hour, $minute)->utc();
         DB::table('ai_editorial_drafts')->insertOrIgnore([
             'feature' => 'scenario_generate', 'slot_key' => $slot,
             'status' => 'queued', 'publication_at' => $publishAt,
@@ -40,9 +43,19 @@ final class AiEditorialService
         return DB::transaction(function () use ($date): array {
             $draft = $this->createScenarioSlot($date);
             $draft = DB::table('ai_editorial_drafts')->where('id', $draft->id)->lockForUpdate()->first();
-            if ($draft->request_id !== null) {
+            if ($draft->request_id !== null && $draft->status !== 'failed') {
                 return ['draft_id' => $draft->id, 'status' => $draft->status];
             }
+            if ($draft->status === 'failed' && (int) $draft->generation_attempts >= 3) {
+                return ['draft_id' => $draft->id, 'status' => 'failed', 'retry_limit_reached' => true];
+            }
+            if ($draft->status === 'failed') {
+                DB::table('ai_editorial_drafts')->where('id', $draft->id)->update([
+                    'request_id' => null, 'status' => 'queued', 'payload_encrypted' => null,
+                    'reviewed_by' => null, 'updated_at' => now(),
+                ]);
+            }
+            DB::table('ai_editorial_drafts')->where('id', $draft->id)->increment('generation_attempts');
             $recent = DB::table('scenarios')->where('published_at', '>=', now()->subDays(30))
                 ->orderByDesc('published_at')->limit(25)->pluck('title')->all();
             $response = $this->gateway->submitEditorial('scenario_generate', $draft->id, [
@@ -155,29 +168,8 @@ final class AiEditorialService
             }
             $data = json_decode(Crypt::decryptString($draft->payload_encrypted), true);
             if ($draft->feature === 'scenario_generate') {
-                $rubric = $data['rubric_criteria'] ?? [];
-                $max = array_sum(array_map(fn ($r) => (int) ($r['max_points'] ?? 0), $rubric));
-                if (! $max || $max > 10 || count($rubric) < 1
-                    || collect($rubric)->pluck('key')->unique()->count() !== count($rubric)) {
-                    throw new AiFailure('INVALID_RUBRIC', 422);
-                }
-                $slug = Str::slug($data['title']).'-'.$draft->id;
-                $scenarioId = DB::table('scenarios')->insertGetId([
-                    'slug' => $slug, 'title' => mb_substr($data['title'], 0, 180),
-                    'summary' => $data['summary'], 'situation' => $data['situation']."\n\n".$data['learner_prompt'],
-                    'known_facts' => json_encode($data['known_facts']), 'topics' => json_encode($data['topics']),
-                    'difficulty' => mb_substr($data['difficulty'], 0, 32),
-                    'focus' => mb_substr($data['focus'], 0, 80), 'minutes' => 10,
-                    'status' => 'published', 'rubric_version' => 1, 'ai_generated' => true,
-                    'published_at' => now(), 'created_at' => now(), 'updated_at' => now(),
-                ]);
-                DB::table('scenario_rubric_versions')->insert([
-                    'scenario_id' => $scenarioId, 'version' => 1,
-                    'criteria_json' => json_encode($rubric), 'max_score' => $max,
-                    'approved_by' => $actor->id, 'created_at' => now(), 'updated_at' => now(),
-                ]);
+                $publishedId = $this->persistScenario($draft, $data, $actor->id);
                 $subject = 'scenarios';
-                $publishedId = $scenarioId;
             } elseif ($draft->feature === 'trend_draft') {
                 $sources = DB::table('trend_sources')->whereIn('id', json_decode($draft->source_refs_json, true) ?: [])
                     ->where('rights_status', 'verified')->get();
@@ -214,4 +206,96 @@ final class AiEditorialService
             return $publishedId;
         }, 3);
     }
+
+    /** Intentionally distinct from human approve/publish: only an explicitly enabled
+     * daily slot may go live without staff sign-off. The draft lock and unique slot
+     * make scheduler retries idempotent. */
+    public function publishAutomatedScenario(int $id): ?int
+    {
+        $policy = app(DailyChallengeSettings::class);
+        $settings = $policy->get();
+        if (! $settings->enabled || ! $settings->auto_publish || ! $policy->isReady()) {
+            return null;
+        }
+        return DB::transaction(function () use ($id, $policy): ?int {
+            $draft = DB::table('ai_editorial_drafts')->where('id', $id)->lockForUpdate()->first();
+            if (! $draft || $draft->feature !== 'scenario_generate'
+                || $draft->status !== 'pending_review' || ! $draft->payload_encrypted
+                || ! str_starts_with($draft->slot_key, 'daily-scenario:')
+                || ! $draft->publication_at || Carbon::parse($draft->publication_at)->isFuture()) {
+                return null;
+            }
+            $day = substr($draft->slot_key, strlen('daily-scenario:'));
+            if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $day)) {
+                throw new AiFailure('INVALID_PUBLICATION_DATE', 422);
+            }
+            $existing = DB::table('scenarios')->where('daily_slot', $day)->value('id');
+            if ($existing) {
+                DB::table('ai_editorial_drafts')->where('id', $id)->update([
+                    'status' => 'published', 'published_at' => now(), 'updated_at' => now(),
+                ]);
+                return (int) $existing;
+            }
+            $data = json_decode(Crypt::decryptString($draft->payload_encrypted), true);
+            if (! is_array($data)) {
+                throw new AiFailure('INVALID_EDITORIAL_DRAFT', 422);
+            }
+            $scenarioId = $this->persistScenario($draft, $data, null);
+            DB::table('ai_editorial_drafts')->where('id', $id)->update([
+                'status' => 'published', 'published_at' => now(), 'updated_at' => now(),
+            ]);
+            $this->access->audit(null, 'editorial.auto_publish', 'scenarios', $scenarioId,
+                null, ['draft_id' => $id, 'slot' => $day],
+                'Automated daily publication explicitly enabled by administrator');
+            return $scenarioId;
+        }, 3);
+    }
+
+    private function persistScenario(object $draft, array $data, ?int $actorId): int
+    {
+        $data = app(AiFeatureCatalog::class)->validate('scenario_generate', $data);
+        $rubric = $data['rubric_criteria'];
+        $max = array_sum(array_map(fn ($item) => (int) $item['max_points'], $rubric));
+        $keys = array_column($rubric, 'key');
+        if ($max !== 10 || count($rubric) < 2 || count($rubric) > 6
+            || count($keys) !== count(array_unique($keys))
+            || count($data['known_facts']) < 2 || count($data['topics']) < 1
+            || mb_strlen($data['title']) > 180 || mb_strlen($data['summary']) > 1500
+            || mb_strlen($data['situation']) > 6000 || mb_strlen($data['learner_prompt']) > 1500) {
+            throw new AiFailure('INVALID_EDITORIAL_DRAFT', 422);
+        }
+        foreach ($rubric as $criterion) {
+            if (! preg_match('/^[a-z][a-z0-9_]{0,59}$/', $criterion['key'])
+                || (int) $criterion['max_points'] < 1 || (int) $criterion['max_points'] > 10) {
+                throw new AiFailure('INVALID_RUBRIC', 422);
+            }
+        }
+        $slot = str_starts_with($draft->slot_key, 'daily-scenario:')
+            ? substr($draft->slot_key, strlen('daily-scenario:')) : null;
+        $settings = app(DailyChallengeSettings::class)->get();
+        $expires = $slot && $draft->publication_at
+            ? Carbon::parse($draft->publication_at)->addHours((int) $settings->expiry_hours)
+            : now()->addHours((int) $settings->expiry_hours);
+        $slug = Str::slug($data['title']).'-'.$draft->id;
+        $id = DB::table('scenarios')->insertGetId([
+            'slug' => $slug, 'title' => $data['title'],
+            'summary' => $data['summary'],
+            'situation' => $data['situation']."\n\n".$data['learner_prompt'],
+            'known_facts' => json_encode($data['known_facts'], JSON_THROW_ON_ERROR),
+            'topics' => json_encode($data['topics'], JSON_THROW_ON_ERROR),
+            'difficulty' => mb_substr($data['difficulty'], 0, 32),
+            'focus' => mb_substr($data['focus'], 0, 80), 'minutes' => 10,
+            'status' => $expires->isPast() ? 'closed' : 'published',
+            'rubric_version' => 1, 'ai_generated' => true,
+            'daily_slot' => $slot, 'expires_at' => $expires,
+            'published_at' => now(), 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        DB::table('scenario_rubric_versions')->insert([
+            'scenario_id' => $id, 'version' => 1,
+            'criteria_json' => json_encode($rubric, JSON_THROW_ON_ERROR), 'max_score' => 10,
+            'approved_by' => $actorId, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        return $id;
+    }
+
 }

@@ -16,7 +16,7 @@ import {
     Target,
     Users,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Avatar } from '@/components/pm/Avatar';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
 import { EngagementActionBar } from '@/components/community/EngagementActionBar';
@@ -47,7 +47,13 @@ type ScenarioResponseItem = {
     is_community_helpful?: boolean;
     is_question?: boolean;
     ai_score?: number | null;
+    ai_review_status?: 'queued' | 'completed' | 'failed' | null;
     ai_feedback?: {
+        strengths?: string[];
+        gaps?: string[];
+        next_actions?: string[];
+        disclaimer?: string;
+        criteria?: { key: string; points: number; evidence: string }[];
         strength?: string;
         consider?: string;
         next_step?: string;
@@ -81,6 +87,8 @@ type Scenario = {
     published_at: string;
     status: 'published' | 'closed';
     ai_generated: boolean;
+    daily_slot?: string | null;
+    expires_at?: string | null;
     reactions_count?: number;
     viewer_reaction?: ReactionType | null;
     viewer_bookmarked?: boolean;
@@ -116,10 +124,24 @@ export default function Show({ scenario, responses, related }: Props) {
     }>();
     const { auth } = page.props;
 
+    const ownQueued = responses.data.filter(item => item.ai_review_status === 'queued'
+        && item.user.id === auth?.user?.id).map(item => item.id).join(',');
+    useEffect(() => {
+        if (!ownQueued) return;
+        let attempts = 0;
+        const timer = window.setInterval(() => {
+            if (attempts++ >= 19) { window.clearInterval(timer); return; }
+            router.reload({ only: ['responses'], preserveScroll: true, preserveState: true });
+        }, 8000);
+        return () => window.clearInterval(timer);
+    }, [ownQueued]);
+
     const memberView = page.url.split('?')[0].startsWith('/dashboard/daily-challenge/');
     const libraryRoot = memberView ? '/dashboard/daily-challenge' : '/daily-challenge';
     const isGuest = !auth?.user;
-    const canRespond = Boolean(auth?.user && auth.user.onboarding_step >= 3 && scenario.status === 'published');
+    const expired = Boolean(scenario.expires_at && new Date(scenario.expires_at).getTime() <= Date.now());
+    const canRespond = Boolean(auth?.user && auth.user.onboarding_step >= 3
+        && scenario.status === 'published' && !expired);
 
     // Independent form state prevents typing in a reply from changing the main response.
     const form = useForm({ body: '' });
@@ -223,8 +245,8 @@ export default function Show({ scenario, responses, related }: Props) {
                         {/* Scenario Article Panel (pm2.png) */}
                         <article className="pm-panel" style={{ padding: '32px', marginBottom: '24px' }}>
                             <div className="pm-scenario-header-badges">
-                                <span className="pm-badge-scenario">TODAY'S SCENARIO</span>
-                                <span className="pm-badge-open">{scenario.status === 'closed' ? 'Discussion closed' : 'Open for discussion'}</span>
+                                <span className="pm-badge-scenario">{scenario.daily_slot && scenario.daily_slot === new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' }) ? "TODAY'S SCENARIO" : 'DAILY CHALLENGE'}</span>
+                                <span className="pm-badge-open">{scenario.status === 'closed' || expired ? 'Discussion closed' : 'Open for discussion'}</span>
                             </div>
 
                             <h1 className="pm-scenario-h1">{scenario.title}</h1>
@@ -248,6 +270,11 @@ export default function Show({ scenario, responses, related }: Props) {
                                     ))}
                                 </div>
                             )}
+
+                            {scenario.ai_generated && <p className="pm-admin-hint">AI-generated educational scenario. Review the facts and exercise your own judgment.</p>}
+                            {scenario.expires_at && <p className="pm-admin-hint">
+                                <Clock size={14} style={{ verticalAlign: 'middle' }}/> Discussion closes {new Date(scenario.expires_at).toLocaleString('en-GB', { timeZone: 'Asia/Dhaka', dateStyle: 'medium', timeStyle: 'short' })} (Dhaka)
+                            </p>}
 
                             {/* Section: The situation */}
                             <h2 className="pm-scenario-section-heading">The situation</h2>
@@ -319,7 +346,7 @@ export default function Show({ scenario, responses, related }: Props) {
                                     </p>
                                 )}
 
-                                {scenario.status === 'closed' ? (
+                                {scenario.status === 'closed' || expired ? (
                                     <p className="pm-submit-lock-notice">This discussion is closed. You can still read previous responses.</p>
                                 ) : isGuest ? (
                                     <div>
@@ -416,8 +443,14 @@ export default function Show({ scenario, responses, related }: Props) {
                                                 {resp.body}
                                             </p>
 
+                                            {resp.ai_review_status === 'queued' && <p className="pm-ai-review-status" role="status">
+                                                <Sparkles size={15}/> AI evaluation is queued. Your response is already posted; return shortly to see the score.
+                                            </p>}
+                                            {resp.ai_review_status === 'failed' && <p className="pm-ai-review-status is-failed">
+                                                AI evaluation is currently unavailable. Your response remains published.
+                                            </p>}
                                             {/* AI Reasoning Score & Feedback Pill */}
-                                            {resp.ai_score && (
+                                            {resp.ai_score !== null && resp.ai_score !== undefined && (
                                                 <div className="pm-ai-score-container">
                                                     <div className="pm-ai-score-row">
                                                         <span className="pm-ai-score-pill">
@@ -452,6 +485,18 @@ export default function Show({ scenario, responses, related }: Props) {
                                                             </div>
 
                                                             <ul className="pm-ai-rubric-list">
+                                                                {resp.ai_feedback.criteria?.map(criterion => <li key={criterion.key}>
+                                                                    <Target size={16}/><span><strong>{criterion.key.replaceAll('_', ' ')} — {criterion.points} points:</strong> {criterion.evidence}</span>
+                                                                </li>)}
+                                                                {resp.ai_feedback.strengths?.map((item, i) => <li key={`strength-${i}`}>
+                                                                    <Check size={16}/><span><strong>Strength:</strong> {item}</span>
+                                                                </li>)}
+                                                                {resp.ai_feedback.gaps?.map((item, i) => <li key={`gap-${i}`}>
+                                                                    <Target size={16}/><span><strong>Improve:</strong> {item}</span>
+                                                                </li>)}
+                                                                {resp.ai_feedback.next_actions?.map((item, i) => <li key={`next-${i}`}>
+                                                                    <ChevronRight size={16}/><span><strong>Next action:</strong> {item}</span>
+                                                                </li>)}
                                                                 {resp.ai_feedback.strength && (
                                                                     <li>
                                                                         <Check size={16} />
@@ -482,7 +527,7 @@ export default function Show({ scenario, responses, related }: Props) {
                                                             </ul>
 
                                                             <div className="pm-ai-feedback-footer-note">
-                                                                Scenario-based feedback, not a professional
+                                                                Scenario-based AI educational feedback, not a professional
                                                                 certification.
                                                             </div>
                                                         </div>

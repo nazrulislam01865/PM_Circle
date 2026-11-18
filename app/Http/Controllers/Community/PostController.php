@@ -10,6 +10,7 @@ use App\Domain\Community\Queries\FeedTabAvailability;
 use App\Http\Requests\Community\StorePostRequest;
 use App\Models\Post;
 use App\Models\Scenario;
+use App\Domain\Community\Services\PostCheckPolicy;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -84,7 +85,7 @@ class PostController extends Controller
         if (EngagementStats::readsEnabled()) {
             $stats = \Illuminate\Support\Facades\DB::table('post_engagement_stats')
                 ->where('post_id', $post->id)->first();
-            foreach (['comments', 'reactions', 'likes', 'loves'] as $label) {
+            foreach (['comments' => fn ($query) => $query->visible(), 'reactions', 'likes', 'loves'] as $label) {
                 $column = match ($label) {
                     'comments' => 'comments_count', 'reactions' => 'reactions_count',
                     'likes' => 'like_count', 'loves' => 'love_count',
@@ -93,7 +94,7 @@ class PostController extends Controller
             }
         } else {
             $post->loadCount([
-                'comments', 'reactions',
+                'comments' => fn ($query) => $query->visible(), 'reactions',
                 'reactions as likes_count' => fn ($query) => $query->where('type', 'like'),
                 'reactions as loves_count' => fn ($query) => $query->where('type', 'love'),
             ]);
@@ -108,10 +109,10 @@ class PostController extends Controller
         PostReactionSummary::attach(collect([$post]));
 
         $comments = $post->comments()
-            ->whereNull('parent_id')
+            ->visible()->whereNull('parent_id')
             ->with(['author:id,name', 'author.profile' => fn ($q) => $q->where('visibility', 'public')->select('id', 'user_id', 'avatar_path')])
-            ->withCount(['likes', 'replies'])
-            ->with(['replies' => fn ($query) => $query->orderBy('created_at')->orderBy('id')->limit(2)
+            ->withCount(['likes', 'replies' => fn ($query) => $query->visible()])
+            ->with(['replies' => fn ($query) => $query->visible()->orderBy('created_at')->orderBy('id')->limit(2)
                 ->with(['author:id,name', 'author.profile' => fn ($q) => $q->where('visibility', 'public')->select('id', 'user_id', 'avatar_path')])->withCount('likes')])
             ->oldest()
             ->paginate(12);
@@ -152,10 +153,28 @@ class PostController extends Controller
                     ->leftJoin('post_engagement_stats as related_stats', 'related_stats.post_id', '=', 'posts.id')
                     ->select('posts.id', 'posts.title', 'posts.body')
                     ->selectRaw('COALESCE(related_stats.comments_count, 0) AS comments_count'))
-                ->when(! EngagementStats::readsEnabled(), fn ($query) => $query->withCount('comments'))
+                ->when(! EngagementStats::readsEnabled(), fn ($query) => $query->withCount(['comments' => fn ($query) => $query->visible()]))
                 ->latest('posts.published_at')
                 ->limit(2)
                 ->get(['posts.id', 'posts.title', 'posts.body']),
+        ]);
+    }
+
+    /** Only the submitting member can preview unapproved attachments. */
+    public function checkMedia(Request $request, Post $post, string $filename): BinaryFileResponse
+    {
+        abort_unless($request->user() && $request->user()->id === $post->author_id
+            && in_array($post->status, ['pending_check', 'restricted', 'check_error'], true)
+            && preg_match('/\A[A-Za-z0-9_-]+\.(?:jpg|jpeg|png|webp)\z/iD', $filename)
+            && $post->getRawOriginal('image_path') === '/posts/'.$post->id.'/check-media/'.$filename, 404);
+        $disk = Storage::disk('local');
+        $path = 'post-check-images/'.$filename;
+        abort_unless($disk->exists($path), 404);
+        return response()->file($disk->path($path), [
+            'Content-Type' => match (strtolower(pathinfo($filename, PATHINFO_EXTENSION))) {
+                'png' => 'image/png', 'webp' => 'image/webp', default => 'image/jpeg',
+            },
+            'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 
@@ -205,12 +224,16 @@ class PostController extends Controller
 
     public function store(StorePostRequest $request, PublishPost $action): RedirectResponse
     {
-        $post = $action->execute($request->user(), $request->validated());
-        if ($post->status === 'pending_review') {
-            return to_route('dashboard')->with('status', 'Your anonymous post has been sent to the moderation team for review.');
+        app(PostCheckPolicy::class)->assertCanContribute($request->user()->id);
+        if (config('pm-ai.post_check_enabled', false)) {
+            app(PostCheckPolicy::class)->assertOperational();
         }
-        return ($request->validated('return_to') === 'dashboard')
-            ? to_route('dashboard')->with('status', 'Your post has been published.')
-            : to_route('posts.show', $post);
+        $post = $action->execute($request->user(), $request->validated());
+        $message = match ($post->status) {
+            'pending_check' => 'Checking your post. It will appear in the feed once it passes the check.',
+            'pending_review' => 'Your anonymous post has been sent to the moderation team for review.',
+            default => 'Your post has been published.',
+        };
+        return to_route('dashboard')->with('status', $message);
     }
 }

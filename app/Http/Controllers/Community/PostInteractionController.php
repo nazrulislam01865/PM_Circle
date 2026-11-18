@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Domain\Community\Actions\ReactToPost;
 use App\Domain\Community\Actions\ReactToComment;
 use App\Domain\Community\Services\EngagementStats;
+use App\Domain\Community\Services\PostCheckPolicy;
+use App\Domain\AI\Jobs\CheckCommunityComment;
 use App\Support\ProfileMediaUrl;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -45,10 +47,10 @@ class PostInteractionController extends Controller
     {
         $this->ensurePublic($post, $request);
         $sort = $request->query('sort') === 'newest' ? 'newest' : 'relevant';
-        $query = $post->comments()->whereNull('parent_id')
+        $query = $post->comments()->visible()->whereNull('parent_id')
             ->with(['author:id,name', 'author.profile:id,user_id,avatar_path,visibility'])
-            ->withCount(['likes', 'replies'])
-            ->with(['replies' => fn ($replies) => $replies->orderBy('created_at')->orderBy('id')->limit(2)
+            ->withCount(['likes', 'replies' => fn ($query) => $query->visible()])
+            ->with(['replies' => fn ($replies) => $replies->visible()->orderBy('created_at')->orderBy('id')->limit(2)
                 ->with(['author:id,name', 'author.profile:id,user_id,avatar_path,visibility'])->withCount('likes')]);
         if ($sort === 'relevant') {
             $query->orderByDesc('likes_count');
@@ -93,6 +95,7 @@ class PostInteractionController extends Controller
     {
         $this->ensurePublic($post, $request);
         abort_unless($comment->post_id === $post->id && ! $comment->trashed()
+            && $comment->isVisible()
             && preg_match('/\A[a-zA-Z0-9_-]+\.(?:jpg|jpeg|png|webp|gif)\z/iD', $filename)
             && $comment->media_path === 'comment-media/'.$filename, 404);
         $disk = Storage::disk('local');
@@ -112,46 +115,107 @@ class PostInteractionController extends Controller
     {
         $this->ensurePublic($post, $request);
         $this->ensureWritesOpen();
+        $policy = app(PostCheckPolicy::class);
+        $policy->assertCanContribute($request->user()->id);
+        $checking = (bool) config('pm-ai.post_check_enabled', false);
+        if ($checking) $policy->assertOperational();
         $data = $request->validate([
             'body' => ['nullable', 'required_without:media', 'string', 'min:2', 'max:3000'],
-            'media' => ['nullable', 'file', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
+            'media' => ['nullable', 'file', 'image', $checking ? 'mimes:jpg,jpeg,png,webp' : 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
             'parent_id' => ['nullable', 'integer', Rule::exists('comments', 'id')->where('post_id', $post->id)
                 ->whereNull('deleted_at')->whereNull('parent_id')],
         ]);
+        if (isset($data['parent_id'])) {
+            // The reply context must be public and approved, not a private pending comment.
+            $parent = Comment::query()->whereKey($data['parent_id'])->where('post_id', $post->id)
+                ->whereNull('parent_id')->visible()->first();
+            abort_unless($parent, 422, 'The comment is unavailable for replies.');
+        }
         $path = isset($data['media']) ? $data['media']->store('comment-media', 'local') : null;
         try {
-            $comment = DB::transaction(function () use ($post, $request, $data, $path): Comment {
+            $comment = DB::transaction(function () use ($post, $request, $data, $path, $checking): Comment {
                 if (EngagementStats::writesEnabled()) {
                     EngagementStats::lockMember($request->user()->id);
                 }
-                return $post->comments()->create([
+                $comment = $post->comments()->create([
                     'body' => $data['body'] ?? '', 'parent_id' => $data['parent_id'] ?? null,
                     'author_id' => $request->user()->id, 'media_path' => $path,
+                    'check_status' => $checking ? 'pending_check' : null,
                 ]);
+                if ($checking) {
+                    DB::table('comment_check_runs')->insert([
+                        'comment_id' => $comment->id, 'status' => 'queued',
+                        'model' => 'gpt-5-nano', 'created_at' => now(), 'updated_at' => now(),
+                    ]);
+                    DB::afterCommit(fn () => CheckCommunityComment::dispatch($comment->id)
+                        ->onQueue(config('pm-ai.post_check_queue', 'ai-editorial')));
+                }
+                return $comment;
             }, 3);
         } catch (\Throwable $exception) {
             if ($path) Storage::disk('local')->delete($path);
             throw $exception;
         }
         if ($request->expectsJson()) {
-            return response()->json(['comment' => [
-                'id' => $comment->id, 'body' => $comment->body, 'media_url' => $comment->media_url,
-                'created_at' => $comment->created_at?->toIso8601String(),
-                'likes_count' => 0, 'viewer_liked' => false, 'viewer_reaction' => null,
-                'author' => [
-                    'name' => $request->user()->name,
-                    'avatar_path' => $request->user()->loadMissing('profile')->profile?->avatar_path,
-                ], 'replies' => [],
-            ]], 201);
+            return response()->json(['comment' => $this->commentResult($comment, $request),
+                'check_status' => $comment->check_status], $checking ? 202 : 201);
         }
-        return back();
+        return $checking ? back()->with('status', 'Checking your comment before publication.') : back();
+    }
+
+    /** Owner-only polling; never return pending media or another member's comment. */
+    public function commentCheckStatus(Request $request, Post $post, Comment $comment): JsonResponse
+    {
+        abort_unless($comment->post_id === $post->id
+            && $comment->author_id === $request->user()?->id && ! $comment->trashed(), 404);
+        return response()->json([
+            'status' => $comment->check_status ?? 'approved',
+            'reason' => in_array($comment->check_status, ['restricted', 'check_error', 'pending_review'], true)
+                ? $comment->check_reason : null,
+            'comment' => $comment->isVisible() ? $this->commentResult($comment, $request) : null,
+        ])->header('Cache-Control', 'private, no-store');
+    }
+
+    public function recheckComment(Request $request, Post $post, Comment $comment): JsonResponse
+    {
+        abort_unless($comment->post_id === $post->id && $comment->author_id === $request->user()->id
+            && $comment->check_status === 'check_error' && ! $comment->trashed(), 404);
+        app(PostCheckPolicy::class)->assertCanContribute($request->user()->id);
+        app(PostCheckPolicy::class)->assertOperational();
+        DB::transaction(function () use ($comment): void {
+            $locked = Comment::query()->whereKey($comment->id)->lockForUpdate()->firstOrFail();
+            abort_unless($locked->check_status === 'check_error', 409);
+            $locked->forceFill(['check_status' => 'pending_check', 'check_reason' => null])->save();
+            DB::table('comment_check_runs')->where('comment_id', $locked->id)->update([
+                'status' => 'queued', 'error_code' => null, 'updated_at' => now(),
+            ]);
+            DB::afterCommit(fn () => CheckCommunityComment::dispatch($locked->id)
+                ->onQueue(config('pm-ai.post_check_queue', 'ai-editorial')));
+        }, 3);
+        return response()->json(['status' => 'pending_check'], 202);
+    }
+
+    /** Shared serializer for ordinary and newly approved comments. */
+    private function commentResult(Comment $comment, Request $request): array
+    {
+        return [
+            'id' => $comment->id, 'body' => $comment->body,
+            'media_url' => $comment->isVisible() ? $comment->media_url : null,
+            'check_status' => $comment->check_status,
+            'created_at' => $comment->created_at?->toIso8601String(),
+            'likes_count' => 0, 'viewer_liked' => false, 'viewer_reaction' => null,
+            'author' => [
+                'name' => $request->user()->name,
+                'avatar_path' => $request->user()->loadMissing('profile')->profile?->avatar_path,
+            ], 'replies' => [],
+        ];
     }
 
     public function toggleCommentLike(Request $request, Post $post, Comment $comment, ReactToComment $action): RedirectResponse|JsonResponse
     {
         $this->ensurePublic($post, $request);
         $this->ensureWritesOpen();
-        abort_unless($comment->post_id === $post->id && ! $comment->trashed(), 404);
+        abort_unless($comment->post_id === $post->id && ! $comment->trashed() && $comment->isVisible(), 404);
         $result = $action->execute($request->user(), $comment, null, true);
 
         return $request->expectsJson()
@@ -163,7 +227,7 @@ class PostInteractionController extends Controller
     {
         $this->ensurePublic($post, $request);
         $this->ensureWritesOpen();
-        abort_unless($comment->post_id === $post->id && ! $comment->trashed(), 404);
+        abort_unless($comment->post_id === $post->id && ! $comment->trashed() && $comment->isVisible(), 404);
         $data = $request->validate(['type' => ['required', Rule::in(['like', 'love', 'care', 'haha', 'wow', 'sad', 'angry'])]]);
         $result = $action->execute($request->user(), $comment, $data['type']);
 
@@ -174,7 +238,7 @@ class PostInteractionController extends Controller
     {
         $this->ensurePublic($post, $request);
         $this->ensureWritesOpen();
-        abort_unless($comment->post_id === $post->id && ! $comment->trashed(), 404);
+        abort_unless($comment->post_id === $post->id && ! $comment->trashed() && $comment->isVisible(), 404);
         $result = $action->execute($request->user(), $comment, null);
 
         return $request->expectsJson() ? response()->json($result) : back();
@@ -264,7 +328,7 @@ class PostInteractionController extends Controller
     public function replies(Request $request, Post $post, Comment $comment): JsonResponse
     {
         $this->ensurePublic($post, $request);
-        abort_unless($comment->post_id === $post->id && $comment->parent_id === null && ! $comment->trashed(), 404);
+        abort_unless($comment->post_id === $post->id && $comment->parent_id === null && ! $comment->trashed() && $comment->isVisible(), 404);
         $data = $request->validate(['after' => ['nullable', 'integer', 'min:1']]);
         $after = null;
         if (isset($data['after'])) {
@@ -272,7 +336,7 @@ class PostInteractionController extends Controller
             abort_unless($after, 422, 'Invalid reply cursor.');
         }
 
-        $query = $comment->replies()->with([
+        $query = $comment->replies()->visible()->with([
             'author:id,name', 'author.profile:id,user_id,avatar_path,visibility',
         ])->withCount('likes');
         if ($after) {

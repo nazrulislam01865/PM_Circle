@@ -40,7 +40,7 @@ const tabs: { id: PmpDashboardTab; label: string }[] = [
 export function PmpWorkspaceTabs({ active, onChange }: {
     active: PmpDashboardTab; onChange: (next: PmpDashboardTab) => void;
 }) {
-    return <nav className="pm-pmp-tabs" aria-label="PMP simulator dashboard tabs" role="tablist">
+    return <nav className="pm-pmp-tabs pm-member-tertiary-sticky" aria-label="PMP simulator dashboard tabs" role="tablist">
         {tabs.map((tab, index) => <span key={tab.id} className="pm-pmp-tab-wrap">
             {index > 0 && <span className="pm-pmp-tab-divider" aria-hidden="true"/>}
             <button type="button" role="tab" id={`pm-pmp-tab-${tab.id}`}

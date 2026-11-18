@@ -8,6 +8,7 @@ use App\Domain\Learning\Queries\LearningOverview;
 use App\Http\Controllers\Controller;
 use App\Services\AI\PmpQuestionHelpService;
 use App\Services\Exam\PmpExamSettings;
+use App\Services\Exam\PmpQuestionPool;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -186,7 +187,26 @@ final class PmpExamController extends Controller
         return response()->json(['targetDate' => $data['targetDate']]);
     }
 
-    public function start(Request $request, CurrentMemberPlan $plans, PmpExamSettings $examSettings): JsonResponse|RedirectResponse
+    /** Lazy, member-scoped availability check: no extra queries on the dashboard render. */
+    public function startOptions(Request $request, CurrentMemberPlan $plans, PmpExamSettings $examSettings, PmpQuestionPool $pool): JsonResponse
+    {
+        $this->authorizeMember($request, $plans);
+        $rules = $examSettings->get();
+        abort_unless($rules['enabled'], 409, 'New PMP attempts are temporarily disabled.');
+
+        $active = DB::table('pmp_exam_questions')->where('is_active', true)->count();
+        $used = $active > 0 ? count($pool->usedActiveIds((int) $request->user()->id)) : 0;
+
+        return response()->json([
+            'bankTotal' => $active,
+            'usedCount' => $used,
+            'unseenCount' => max(0, $active - $used),
+            'examSize' => min($active, $rules['full_question_count']),
+            'fullQuestionCount' => $rules['full_question_count'],
+        ]);
+    }
+
+    public function start(Request $request, CurrentMemberPlan $plans, PmpExamSettings $examSettings, PmpQuestionPool $pool): JsonResponse|RedirectResponse
     {
         $this->authorizeMember($request, $plans);
         $rules = $examSettings->get();
@@ -194,11 +214,13 @@ final class PmpExamController extends Controller
         $data = $request->validate([
             'mode' => ['sometimes', 'in:focused,full'],
             'domain' => ['required_if:mode,focused', 'nullable', 'in:People,Process,Business Environment'],
+            'selection' => ['sometimes', Rule::in(['new', 'mixed', 'random'])],
         ]);
         $focused = ($data['mode'] ?? 'full') === 'focused';
         $domain = $focused ? $data['domain'] : null;
+        $selection = $focused ? 'random' : ($data['selection'] ?? 'random');
         $userId = $request->user()->id;
-        $id = DB::transaction(function () use ($userId, $focused, $domain, $rules) {
+        $id = DB::transaction(function () use ($userId, $focused, $domain, $rules, $selection, $pool) {
             // A new mock snapshots both question IDs and current rules. Completed attempts
             // never change when an administrator adjusts the live question bank or timer.
             DB::table('users')->where('id', $userId)->lockForUpdate()->first(['id']);
@@ -207,7 +229,26 @@ final class PmpExamController extends Controller
                 $query->where('domain', $domain);
             }
             $limit = $focused ? $rules['focused_question_count'] : $rules['full_question_count'];
-            $ids = $this->selectQuestionIds($query, $limit, $rules['shuffle_questions']);
+            if ($focused || $selection === 'random') {
+                $ids = $this->selectQuestionIds($query, $limit, $rules['shuffle_questions']);
+            } else {
+                $used = $pool->usedActiveIds((int) $userId);
+                $fresh = $this->selectQuestionIds(
+                    (clone $query)->whereNotIn('id', $used), $limit, $rules['shuffle_questions']
+                );
+                if ($selection === 'new' && count($fresh) < min($limit, DB::table('pmp_exam_questions')->where('is_active', true)->count())) {
+                    abort(409, 'Not enough unseen questions remain for a new-only set. Reopen the exam dialog.');
+                }
+                $ids = $fresh;
+                if ($selection === 'mixed' && count($ids) < $limit && $used !== []) {
+                    $ids = array_merge($ids, $this->selectQuestionIds(
+                        (clone $query)->whereIn('id', $used), $limit - count($ids), $rules['shuffle_questions']
+                    ));
+                }
+                if ($rules['shuffle_questions']) {
+                    shuffle($ids);
+                }
+            }
             abort_if($ids === [], 409, 'No active questions are available for this practice selection.');
             // Prevent a concurrent admin edit from changing the answer key between
             // question selection and insertion of this new attempt.

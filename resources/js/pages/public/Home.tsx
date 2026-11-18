@@ -7,6 +7,7 @@ import { type HomePost } from '@/components/home/HomePostPreview';
 import { HomeCommunitySection } from '@/components/home/HomeCommunitySection';
 import { CareerHighlights } from '@/components/home/CareerHighlights';
 import { HomePathway } from '@/components/home/HomePathway';
+import { HomeAiFeatures } from '@/components/home/HomeAiFeatures';
 import type { HomeContent, HomeMember, HomeCareerJob } from '@/types/home';
 import type { RewardPromotionData } from '@/types/reward';
 import type { HomepageIconAssets } from '@/components/home/HomeContentIcon';
@@ -42,6 +43,7 @@ export default function Home({ content, iconAssets, isDemo, scenario, scenarioRe
                     <Link href={hero?.secondary_url || '/community'} className="pm-button pm-button-outline">{hero?.secondary_label}</Link></div>
             </div><CommunityOrbit people={people} content={hero}/></div></section>}
             {visible('pathway') && <HomePathway content={content.pathway} iconAssets={iconAssets} promotion={rewardPromotion} isMember={Boolean(auth?.user && !auth.user.is_admin)}/>}
+            <HomeAiFeatures/>
             {(visible('scenario') || visible('community') || visible('members') || visible('skills')) && <div className={`pm-container pm-home-showcases ${!(visible('scenario') || visible('community')) || !(visible('members') || visible('skills')) ? 'pm-home-showcases-single' : ''}`}>
                 <div className="pm-home-main">
                     {visible('scenario') && <ScenarioPreview scenario={scenario} responses={scenarioResponses ?? []} content={content.scenario} canInteract={canInteract} onJoin={setJoinAction}/>}

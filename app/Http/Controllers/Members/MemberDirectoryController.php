@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Members;
 use App\Domain\Billing\Actions\SetTemporaryMembership;
 use App\Http\Controllers\Controller;
 use App\Domain\Community\Services\EngagementStats;
+use App\Domain\Identity\Services\ProfileFieldPrivacy;
 use App\Models\Profile;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -64,7 +65,7 @@ final class MemberDirectoryController extends Controller
                 ? $query->whereIn('users.id', DB::table('member_follows')->where('follower_id', $viewerId)->select('followed_id'))
                 : $query->whereRaw('1 = 0'))
             ->select(['users.id', 'users.name', 'users.created_at'])
-            ->with(['profile' => fn ($query) => $query->select('id', 'user_id', 'role', 'headline', 'industry', 'city', 'country', 'avatar_path', 'visibility')])
+            ->with(['profile' => fn ($query) => $query->select('id', 'user_id', 'role', 'headline', 'industry', 'city', 'country', 'avatar_path', 'visibility', 'field_visibility')])
             ->withCount(['posts as contributions_count' => fn ($query) => $query
                 ->where('status', 'published')->where('visibility', 'public')->where('is_anonymous', false)])
             ->addSelect(['followers_count' => DB::table('member_follows')
@@ -96,16 +97,17 @@ final class MemberDirectoryController extends Controller
         };
 
         $members = $query->paginate(12)->withQueryString();
-        $members->through(static fn (User $member): array => [
+        $members->through(fn (User $member): array => [
             'id' => $member->id,
-            'name' => $member->name,
+            'name' => $member->profile && ProfileFieldPrivacy::visible($member->profile, 'full_name', $viewer, $member->id)
+                ? $member->name : 'PM Circle member',
             'profile' => [
-                'role' => $member->profile?->role,
-                'headline' => $member->profile?->headline,
-                'industry' => $member->profile?->industry,
-                'city' => $member->profile?->city,
-                'country' => $member->profile?->country,
-                'avatar_path' => $member->profile?->avatar_path,
+                'role' => $member->profile && ProfileFieldPrivacy::visible($member->profile, 'current_job_title', $viewer, $member->id) ? $member->profile->role : null,
+                'headline' => $member->profile && ProfileFieldPrivacy::visible($member->profile, 'professional_headline', $viewer, $member->id) ? $member->profile->headline : null,
+                'industry' => $member->profile && ProfileFieldPrivacy::visible($member->profile, 'industry', $viewer, $member->id) ? $member->profile->industry : null,
+                'city' => $member->profile && ProfileFieldPrivacy::visible($member->profile, 'city', $viewer, $member->id) ? $member->profile->city : null,
+                'country' => $member->profile && ProfileFieldPrivacy::visible($member->profile, 'country', $viewer, $member->id) ? $member->profile->country : null,
+                'avatar_path' => $member->profile && ProfileFieldPrivacy::visible($member->profile, 'profile_photo_url', $viewer, $member->id) ? $member->profile->avatar_path : null,
             ],
             'plan' => in_array($member->temporary_plan ?? null, ['free', 'plus', 'pro'], true)
                 ? $member->temporary_plan : ($member->subscribed_plan ?? 'free'),
@@ -159,7 +161,7 @@ final class MemberDirectoryController extends Controller
         if (! $isOwnProfile) {
             $profileQuery->where('visibility', 'public');
         }
-        $profile = $profileQuery->firstOrFail(['id', 'user_id', 'role', 'headline', 'bio']);
+        $profile = $profileQuery->firstOrFail(['id', 'user_id', 'role', 'headline', 'bio', 'field_visibility', 'visibility']);
 
         if ($viewer && ! $isOwnProfile && $viewer->status === 'active' && ! $viewer->is_admin) {
             // Single indexed write per viewer/day. Guest and self views are never counted.
@@ -172,7 +174,15 @@ final class MemberDirectoryController extends Controller
         }
 
         return Inertia::render('members/Show', [
-            'member' => ['id' => $member->id, 'name' => $member->name, 'profile' => $profile],
+            'member' => [
+                'id' => $member->id,
+                'name' => ProfileFieldPrivacy::visible($profile, 'full_name', $viewer, $member->id) ? $member->name : 'PM Circle member',
+                'profile' => [
+                    'role' => ProfileFieldPrivacy::visible($profile, 'current_job_title', $viewer, $member->id) ? $profile->role : null,
+                    'headline' => ProfileFieldPrivacy::visible($profile, 'professional_headline', $viewer, $member->id) ? $profile->headline : null,
+                    'bio' => ProfileFieldPrivacy::visible($profile, 'professional_summary', $viewer, $member->id) ? $profile->bio : null,
+                ],
+            ],
             'isOwnProfile' => $isOwnProfile,
             'following' => $viewer ? DB::table('member_follows')->where('follower_id', $viewer->id)->where('followed_id', $member->id)->exists() : false,
             'posts' => $member->posts()->where('status', 'published')->where('visibility', 'public')->where('is_anonymous', false)
@@ -184,7 +194,7 @@ final class MemberDirectoryController extends Controller
                     ->select('posts.id', 'posts.author_id', 'posts.title', 'posts.body', 'posts.image_path', 'posts.topic', 'posts.published_at', 'posts.ai_generated')
                     ->selectRaw('COALESCE(profile_stats.comments_count, 0) AS comments_count')
                     ->selectRaw('COALESCE(profile_stats.reactions_count, 0) AS reactions_count'))
-                ->when(! EngagementStats::readsEnabled(), fn ($query) => $query->withCount(['comments', 'reactions']))
+                ->when(! EngagementStats::readsEnabled(), fn ($query) => $query->withCount(['comments' => fn ($query) => $query->visible(), 'reactions']))
                 ->latest('posts.published_at')->limit(8)->get(['posts.id', 'posts.author_id', 'posts.title', 'posts.body', 'posts.image_path', 'posts.topic', 'posts.published_at', 'posts.ai_generated']),
         ]);
     }

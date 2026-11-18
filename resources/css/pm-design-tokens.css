@@ -140,6 +140,10 @@
     --pm-home-reaction-bg-sad: #eff4ff;
     --pm-home-reaction-bg-angry: #fff0eb;
     --pm-home-shadow-soft: rgb(23 43 77 / 4%);
+    --pm-home-ai-background-start: #d8ecff;
+    --pm-home-ai-background-end: #d2eeff;
+    --pm-home-ai-glow: #f0efff;
+    --pm-home-ai-card-shadow: 0 3px 5px rgb(0 102 204 / 17%);
     --pm-home-shadow-picker: rgb(23 43 77 / 19%);
     --pm-home-status-outline: rgb(0 102 102 / 12%);
     --type-caption: var(--text-xs);

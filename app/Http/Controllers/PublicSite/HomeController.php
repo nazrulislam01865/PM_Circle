@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Onboarding\OnboardingController;
 use App\Models\HomePageContent;
 use App\Domain\Community\Services\EngagementStats;
+use App\Domain\Identity\Services\ProfileFieldPrivacy;
 use App\Domain\Community\Queries\PostReactionSummary;
 use App\Models\CareerJob;
 use App\Models\Post;
@@ -101,7 +102,7 @@ class HomeController extends Controller
             ->when(config('pm-circle.email_verification_required'), fn ($query) => $query->whereNotNull('email_verified_at'))
             ->whereHas('profile', fn ($query) => $query->where('visibility', 'public'))
             ->when($featuredMembers !== [], fn ($query) => $query->whereIn('id', $featuredMembers))
-            ->with(['profile' => fn ($query) => $query->where('visibility', 'public')->select('id', 'user_id', 'role', 'avatar_path')])
+            ->with(['profile' => fn ($query) => $query->where('visibility', 'public')->select('id', 'user_id', 'role', 'avatar_path', 'visibility', 'field_visibility')])
             ->when($demo && $featuredMembers === [], fn ($query) => $query->whereIn('email', data_get($content, 'members.demo_emails', [])))
             ->latest('id')->limit(3)->get(['id', 'name', 'email']) : collect();
         if ($featuredMembers !== []) {
@@ -134,8 +135,14 @@ class HomeController extends Controller
             'posts' => $posts,
             'members' => $members->map(fn (User $member) => [
                 'id' => $member->id,
-                'name' => $member->name,
-                'profile' => $member->profile,
+                'name' => $member->profile && ProfileFieldPrivacy::visible($member->profile, 'full_name', request()->user(), $member->id)
+                    ? $member->name : 'PM Circle member',
+                'profile' => [
+                    'role' => $member->profile && ProfileFieldPrivacy::visible($member->profile, 'current_job_title', request()->user(), $member->id)
+                        ? $member->profile->role : null,
+                    'avatar_path' => $member->profile && ProfileFieldPrivacy::visible($member->profile, 'profile_photo_url', request()->user(), $member->id)
+                        ? $member->profile->avatar_path : null,
+                ],
             ]),
         ]);
     }

@@ -14,6 +14,7 @@ export default function Dashboard({ dashboard, flashStatus }: { dashboard: Dashb
         if (!overview) return;
 
         const header = document.querySelector<HTMLElement>('.pm-site-header');
+        const secondaryHeader = document.querySelector<HTMLElement>('.pm-member-secondary');
         const cards = Array.from(overview.children).filter((node): node is HTMLElement => node instanceof HTMLElement);
         let previousScrollY = window.scrollY;
         let stickyTop = 0;
@@ -23,7 +24,8 @@ export default function Dashboard({ dashboard, flashStatus }: { dashboard: Dashb
         let frame: number | null = null;
 
         const updateStickyLayout = () => {
-            const headerHeight = header?.getBoundingClientRect().height ?? 67;
+            const headerHeight = (header?.getBoundingClientRect().height ?? 67)
+                + (secondaryHeader?.getBoundingClientRect().height ?? 0);
             const gap = parseFloat(getComputedStyle(overview).rowGap) || 0;
             const contentHeight = cards.reduce((height, card) => height + card.getBoundingClientRect().height, 0)
                 + Math.max(0, cards.length - 1) * gap;
@@ -61,6 +63,7 @@ export default function Dashboard({ dashboard, flashStatus }: { dashboard: Dashb
         const observer = new ResizeObserver(updateStickyLayout);
         cards.forEach(card => observer.observe(card));
         if (header) observer.observe(header);
+        if (secondaryHeader) observer.observe(secondaryHeader);
         window.addEventListener('resize', updateStickyLayout);
         window.addEventListener('scroll', onScroll, { passive: true });
         updateStickyLayout();

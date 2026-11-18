@@ -9,6 +9,13 @@ return [
     'api_key' => env('OPENAI_API_KEY'),
     // Dedicated restricted key for Daily Challenge only. Never expose it through an admin response.
     'daily_challenge_api_key' => env('OPENAI_DAILY_CHALLENGE_API_KEY'),
+    // Independent Responses-only GPT-5-nano key for community post checking.
+    'post_check_api_key' => env('OPENAI_POST_CHECK_API_KEY'),
+    'post_check_enabled' => (bool) env('PM_AI_POST_CHECK_ENABLED', false),
+    // Optional multimodal preflight: requires Moderations -> Write on the dedicated post key.
+    'post_check_external_moderation' => (bool) env('PM_AI_POST_CHECK_EXTERNAL_MODERATION', false),
+    'post_check_daily_budget_usd' => (float) env('PM_AI_POST_CHECK_DAILY_BUDGET_USD', 0),
+    'post_check_queue' => env('PM_AI_POST_CHECK_QUEUE', 'ai-editorial'),
     'daily_challenge_reasoning_effort' => 'minimal',
     // Local debugging ONLY: permit generated editorial challenges with a Responses-only key.
     // Never skips moderation for member-submitted answers or in deployed environments.

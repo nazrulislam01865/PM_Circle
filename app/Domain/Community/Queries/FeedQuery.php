@@ -46,6 +46,7 @@ final class FeedQuery
         $query = Post::query()->forFeed($tab, $viewer && $viewer->status === 'active' && ! $viewer->is_admin
                 && $viewer->onboarding_step >= 3 && $viewer->hasVerifiedEmail() ? $viewer->getKey() : null)
             ->whereNotNull('posts.published_at')
+            ->when($tab === 'restricted', fn ($query) => $query->whereRaw('1 = 0'))
             ->when($topic !== 'All', function ($query) use ($topic): void {
                 if ($topic === 'Questions') {
                     $query->whereIn('posts.topic', ['Questions', 'Ask the community']);
@@ -84,7 +85,7 @@ final class FeedQuery
             PostReactionSummary::selectStats($query, 'engagement_stats');
         } else {
             $query->withCount([
-                'comments', 'reactions',
+                'comments' => fn ($query) => $query->visible(), 'reactions',
                 'reactions as likes_count' => fn ($query) => $query->where('type', 'like'),
             ]);
         }

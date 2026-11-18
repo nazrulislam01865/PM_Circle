@@ -6,6 +6,7 @@ import { ResumeImportsTab, type ResumeImportState, type ResumeRecord } from '@/c
 import { ProfileImageCropDialog } from '@/components/profile/ProfileImageCropDialog';
 import { ProfileHeroPhoto } from '@/components/profile/ProfileHeroPhoto';
 import { ProfilePhoneField } from '@/components/profile/ProfilePhoneField';
+import { ProfilePrivacyTab, type ProfilePrivacyAudience, type ProfilePrivacyFieldGroup } from '@/components/profile/ProfilePrivacyTab';
 import {
     Briefcase,
     Building2,
@@ -65,6 +66,7 @@ type ProjectItem = {
 type ProfilePageProps = {
     activeTab: 'overview' | 'edit' | 'imports' | 'privacy';
     profileReward: ProfileRewardData | null;
+    privacyFieldGroups: ProfilePrivacyFieldGroup[];
     status?: string;
     profileData: {
         id: number;
@@ -82,6 +84,7 @@ type ProfilePageProps = {
         avatar_path?: string | null;
         open_to_opportunities: boolean;
         visibility: string;
+        field_visibility: Record<string, ProfilePrivacyAudience>;
         resume_employer_visibility: boolean;
         contact_visibility: string;
         linkedin_url: string;
@@ -110,7 +113,7 @@ type ProfilePageProps = {
     };
 };
 
-export default function Profile({ activeTab: initialTab = 'overview', profileData, profileReward }: ProfilePageProps) {
+export default function Profile({ activeTab: initialTab = 'overview', profileData, profileReward, privacyFieldGroups = [] }: ProfilePageProps) {
     const { memberShell } = usePage<{ memberShell?: DashboardShellData }>().props;
 
     const dashboardShell: DashboardShellData = memberShell || {
@@ -309,7 +312,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                             {currentTab === 'overview' && 'Showcase your experience, skills and achievements to the PM Circle community.'}
                             {currentTab === 'edit' && 'Manage your information, skills and preferences to get the most out of PM Circle.'}
                             {currentTab === 'imports' && 'Manage your information, skills and preferences to get the most out of PM Circle.'}
-                            {currentTab === 'privacy' && 'Manage how your profile, contact details, and resume are displayed to other members and recruiters.'}
+                            {currentTab === 'privacy' && 'Manage your professional profile and who can see it.'}
                         </p>
                     </div>
 
@@ -329,7 +332,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                 </header>
 
                 {/* Horizontal Nav Tabs */}
-                <nav className="pm-profile-nav-tabs" aria-label="Profile tabs">
+                <nav className="pm-profile-nav-tabs pm-member-tertiary-sticky" aria-label="Profile tabs">
                     <button
                         type="button"
                         onClick={() => changeTab('overview')}
@@ -1055,101 +1058,13 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                     />
                 )}
 
-                {/* ==============================================================
-                    TAB 4: PRIVACY
-                   ============================================================== */}
+                {/* Tab 4: Prototype privacy fields, using the existing member header/footer. */}
                 {currentTab === 'privacy' && (
-                    <div className="max-w-2xl space-y-6">
-                        <div className="pm-card">
-                            <div className="pm-card-body space-y-6">
-                                <h3 className="pm-card-title">Granular privacy controls</h3>
-
-                                <div>
-                                    <label className="pm-label mb-1 block">Profile visibility</label>
-                                    <p className="text-(length:--pm-font-size-13px) text-(color:--disabled-text) mb-2">
-                                        Choose who is allowed to view your complete profile and achievements.
-                                    </p>
-                                    <select
-                                        className="pm-select"
-                                        value={formData.visibility}
-                                        onChange={(e) => setFormData({ ...formData, visibility: e.target.value })}
-                                    >
-                                        <option value="members_only">Members only (Recommended)</option>
-                                        <option value="public">Public (Visible to everyone on the web)</option>
-                                        <option value="private">Private (Only visible to you)</option>
-                                    </select>
-                                </div>
-
-                                <div className="pt-4 border-t border-(color:--pm-tone-f1f5f9) flex items-center justify-between">
-                                    <div>
-                                        <div className="text-(length:--type-small) font-semibold text-(color:--pm-tone-0f172a)">
-                                            Open to career opportunities
-                                        </div>
-                                        <div className="text-(length:--pm-font-size-12p5px) text-(color:--disabled-text)">
-                                            Displays the "Open to opportunities" badge to verified hiring leads.
-                                        </div>
-                                    </div>
-                                    <label className="pm-switch">
-                                        <input
-                                            type="checkbox"
-                                            checked={formData.open_to_opportunities}
-                                            onChange={(e) => setFormData({ ...formData, open_to_opportunities: e.target.checked })}
-                                        />
-                                        <span className="pm-slider"></span>
-                                    </label>
-                                </div>
-
-                                <div className="pt-4 border-t border-(color:--pm-tone-f1f5f9) flex items-center justify-between">
-                                    <div>
-                                        <div className="text-(length:--type-small) font-semibold text-(color:--pm-tone-0f172a)">
-                                            Show resume to employers
-                                        </div>
-                                        <div className="text-(length:--pm-font-size-12p5px) text-(color:--disabled-text)">
-                                            Allows recruiters and hiring managers to download your uploaded CV.
-                                        </div>
-                                    </div>
-                                    <label className="pm-switch">
-                                        <input
-                                            type="checkbox"
-                                            checked={allowEmployerResume}
-                                            onChange={(e) => {
-                                                setAllowEmployerResume(e.target.checked);
-                                                setFormData({ ...formData, resume_employer_visibility: e.target.checked });
-                                            }}
-                                        />
-                                        <span className="pm-slider"></span>
-                                    </label>
-                                </div>
-
-                                <div className="pt-4 border-t border-(color:--pm-tone-f1f5f9) flex items-center justify-between">
-                                    <div>
-                                        <div className="text-(length:--type-small) font-semibold text-(color:--pm-tone-0f172a)">
-                                            Contact information
-                                        </div>
-                                        <div className="text-(length:--pm-font-size-12p5px) text-(color:--disabled-text)">
-                                            Controls whether other members can see your email or phone number.
-                                        </div>
-                                    </div>
-                                    <select
-                                        className="pm-select w-auto text-(length:--pm-font-size-13px) py-1.5"
-                                        value={formData.contact_visibility}
-                                        onChange={(e) => setFormData({ ...formData, contact_visibility: e.target.value })}
-                                    >
-                                        <option value="private">Private (Only you)</option>
-                                        <option value="members">Connections & Members</option>
-                                    </select>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    className="pm-btn pm-btn-primary w-full"
-                                    onClick={handleFormSubmit}
-                                >
-                                    Save privacy preferences
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    <ProfilePrivacyTab
+                        groups={privacyFieldGroups}
+                        initialVisibility={profileData.field_visibility}
+                        globalVisibility={profileData.visibility}
+                    />
                 )}
                 {currentTab === 'edit' && (
                     <div className="pm-profile-sticky-save" role="group" aria-label="Profile edit actions">

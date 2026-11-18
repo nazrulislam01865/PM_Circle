@@ -88,7 +88,7 @@ export default function Feed({ posts, activeTopic, feedTab, feedScopeCounts, sea
     };
 
     return (
-        <PublicLayout siteLayout active="/community" joinLabel="Join free">
+        <PublicLayout siteLayout={isGuest} active="/community" joinLabel="Join free">
             <Head title="Discussions · PM Circle" />
 
             <div className="pm-container pm-page">

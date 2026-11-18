@@ -25,6 +25,7 @@ class Post extends Model
         'visibility',
         'status',
         'published_at',
+        'check_version',
     ];
 
     protected function casts(): array
@@ -40,6 +41,9 @@ class Post extends Model
             'ai_generated' => 'boolean',
             'notifications_muted_at' => 'datetime',
             'is_anonymous' => 'boolean',
+            'check_version' => 'integer',
+            'checked_at' => 'datetime',
+            'restricted_at' => 'datetime',
         ];
     }
 

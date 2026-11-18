@@ -48,6 +48,9 @@ Route::middleware(['auth', 'pm.admin', 'verified'])->prefix('admin')->name('admi
     Route::get('/', [HomepageController::class, 'dashboard'])->name('dashboard');
     Route::get('/post-reports', [PostModerationController::class, 'index'])->name('post-reports.index');
     Route::post('/post-reviews/{post}', [PostModerationController::class, 'reviewPost'])->middleware('throttle:30,1')->name('post-reviews.update');
+    Route::get('/post-reviews/{post}/media', [PostModerationController::class, 'reviewPostMedia'])->middleware('throttle:60,1')->name('post-reviews.media');
+    Route::post('/comment-reviews/{comment}', [PostModerationController::class, 'reviewComment'])->middleware('throttle:30,1')->name('comment-reviews.update');
+    Route::get('/comment-reviews/{comment}/media', [PostModerationController::class, 'reviewCommentMedia'])->middleware('throttle:60,1')->name('comment-reviews.media');
     Route::patch('/post-reports/{report}', [PostModerationController::class, 'update'])->middleware('throttle:30,1')->whereNumber('report')->name('post-reports.update');
     Route::get('/profile-rewards', [ProfileRewardSettingsController::class, 'edit'])->name('profile-rewards.edit');
     Route::put('/profile-rewards', [ProfileRewardSettingsController::class, 'update'])->middleware('throttle:10,1')->name('profile-rewards.update');
@@ -57,6 +60,7 @@ Route::middleware(['auth', 'pm.admin', 'verified'])->prefix('admin')->name('admi
     Route::post('/exam-simulator/pmp/questions', [PmpExamBankController::class, 'store'])->middleware('throttle:30,1')->name('pmp-questions.store');
     Route::put('/exam-simulator/pmp/questions/{question}', [PmpExamBankController::class, 'update'])->middleware('throttle:30,1')->whereNumber('question')->name('pmp-questions.update');
     Route::patch('/exam-simulator/pmp/questions/{question}/status', [PmpExamBankController::class, 'toggle'])->middleware('throttle:30,1')->whereNumber('question')->name('pmp-questions.status');
+    Route::post('/exam-simulator/pmp/questions/activate-approved', [PmpExamBankController::class, 'activateApproved'])->middleware('throttle:5,1')->name('pmp-questions.activate-approved');
     Route::post('/exam-simulator/pmp/questions/import', [PmpExamBankController::class, 'import'])->middleware('throttle:5,1')->name('pmp-questions.import');
     Route::get('/exam-simulator/pmp/questions/template', [PmpExamBankController::class, 'template'])->name('pmp-questions.template');
     Route::get('/exam-simulator/pmp', [AdminPmpPublicPageController::class, 'edit'])->name('pmp-public.edit');
@@ -86,10 +90,16 @@ Route::get('/learning/courses/{course}', [DemoCourseController::class, 'show'])-
 Route::get('/profile-media/{kind}/{filename}', [SettingsProfileController::class, 'showProfileImage'])
     ->where(['kind' => 'avatar|cover', 'filename' => '[a-zA-Z0-9._-]+'])->name('profile-media.show');
 Route::get('/post-media/{filename}', [PostController::class, 'media'])->where('filename', '[a-zA-Z0-9._-]+')->name('posts.media');
+Route::get('/posts/{post}/check-media/{filename}', [PostController::class, 'checkMedia'])->middleware(['auth', 'pm.member'])->where('filename', '[a-zA-Z0-9._-]+')->name('posts.check-media');
 Route::get('/posts/{post}/media/{filename}', [PostController::class, 'privateMedia'])->where('filename', '[a-zA-Z0-9._-]+')->name('posts.private-media');
+// Exact private review endpoint must precede the public /posts/{post} binding.
+Route::get('/posts/check-feed', [PostManagementController::class, 'checkFeed'])
+    ->middleware(['auth', 'pm.member', 'verified', 'pm.onboarded', 'throttle:30,1'])->name('posts.check-feed');
 Route::get('/posts/{post}', [PostController::class, 'show'])->name('posts.show');
 Route::get('/posts/{post}/reactions/users', [PostInteractionController::class, 'reactionUsers'])->middleware('throttle:60,1')->name('posts.reactions.users');
 Route::get('/posts/{post}/comments/preview', [PostInteractionController::class, 'previewComments'])->middleware('throttle:60,1')->name('posts.comments.preview');
+Route::get('/posts/{post}/comments/{comment}/check-status', [PostInteractionController::class, 'commentCheckStatus'])->middleware(['auth', 'pm.member', 'throttle:60,1'])->name('posts.comments.check-status');
+Route::post('/posts/{post}/comments/{comment}/recheck', [PostInteractionController::class, 'recheckComment'])->middleware(['auth', 'pm.member', 'verified', 'pm.onboarded', 'throttle:6,1'])->name('posts.comments.recheck');
 Route::get('/posts/{post}/comments/{comment}/replies', [PostInteractionController::class, 'replies'])->middleware('throttle:60,1')->name('posts.comments.replies');
 Route::get('/posts/{post}/comments/{comment}/media/{filename}', [PostInteractionController::class, 'commentMedia'])
     ->where('filename', '[a-zA-Z0-9._-]+')->middleware('throttle:120,1')->name('posts.comments.media');
@@ -150,6 +160,7 @@ Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded'])->group(func
         ->middleware('throttle:30,1')->name('exams.pmp.ai-usage');
     Route::get('/exams/pmp/history', [PmpExamController::class, 'history'])->middleware('throttle:30,1')->name('exams.pmp.history');
     Route::put('/exams/pmp/target-date', [PmpExamController::class, 'updateTargetDate'])->middleware('throttle:20,1')->name('exams.pmp.target-date');
+    Route::get('/exams/pmp/start-options', [PmpExamController::class, 'startOptions'])->middleware('throttle:30,1')->name('exams.pmp.start-options');
     Route::post('/exams/pmp/start', [PmpExamController::class, 'start'])->middleware('throttle:pmp-exam-start')->name('exams.pmp.start');
     Route::get('/exams/pmp/attempts/{attempt}', [PmpExamController::class, 'take'])->whereNumber('attempt')->name('exams.pmp.take');
     Route::put('/exams/pmp/attempts/{attempt}/answer', [PmpExamController::class, 'answer'])->middleware('throttle:120,1')->whereNumber('attempt')->name('exams.pmp.answer');
@@ -168,6 +179,9 @@ Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded'])->group(func
     Route::post('/dashboard/learning/courses/{course}/enroll', [DemoCourseController::class, 'enroll'])->middleware('throttle:20,1')->name('dashboard.learning.courses.enroll');
     Route::get('/dashboard/daily-challenge', [ScenarioController::class, 'index'])->name('dashboard.scenarios.index');
     Route::get('/dashboard/daily-challenge/{scenario:slug}', [ScenarioController::class, 'show'])->name('dashboard.scenarios.show');
+    Route::get('/activity-log', [\App\Http\Controllers\Account\ActivityLogController::class, 'index'])->name('activity-log.index');
+    Route::get('/activity-log/entries', [\App\Http\Controllers\Account\ActivityLogController::class, 'entries'])->middleware('throttle:30,1')->name('activity-log.entries');
+    Route::delete('/activity-log/history', [\App\Http\Controllers\Account\ActivityLogController::class, 'clear'])->middleware('throttle:5,1')->name('activity-log.clear');
     Route::get('/saved-posts', SavedPostsController::class)->name('saved-posts.index');
     Route::post('/members/{member}/follow', [MemberDirectoryController::class, 'follow'])->middleware('throttle:30,1')->whereNumber('member')->name('members.follow');
     Route::delete('/members/{member}/follow', [MemberDirectoryController::class, 'unfollow'])->whereNumber('member')->name('members.unfollow');
@@ -185,6 +199,8 @@ Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded'])->group(func
     Route::post('/learning/{path}/modules/{module}/activities/{activity}/check', [LearningController::class, 'check'])->middleware('throttle:30,1')->name('learning.check');
     Route::post('/learning/{path}/modules/{module}/activities/{activity}/complete', [LearningController::class, 'complete'])->middleware('throttle:30,1')->name('learning.complete');
 
+    Route::post('/posts/{post}/recheck', [PostManagementController::class, 'recheck'])->middleware('throttle:5,1')->name('posts.recheck');
+    Route::post('/posts/{post}/repost', [PostManagementController::class, 'repost'])->middleware('throttle:10,1')->name('posts.repost');
     Route::post('/posts', [PostController::class, 'store'])->middleware('throttle:10,1')->name('posts.store');
     Route::patch('/posts/{post}', [PostManagementController::class, 'update'])->middleware('throttle:20,1')->name('posts.update');
     Route::delete('/posts/{post}', [PostManagementController::class, 'destroy'])->middleware('throttle:20,1')->name('posts.destroy');

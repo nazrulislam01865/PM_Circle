@@ -1,0 +1,127 @@
+/* Profile privacy prototype. Only layout and composition are page-specific;
+   typography, controls, borders, and colors reuse the approved shared tokens. */
+.pm-profile-page .pm-privacy-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 320px);
+    gap: var(--s5);
+    align-items: start;
+}
+.pm-profile-page .pm-privacy-main {
+    padding: var(--s5);
+    min-width: 0;
+    overflow: visible;
+    border-radius: var(--radius-card);
+}
+.pm-profile-page .pm-privacy-intro { margin-bottom: var(--s4); }
+.pm-profile-page .pm-privacy-intro h2 {
+    color: var(--ink);
+    font: var(--bold) var(--text-h2)/var(--line-h2) var(--font-ui);
+}
+.pm-profile-page .pm-privacy-intro p,
+.pm-profile-page .pm-privacy-confidential {
+    color: var(--muted);
+    font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui);
+}
+.pm-profile-page .pm-privacy-intro p { margin-top: var(--s2); }
+.pm-profile-page .pm-privacy-groups { display: grid; gap: var(--s4); }
+.pm-profile-page .pm-privacy-fieldset {
+    min-width: 0;
+    margin: 0;
+    padding: var(--s2) var(--s3) var(--s1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--surface);
+}
+.pm-profile-page .pm-privacy-legend {
+    padding-inline: var(--s2);
+    margin-left: var(--s1);
+    font: var(--bold) var(--text-ui)/var(--line-ui) var(--font-ui);
+    color: var(--ink);
+}
+.pm-profile-page .pm-privacy-field-row {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 190px);
+    align-items: center;
+    gap: var(--s3);
+    min-height: calc(var(--control-height) + var(--s3));
+    padding: var(--s1) var(--s2);
+}
+.pm-profile-page .pm-privacy-field-row + .pm-privacy-field-row { border-top: 1px solid var(--border); }
+.pm-profile-page .pm-privacy-field-label {
+    color: var(--ink);
+    font: var(--regular) var(--text-ui)/var(--line-ui) var(--font-ui);
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.pm-profile-page .pm-privacy-field-row .pm-privacy-select {
+    display: block;
+    width: 100%;
+    min-height: var(--control-height);
+    height: var(--control-height);
+    padding: var(--s2) var(--s3);
+    border-radius: var(--radius-control);
+    border-color: var(--control-border);
+    font: var(--regular) var(--text-ui)/var(--line-ui) var(--font-ui);
+    color: var(--ink);
+    background-color: var(--surface);
+}
+.pm-profile-page .pm-privacy-confidential { margin-top: var(--s4); }
+.pm-profile-page .pm-privacy-save { margin-top: var(--s3); }
+.pm-profile-page .pm-privacy-error,
+.pm-profile-page .pm-privacy-success {
+    margin-top: var(--s3);
+    padding: var(--s2) var(--s3);
+    border-radius: var(--radius-control);
+    font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui);
+}
+.pm-profile-page .pm-privacy-error { color: var(--red); background: var(--red-soft); }
+.pm-profile-page .pm-privacy-success { color: var(--green); background: var(--green-soft); }
+.pm-profile-page .pm-privacy-aside { display: grid; align-content: start; gap: var(--s4); min-width: 0; }
+.pm-profile-page .pm-privacy-side-card { padding: var(--s5); box-shadow: none; }
+.pm-profile-page .pm-privacy-side-card h3 {
+    margin: 0 0 var(--s3);
+    font: var(--semibold) var(--text-h3)/var(--line-h3) var(--font-ui);
+    color: var(--ink);
+}
+.pm-profile-page .pm-privacy-definitions { display: grid; gap: var(--s3); margin: 0; }
+.pm-profile-page .pm-privacy-definitions dt { font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui); }
+.pm-profile-page .pm-privacy-definitions dd,
+.pm-profile-page .pm-privacy-side-card > p,
+.pm-profile-page .pm-privacy-preview-details p {
+    margin: 0;
+    color: var(--muted);
+    font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui);
+}
+.pm-profile-page .pm-privacy-preview-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s2);
+    margin-top: var(--s3);
+}
+.pm-profile-page .pm-privacy-preview-btn.pm-btn { min-height: var(--control-compact); padding: var(--s1) var(--s3); }
+.pm-profile-page .pm-privacy-preview-btn.is-selected { background: var(--blue-soft); border-color: var(--blue); }
+.pm-profile-page .pm-privacy-preview-details {
+    border-top: 1px solid var(--border);
+    padding-top: var(--s3);
+    margin-top: var(--s3);
+    color: var(--ink);
+    font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui);
+}
+.pm-profile-page .pm-privacy-preview-details > strong { display: block; font-weight: var(--semibold); }
+.pm-profile-page .pm-privacy-preview-details ul { padding-left: var(--s5); margin: var(--s2) 0; max-height: 220px; overflow: auto; }
+.pm-profile-page .pm-privacy-preview-details .pm-privacy-preview-note { margin-top: var(--s2); }
+@media (max-width: 900px) {
+    .pm-profile-page .pm-privacy-layout { grid-template-columns: minmax(0, 1fr); }
+    .pm-profile-page .pm-privacy-aside { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+    .pm-profile-page .pm-privacy-main, .pm-profile-page .pm-privacy-side-card { padding: var(--s4); }
+    .pm-profile-page .pm-privacy-aside { grid-template-columns: minmax(0, 1fr); }
+    .pm-profile-page .pm-privacy-field-row { grid-template-columns: minmax(0, 1fr); gap: var(--s1); padding-block: var(--s2); }
+    .pm-profile-page .pm-privacy-field-row .pm-privacy-select { min-height: var(--control-touch); height: var(--control-touch); }
+}
+@media (pointer: coarse) {
+    .pm-profile-page .pm-privacy-preview-btn.pm-btn { min-height: var(--control-touch); }
+}

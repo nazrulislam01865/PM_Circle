@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Bookmark, BookOpen, BriefcaseBusiness, ChartNoAxesColumnIncreasing, ChevronsLeft, ChevronsRight, ChevronRight, Crown, Home, LockKeyhole, Mic, Settings, Trophy, UserRound, RefreshCcw, ClipboardList, CalendarDays } from 'lucide-react';
+import { Bookmark, BookOpen, BriefcaseBusiness, ChartNoAxesColumnIncreasing, History, ChevronsLeft, ChevronsRight, ChevronRight, Crown, Home, LockKeyhole, Mic, Settings, Trophy, UserRound, RefreshCcw, ClipboardList, CalendarDays } from 'lucide-react';
 import { Brand } from '@/components/pm/Brand';
 import { DashboardAvatar } from '@/components/dashboard/DashboardAvatar';
 import type { DashboardShellData } from '@/types/dashboard';
@@ -19,7 +19,7 @@ const secondaryItems: Item[] = [
     { label: 'Daily Challenge', href: '/dashboard/daily-challenge', icon: CalendarDays },
     { label: 'Saved posts', href: '/saved-posts', icon: Bookmark },
     { label: 'Jobs & resume', href: '/careers', icon: BriefcaseBusiness },
-    { label: 'Profile insights', href: '/dashboard/features/insights', icon: ChartNoAxesColumnIncreasing },
+    { label: 'Activity Log', href: '/activity-log', icon: History },
     { label: 'Settings', href: '/settings/security', icon: Settings },
 ];
 

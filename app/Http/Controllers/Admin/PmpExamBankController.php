@@ -65,11 +65,14 @@ final class PmpExamBankController extends Controller
             'is_active' => (bool) $q->is_active,
         ]);
         $stats = DB::table('pmp_exam_questions')->selectRaw('COUNT(*) AS total')
-            ->selectRaw('SUM(CASE WHEN is_active THEN 1 ELSE 0 END) AS active')->first();
+            ->selectRaw('SUM(CASE WHEN is_active THEN 1 ELSE 0 END) AS active')
+            ->selectRaw("SUM(CASE WHEN review_status = 'Approved' AND NOT is_active THEN 1 ELSE 0 END) AS ready")
+            ->first();
 
         return Inertia::render('admin/PmpQuestionBank', [
             'settings' => $settings->get(),
-            'stats' => ['total' => (int) ($stats->total ?? 0), 'active' => (int) ($stats->active ?? 0)],
+            'stats' => ['total' => (int) ($stats->total ?? 0), 'active' => (int) ($stats->active ?? 0),
+                'ready' => (int) ($stats->ready ?? 0)],
             'questions' => $questions,
             'filters' => ['search' => $filters['search'] ?? '', 'domain' => $filters['domain'] ?? '', 'status' => $filters['status'] ?? 'all',
                 'review_status' => $filters['review_status'] ?? ''],
@@ -135,6 +138,16 @@ final class PmpExamBankController extends Controller
             ]);
         });
         return back()->with('status', $data['is_active'] ? 'Question activated.' : 'Question deactivated. Existing attempts are preserved.');
+    }
+
+    /** Publish only questions that have already passed review; never publish drafts. */
+    public function activateApproved(): RedirectResponse
+    {
+        $count = DB::table('pmp_exam_questions')
+            ->where('review_status', 'Approved')->where('is_active', false)
+            ->update(['is_active' => true, 'updated_at' => now()]);
+
+        return back()->with('status', "{$count} approved questions activated for the PMP exam simulator.");
     }
 
     public function import(ImportPmpExamQuestionsRequest $request, PmpQuestionImporter $importer): RedirectResponse

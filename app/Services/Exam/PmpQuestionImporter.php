@@ -112,6 +112,8 @@ final class PmpQuestionImporter
                     'eco_reference' => $value('eco_reference') ?: null,
                     'review_status' => $value('review_status'),
                 ];
+                // Administrator-approved rows may be published; editorial drafts remain inactive.
+                $data['is_active'] = $data['review_status'] === 'Approved';
                 $data['other_options'] = PmpQuestionContent::otherOptionRationales($rationales, $correct);
                 $data['references'] = PmpQuestionContent::referenceSummary($data);
                 if (isset($options[$correct]) && PmpQuestionContent::cleanAnswer($value('correct_answer'))

@@ -36,8 +36,9 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         // Public homepage-style pages never mount the dashboard sidebar.
+        // Community uses the member shell only when signed in; guest presentation is unchanged.
         // Avoid computing its member projection on those requests.
-        $siteLayout = in_array($request->path(), ['/', 'daily-challenge', 'community', 'learning', 'contact', 'help-center', 'refund-policy'], true)
+        $siteLayout = in_array($request->path(), ['/', 'daily-challenge', 'learning', 'contact', 'help-center', 'refund-policy'], true)
             || $request->is('learning/courses/*') || $request->is('admin', 'admin/*');
 
         return [

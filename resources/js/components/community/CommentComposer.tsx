@@ -43,6 +43,11 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
     const [emojiOpen, setEmojiOpen] = useState(false);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
+    const [reviewNotice, setReviewNotice] = useState('');
+    const [pendingReview, setPendingReview] = useState<{ id: number; submittedBody: string } | null>(null);
+    const [failedComment, setFailedComment] = useState<number | null>(null);
+    const onCreatedRef = useRef(onCreated);
+    useEffect(() => { onCreatedRef.current = onCreated; }, [onCreated]);
     const photoInput = useRef<HTMLInputElement>(null);
     const editor = useRef<HTMLTextAreaElement>(null);
     const isReply = parentId !== null;
@@ -58,6 +63,65 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
 
     useEffect(() => { if (isReply) editor.current?.focus(); }, [isReply]);
 
+    useEffect(() => {
+        if (!pendingReview || postId === undefined) return;
+        let live = true;
+        let settled = false;
+        const poll = async () => {
+            if (settled) return;
+            try {
+                const response = await fetch(`/posts/${postId}/comments/${pendingReview.id}/check-status`, {
+                    credentials: 'same-origin', headers: { Accept: 'application/json' },
+                });
+                if (!response.ok || !live || settled) return;
+                const result = await response.json() as {
+                    status: string; reason?: string | null; comment?: SavedComment | null;
+                };
+                if (!live || settled) return;
+                if (result.status === 'approved' && result.comment) {
+                    settled = true;
+                    onCreatedRef.current?.(result.comment);
+                    setPendingReview(null); setReviewNotice(''); setFailedComment(null);
+                } else if (result.status === 'restricted') {
+                    settled = true;
+                    setBody(pendingReview.submittedBody);
+                    setError(result.reason || 'Your comment did not meet the community policy. Edit and submit again.');
+                    setReviewNotice(''); setPendingReview(null);
+                } else if (result.status === 'check_error') {
+                    settled = true;
+                    setFailedComment(pendingReview.id);
+                    setReviewNotice('Your comment could not be checked. It has not been published.');
+                    setPendingReview(null);
+                } else if (result.status === 'pending_review') {
+                    settled = true;
+                    setReviewNotice('Your comment is awaiting an administrator review.');
+                    setPendingReview(null);
+                }
+            } catch { /* The next poll retries; never expose unchecked comments. */ }
+        };
+        void poll();
+        const timer = window.setInterval(() => { void poll(); }, 6000);
+        return () => { live = false; window.clearInterval(timer); };
+    }, [pendingReview, postId]);
+
+    const retryFailedReview = async () => {
+        if (!failedComment || postId === undefined) return;
+        setError('');
+        const token = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+        try {
+            const response = await fetch(`/posts/${postId}/comments/${failedComment}/recheck`, {
+                method: 'POST', credentials: 'same-origin',
+                headers: { Accept: 'application/json', 'X-CSRF-TOKEN': token },
+            });
+            if (!response.ok) throw new Error('Unable to retry comment checking.');
+            setPendingReview({ id: failedComment, submittedBody: body });
+            setFailedComment(null);
+            setReviewNotice('Checking your comment...');
+        } catch (reason) {
+            setError(reason instanceof Error ? reason.message : 'Unable to retry checking.');
+        }
+    };
+
     const selectFile = (selected?: File) => {
         if (!allowMedia || !selected) return;
         if (!allowed.includes(selected.type) || selected.size > maxFileBytes) {
@@ -72,7 +136,7 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
         event.preventDefault();
         if (!canInteract) { onJoin(isReply ? 'reply to a comment' : 'comment on a post'); return; }
         if (!valid || busy) return;
-        setBusy(true); setError('');
+        setBusy(true); setError(''); setReviewNotice('');
         try {
             if (onSubmitText) {
                 await onSubmitText(body.trim());
@@ -98,9 +162,14 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
                 }
                 throw new Error('Unable to save your comment. Please try again.');
             }
-            const result = await response.json() as { comment: SavedComment };
+            const result = await response.json() as { comment: SavedComment; check_status?: string | null };
+            if (result.check_status === 'pending_check') {
+                setPendingReview({ id: result.comment.id, submittedBody: body.trim() });
+                setReviewNotice(isReply ? 'Checking your reply...' : 'Checking your comment...');
+            } else {
+                onCreated?.(result.comment);
+            }
             setBody(''); if (!compact && postId !== undefined) commentDrafts.delete(postId); setFile(null); setEmojiOpen(false);
-            onCreated?.(result.comment);
         } catch (reason) {
             setError(reason instanceof Error ? reason.message : 'Unable to save your comment.');
         } finally { setBusy(false); }
@@ -125,11 +194,12 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
                     </>}
                 </div>
                 <span className="pm-comment-character-count">{Array.from(body).length}/{maxLength}</span>
-                <button className="pm-button pm-button-sm pm-comment-submit" type="submit" disabled={!canInteract || !valid || busy}>
+                <button className="pm-button pm-button-sm pm-comment-submit" type="submit" disabled={!canInteract || !valid || busy || Boolean(pendingReview)}>
                     <Send size={16} aria-hidden="true"/>{busy ? 'Sending...' : isReply ? 'Reply' : 'Comment'}
                 </button>
             </div>
             {emojiOpen && <div className="pm-comment-emoji-list" role="group" aria-label="Choose an emoji">{emojis.map(emoji => <button key={emoji} type="button" aria-label={`Insert ${emoji}`} onClick={() => { setBody(previous => { const value = previous + emoji; if (!compact && postId !== undefined) commentDrafts.set(postId, value); return value; }); editor.current?.focus(); setEmojiOpen(false); }}>{emoji}</button>)}</div>}
+            {reviewNotice && <p className="pm-inline-comment-info" role="status">{reviewNotice}{failedComment && <button type="button" className="pm-button pm-button-outline pm-button-sm" onClick={() => void retryFailedReview()}>Retry check</button>}</p>}
             {error && <p className="pm-inline-comment-error" role="alert">{error}</p>}
         </div>
     </form>;

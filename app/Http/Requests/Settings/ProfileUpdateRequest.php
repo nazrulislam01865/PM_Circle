@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Settings;
 
 use App\Concerns\ProfileValidationRules;
+use App\Domain\Identity\Services\ProfileFieldPrivacy;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -25,7 +26,12 @@ class ProfileUpdateRequest extends FormRequest
         $rules['name'] = ['sometimes', ...$rules['name']];
         $rules['email'] = ['sometimes', ...$rules['email']];
 
-        return array_merge($rules, [
+        $fieldRules = ['field_visibility' => ['sometimes', 'required', 'array', 'size:'.count(ProfileFieldPrivacy::keys())]];
+        foreach (ProfileFieldPrivacy::keys() as $key) {
+            $fieldRules['field_visibility.'.$key] = ['required_with:field_visibility', Rule::in(['public', 'community', 'private'])];
+        }
+
+        return array_merge($rules, $fieldRules, [
             // Basic-profile saves require a valid private contact number. Independent
             // privacy-only PATCH requests may omit it to preserve existing controls.
             'phone' => [

@@ -1,7 +1,7 @@
 import type { ProfileRewardData } from '@/types/reward';
 
 export type DashboardPlan = 'free' | 'premium' | 'pro';
-export type DashboardTab = 'all' | 'following' | 'mine' | 'saved' | 'hidden';
+export type DashboardTab = 'all' | 'following' | 'mine' | 'saved' | 'hidden' | 'restricted';
 export type DashboardPost = {
     id: number; title: string | null; body: string; image_path?: string | null; topic: string;
     is_anonymous?: boolean; visibility?: string; author: string; authorRole: string | null; authorAvatar?: string | null; publishedAt: string | null;
@@ -20,6 +20,7 @@ export type DashboardData = {
         contribution: { posts: number; replies: number; responses: number };
         syllabus: { name: string; status: string };
     };
+    postChecks: import('@/components/community/PostCheckCard').PostCheckFeedData;
     posts: DashboardPost[]; feedTab: DashboardTab;
     feedScopeCounts: import('@/components/community/FeedScopeTabs').FeedScopeCounts;
     feedPage: { next_cursor: string | null; has_more: boolean };

@@ -26,7 +26,7 @@ type Question = {
 type Props = {
     settings: Settings;
     questions: { data: Question[]; links: { url: string | null; label: string; active: boolean }[]; total: number };
-    stats: { total: number; active: number };
+    stats: { total: number; active: number; ready: number };
     filters: { search: string; domain: string; status: string; review_status: string };
 };
 const domains = ['People', 'Process', 'Business Environment'];
@@ -127,6 +127,18 @@ export default function PmpQuestionBank({ settings, questions, stats, filters }:
             <article className="pm-admin-panel pm-admin-stat"><span>Questions</span><strong className="pm-admin-stat-number">{stats.total}</strong></article>
             <article className="pm-admin-panel pm-admin-stat"><span>Active questions</span><strong className="pm-admin-stat-number">{stats.active}</strong></article>
         </div>
+        {stats.ready > 0 && <div className="pm-admin-notice" role="status">
+            <ShieldCheck size={18} aria-hidden="true"/>
+            <span>{stats.ready} approved questions are not active and will not appear in exams.</span>
+            <button type="button" className="pm-admin-button pm-admin-button-primary" disabled={busy}
+                onClick={() => {
+                    if (busy || !window.confirm(`Activate ${stats.ready} approved questions for member exams?`)) return;
+                    setBusy(true);
+                    router.post('/admin/exam-simulator/pmp/questions/activate-approved', {}, {
+                        preserveScroll: true, onError: setErrors, onFinish: () => setBusy(false),
+                    });
+                }}>Activate approved questions</button>
+        </div>}
         <nav className="pm-pmp-bank-tabs" aria-label="PMP administration">
             <button type="button" className={tab === 'bank' ? 'is-active' : ''} onClick={() => setTab('bank')}>Question bank and import</button>
             <button type="button" className={tab === 'settings' ? 'is-active' : ''} onClick={() => setTab('settings')}>Exam settings</button>
@@ -175,7 +187,7 @@ export default function PmpQuestionBank({ settings, questions, stats, filters }:
                     <span id="pmp-import-guidance" className="pm-pmp-import-hint">Maximum 5 MB · 30 original columns in order · Original workbook contains 100 drafts · Use new Question IDs for additional imports.</span>
                     {(fileMessage || errors.file) && <span id="pmp-import-error" className="pm-pmp-import-error" role="alert">{fileMessage || errors.file}</span>}
                 </form>
-                <p className="pm-pmp-bank-description"><ShieldCheck size={16} aria-hidden="true"/> Upload only Excel (.xlsx) or CSV (.csv). Preserve all 30 original headers, including Correct Answer. The other two workbook sheets are retained in the download and ignored by the question importer. Editorial drafts remain inactive; existing Question IDs are never overwritten.</p>
+                <p className="pm-pmp-bank-description"><ShieldCheck size={16} aria-hidden="true"/> Upload only Excel (.xlsx) or CSV (.csv). Preserve all 30 original headers, including Correct Answer. The other two workbook sheets are retained in the download and ignored by the question importer. Approved rows become active; editorial drafts remain inactive. Existing Question IDs are never overwritten.</p>
             </section>
             <section className="pm-admin-panel pm-pmp-bank-panel">
                 <div className="pm-pmp-bank-heading"><div><h2>Question bank</h2><p>Review imported answers and explanations before making a question active.</p></div>

@@ -24,7 +24,7 @@ final class SavedPostsController extends Controller
                     ->select('posts.*')
                     ->selectRaw('COALESCE(saved_stats.comments_count, 0) AS comments_count')
                     ->selectRaw('COALESCE(saved_stats.reactions_count, 0) AS reactions_count'), 'saved_stats'))
-                ->when(! EngagementStats::readsEnabled(), fn ($query) => $query->withCount(['comments', 'reactions']))
+                ->when(! EngagementStats::readsEnabled(), fn ($query) => $query->withCount(['comments' => fn ($query) => $query->visible(), 'reactions']))
                 ->latest('posts.published_at')->paginate(12);
         PostReactionSummary::attach($posts->getCollection());
         $posts->getCollection()->each(fn (Post $post) => $post->anonymizeForPublic());

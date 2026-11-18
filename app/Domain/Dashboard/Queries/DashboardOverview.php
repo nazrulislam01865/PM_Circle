@@ -3,6 +3,7 @@
 namespace App\Domain\Dashboard\Queries;
 
 use App\Domain\Community\Queries\FeedQuery;
+use App\Domain\Community\Queries\PostCheckFeed;
 use App\Domain\Community\Queries\FeedTabAvailability;
 use App\Models\User;
 use App\Domain\Billing\Queries\CurrentMemberPlan;
@@ -30,6 +31,9 @@ final class DashboardOverview
         $feedPage = $feed->page($feedTab, 'All', null, $user, null, true);
         $dashboardPosts = $feed->dashboardPosts($feedPage['data']);
         $stats = app(MemberDashboardStats::class)->forMember($user);
+        $postChecks = app(PostCheckFeed::class)->forMember($user->id);
+        $scopeCounts = app(FeedTabAvailability::class)->forViewer($user);
+        $scopeCounts['restricted'] = $postChecks['restricted_count'];
 
         return [
             'dashboard' => [
@@ -42,13 +46,14 @@ final class DashboardOverview
                 'learning' => $stats['learning'],
                 'overview' => $stats['overview'],
                 'posts' => $dashboardPosts,
+                'postChecks' => $postChecks,
                 'virtualFeedEnabled' => (bool) config('pm-circle.virtual_feed_enabled', true),
                 'feedPage' => [
                     'next_cursor' => $feedPage['next_cursor'],
                     'has_more' => $feedPage['has_more'],
                 ],
                 'feedTab' => $feedTab,
-                'feedScopeCounts' => app(FeedTabAvailability::class)->forViewer($user),
+                'feedScopeCounts' => $scopeCounts,
             ],
         ];
     }

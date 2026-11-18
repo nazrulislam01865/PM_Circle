@@ -8,6 +8,7 @@ use App\Jobs\AnalyzeProfileResume;
 use App\Domain\Billing\Queries\CurrentMemberPlan;
 use App\Domain\Billing\Services\ProfileCompletionRewardService;
 use App\Domain\Identity\Services\ProfileCompleteness;
+use App\Domain\Identity\Services\ProfileFieldPrivacy;
 use App\Services\Resume\ApplyProfileImport;
 use App\Services\Resume\ProfileImportPresenter;
 use App\Services\Resume\ResumeTextExtractor;
@@ -46,19 +47,21 @@ class ProfileController extends Controller
         if (! in_array($activeTab, ['overview', 'edit', 'imports', 'privacy'], true)) {
             $activeTab = 'overview';
         }
-        $user->loadMissing($activeTab === 'imports'
-            ? ['profile', 'certifications', 'experiences', 'educations']
-            : ['profile', 'certifications', 'experiences', 'profileProjects', 'educations']);
+        $user->loadMissing(match ($activeTab) {
+            'imports' => ['profile', 'certifications', 'experiences', 'educations'],
+            'privacy' => ['profile'],
+            default => ['profile', 'certifications', 'experiences', 'profileProjects', 'educations'],
+        });
 
         $profile = $user->profile ?? new Profile();
 
         // Edit and overview always use this member's persisted records.
         // Relations are eager-loaded above; do not add per-card queries.
-        $experiences = $user->experiences->values();
-        $projects = $activeTab === 'imports' ? collect() : $user->profileProjects->values();
+        $experiences = $activeTab === 'privacy' ? collect() : $user->experiences->values();
+        $projects = in_array($activeTab, ['imports', 'privacy'], true) ? collect() : $user->profileProjects->values();
         $featuredProject = $projects->firstWhere('is_featured', true) ?? $projects->first();
-        $educations = $user->educations->values();
-        $certifications = $user->certifications->map(fn ($entry) => [
+        $educations = $activeTab === 'privacy' ? collect() : $user->educations->values();
+        $certifications = ($activeTab === 'privacy' ? collect() : $user->certifications)->map(fn ($entry) => [
             'id' => $entry->id,
             'name' => $entry->name,
             'credential_number' => $entry->credential_number,
@@ -94,6 +97,7 @@ class ProfileController extends Controller
             'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
             'activeTab' => $activeTab,
+            'privacyFieldGroups' => $activeTab === 'privacy' ? ProfileFieldPrivacy::groups() : [],
             'profileReward' => app(ProfileCompletionRewardService::class)->forMember($user, $completenessScore),
             'profileData' => [
                 'id' => $user->id,
@@ -111,6 +115,7 @@ class ProfileController extends Controller
                 'avatar_path' => $profile->avatar_path,
                 'open_to_opportunities' => $profile->open_to_opportunities ?? true,
                 'visibility' => $profile->visibility ?: 'members_only',
+                'field_visibility' => $activeTab === 'privacy' ? ProfileFieldPrivacy::choices($profile) : [],
                 'resume_employer_visibility' => $profile->resume_employer_visibility ?? true,
                 'contact_visibility' => $profile->contact_visibility ?: 'private',
                 'linkedin_url' => $profile->linkedin_url ?? '',
@@ -178,6 +183,7 @@ class ProfileController extends Controller
             'visibility',
             'resume_employer_visibility',
             'contact_visibility',
+            'field_visibility',
             'linkedin_url',
             'languages',
         ] as $field) {

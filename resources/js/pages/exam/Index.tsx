@@ -2,6 +2,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import { ExamPage } from '@/components/exam/ExamShared';
 import { useExamStart } from '@/components/exam/useExamStart';
+import { PmpStartExamDialog, type PmpExamCoverage, type PmpExamSelection } from '@/components/exam/PmpStartExamDialog';
 import {
     PmpWorkspaceTabs, PmpOverview, PmpPerformance, PmpHistory, PmpAiUsage,
     type PmpDashboardTab, type PmpWorkspaceAttempt, type PmpTopicRow,
@@ -79,8 +80,73 @@ export default function Index({ shell, availableQuestions, fullLength, examSetti
         if (next === 'ai') void refreshUsage();
     };
 
-    const { startExam, starting, startError } = useExamStart();
-    const onStart = () => void startExam();
+    const { startExam, starting, startError, clearStartError } = useExamStart();
+    const [startDialogOpen, setStartDialogOpen] = useState(false);
+    const [startDialogPhase, setStartDialogPhase] = useState<'loading' | 'ready' | 'mixed' | 'preparing'>('loading');
+    const [startCoverage, setStartCoverage] = useState<PmpExamCoverage | null>(null);
+    const [startSelection, setStartSelection] = useState<PmpExamSelection>('new');
+    const [startDialogError, setStartDialogError] = useState('');
+    const coverageRequest = useRef<AbortController | null>(null);
+    useEffect(() => () => coverageRequest.current?.abort(), []);
+
+    const loadStartOptions = async () => {
+        coverageRequest.current?.abort();
+        const request = new AbortController();
+        coverageRequest.current = request;
+        setStartDialogPhase('loading');
+        setStartDialogError('');
+        clearStartError();
+        try {
+            const response = await fetch('/exams/pmp/start-options', {
+                credentials: 'same-origin', cache: 'no-store', signal: request.signal,
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            if (!response.ok) {
+                if (response.status === 419) throw new Error('Your session has expired. Refresh the page and try again.');
+                if (response.status === 403) throw new Error('Your membership does not currently allow this exam.');
+                throw new Error('Could not retrieve question bank coverage. Please try again.');
+            }
+            const result = await response.json() as PmpExamCoverage;
+            if (![result.bankTotal, result.usedCount, result.unseenCount, result.examSize, result.fullQuestionCount]
+                .every(value => Number.isSafeInteger(value) && value >= 0)) {
+                throw new Error('Question bank coverage is temporarily unavailable. Please try again.');
+            }
+            if (request.signal.aborted) return;
+            setStartCoverage(result);
+            setStartSelection(result.unseenCount === 0 ? 'random' : 'new');
+            setStartDialogPhase('ready');
+        } catch (error) {
+            if (request.signal.aborted) return;
+            setStartCoverage(null);
+            setStartDialogError(error instanceof Error ? error.message : 'Unable to check question availability.');
+            setStartDialogPhase('ready');
+        }
+    };
+    const onStart = () => {
+        if (starting || startDialogOpen) return;
+        setStartDialogOpen(true);
+        void loadStartOptions();
+    };
+    const closeStartDialog = () => {
+        if (startDialogPhase === 'preparing') return;
+        coverageRequest.current?.abort();
+        setStartDialogOpen(false);
+        setStartDialogError('');
+    };
+    const confirmStart = async () => {
+        if (!startCoverage || startCoverage.examSize === 0 || starting) return;
+        setStartDialogError('');
+        if (startDialogPhase === 'ready' && startSelection === 'new'
+            && startCoverage.unseenCount > 0 && startCoverage.unseenCount < startCoverage.examSize) {
+            setStartDialogPhase('mixed');
+            return;
+        }
+        const selection: PmpExamSelection = startDialogPhase === 'mixed' ? 'mixed'
+            : startCoverage.unseenCount === 0 ? 'random' : startSelection;
+        setStartDialogPhase('preparing');
+        const succeeded = await startExam({ selection });
+        if (!succeeded) setStartDialogPhase('ready');
+    };
     const onFocus = (domain: string) => void startExam({ mode: 'focused', domain });
 
     // Old review/history bookmarks used hash fragments. Keep them working without
@@ -98,7 +164,7 @@ export default function Index({ shell, availableQuestions, fullLength, examSetti
         <Head title="My PMP Exam Simulator | PM Circle"/>
         <div className="pm-pmp-workspace">
             <PmpWorkspaceTabs active={active} onChange={openTab}/>
-            {startError && <p className="pm-pmp-action-error" role="alert">{startError}</p>}
+            {startError && !startDialogOpen && <p className="pm-pmp-action-error" role="alert">{startError}</p>}
             <div className="pm-pmp-dashboard-main" id="pmp-dashboard-content" role="tabpanel" aria-labelledby={`pm-pmp-tab-${active}`} tabIndex={0}>
                 {active === 'overview' && <PmpOverview attempts={attempts} planCode={planCode} planDetails={planDetails}
                     attemptTotals={attemptTotals} aiUsage={currentUsage} topics={topicAccuracy} targetExamDate={targetExamDate}
@@ -111,5 +177,10 @@ export default function Index({ shell, availableQuestions, fullLength, examSetti
                 {active === 'ai' && <PmpAiUsage usage={currentUsage} onRefresh={() => void refreshUsage()} loading={usageLoading} error={usageError}/>}
             </div>
         </div>
+        <PmpStartExamDialog open={startDialogOpen} phase={startDialogPhase} coverage={startCoverage}
+            attempts={attempts} completedCount={attemptTotals.completed} inProgressCount={attemptTotals.inProgress}
+            selection={startSelection} onSelectionChange={setStartSelection} onClose={closeStartDialog}
+            onRetry={() => void loadStartOptions()} onBack={() => setStartDialogPhase('ready')} onConfirm={() => void confirmStart()}
+            error={startDialogError || startError}/>
     </ExamPage>;
 }

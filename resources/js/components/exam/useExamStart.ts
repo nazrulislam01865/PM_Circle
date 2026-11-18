@@ -8,8 +8,8 @@ export function useExamStart() {
     const [starting, setStarting] = useState(false);
     const [startError, setStartError] = useState('');
 
-    const startExam = async (options?: { mode: 'focused'; domain: string }) => {
-        if (busy.current) return;
+    const startExam = async (options?: { mode: 'focused'; domain: string } | { selection: 'new' | 'mixed' | 'random' }): Promise<boolean> => {
+        if (busy.current) return false;
         busy.current = true;
         setStarting(true);
         setStartError('');
@@ -28,6 +28,7 @@ export function useExamStart() {
             });
             if (!response.ok) {
                 if (response.status === 429) throw new Error('Too many exam starts. Please try again shortly.');
+                if (response.status === 409) throw new Error('Your available question set has changed. Reopen the start dialog to refresh question coverage.');
                 if (response.status === 419) throw new Error('Your session has expired. Refresh the page and try again.');
                 if (response.status === 403) throw new Error('Your membership does not currently allow this practice exam.');
                 throw new Error('Unable to start the exam. Please try again.');
@@ -39,13 +40,15 @@ export function useExamStart() {
                 throw new Error('Unable to open the exam. Please try again.');
             }
             router.visit(`${next.pathname}${next.search}`);
+            return true;
         } catch (error) {
             setStartError(error instanceof Error ? error.message : 'Unable to start the exam. Please try again.');
+            return false;
         } finally {
             busy.current = false;
             setStarting(false);
         }
     };
 
-    return { startExam, starting, startError };
+    return { startExam, starting, startError, clearStartError: () => setStartError('') };
 }

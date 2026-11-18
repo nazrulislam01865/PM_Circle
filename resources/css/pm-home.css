@@ -167,7 +167,7 @@
     padding: 20px 0 var(--space-6);
 }
 
-.pm-home .pm-pathway-container {
+.pm-home :is(.pm-pathway-container, .pm-home-wide-container) {
     width: min(1480px, calc(100% - 40px));
     margin-inline: auto;
 }
@@ -512,7 +512,7 @@
 }
 
 @media (max-width: 760px) {
-    .pm-home .pm-pathway-container {
+    .pm-home :is(.pm-pathway-container, .pm-home-wide-container) {
         width: calc(100% - 28px);
     }
 

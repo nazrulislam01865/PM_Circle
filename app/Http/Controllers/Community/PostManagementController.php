@@ -4,6 +4,10 @@ namespace App\Http\Controllers\Community;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Community\UpdatePostRequest;
+use App\Domain\Community\Services\PostCheckPolicy;
+use App\Domain\Community\Services\PostCheckQueue;
+use App\Domain\Community\Services\PostCheckMedia;
+use App\Domain\Community\Queries\PostCheckFeed;
 use App\Models\Post;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -28,7 +32,57 @@ final class PostManagementController extends Controller
         ), 404);
     }
 
+    /** Published edits must be checked again before they become visible. */
     public function update(UpdatePostRequest $request, Post $post): RedirectResponse|JsonResponse
+    {
+        app(PostCheckPolicy::class)->assertCanContribute($request->user()->id);
+        if (! config('pm-ai.post_check_enabled', false)) {
+            return $this->updateLegacy($request, $post);
+        }
+        app(PostCheckPolicy::class)->assertOperational();
+        $data = $request->validated();
+        $newPath = $request->hasFile('image')
+            ? $request->file('image')->store('post-check-images', 'local') : null;
+        if ($request->hasFile('image') && ! $newPath) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['image' => 'Unable to save the uploaded image.']);
+        }
+        $oldUrl = $post->getRawOriginal('image_path');
+        try {
+            DB::transaction(function () use ($post, $data, $request, $newPath): void {
+                $locked = Post::query()->whereKey($post->id)->lockForUpdate()->firstOrFail();
+                abort_unless($locked->author_id === $request->user()->id && $locked->status === 'published', 403);
+                $locked->body = trim((string) ($data['body'] ?? ''));
+                if ($newPath) {
+                    $locked->image_path = '/posts/'.$locked->id.'/check-media/'.basename($newPath);
+                } elseif ($request->boolean('remove_image')) {
+                    $locked->image_path = null;
+                }
+                if ($locked->body === '' && ! $locked->image_path) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['body' => 'Add text or an image.']);
+                }
+                $locked->status = 'pending_check';
+                $locked->published_at = null;
+                $locked->check_version = (int) $locked->check_version + 1;
+                $locked->check_reason = null;
+                $locked->check_target = null;
+                $locked->check_category = null;
+                $locked->save();
+                app(PostCheckQueue::class)->dispatch($locked);
+            }, 3);
+        } catch (\Throwable $exception) {
+            if ($newPath) Storage::disk('local')->delete($newPath);
+            throw $exception;
+        }
+        if ($oldUrl && ($newPath || $request->boolean('remove_image'))) {
+            app(PostCheckMedia::class)->delete($oldUrl, $post->id);
+        }
+        return $request->expectsJson()
+            ? response()->json(['body' => $post->fresh()->body, 'image_path' => $post->fresh()->image_path, 'status' => 'pending_check'])
+            : to_route('dashboard')->with('status', 'Checking your updated post.');
+    }
+
+    /** Preserve the pre-check editing path while the AI checker rollout flag is disabled. */
+private function updateLegacy(UpdatePostRequest $request, Post $post): RedirectResponse|JsonResponse
     {
         $data = $request->validated();
         $oldImage = $post->getRawOriginal('image_path');
@@ -64,6 +118,86 @@ final class PostManagementController extends Controller
         return $request->expectsJson()
             ? response()->json(['body' => $post->body, 'image_path' => $post->image_path])
             : back()->with('status', 'Post updated.');
+    }
+
+    /** Lightweight, private polling contract. No public visibility or member details leak. */
+    public function checkFeed(Request $request, PostCheckFeed $feed): JsonResponse
+    {
+        $viewer = $request->user();
+        abort_unless($viewer && $viewer->onboarding_step >= 3, 403);
+        return response()->json($feed->forMember($viewer->id))
+            ->header('Cache-Control', 'private, no-store');
+    }
+
+    /** Retry an unavailable review without approving or exposing the original content. */
+    public function recheck(Request $request, Post $post, PostCheckQueue $queue): JsonResponse
+    {
+        abort_unless($post->author_id === $request->user()->id && $post->status === 'check_error', 404);
+        app(PostCheckPolicy::class)->assertCanContribute($request->user()->id);
+        app(PostCheckPolicy::class)->assertOperational();
+        DB::transaction(function () use ($post, $queue): void {
+            $locked = Post::query()->whereKey($post->id)->lockForUpdate()->firstOrFail();
+            abort_unless($locked->status === 'check_error', 409);
+            $locked->forceFill(['status' => 'pending_check', 'check_version' => $locked->check_version + 1,
+                'check_reason' => null])->save();
+            $queue->dispatch($locked);
+        }, 3);
+        return response()->json(['status' => 'pending_check'], 202);
+    }
+
+    /** The prototype's Edit restricted post -> Post again flow. */
+    public function repost(Request $request, Post $post, PostCheckQueue $queue, PostCheckMedia $media): JsonResponse
+    {
+        abort_unless($post->author_id === $request->user()->id && $post->status === 'restricted', 404);
+        app(PostCheckPolicy::class)->assertCanContribute($request->user()->id);
+        app(PostCheckPolicy::class)->assertOperational();
+        $data = $request->validate([
+            'body' => ['nullable', 'string', 'max:5000'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'remove_image' => ['sometimes', 'boolean'],
+        ]);
+        $newText = trim((string) ($data['body'] ?? $post->body));
+        $changedText = $newText !== $post->body;
+        $changedImage = $request->hasFile('image') || $request->boolean('remove_image');
+        if ((! $changedText && ! $changedImage)
+            || (in_array($post->check_target, ['text', 'both'], true) && ! $changedText)
+            || (in_array($post->check_target, ['image', 'both'], true) && ! $changedImage)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'body' => 'Change the content identified in the restriction reason before reposting.',
+            ]);
+        }
+        $newPath = $request->hasFile('image')
+            ? $request->file('image')->store('post-check-images', 'local') : null;
+        if ($request->hasFile('image') && ! $newPath) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['image' => 'Unable to store the image.']);
+        }
+        $oldUrl = $post->getRawOriginal('image_path');
+        try {
+            DB::transaction(function () use ($post, $queue, $newText, $newPath, $request): void {
+                $locked = Post::query()->whereKey($post->id)->lockForUpdate()->firstOrFail();
+                abort_unless($locked->status === 'restricted' && $locked->author_id === $request->user()->id, 409);
+                $locked->body = $newText;
+                if ($newPath) {
+                    $locked->image_path = '/posts/'.$locked->id.'/check-media/'.basename($newPath);
+                } elseif ($request->boolean('remove_image')) {
+                    $locked->image_path = null;
+                }
+                if ($newText === '' && ! $locked->image_path) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['body' => 'Add text or an image.']);
+                }
+                $locked->forceFill([
+                    'status' => 'pending_check', 'check_version' => $locked->check_version + 1,
+                    'check_category' => null, 'check_target' => null, 'check_reason' => null,
+                    'restricted_at' => null,
+                ])->save();
+                $queue->dispatch($locked);
+            }, 3);
+        } catch (\Throwable $exception) {
+            if ($newPath) Storage::disk('local')->delete($newPath);
+            throw $exception;
+        }
+        if ($oldUrl && $changedImage) $media->delete($oldUrl, $post->id);
+        return response()->json(['status' => 'pending_check'], 202);
     }
 
     public function destroy(Request $request, Post $post): RedirectResponse|JsonResponse

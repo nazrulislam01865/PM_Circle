@@ -22,6 +22,7 @@ import { useState, type KeyboardEvent, type MouseEvent, type ReactNode } from 'r
 import { Brand } from '@/components/pm/Brand';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import type { DashboardShellData } from '@/types/dashboard';
+import { memberNavigationForUrl } from '@/components/dashboard/memberNavigation';
 
 type NavigationLink = { href: string; label: string };
 
@@ -73,6 +74,8 @@ export function MemberHomeHeader({ dashboard, active, actions, brandHref, joinLa
     };
     const user = page.props.auth?.user;
     const isMember = Boolean(user && !user.is_admin && (user.onboarding_step ?? 0) >= 3);
+    const memberMode = isMember && Boolean(dashboard);
+    const memberNav = memberNavigationForUrl(page.url);
     const pathname = active ?? page.url.split('?')[0].split('#')[0];
     const isHome = pathname === '/dashboard' || pathname === '/';
     const isDaily = pathname.startsWith('/dashboard/daily-challenge') || pathname === '/daily-challenge' || pathname.startsWith('/scenarios/');
@@ -94,7 +97,24 @@ export function MemberHomeHeader({ dashboard, active, actions, brandHref, joinLa
     return <header className={`pm-member-home-header pm-site-header${isMember ? '' : ' is-guest'}${!user ? ' has-guest-actions' : ''}${mobileOpen ? ' is-navigation-open' : ''}`}>
         <div className="pm-member-home-header-inner">
             <div className="pm-member-home-brand"><Brand href={brandHref ?? (isMember ? '/dashboard' : '/')} /></div>
-            <nav id="pm-member-home-navigation" className={`pm-member-home-nav${mobileOpen ? ' is-open' : ''}`} aria-label="Main navigation">
+            <nav id="pm-member-home-navigation" className={`pm-member-home-nav${mobileOpen ? ' is-open' : ''}`} aria-label={memberMode ? "Primary navigation" : "Main navigation"}>
+                {memberMode ? <>
+                    <Link href="/dashboard" className={`${navClass(memberNav.section === 'home')} pm-member-home-nav-home`} aria-current={memberNav.section === 'home' ? 'page' : undefined} onClick={close}>
+                        <Home className="pm-nav-icon" aria-hidden="true"/>Home
+                    </Link>
+                    <Link href="/dashboard/daily-challenge" className={navClass(memberNav.section === 'challenge')} aria-current={memberNav.section === 'challenge' ? 'page' : undefined} onClick={close}>
+                        <CalendarCheck2 className="pm-nav-icon" aria-hidden="true"/>Challenge
+                    </Link>
+                    <Link href="/dashboard?view=community" className={navClass(memberNav.section === 'community')} aria-current={memberNav.section === 'community' ? 'page' : undefined} onClick={close}>
+                        <MessagesSquare className="pm-nav-icon" aria-hidden="true"/>Community
+                    </Link>
+                    <Link href="/dashboard/learning" className={navClass(memberNav.section === 'learn')} aria-current={memberNav.section === 'learn' ? 'page' : undefined} onClick={close}>
+                        <BookOpen className="pm-nav-icon" aria-hidden="true"/>Learn
+                    </Link>
+                    <Link href="/exams/pmp" className={`${navClass(memberNav.section === 'exams')} pm-member-primary-exams`} aria-current={memberNav.section === 'exams' ? 'page' : undefined} onClick={close}>
+                        <ClipboardCheck className="pm-nav-icon" aria-hidden="true"/>Exams
+                    </Link>
+                </> : <>
                 <Link href={isMember ? '/dashboard' : '/'} className={`${navClass(isHome)} pm-member-home-nav-home`} aria-label="Home" title="Home" aria-current={isHome ? 'page' : undefined} onClick={close}>
                     <Home className="pm-nav-icon" aria-hidden="true"/>
                 </Link>
@@ -130,6 +150,7 @@ export function MemberHomeHeader({ dashboard, active, actions, brandHref, joinLa
                         <span className="pm-member-home-disabled-item" aria-disabled="true" title="BA Simulator is coming soon"><ChartNoAxesColumnIncreasing aria-hidden="true"/>BA Simulator</span>
                     </div>
                 </details>
+                </>}
                 {page.props.rewardPromotion && <a className="pm-header-profile-reward-badge" href={pathname === '/' ? '#pm-pathway-exams-title' : '/#pm-pathway-exams-title'} aria-label={`${page.props.rewardPromotion.discountLabel} profile completion reward — view exam offers`} onClick={close}><Gift className="pm-nav-icon" aria-hidden="true"/>{page.props.rewardPromotion.discountLabel}</a>}
                 <div className="pm-member-home-mobile-utilities" aria-label="More links">
                     {careers && <><Link href="/careers" onClick={close}><BriefcaseBusiness aria-hidden="true"/>Careers</Link><Link href="/dashboard/features/career" onClick={close}><BookOpen aria-hidden="true"/>Career Tools</Link></>}

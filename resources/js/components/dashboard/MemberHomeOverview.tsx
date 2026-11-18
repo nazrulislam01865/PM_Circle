@@ -67,7 +67,7 @@ export function MemberHomeOverview({ dashboard }: { dashboard: DashboardData }) 
                 <div><strong>{overview.contribution.replies}</strong><span>Replies</span></div>
                 <div><strong>{overview.contribution.responses}</strong><span>Responses</span></div>
             </div>
-            <Link href="/dashboard/features/insights" className="pm-member-overview-link">View activity <ArrowRight size={17} aria-hidden="true" /></Link>
+            <Link href="/activity-log" className="pm-member-overview-link">View activity <ArrowRight size={17} aria-hidden="true" /></Link>
         </section>
     </>;
 }

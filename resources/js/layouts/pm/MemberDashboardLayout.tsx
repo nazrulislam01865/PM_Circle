@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { MemberHomeHeader } from '@/components/dashboard/MemberHomeHeader';
+import { MemberSecondaryNavigation } from '@/components/dashboard/MemberSecondaryNavigation';
 import type { DashboardShellData } from '@/types/dashboard';
 import { SiteFooter } from '@/components/pm/SiteFooter';
 
@@ -12,6 +13,7 @@ export function MemberDashboardLayout({ dashboard, children, variant = 'dashboar
 }) {
     return <div className={`pm-app pm-dashboard pm-member-shell${variant === 'member-home' ? ' pm-member-home' : ''}${variant === 'learning' || variant === 'learning-catalog' ? ' pm-learning-view' : ''}${variant === 'learning-catalog' ? ' pm-learning-catalog-view' : ''}`}>
         <MemberHomeHeader dashboard={dashboard} />
+        <MemberSecondaryNavigation />
         <div className="pm-dashboard-layout">
             <div className="pm-dash-workspace">
                 <main id="main-content" className="pm-dash-body">{children}</main>

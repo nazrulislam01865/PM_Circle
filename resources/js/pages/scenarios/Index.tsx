@@ -67,7 +67,7 @@ export default function Index({ scenarios, topics, statusCounts, todaySlug, filt
                     <div><h1>Scenario Library</h1><p>Real project scenarios to think, decide, and learn together.</p></div>
                     {todaySlug && <Link className="pm-challenge-today-link" href={`${memberView ? libraryRoot : '/scenarios'}/${encodeURIComponent(todaySlug)}`}>Today's scenario <ArrowRight size={18} aria-hidden="true" /></Link>}
                 </div>
-                <div className="pm-challenge-tabs" role="group" aria-label="Scenario views">
+                <div className="pm-challenge-tabs pm-member-tertiary-sticky" role="group" aria-label="Scenario views">
                     {tabs.map(({ id, label }) => <button key={id} type="button" className={`pm-challenge-tab ${filters.tab === id ? 'is-active' : ''}`} aria-pressed={filters.tab === id} onClick={() => navigate({ tab: id, status: 'all' })}>
                         {label}
                     </button>)}

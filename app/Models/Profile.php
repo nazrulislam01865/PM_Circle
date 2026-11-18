@@ -28,12 +28,14 @@ class Profile extends Model
         'open_to_opportunities',
         'resume_employer_visibility',
         'contact_visibility',
+        'field_visibility',
         'linkedin_url',
         'languages',
     ];
 
     protected $casts = [
         'skills' => 'array',
+        'field_visibility' => 'array',
         'languages' => 'array',
         'open_to_opportunities' => 'boolean',
         'resume_employer_visibility' => 'boolean',

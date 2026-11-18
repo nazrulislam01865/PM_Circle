@@ -1,5 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { Bell, ChevronDown, LogOut, Menu, Search, Settings2, UserRound } from 'lucide-react';
+import { Bell, ChevronDown, History, LogOut, Menu, Search, Settings2, UserRound } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
 import { DashboardAvatar } from '@/components/dashboard/DashboardAvatar';
 
@@ -30,7 +30,7 @@ export function DashboardHeader({ name, avatar, isDemo, onMenu, compact = false 
         <div className="pm-dash-header-right">
             <Link href="/dashboard/features/notifications" aria-label="Notifications" className="pm-dash-bell"><Bell size={23}/>{isDemo && <span aria-hidden="true"/>}</Link>
             <button type="button" className="pm-dash-account-button" onClick={() => setMenuOpen(value => !value)} aria-haspopup="menu" aria-expanded={menuOpen} aria-label="Account menu"><DashboardAvatar name={name} size={compact ? 32 : 40} demo={isDemo} src={avatar}/><ChevronDown size={17}/></button>
-            {menuOpen && <div className="pm-dash-account-menu" role="menu"><Link href="/settings/profile" role="menuitem" onClick={() => setMenuOpen(false)}><UserRound size={17}/> My profile</Link><Link href="/settings/profile" role="menuitem" onClick={() => setMenuOpen(false)}><Settings2 size={17}/> Settings</Link><Link href="/logout" method="post" as="button" role="menuitem" onClick={() => setMenuOpen(false)}><LogOut size={17}/> Log out</Link></div>}
+            {menuOpen && <div className="pm-dash-account-menu" role="menu"><Link href="/settings/profile" role="menuitem" onClick={() => setMenuOpen(false)}><UserRound size={17}/> My profile</Link><Link href="/activity-log" role="menuitem" onClick={() => setMenuOpen(false)}><History size={17}/> Activity Log</Link><Link href="/settings/profile" role="menuitem" onClick={() => setMenuOpen(false)}><Settings2 size={17}/> Settings</Link><Link href="/logout" method="post" as="button" role="menuitem" onClick={() => setMenuOpen(false)}><LogOut size={17}/> Log out</Link></div>}
         </div>
     </div>;
 }

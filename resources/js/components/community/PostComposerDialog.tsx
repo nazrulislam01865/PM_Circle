@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { PMDropdown } from '@/components/pm/PMDropdown';
 import type { DashboardPlan } from '@/types/dashboard';
 import { postComposerTypes, type PostComposerTopic } from './postComposerTypes';
+import type { PostCheckPreview } from './PostCheckCard';
 
 export type EditablePost = { id: number; body: string; image_path?: string | null; topic?: string; is_anonymous?: boolean; visibility?: string };
 const emojiList = ['🙂', '😊', '👏', '🙌', '🎉', '💡', '👍', '🚀', '❤️', '🤝', '💬', '✅'];
@@ -29,13 +30,15 @@ function editorText(root: HTMLElement): string {
     return Array.from(root.childNodes).map(walk).join('').replace(/\n{3,}/g, '\n\n').trim();
 }
 
-export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onUpdated, initialTopic = 'From my project' }: {
+export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onUpdated, initialTopic = 'From my project', onSubmissionStateChange, onSubmissionError }: {
     open: boolean;
     onClose: () => void;
     plan?: DashboardPlan;
     editPost?: EditablePost | null;
     onUpdated?: (updated: { body: string; image_path: string | null }) => void;
     initialTopic?: PostComposerTopic;
+    onSubmissionStateChange?: (post: PostCheckPreview | null) => void;
+    onSubmissionError?: () => void;
 }) {
     const { auth } = usePage<{ auth?: { user?: { name: string; avatar_path?: string | null } | null } }>().props;
     const name = auth?.user?.name ?? 'Member';
@@ -52,11 +55,17 @@ export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onU
     const [error, setError] = useState('');
     const editor = useRef<HTMLDivElement>(null);
     const fileInput = useRef<HTMLInputElement>(null);
+    const restoreDraftOnError = useRef(false);
     const editing = Boolean(editPost);
     const canAnonymous = plan === 'premium' || plan === 'pro';
 
     useEffect(() => {
         if (!open) return;
+        if (restoreDraftOnError.current) {
+            restoreDraftOnError.current = false;
+            setBusy(false);
+            return;
+        }
         setIdentity(editPost?.is_anonymous ? 'anonymous' : 'named');
         setAudience(editPost?.visibility === 'members' ? 'members' : 'public');
         setTopic(editPost?.topic ?? initialTopic);
@@ -125,8 +134,30 @@ export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onU
             if (topic === 'Poll') pollOptions.forEach((option, index) => payload.append(`poll_options[${index}]`, option.trim()));
             router.post('/posts', payload, {
                 preserveScroll: true, forceFormData: true,
-                onSuccess: () => { setBusy(false); onClose(); },
-                onError: errors => { setBusy(false); setError(Object.values(errors)[0] ?? 'Unable to publish your post.'); },
+                onStart: () => {
+                    if (!onSubmissionStateChange) return;
+                    onSubmissionStateChange({
+                        id: -1, body: text, image_path: preview, topic,
+                        status: 'pending_check', is_anonymous: identity === 'anonymous',
+                        check_reason: null, check_target: null, check_category: null,
+                        created_at: new Date().toISOString(),
+                    });
+                    // Reveal the existing feed progress card while the request is in flight.
+                    restoreDraftOnError.current = true;
+                    onClose();
+                },
+                onSuccess: () => {
+                    restoreDraftOnError.current = false;
+                    onSubmissionStateChange?.(null);
+                    setBusy(false);
+                    onClose();
+                },
+                onError: errors => {
+                    onSubmissionStateChange?.(null);
+                    setBusy(false);
+                    setError(Object.values(errors)[0] ?? 'Unable to publish your post.');
+                    if (onSubmissionStateChange) onSubmissionError?.();
+                },
                 onFinish: () => setBusy(false),
             });
         }
@@ -145,7 +176,7 @@ export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onU
 
     return <Dialog open={open} onOpenChange={next => { if (!next) close(); }}>
         <DialogContent className="pm-compose-dialog pm-compose-prototype" aria-describedby="pm-compose-help" onEscapeKeyDown={event => { if (busy) event.preventDefault(); }} onInteractOutside={event => { if (busy) event.preventDefault(); }}
-            onOpenAutoFocus={event => { event.preventDefault(); if (editor.current) { editor.current.textContent = editPost?.body ?? ''; editor.current.focus(); } }}>
+            onOpenAutoFocus={event => { event.preventDefault(); if (editor.current) { editor.current.textContent = editPost?.body ?? body; editor.current.focus(); } }}>
             <DialogTitle className="pm-compose-title">{editing ? 'Edit post' : 'Create a post'}</DialogTitle>
             <DialogDescription id="pm-compose-help" className="pm-compose-sr-description">Share your experience with the community. Only your text and selected audience are shared.</DialogDescription>
             <div className="pm-compose-identity-bar">

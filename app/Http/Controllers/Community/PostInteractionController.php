@@ -145,7 +145,8 @@ class PostInteractionController extends Controller
                 if ($checking) {
                     DB::table('comment_check_runs')->insert([
                         'comment_id' => $comment->id, 'status' => 'queued',
-                        'model' => 'gpt-5-nano', 'created_at' => now(), 'updated_at' => now(),
+                        'model' => \App\Domain\AI\Services\PostContentCheckService::selectedModel(),
+                        'created_at' => now(), 'updated_at' => now(),
                     ]);
                     DB::afterCommit(fn () => CheckCommunityComment::dispatch($comment->id)
                         ->onQueue(config('pm-ai.post_check_queue', 'ai-editorial')));

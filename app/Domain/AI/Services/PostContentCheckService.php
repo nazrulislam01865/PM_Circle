@@ -6,10 +6,19 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
-/** One centrally controlled GPT-5-nano classifier for community posts, comments and replies. */
+/** Dedicated post/comment checker; Responses or the opt-in Omni Moderations API. */
 final class PostContentCheckService
 {
     public const MODEL = 'gpt-5-nano';
+
+    public static function selectedModel(): string
+    {
+        return match (config('pm-ai.post_check_provider', 'responses')) {
+            'responses' => self::MODEL,
+            'omni' => OmniPostModerationService::MODEL,
+            default => throw new RuntimeException('POST_CHECK_INVALID_PROVIDER'),
+        };
+    }
 
     /**
      * Parent text, post context and heuristic signals are evidence, never extra text to punish.
@@ -22,13 +31,18 @@ final class PostContentCheckService
         if (! config('pm-ai.enabled') || ! config('pm-ai.post_check_enabled') || ! is_string($key) || $key === '') {
             throw new RuntimeException('POST_CHECK_NOT_CONFIGURED');
         }
-        if (! in_array(self::MODEL, config('pm-ai.allowed_models', []), true)) {
+        $model = self::selectedModel();
+        if ($model === self::MODEL && ! in_array(self::MODEL, config('pm-ai.allowed_models', []), true)) {
             throw new RuntimeException('MODEL_NOT_ALLOWLISTED');
         }
         if ($imageBytes !== null && ($mime === null
             || ! in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true)
             || strlen($imageBytes) > 5 * 1024 * 1024)) {
             throw new RuntimeException('POST_CHECK_INVALID_IMAGE');
+        }
+
+        if ($model === OmniPostModerationService::MODEL) {
+            return app(OmniPostModerationService::class)->inspect($body, $imageBytes, $mime, $key, $context);
         }
 
         $moderation = null;

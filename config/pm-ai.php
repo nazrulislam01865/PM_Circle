@@ -9,8 +9,10 @@ return [
     'api_key' => env('OPENAI_API_KEY'),
     // Dedicated restricted key for Daily Challenge only. Never expose it through an admin response.
     'daily_challenge_api_key' => env('OPENAI_DAILY_CHALLENGE_API_KEY'),
-    // Independent Responses-only GPT-5-nano key for community post checking.
+    // Dedicated key for community posts, comments and replies; never shared with other AI features.
     'post_check_api_key' => env('OPENAI_POST_CHECK_API_KEY'),
+    // Opt in to the Moderations API without changing existing Responses-based installations.
+    'post_check_provider' => env('PM_AI_POST_CHECK_PROVIDER', 'responses'),
     'post_check_enabled' => (bool) env('PM_AI_POST_CHECK_ENABLED', false),
     // Optional multimodal preflight: requires Moderations -> Write on the dedicated post key.
     'post_check_external_moderation' => (bool) env('PM_AI_POST_CHECK_EXTERNAL_MODERATION', false),

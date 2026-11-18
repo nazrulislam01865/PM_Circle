@@ -24,18 +24,22 @@ final class PostCheckBudget
             } elseif (! in_array($run->status, ['queued', 'failed'], true)) {
                 return false;
             }
-            $limit = (float) config('pm-ai.post_check_daily_budget_usd', 0);
-            $start = Carbon::parse($day, 'UTC')->startOfDay();
-            $end = $start->copy()->addDay();
-            $spent = 0.0;
-            foreach (['post_check_runs', 'comment_check_runs'] as $source) {
-                $spent += (float) DB::table($source)
-                    ->where('created_at', '>=', $start)->where('created_at', '<', $end)
-                    ->selectRaw('SUM(CASE WHEN status = ? THEN 0.02 ELSE COALESCE(cost_usd, 0) END) AS total', ['running'])
-                    ->value('total');
-            }
-            if ($limit < 0.02 || $spent + 0.02 > $limit + 0.00000001) {
-                throw new RuntimeException('POST_CHECK_BUDGET_EXCEEDED');
+            // OpenAI's Omni Moderations API is free; do not charge an artificial
+            // $0.02 reservation or block checking because a Responses budget is zero.
+            if (config('pm-ai.post_check_provider', 'responses') === 'responses') {
+                $limit = (float) config('pm-ai.post_check_daily_budget_usd', 0);
+                $start = Carbon::parse($day, 'UTC')->startOfDay();
+                $end = $start->copy()->addDay();
+                $spent = 0.0;
+                foreach (['post_check_runs', 'comment_check_runs'] as $source) {
+                    $spent += (float) DB::table($source)
+                        ->where('created_at', '>=', $start)->where('created_at', '<', $end)
+                        ->selectRaw('SUM(CASE WHEN status = ? THEN 0.02 ELSE COALESCE(cost_usd, 0) END) AS total', ['running'])
+                        ->value('total');
+                }
+                if ($limit < 0.02 || $spent + 0.02 > $limit + 0.00000001) {
+                    throw new RuntimeException('POST_CHECK_BUDGET_EXCEEDED');
+                }
             }
             return DB::table($table)->where('id', $id)->where('status', $run->status)
                 ->when($run->status === 'running', fn ($query) => $query->where('updated_at', '<=', now()->subMinutes(3)))

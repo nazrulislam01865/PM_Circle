@@ -19,7 +19,11 @@ final class PostCheckPolicy
     {
         if (! config('pm-ai.enabled') || ! config('pm-ai.post_check_enabled')
             || ! filled(config('pm-ai.post_check_api_key'))
-            || (float) config('pm-ai.post_check_daily_budget_usd', 0) < 0.02) {
+            || ! in_array(config('pm-ai.post_check_provider', 'responses'), ['responses', 'omni'], true)
+            || (config('pm-ai.post_check_provider', 'responses') === 'responses'
+                && ((float) config('pm-ai.post_check_daily_budget_usd', 0) < 0.02
+                    || ! in_array(\App\Domain\AI\Services\PostContentCheckService::MODEL,
+                        config('pm-ai.allowed_models', []), true)))) {
             throw ValidationException::withMessages([
                 'body' => 'Post checking is temporarily unavailable. Please try again later.',
             ]);

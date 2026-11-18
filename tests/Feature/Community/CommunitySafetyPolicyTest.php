@@ -30,6 +30,7 @@ final class CommunitySafetyPolicyTest extends TestCase
         config()->set('pm-ai.enabled', true);
         config()->set('pm-ai.post_check_enabled', true);
         config()->set('pm-ai.post_check_external_moderation', false);
+        config()->set('pm-ai.post_check_provider', 'responses');
         config()->set('pm-ai.post_check_api_key', 'post-check-test-key');
         config()->set('pm-ai.post_check_daily_budget_usd', 5);
         config()->set('pm-ai.allowed_models', ['gpt-5-nano']);

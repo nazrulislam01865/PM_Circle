@@ -5,9 +5,10 @@ import { PostComposerCard } from '@/components/community/PostComposerCard';
 import { PostComposerDialog } from '@/components/community/PostComposerDialog';
 import type { PostComposerTopic } from '@/components/community/postComposerTypes';
 import type { DashboardPlan } from '@/types/dashboard';
+import type { PostCheckPreview } from '@/components/community/PostCheckCard';
 
 /** Connect the shared composer card to the member identity and post editor. */
-export function DashboardComposer({ name, plan, demo }: { name: string; plan: DashboardPlan; demo: boolean }) {
+export function DashboardComposer({ name, plan, demo, onSubmissionStateChange }: { name: string; plan: DashboardPlan; demo: boolean; onSubmissionStateChange: (post: PostCheckPreview | null) => void }) {
     const { auth } = usePage<{ auth?: { user?: { avatar_path?: string | null } | null } }>().props;
     const [open, setOpen] = useState(false);
     const [topic, setTopic] = useState<PostComposerTopic>('From my project');
@@ -21,6 +22,7 @@ export function DashboardComposer({ name, plan, demo }: { name: string; plan: Da
             selectedTopic={topic}
             onCompose={compose}
         />
-        <PostComposerDialog open={open} onClose={() => setOpen(false)} plan={plan} initialTopic={topic}/>
+        <PostComposerDialog open={open} onClose={() => setOpen(false)} plan={plan} initialTopic={topic}
+            onSubmissionStateChange={onSubmissionStateChange} onSubmissionError={() => setOpen(true)}/>
     </>;
 }

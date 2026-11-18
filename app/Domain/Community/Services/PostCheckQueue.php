@@ -3,6 +3,7 @@
 namespace App\Domain\Community\Services;
 
 use App\Domain\AI\Jobs\CheckCommunityPost;
+use App\Domain\AI\Services\PostContentCheckService;
 use App\Models\Post;
 use Illuminate\Support\Facades\DB;
 
@@ -13,7 +14,7 @@ final class PostCheckQueue
     {
         DB::table('post_check_runs')->insertOrIgnore([
             'post_id' => $post->id, 'check_version' => $post->check_version,
-            'status' => 'queued', 'model' => 'gpt-5-nano',
+            'status' => 'queued', 'model' => PostContentCheckService::selectedModel(),
             'created_at' => now(), 'updated_at' => now(),
         ]);
         DB::afterCommit(fn () => CheckCommunityPost::dispatch($post->id, $post->check_version)

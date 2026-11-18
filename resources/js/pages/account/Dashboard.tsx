@@ -1,13 +1,15 @@
 import { Head } from '@inertiajs/react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DashboardComposer } from '@/components/dashboard/DashboardComposer';
 import { DashboardFeed } from '@/components/dashboard/DashboardFeed';
+import type { PostCheckPreview } from '@/components/community/PostCheckCard';
 import { MemberHomeOverview } from '@/components/dashboard/MemberHomeOverview';
 import { MemberDashboardLayout } from '@/layouts/pm/MemberDashboardLayout';
 import type { DashboardData } from '@/types/dashboard';
 
 export default function Dashboard({ dashboard, flashStatus }: { dashboard: DashboardData; flashStatus?: string | null }) {
     const overviewRef = useRef<HTMLElement>(null);
+    const [submittingPost, setSubmittingPost] = useState<PostCheckPreview | null>(null);
 
     useEffect(() => {
         const overview = overviewRef.current;
@@ -80,8 +82,8 @@ export default function Dashboard({ dashboard, flashStatus }: { dashboard: Dashb
         <div className="pm-dash-columns"><div className="pm-dash-center">
             <h1 className="sr-only">Member dashboard</h1>
             {flashStatus && <p role="status" className="pm-dashboard-flash">{flashStatus}</p>}
-            <DashboardComposer name={dashboard.member.name} plan={dashboard.isPreview ? 'free' : dashboard.plan} demo={dashboard.isDemo} />
-            <DashboardFeed dashboard={dashboard} />
+            <DashboardComposer name={dashboard.member.name} plan={dashboard.isPreview ? 'free' : dashboard.plan} demo={dashboard.isDemo} onSubmissionStateChange={setSubmittingPost} />
+            <DashboardFeed dashboard={dashboard} submittingPost={submittingPost} />
         </div><aside ref={overviewRef} className="pm-dash-right" aria-label="Member overview">
             <MemberHomeOverview dashboard={dashboard}/>
         </aside></div>

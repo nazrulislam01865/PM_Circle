@@ -59,6 +59,18 @@ class HandleInertiaRequests extends Middleware
                     'avatar' => $request->user()->is_admin ? null : $request->user()->profile?->avatar_path,
                 ] : null,
             ],
+            'notificationRealtime' => fn () => $request->user() && ! $request->user()->is_admin ? [
+                'pusher' => config('broadcasting.connections.pusher.key') ? [
+                    'key' => config('broadcasting.connections.pusher.key'),
+                    'cluster' => config('broadcasting.connections.pusher.options.cluster'),
+                ] : null,
+                'reverb' => config('broadcasting.connections.reverb.key') ? [
+                    'key' => config('broadcasting.connections.reverb.key'),
+                    'host' => config('notifications.reverb_public_host'),
+                    'port' => config('notifications.reverb_public_port'),
+                    'secure' => config('notifications.reverb_public_secure'),
+                ] : null,
+            ] : null,
             'memberShell' => fn () => ! $siteLayout && $request->user() && $request->user()->is_admin !== true ? app(\App\Domain\Dashboard\Queries\MemberShell::class)->forMember($request->user()) : null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

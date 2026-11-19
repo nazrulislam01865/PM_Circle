@@ -18,6 +18,14 @@ return [
     'post_check_external_moderation' => (bool) env('PM_AI_POST_CHECK_EXTERNAL_MODERATION', false),
     'post_check_daily_budget_usd' => (float) env('PM_AI_POST_CHECK_DAILY_BUDGET_USD', 0),
     'post_check_queue' => env('PM_AI_POST_CHECK_QUEUE', 'ai-editorial'),
+    // Resume extraction is an independent opt-in feature. Leave off until the dedicated key/model are approved.
+    'resume_extract_enabled' => (bool) env('PM_AI_RESUME_EXTRACT_ENABLED', false),
+    'resume_extract_api_key' => env('OPENAI_RESUME_EXTRACT_API_KEY'),
+    'resume_extract_model' => env('PM_AI_RESUME_EXTRACT_MODEL'),
+    'resume_extract_queue' => env('PM_AI_RESUME_EXTRACT_QUEUE', 'ai-interactive'),
+    'resume_extract_daily_limit' => min(20, max(1, (int) env('PM_AI_RESUME_EXTRACT_DAILY_LIMIT', 3))),
+    'resume_extract_timeout_seconds' => min(45, max(20, (int) env('PM_AI_RESUME_EXTRACT_TIMEOUT_SECONDS', 45))),
+    'resume_extract_max_output_tokens' => min(10000, max(2000, (int) env('PM_AI_RESUME_EXTRACT_MAX_OUTPUT_TOKENS', 6000))),
     'daily_challenge_reasoning_effort' => 'minimal',
     // Local debugging ONLY: permit generated editorial challenges with a Responses-only key.
     // Never skips moderation for member-submitted answers or in deployed environments.

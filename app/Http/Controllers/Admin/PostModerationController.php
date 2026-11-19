@@ -92,7 +92,11 @@ final class PostModerationController extends Controller
             $locked->checked_at = now();
             $locked->check_reason = $data['decision'] === 'approve' ? null
                 : ($locked->check_reason ?: 'Restricted after administrator review.');
-            if ($data['decision'] === 'approve') EngagementStats::applyComment($locked->post_id, 1);
+            if ($data['decision'] === 'approve') {
+                EngagementStats::applyComment($locked->post_id, 1);
+                DB::afterCommit(static fn () => app(\App\Domain\Notifications\ActivityNotifier::class)
+                    ->forComment($locked));
+            }
             $locked->save();
             // Administrator rejection is a moderation action, not an AI-confirmed strike.
         }, 3);

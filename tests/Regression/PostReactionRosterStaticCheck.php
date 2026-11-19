@@ -14,6 +14,7 @@ $assert = static function (bool $condition, string $label): void {
 $route = $read('routes/web.php');
 $controller = $read('app/Http/Controllers/Community/PostInteractionController.php');
 $query = $read('app/Domain/Community/Queries/PostReactionSummary.php');
+$postController = $read('app/Http/Controllers/Community/PostController.php');
 $feed = $read('app/Domain/Community/Queries/FeedQuery.php');
 $card = $read('resources/js/components/community/PostCard.tsx');
 $actions = $read('resources/js/components/community/PostEngagementActions.tsx');
@@ -30,6 +31,11 @@ $assert(str_contains($controller, "->join('users as users'")
     && str_contains($controller, "->leftJoin('profiles as profile'")
     && str_contains($controller, "'profile_url' => \$publicProfile ?")
     && str_contains($controller, "'avatar_url' => \$publicProfile ?"), 'Real reactor names, privacy-safe avatars and profile links');
+$assert(str_contains($postController, "foreach (['comments', 'reactions', 'likes', 'loves'] as \$label)")
+    && str_contains($postController, "'comments' => 'comments_count'")
+    && str_contains($postController, "'likes' => 'like_count'")
+    && str_contains($postController, "'loves' => 'love_count'"),
+    'Post detail engagement counters use string labels with the existing stored columns');
 $assert(str_contains($feed, 'PostReactionSummary::attach($posts)')
     && str_contains($query, "->groupBy('post_id', 'type')")
     && str_contains($query, 'EngagementStats::readsEnabled()'), 'Seven breakdown counts batched without N+1');

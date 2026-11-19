@@ -77,6 +77,8 @@ final class CheckCommunityComment implements ShouldQueue
                     $locked->check_status = 'approved';
                     $locked->check_reason = null;
                     EngagementStats::applyComment($locked->post_id, 1);
+                    DB::afterCommit(static fn () => app(\App\Domain\Notifications\ActivityNotifier::class)
+                        ->forComment($locked));
                 }
                 $locked->checked_at = now();
                 $locked->save();

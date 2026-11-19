@@ -37,6 +37,12 @@ final class PostManagementController extends Controller
     {
         app(PostCheckPolicy::class)->assertCanContribute($request->user()->id);
         if (! config('pm-ai.post_check_enabled', false)) {
+            if ($post->is_anonymous) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'body' => 'Anonymous posting is temporarily unavailable while AI checking is disabled.',
+                ]);
+            }
+
             return $this->updateLegacy($request, $post);
         }
         app(PostCheckPolicy::class)->assertOperational();

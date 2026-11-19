@@ -6,7 +6,8 @@
 
 .pm-profile-page {
     width: 100%;
-    max-width: 1700px;
+    /* The member shell owns the responsive content width on every profile tab. */
+    max-width: var(--pm-member-page-max-width);
     margin: 0 auto;
     padding: 0 0 48px;
     min-width: 0;
@@ -1044,4 +1045,53 @@
 @media (max-width: 700px) {
     .pm-profile-section-toggle { padding: var(--pm-control-padding-14px) var(--space-4); min-height: var(--pm-control-dimension-54px); }
     .pm-profile-section-trailing span { display: none; }
+}
+
+/* Read-only owner overview: reuse profile cards and existing design tokens. */
+.pm-profile-page .pm-overview-field-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3) var(--space-4);
+    margin: 0;
+}
+.pm-profile-page .pm-overview-field { min-width: 0; }
+.pm-profile-page .pm-overview-field dt {
+    font-size: var(--text-xs);
+    line-height: var(--line-xs);
+    color: var(--muted);
+    margin-bottom: var(--space-1);
+}
+.pm-profile-page .pm-overview-field dd {
+    margin: 0;
+    font-size: var(--text-ui);
+    line-height: var(--line-ui);
+    color: var(--ink);
+    overflow-wrap: anywhere;
+    white-space: pre-line;
+}
+.pm-profile-page .pm-overview-field-link { color: var(--primary); text-decoration: underline; }
+.pm-profile-page .pm-overview-records { display: grid; gap: var(--space-3); }
+.pm-profile-page .pm-overview-record {
+    padding: var(--space-3);
+    background: var(--canvas);
+    border: 1px solid var(--divider);
+    border-radius: var(--radius-control);
+}
+.pm-profile-page .pm-overview-record-heading { display: flex; gap: var(--space-3); align-items: center; margin-bottom: var(--space-3); }
+.pm-profile-page .pm-overview-record-name { min-width: 0; }
+.pm-profile-page .pm-overview-record-heading h4 { font-size: var(--text-ui); font-weight: var(--bold); color: var(--ink); margin: 0; }
+.pm-profile-page .pm-overview-about { margin: 0 0 var(--space-3); font-size: var(--text-ui); line-height: var(--line-body); white-space: pre-line; }
+.pm-profile-page .pm-overview-skills-title { font-size: var(--text-sm); font-weight: var(--semibold); color: var(--ink); margin-bottom: var(--space-2); }
+.pm-profile-page .pm-overview-skills-title ~ .pm-overview-field-grid { margin-top: var(--space-3); }
+.pm-profile-page .pm-overview-private-note { font-size: var(--text-sm); color: var(--muted); margin: 0 0 var(--space-3); }
+.pm-profile-page .pm-card-header-row .pm-btn-ghost { display: inline-flex; align-items: center; gap: var(--space-1); }
+@media (max-width: 42rem) {
+    .pm-profile-page .pm-overview-field-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+.pm-profile-page .pm-overview-records > .pm-project-card { min-width: 0; }
+.pm-profile-page .pm-overview-work-link { align-self: flex-start; margin-top: var(--space-3); }
+@media (max-width: 42rem) {
+    .pm-profile-page .pm-overview-records > .pm-project-card { grid-template-columns: minmax(0, 1fr); }
+    .pm-profile-page .pm-overview-records .pm-project-thumb { height: 96px; }
 }

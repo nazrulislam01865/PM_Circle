@@ -204,10 +204,13 @@ final class MemberDirectoryController extends Controller
         abort_if($request->user()->id === $member->id, 422, 'You cannot follow yourself.');
         abort_unless($member->is_admin !== true && $member->status === 'active'
             && $member->profile()->where('visibility', 'public')->exists(), 404);
-        DB::table('member_follows')->insertOrIgnore([
+        $inserted = DB::table('member_follows')->insertOrIgnore([
             'follower_id' => $request->user()->id, 'followed_id' => $member->id,
             'created_at' => now(), 'updated_at' => now(),
         ]);
+        if ($inserted) {
+            app(\App\Domain\Notifications\ActivityNotifier::class)->forFollow($request->user(), $member);
+        }
         return $request->expectsJson() ? response()->json(['following' => true]) : back();
     }
 

@@ -48,7 +48,7 @@ class ProfileController extends Controller
             $activeTab = 'overview';
         }
         $user->loadMissing(match ($activeTab) {
-            'imports' => ['profile', 'certifications', 'experiences', 'educations'],
+            'imports' => ['profile', 'certifications', 'experiences', 'educations', 'profileProjects'],
             'privacy' => ['profile'],
             default => ['profile', 'certifications', 'experiences', 'profileProjects', 'educations'],
         });
@@ -88,7 +88,7 @@ class ProfileController extends Controller
             : collect();
         $activeImport = $activeTab === 'imports'
             ? app(ProfileImportPresenter::class)->present($user, $recentImports->first(), $recentImports)
-            : ['id' => null, 'status' => 'empty', 'step' => 1, 'filename' => null, 'comparisons' => [], 'warnings' => [], 'history' => []];
+            : ['id' => null, 'status' => 'empty', 'step' => 1, 'filename' => null, 'comparisons' => [], 'warnings' => [], 'history' => [], 'ai_enabled' => (bool) config('pm-ai.resume_extract_enabled')];
 
         // The dashboard and profile must use the exact same server-side criteria.
         $completenessScore = app(ProfileCompleteness::class)->percentage($user);
@@ -120,6 +120,7 @@ class ProfileController extends Controller
                 'contact_visibility' => $profile->contact_visibility ?: 'private',
                 'linkedin_url' => $profile->linkedin_url ?? '',
                 'languages' => $profile->languages ?? [],
+                'editor_details' => in_array($activeTab, ['edit', 'overview'], true) ? ($profile->editor_details ?? []) : [],
                 'plan_label' => '👑 Plus member',
                 'location_label' => implode(', ', array_filter([$profile->city, $profile->country])),
                 'status_label' => $profile->open_to_opportunities ? 'Open to opportunities' : 'Not actively looking',
@@ -152,6 +153,13 @@ class ProfileController extends Controller
     {
         $user = $request->user();
         $validated = $request->validated();
+
+        if (array_key_exists('editor_details', $validated)) {
+            app(\App\Domain\Identity\Services\ProfileEditorSaveService::class)->save($user, $validated);
+            Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile details updated successfully.')]);
+
+            return redirect()->route('profile.edit', ['tab' => 'edit']);
+        }
 
         if (isset($validated['name'])) {
             $user->name = $validated['name'];
@@ -367,6 +375,7 @@ class ProfileController extends Controller
         $request->validate([
             'resume' => ['required', 'file', 'mimes:pdf,docx', 'max:5120'],
             'source' => ['nullable', 'in:resume,linkedin_export'],
+            'ai_consent' => ['sometimes', 'boolean'],
         ]);
 
         $user = $request->user();
@@ -378,8 +387,14 @@ class ProfileController extends Controller
         $path = $file->store('resumes/'.$user->id, 'local');
         abort_unless(is_string($path) && $path !== '', 500, 'Resume could not be stored.');
 
+        $consented = $request->boolean('ai_consent');
+        if (config('pm-ai.resume_extract_enabled') && ! $consented) {
+            Storage::disk('local')->delete($path);
+            throw ValidationException::withMessages(['ai_consent' => 'Please consent to AI processing before uploading a CV.']);
+        }
+
         try {
-            $import = DB::transaction(function () use ($user, $file, $path): ProfileImportSession {
+            $import = DB::transaction(function () use ($user, $file, $path, $consented): ProfileImportSession {
                 $resume = ProfileResume::create([
                     'user_id' => $user->id,
                     'original_name' => mb_substr(basename($file->getClientOriginalName()), 0, 255),
@@ -391,7 +406,7 @@ class ProfileController extends Controller
                     'user_id' => $user->id,
                     'profile_resume_id' => $resume->id,
                     'source_filename' => $resume->original_name,
-                    'extracted_data' => ['fields' => [], 'warnings' => []],
+                    'extracted_data' => ['fields' => [], 'warnings' => [], 'ai_consent' => $consented],
                     'status' => 'processing',
                 ]);
                 $profile = $user->profile ?? new Profile(['user_id' => $user->id]);
@@ -410,14 +425,16 @@ class ProfileController extends Controller
         }
 
         try {
-            AnalyzeProfileResume::dispatch($import->id);
+            AnalyzeProfileResume::dispatch($import->id)
+                ->onQueue(config('pm-ai.resume_extract_enabled') ? config('pm-ai.resume_extract_queue') : 'default');
         } catch (\Throwable $error) {
             Log::warning('Resume analysis dispatch failed.', [
                 'import_id' => $import->id,
                 'exception' => $error::class,
             ]);
             $import->update(['status' => 'failed', 'extracted_data' => ['fields' => [],
-                'warnings' => ['Analysis could not be started. The uploaded file is safe; please retry after the queue is restored.']]]);
+                'warnings' => ['Analysis could not be started. The uploaded file is safe; please retry after the queue is restored.'],
+                'ai_consent' => $consented]]);
             return redirect()->route('profile.edit', ['tab' => 'imports']);
         }
 
@@ -477,16 +494,20 @@ class ProfileController extends Controller
     /** Re-analyse a previously uploaded, owned document; no demo data. */
     public function startImport(Request $request): RedirectResponse
     {
-        $validated = $request->validate(['resume_id' => ['required', 'integer']]);
+        $validated = $request->validate(['resume_id' => ['required', 'integer'], 'ai_consent' => ['sometimes', 'boolean']]);
+        if (config('pm-ai.resume_extract_enabled') && ! $request->boolean('ai_consent')) {
+            throw ValidationException::withMessages(['ai_consent' => 'Please consent to AI processing before importing a CV.']);
+        }
         $resume = $request->user()->resumes()->findOrFail($validated['resume_id']);
         $import = ProfileImportSession::create([
             'user_id' => $request->user()->id,
             'profile_resume_id' => $resume->id,
             'source_filename' => $resume->original_name,
-            'extracted_data' => ['fields' => [], 'warnings' => []],
+            'extracted_data' => ['fields' => [], 'warnings' => [], 'ai_consent' => $request->boolean('ai_consent')],
             'status' => 'processing',
         ]);
-        AnalyzeProfileResume::dispatch($import->id);
+        AnalyzeProfileResume::dispatch($import->id)
+            ->onQueue(config('pm-ai.resume_extract_enabled') ? config('pm-ai.resume_extract_queue') : 'default');
         return redirect()->route('profile.edit', ['tab' => 'imports']);
     }
 
@@ -508,6 +529,7 @@ class ProfileController extends Controller
     /** Retry only a failed or long-stalled, owned import without reuploading a private file. */
     public function retryImport(Request $request, ProfileImportSession $import): RedirectResponse
     {
+        $request->validate(['ai_consent' => ['sometimes', 'boolean']]);
         $replacement = DB::transaction(function () use ($request, $import): ProfileImportSession {
             $original = ProfileImportSession::query()
                 ->where('user_id', $request->user()->id)
@@ -527,6 +549,11 @@ class ProfileController extends Controller
                 throw ValidationException::withMessages(['import' => 'The original resume is unavailable. Please upload a new file.']);
             }
 
+            $consented = $request->boolean('ai_consent') || ($original->extracted_data['ai_consent'] ?? false) === true;
+            if (config('pm-ai.resume_extract_enabled') && ! $consented) {
+                throw ValidationException::withMessages(['ai_consent' => 'Please consent to AI processing before retrying this CV.']);
+            }
+
             // Cancel the prior attempt so any delayed worker cannot publish its result.
             $original->update(['status' => 'cancelled']);
 
@@ -534,13 +561,14 @@ class ProfileController extends Controller
                 'user_id' => $request->user()->id,
                 'profile_resume_id' => $resume->id,
                 'source_filename' => $resume->original_name,
-                'extracted_data' => ['fields' => [], 'warnings' => []],
+                'extracted_data' => ['fields' => [], 'warnings' => [], 'ai_consent' => $consented],
                 'status' => 'processing',
             ]);
         });
 
         try {
-            AnalyzeProfileResume::dispatch($replacement->id);
+            AnalyzeProfileResume::dispatch($replacement->id)
+                ->onQueue(config('pm-ai.resume_extract_enabled') ? config('pm-ai.resume_extract_queue') : 'default');
         } catch (\Throwable $error) {
             Log::warning('Resume analysis retry dispatch failed.', [
                 'import_id' => $replacement->id,
@@ -573,7 +601,7 @@ class ProfileController extends Controller
     {
         $data = $request->validate([
             'import_id' => ['required', 'integer'],
-            'decisions' => ['required', 'array', 'max:8'],
+            'decisions' => ['required', 'array', 'max:'.count(\App\Services\Resume\ResumeImportShape::LABELS)],
             'decisions.*' => ['required', 'in:keep,replace,merge'],
         ]);
         $count = $service->apply($request->user(), (int) $data['import_id'], $data['decisions']);

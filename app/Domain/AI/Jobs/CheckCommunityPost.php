@@ -64,8 +64,8 @@ final class CheckCommunityPost implements ShouldQueue
                     $oldUrl = $locked->getRawOriginal('image_path');
                     $media->approve($locked);
                     $locked->forceFill([
-                        'status' => $locked->is_anonymous ? 'pending_review' : 'published',
-                        'published_at' => $locked->is_anonymous ? null : now(),
+                        'status' => 'published',
+                        'published_at' => now(),
                         'check_category' => null, 'check_target' => null, 'check_reason' => null,
                         'checked_at' => now(), 'restricted_at' => null,
                     ])->save();

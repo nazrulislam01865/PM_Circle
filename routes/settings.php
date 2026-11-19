@@ -22,12 +22,14 @@ Route::middleware(['auth', 'pm.member'])->group(function () {
     Route::post('settings/profile/cover', [ProfileController::class, 'uploadCover'])->name('profile.cover.upload');
     Route::post('settings/profile/avatar', [ProfileController::class, 'uploadAvatar'])->name('profile.avatar.upload');
     Route::delete('settings/profile/avatar', [ProfileController::class, 'removeAvatar'])->name('profile.avatar.delete');
-    Route::post('settings/profile/resume', [ProfileController::class, 'uploadResume'])->name('profile.resume.upload');
+    Route::post('settings/profile/resume', [ProfileController::class, 'uploadResume'])
+        ->middleware('throttle:5,10')->name('profile.resume.upload');
     Route::get('settings/profile/resume/export', [ProfileController::class, 'exportResume'])->name('profile.resume.export');
     Route::get('settings/profile/resume/{resume}/preview', [ProfileController::class, 'previewResume'])->name('profile.resume.preview');
     Route::delete('settings/profile/resume/{resume}', [ProfileController::class, 'removeResume'])->name('profile.resume.remove');
     Route::get('settings/profile/resume/{resume?}', [ProfileController::class, 'downloadResume'])->name('profile.resume.download');
-    Route::post('settings/profile/import/start', [ProfileController::class, 'startImport'])->name('profile.import.start');
+    Route::post('settings/profile/import/start', [ProfileController::class, 'startImport'])
+        ->middleware('throttle:5,10')->name('profile.import.start');
     Route::get('settings/profile/import/{import}/status', [ProfileController::class, 'importStatus'])->name('profile.import.status');
     Route::post('settings/profile/import/{import}/retry', [ProfileController::class, 'retryImport'])
         ->middleware('throttle:3,10')->name('profile.import.retry');

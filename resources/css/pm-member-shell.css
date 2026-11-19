@@ -22,7 +22,7 @@
     width: 100%;
 }
 .pm-member-shell .pm-dash-body {
-    width: min(1480px, calc(100% - 64px));
+    width: min(var(--pm-member-page-max-width), calc(100% - 64px));
     margin-inline: auto;
     padding: var(--s4) 0 var(--s10);
     min-width: 0;

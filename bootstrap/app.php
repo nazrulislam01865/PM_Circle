@@ -7,11 +7,13 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
+        channels: __DIR__.'/../routes/channels.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
@@ -42,5 +44,21 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        // Preserve rate limiting but return a normal Inertia validation error for the
+        // Daily Challenge form, instead of displaying Laravel's HTML 429 in a modal.
+        $exceptions->respond(function (SymfonyResponse $response, \Throwable $exception, Request $request): SymfonyResponse {
+            if ($response->getStatusCode() !== 429
+                || ! $request->isMethod('POST')
+                || ! $request->is('admin/ai/daily-challenge/generate')
+                || ! $request->hasHeader('X-Inertia')) {
+                return $response;
+            }
+
+            $retryAfter = max(1, (int) $response->headers->get('Retry-After', '60'));
+
+            return redirect()->route('admin.ai.daily-challenge.index')
+                ->withErrors(['date' => "Too many generation requests. Try again in {$retryAfter} seconds."]);
+        });
     })->create();
 

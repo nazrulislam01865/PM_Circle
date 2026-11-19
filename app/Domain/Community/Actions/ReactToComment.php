@@ -36,6 +36,10 @@ final class ReactToComment
                 }
             }
 
+            if ($old === null && $type !== null) {
+                DB::afterCommit(static fn () => app(\App\Domain\Notifications\ActivityNotifier::class)
+                    ->forCommentReaction($user, $comment));
+            }
             return ['reaction' => $type, 'count' => (int) $comment->likes()->count()];
         }, 3);
     }

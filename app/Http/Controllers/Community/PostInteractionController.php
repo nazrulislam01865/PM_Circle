@@ -142,6 +142,10 @@ class PostInteractionController extends Controller
                     'author_id' => $request->user()->id, 'media_path' => $path,
                     'check_status' => $checking ? 'pending_check' : null,
                 ]);
+                if (! $checking) {
+                    DB::afterCommit(static fn () => app(\App\Domain\Notifications\ActivityNotifier::class)
+                        ->forComment($comment, $request->user()->name));
+                }
                 if ($checking) {
                     DB::table('comment_check_runs')->insert([
                         'comment_id' => $comment->id, 'status' => 'queued',

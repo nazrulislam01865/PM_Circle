@@ -35,8 +35,7 @@ final class AiCreditAdminController extends Controller
             'reason' => ['required', 'string', 'max:500'],
         ]);
         if ($data['active'] && (! config('pm-ai.purchases_enabled')
-            || app(\App\Domain\AI\Billing\AiPaymentGateway::class)
-                instanceof \App\Domain\AI\Billing\UnconfiguredAiPaymentGateway)) {
+            || ! app(\App\Domain\Billing\Payments\Services\PaymentGatewayManager::class)->ready())) {
             abort(503, 'A verified payment gateway must be enabled before selling packages.');
         }
         $version = DB::transaction(function () use ($data, $request, $access): int {

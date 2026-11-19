@@ -27,6 +27,7 @@ export type ResumeRecord = {
 export type ResumeImportState = {
     id: number | null;
     status: 'empty' | 'processing' | 'ready' | 'applied' | 'failed' | 'cancelled';
+    ai_enabled?: boolean;
     step: number;
     filename: string | null;
     comparisons: ImportComparison[];
@@ -68,6 +69,7 @@ export const ResumeImportsTab = forwardRef<ResumeImportsHandle, Props>(function 
     const [statusError, setStatusError] = useState<string | null>(null);
     const [canRetry, setCanRetry] = useState(false);
     const [historyOpen, setHistoryOpen] = useState(false);
+    const [aiConsent, setAiConsent] = useState(false);
     const [decisions, setDecisions] = useState<Record<string, ImportAction>>({});
     const [markedFields, setMarkedFields] = useState<string[]>([]);
 
@@ -147,6 +149,10 @@ export const ResumeImportsTab = forwardRef<ResumeImportsHandle, Props>(function 
             setError('LinkedIn export imports require Plus or Pro membership.');
             return;
         }
+        if (importData.ai_enabled && !aiConsent) {
+            setError('Please agree to AI CV processing before uploading.');
+            return;
+        }
         if (!/\.(pdf|docx)$/i.test(file.name) || file.size > 5 * 1024 * 1024) {
             setError('Choose a PDF or DOCX smaller than 5 MB.');
             return;
@@ -157,6 +163,7 @@ export const ResumeImportsTab = forwardRef<ResumeImportsHandle, Props>(function 
         const payload = new FormData();
         payload.append('resume', file);
         payload.append('source', source);
+        payload.append('ai_consent', aiConsent ? '1' : '0');
         router.post('/settings/profile/resume', payload, {
             forceFormData: true,
             preserveScroll: true,
@@ -199,7 +206,7 @@ export const ResumeImportsTab = forwardRef<ResumeImportsHandle, Props>(function 
         setWorking(true);
         setError(null);
         setStatusError(null);
-        router.post(`/settings/profile/import/${importData.id}/retry`, {}, {
+        router.post(`/settings/profile/import/${importData.id}/retry`, { ai_consent: aiConsent }, {
             preserveScroll: true,
             onError: (messages) => setError(Object.values(messages)[0] ?? 'Unable to restart analysis.'),
             onFinish: () => setWorking(false),
@@ -247,6 +254,10 @@ export const ResumeImportsTab = forwardRef<ResumeImportsHandle, Props>(function 
                     <span className="pm-resume-choose">Choose file</span>
                     {uploadProgress !== null && <span role="status">Uploading {uploadProgress}%</span>}
                 </button>
+                {importData.ai_enabled && <label className="pm-resume-visibility">
+                    <input type="checkbox" checked={aiConsent} onChange={event => setAiConsent(event.target.checked)} />
+                    I agree to send this CV to the configured AI provider for private profile extraction.
+                </label>}
                 {resume && <div className="pm-resume-file-row">
                     <span className="pm-resume-file-badge"><FileText size={22} /></span>
                     <span className="pm-resume-file-details"><strong>{resume.original_name}</strong><small>{resume.file_size_formatted}</small></span>

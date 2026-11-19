@@ -200,6 +200,13 @@ class ScenarioController extends Controller
             'is_question' => str_ends_with(trim($validated['body']), '?'),
         ]);
 
+        if ($isReply) {
+            $parentUserId = (int) DB::table('scenario_responses')
+                ->where('id', $validated['parent_id'])->value('user_id');
+            app(\App\Domain\Notifications\ActivityNotifier::class)
+                ->forScenarioReply($request->user(), $created, $parentUserId, $scenario->slug);
+        }
+
         if ($reviewRequested) {
             try {
                 QueueDailyChallengeReview::dispatch($created->id)->onQueue(config('pm-ai.queue'));

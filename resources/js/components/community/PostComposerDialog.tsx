@@ -186,7 +186,7 @@ export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onU
                     {editing ? <span>{audience === 'public' ? 'Public' : 'Community members only'}</span> : <PMDropdown id="pm-compose-audience" value={audience} onValueChange={setAudience} options={[{ value: 'public', label: 'Public' }, { value: 'members', label: 'Community members only' }]} placeholder="Audience" />}
                 </div>
             </div>
-            {!editing && identity === 'anonymous' && <p className="pm-compose-anon-note">Viewers will see Anonymous member. PM Circle administrators can see your identity. Your post will be reviewed before publication.</p>}
+            {!editing && identity === 'anonymous' && <p className="pm-compose-anon-note">Viewers will see Anonymous member. PM Circle administrators can see your identity. Your post will appear after it passes the AI safety check.</p>}
             <form className="pm-compose-form" onSubmit={submit}>
                 <div className="pm-compose-scroll-region">
                 <div ref={editor} className="pm-compose-editor" contentEditable={!busy} role="textbox" aria-label="Post content" aria-multiline="true" data-placeholder={topic === 'Ask the community' ? 'Ask the community a question...' : topic === 'Poll' ? 'What would you like to ask?' : 'Share your thoughts...'} suppressContentEditableWarning onInput={() => { if (editor.current) setBody(editorText(editor.current)); }} onPaste={event => { event.preventDefault(); insertText(event.clipboardData.getData('text/plain')); }} />
@@ -207,7 +207,7 @@ export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onU
                 {emojiOpen && <div className="pm-compose-emojis">{emojiList.map(emoji => <button key={emoji} type="button" onClick={() => insertText(emoji)}>{emoji}</button>)}</div>}
                 {!editing && <div className="pm-compose-types"><span>Post type</span>{postComposerTypes.map(option => <button key={option.value} type="button" className={topic === option.value ? 'is-selected' : ''} aria-pressed={topic === option.value} onClick={() => setTopic(option.value)}>{option.editorLabel}</button>)}</div>}
                 {error && <p className="pm-post-action-error pm-compose-error" role="alert">{error}</p>}
-                <div className="pm-compose-footer"><span>{characterCount} / 5000</span><button className="pm-button" type="submit" disabled={!canSubmit}>{busy ? 'Saving…' : editing ? 'Save changes' : identity === 'anonymous' ? 'Submit for review' : 'Post'}</button></div>
+                <div className="pm-compose-footer"><span>{characterCount} / 5000</span><button className="pm-button" type="submit" disabled={!canSubmit}>{busy ? 'Saving…' : editing ? 'Save changes' : 'Post'}</button></div>
             </form>
         </DialogContent>
     </Dialog>;

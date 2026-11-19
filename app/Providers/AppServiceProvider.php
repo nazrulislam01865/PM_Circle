@@ -18,7 +18,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Separately registered adapters allow a previously used provider to process
+        // independently verified refunds after the checkout provider is changed.
+        $this->app->bind('payments.gateway.bkash',
+            \App\Domain\Billing\Payments\Gateways\UnconfiguredGateway::class);
+        $this->app->bind('payments.gateway.nagad',
+            \App\Domain\Billing\Payments\Gateways\UnconfiguredGateway::class);
     }
 
     /**

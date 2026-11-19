@@ -1,39 +1,22 @@
 import { useState, useRef } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
-import { ProfileEditSections, sectionAnchor, sectionLabel, type ProfileSectionId } from '@/components/profile/ProfileEditSections';
+import { ProfileEditorPrototype, type ProfileEditorDetails } from '@/components/profile/ProfileEditorPrototype';
+import { ProfileOverviewSections } from '@/components/profile/ProfileOverviewSections';
 import { ResumeImportsTab, type ResumeImportState, type ResumeRecord } from '@/components/profile/ResumeImportsTab';
 import { ProfileImageCropDialog } from '@/components/profile/ProfileImageCropDialog';
 import { ProfileHeroPhoto } from '@/components/profile/ProfileHeroPhoto';
-import { ProfilePhoneField } from '@/components/profile/ProfilePhoneField';
 import { ProfilePrivacyTab, type ProfilePrivacyAudience, type ProfilePrivacyFieldGroup } from '@/components/profile/ProfilePrivacyTab';
 import {
     Briefcase,
-    Building2,
-    Calendar,
     Camera,
-    Check,
-    CheckCircle2,
-    ChevronDown,
     ChevronRight,
-    Download,
     Eye,
     FileText,
-    Globe,
-    GraduationCap,
-    Info,
-    Laptop,
-    Lock,
     MapPin,
     Pencil,
     Plus,
-    RefreshCw,
-    Shield,
     Sparkles,
-    Trash2,
-    UploadCloud,
-    UserCheck,
-    X,
 } from 'lucide-react';
 import { MemberDashboardLayout } from '@/layouts/pm/MemberDashboardLayout';
 import type { DashboardShellData } from '@/types/dashboard';
@@ -89,6 +72,7 @@ type ProfilePageProps = {
         contact_visibility: string;
         linkedin_url: string;
         languages: string[];
+        editor_details?: ProfileEditorDetails;
         plan_label: string;
         location_label: string;
         status_label: string;
@@ -137,9 +121,6 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
     const overviewLocation = profileData.location_label || (headlineLooksLikeLegacyAddress ? profileData.headline.replace(/\s+,/g, ',') : '');
 
     const [currentTab, setCurrentTab] = useState<'overview' | 'edit' | 'imports' | 'privacy'>(initialTab);
-    const [editActiveSection, setEditActiveSection] = useState<ProfileSectionId>('basic');
-    const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({ experience: true });
-    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
     // Edit Form State
     const [formData, setFormData] = useState({
@@ -159,12 +140,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
         languages: profileData?.languages || [],
     });
 
-    const [skillsList, setSkillsList] = useState<string[]>(profileData?.skills || []);
-    const [newSkillInput, setNewSkillInput] = useState('');
-    const [showSkillDropdown, setShowSkillDropdown] = useState(false);
-
     const [allowEmployerResume, setAllowEmployerResume] = useState(profileData?.resume_employer_visibility ?? false);
-    const [isSaving, setIsSaving] = useState(false);
     const [photoSaving, setPhotoSaving] = useState(false);
     const [photoError, setPhotoError] = useState('');
     const [pendingPhoto, setPendingPhoto] = useState<{ file: File; kind: 'avatar' | 'cover' } | null>(null);
@@ -173,20 +149,6 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
     const coverInputRef = useRef<HTMLInputElement>(null);
     const resumeUploadRef = useRef<HTMLInputElement>(null);
 
-    const navigateToSection = (section: ProfileSectionId) => {
-        setEditActiveSection(section);
-        setExpandedSections((previous) => ({ ...previous, [section]: true }));
-        // The section exists even while collapsed; expand then scroll to its anchor.
-        requestAnimationFrame(() => {
-            document.getElementById(sectionAnchor[section])?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-    };
-
-    const toggleSection = (section: ProfileSectionId) => {
-        setEditActiveSection(section);
-        setExpandedSections((previous) => ({ ...previous, [section]: !previous[section] }));
-    };
-
     const changeTab = (tab: 'overview' | 'edit' | 'imports' | 'privacy') => {
         setCurrentTab(tab);
         router.visit(ProfileController.edit.url({ query: { tab } }), {
@@ -194,61 +156,6 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
             preserveScroll: true,
             replace: true,
         });
-    };
-
-    const handleFormSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        // Keep the independent privacy-only editor usable for existing members
-        // without a phone; basic profile saves must provide one.
-        if (currentTab === 'edit') {
-            const digits = formData.phone.replace(/\D/g, '');
-            if (digits.length < 7 || digits.length > 15) {
-                setFormErrors((previous) => ({ ...previous, phone: digits.length === 0
-                    ? 'Phone number is required.'
-                    : 'Enter a valid phone number with 7 to 15 digits, including the country code.' }));
-                document.getElementById('pm-profile-phone')?.focus();
-                return;
-            }
-            setFormErrors((previous) => ({ ...previous, phone: '' }));
-        }
-        const payload = currentTab === 'privacy'
-            ? {
-                visibility: formData.visibility,
-                open_to_opportunities: formData.open_to_opportunities,
-                resume_employer_visibility: formData.resume_employer_visibility,
-                contact_visibility: formData.contact_visibility,
-                tab: 'privacy',
-            }
-            : {
-                ...formData,
-                skills: skillsList,
-                languages: formData.languages.map((language) => language.trim()).filter(Boolean),
-                tab: 'edit',
-            };
-        setIsSaving(true);
-        router.patch(
-            ProfileController.update.url(),
-            payload,
-            {
-                preserveScroll: true,
-                onSuccess: () => setFormErrors({}),
-                onError: setFormErrors,
-                onFinish: () => setIsSaving(false),
-            }
-        );
-    };
-
-    const handleAddSkill = (skill: string) => {
-        const trimmed = skill.trim();
-        if (trimmed && !skillsList.includes(trimmed)) {
-            setSkillsList([...skillsList, trimmed]);
-            setNewSkillInput('');
-            setShowSkillDropdown(false);
-        }
-    };
-
-    const handleRemoveSkill = (skillToRemove: string) => {
-        setSkillsList(skillsList.filter((s) => s !== skillToRemove));
     };
 
     const prepareImage = (event: React.ChangeEvent<HTMLInputElement>, kind: 'avatar' | 'cover') => {
@@ -293,7 +200,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
         <MemberDashboardLayout dashboard={dashboardShell}>
             <Head title="My profile - PM Circle" />
 
-            <div className="pm-profile-page">
+            <div className={`pm-profile-page ${currentTab === 'edit' ? 'pm-profile-page--editor' : ''}`}>
                 {/* Hidden File Inputs */}
                 <input type="file" ref={coverInputRef} onChange={(event) => prepareImage(event, 'cover')} accept="image/jpeg,image/png,image/webp" className="hidden" aria-hidden="true" />
                 <input type="file" ref={fileInputRef} onChange={(event) => prepareImage(event, 'avatar')} accept="image/jpeg,image/png,image/webp" className="hidden" aria-hidden="true" />
@@ -310,7 +217,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                         <h1>My profile</h1>
                         <p>
                             {currentTab === 'overview' && 'Showcase your experience, skills and achievements to the PM Circle community.'}
-                            {currentTab === 'edit' && 'Manage your information, skills and preferences to get the most out of PM Circle.'}
+                            {currentTab === 'edit' && 'Manage your professional profile and who can see it.'}
                             {currentTab === 'imports' && 'Manage your information, skills and preferences to get the most out of PM Circle.'}
                             {currentTab === 'privacy' && 'Manage your professional profile and who can see it.'}
                         </p>
@@ -415,170 +322,9 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                 </div>
                             </div>
 
-                            {/* About Section */}
-                            <section className="pm-card" aria-labelledby="about-head">
-                                <div className="pm-card-body">
-                                    <div className="pm-card-header-row">
-                                        <h3 id="about-head" className="pm-card-title"><UserCheck size={20} aria-hidden="true"/> About</h3>
-                                        <button type="button" className="pm-btn-ghost" onClick={() => changeTab('edit')}>
-                                            ✏️ Edit
-                                        </button>
-                                    </div>
-                                    <div className="text-(length:--pm-font-size-14p5px) leading-relaxed text-(color:--pm-tone-334155) whitespace-pre-line">
-                                        {profileData.about}
-                                    </div>
-                                </div>
-                            </section>
-
-                            {/* Experience Section */}
-                            <section className="pm-card" aria-labelledby="exp-head">
-                                <div className="pm-card-body">
-                                    <div className="pm-card-header-row">
-                                        <h3 id="exp-head" className="pm-card-title"><Briefcase size={20} aria-hidden="true"/> Experience</h3>
-                                        <div className="flex items-center gap-2">
-                                            <button type="button" className="pm-btn-ghost" onClick={() => changeTab('edit')}>
-                                                + Add experience
-                                            </button>
-                                            <button type="button" className="pm-btn-ghost" onClick={() => changeTab('edit')}>
-                                                ✏️ Edit
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {profileData.experiences.map((exp, idx) => (
-                                        <div key={exp.id || idx} className="pm-experience-item">
-                                            <div className="pm-company-logo">
-                                                <Building2 size={24} />
-                                            </div>
-                                            <div className="pm-experience-details">
-                                                <h4 className="pm-experience-role">{exp.job_title}</h4>
-                                                <div className="pm-experience-org">
-                                                    {exp.organization} · {exp.employment_type}
-                                                </div>
-                                                <div className="pm-experience-dates">
-                                                    {exp.start_date} — {exp.is_current ? 'Present' : exp.end_date} · 2 yrs 10 mos · Dhaka, Bangladesh · Hybrid
-                                                </div>
-
-                                                {exp.responsibilities && (
-                                                    <ul className="pm-experience-bullets">
-                                                        {exp.responsibilities.split('\n').filter(Boolean).map((bullet, bIdx) => (
-                                                            <li key={bIdx}>{bullet.replace(/^[-•*]\s*/, '')}</li>
-                                                        ))}
-                                                    </ul>
-                                                )}
-
-                                                <span className="pm-reported-tag">
-                                                    <Info size={12} /> Member-reported outcomes ⓘ
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
-
-                            {/* Featured Project */}
-                            <section className="pm-card" aria-labelledby="proj-head">
-                                <div className="pm-card-body">
-                                    <div className="pm-card-header-row">
-                                        <h3 id="proj-head" className="pm-card-title"><FileText size={20} aria-hidden="true"/> Featured Project</h3>
-                                        <button type="button" className="pm-btn-ghost" onClick={() => changeTab('edit')}>
-                                            + Add project
-                                        </button>
-                                    </div>
-
-                                    {profileData.featured_project ? <div className="pm-project-card">
-                                        <div className="pm-project-thumb">
-                                            <Laptop size={44} strokeWidth={1.5} />
-                                            <span className="text-(length:--pm-font-size-11px) font-semibold tracking-wider uppercase opacity-80">
-                                                Interactive Portal
-                                            </span>
-                                        </div>
-
-                                        <div className="pm-project-info">
-                                            <div>
-                                                <h4 className="pm-project-title">{profileData.featured_project.title}</h4>
-                                                <p className="pm-project-summary">{profileData.featured_project.summary}</p>
-
-                                                <div className="pm-project-metrics">
-                                                    <span>Role: <strong>{profileData.featured_project.role}</strong></span>
-                                                    <span>Team size: <strong>{profileData.featured_project.team_size}</strong></span>
-                                                    <span>Delivery: <strong>{profileData.featured_project.delivery_months} months</strong></span>
-                                                </div>
-                                            </div>
-
-                                            <div className="pm-project-foot">
-                                                <button
-                                                    type="button"
-                                                    className="pm-btn pm-btn-secondary pm-btn-sm"
-                                                    disabled={!profileData.featured_project.work_sample_path}
-                                                    onClick={() => { if (profileData.featured_project?.work_sample_path) window.open(profileData.featured_project.work_sample_path, '_blank', 'noopener,noreferrer'); }}
-                                                >
-                                                    View work sample ↗
-                                                </button>
-                                                <span className="text-(length:--type-caption) text-(color:--disabled-text)">Anonymised case study</span>
-                                            </div>
-                                        </div>
-                                    </div> : <p className="pm-profile-empty">No projects added yet. Add a project in Edit profile.</p>}
-                                </div>
-                            </section>
-
-                            {/* Skills Section */}
-                            <section className="pm-card" aria-labelledby="skills-head">
-                                <div className="pm-card-body">
-                                    <div className="pm-card-header-row">
-                                        <h3 id="skills-head" className="pm-card-title"><Sparkles size={20} aria-hidden="true"/> Skills</h3>
-                                        <button type="button" className="pm-btn-ghost" onClick={() => changeTab('edit')}>
-                                            ✏️ Edit
-                                        </button>
-                                    </div>
-
-                                    <div className="pm-skills-list">
-                                        {profileData.skills.map((skill) => (
-                                            <span key={skill} className="pm-skill-tag">
-                                                {skill}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            </section>
-
-                            {/* Education & Certifications */}
-                            <section className="pm-card" aria-labelledby="edu-head">
-                                <div className="pm-card-body">
-                                    <div className="pm-card-header-row">
-                                        <h3 id="edu-head" className="pm-card-title"><GraduationCap size={20} aria-hidden="true"/> Education & Certifications</h3>
-                                        <button type="button" className="pm-btn-ghost" onClick={() => changeTab('edit')}>
-                                            ✏️ Edit
-                                        </button>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        {profileData.educations.map((edu) => (
-                                            <div key={edu.id} className="flex items-start gap-3">
-                                                <GraduationCap size={22} className="text-(color:--primary) mt-0.5" />
-                                                <div>
-                                                    <div className="font-semibold text-(color:--pm-tone-0f172a) text-(length:--pm-font-size-15px)">{edu.degree}</div>
-                                                    <div className="text-(length:--pm-font-size-13p5px) text-(color:--pm-tone-475569)">
-                                                        {edu.institution} · Graduated {edu.year}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-
-                                        {profileData.certifications.map((cert) => (
-                                            <div key={cert.id} className="flex items-start gap-3 pt-3 border-t border-(color:--pm-tone-f1f5f9)">
-                                                <Shield size={22} className="text-(color:--pm-tone-d97706) mt-0.5" />
-                                                <div>
-                                                    <div className="font-semibold text-(color:--pm-tone-0f172a) text-(length:--pm-font-size-15px)">{cert.name}</div>
-                                                    <div className="text-(length:--pm-font-size-13p5px) text-(color:--pm-tone-475569)">
-                                                        {cert.status_label || 'Valid until 2028 · Self-reported'}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </section>
+                            {/* Every editable profile section, rendered from the saved editor records. */}
+                            <ProfileOverviewSections profile={profileData} featuredProjectId={profileData.featured_project?.id}
+                                onEdit={() => changeTab('edit')} />
 
                             {/* Learning & Contributions */}
                             <section className="pm-card" aria-labelledby="learning-head">
@@ -793,258 +539,17 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                     TAB 2: EDIT PROFILE (p1.png)
                    ============================================================== */}
                 {currentTab === 'edit' && (
-                    <div className="pm-profile-edit-grid">
-                        {/* Anchors and accordion panels share the same section keys. */}
-                        <nav className="pm-edit-nav" aria-label="Edit profile sections">
-                            {(Object.keys(sectionLabel) as ProfileSectionId[]).map((section) => {
-                                const count = section === 'experience' ? profileData.experiences.length :
-                                    section === 'projects' ? profileData.projects.length :
-                                    section === 'education' ? profileData.educations.length :
-                                    section === 'certifications' ? profileData.certifications.length : undefined;
-                                return <button key={section} type="button"
-                                    className={`pm-edit-nav-item ${editActiveSection === section ? 'is-active' : ''}`}
-                                    aria-current={editActiveSection === section ? 'location' : undefined}
-                                    onClick={() => navigateToSection(section)}>
-                                    {sectionLabel[section]}{count === undefined ? '' : ` (${count})`}
-                                </button>;
-                            })}
-                        </nav>
-
-                        {/* Middle Editor Form */}
-                        <div className="space-y-6">
-                            {/* Photo and Cover Editor – matches the approved p1 profile prototype. */}
-                            <div className="pm-card pm-profile-edit-media">
-                                <div className="pm-profile-edit-cover"
-                                    style={profileData.cover_photo_path ? { backgroundImage: `url(${profileData.cover_photo_path})` } : undefined}>
-                                    <button type="button" className="pm-profile-edit-cover-action" onClick={() => coverInputRef.current?.click()}>
-                                        <Camera size={16} /> Upload cover photo
-                                    </button>
-                                </div>
-                                <div className="pm-profile-edit-media-footer">
-                                    <div className="pm-profile-edit-media-avatar">
-                                        <ProfileHeroPhoto name={formData.name || profileData.name} src={profileData.avatar_path} />
-                                        <button type="button" className="pm-hero-avatar-camera" onClick={() => fileInputRef.current?.click()} aria-label="Change profile photo"><Camera size={16} /></button>
-                                    </div>
-                                    <div className="pm-profile-photo-actions">
-                                        <div className="pm-profile-photo-buttons">
-                                            <button type="button" className="pm-btn pm-btn-secondary pm-btn-sm" onClick={() => fileInputRef.current?.click()}><Camera size={15}/> Change photo</button>
-                                            <button type="button" className="pm-btn pm-btn-secondary pm-btn-sm pm-profile-remove-photo" onClick={() => { if (profileData.avatar_path && window.confirm('Remove your profile photo?')) router.delete('/settings/profile/avatar', { preserveScroll: true }); }}> <Trash2 size={15}/> Remove</button>
-                                        </div>
-
-                                    </div>
-
-                                </div>
-                            </div>
-
-                            {/* Section: Basic Details */}
-                            <div className="pm-card" id="basic-details">
-                                <div className="pm-card-body">
-                                    <h3 className="pm-card-title mb-4">Basic details</h3>
-
-                                    <div className="pm-form-row-2">
-                                        <div className="pm-form-group">
-                                            <label className="pm-label">Full name *</label>
-                                            <input
-                                                type="text"
-                                                className="pm-input" placeholder="Your full name" autoComplete="name"
-                                                value={formData.name}
-                                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                                required
-                                            />
-                                        </div>
-
-                                        <div className="pm-form-group">
-                                            <label className="pm-label">Professional headline *</label>
-                                            <input
-                                                type="text"
-                                                className="pm-input" placeholder="e.g. Project Manager | Agile delivery"
-                                                value={formData.headline}
-                                                onChange={(e) => setFormData({ ...formData, headline: e.target.value })}
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="pm-form-row-2">
-                                        <div className="pm-form-group">
-                                            <label className="pm-label">Current role *</label>
-                                            <input
-                                                type="text"
-                                                className="pm-input" placeholder="e.g. Senior Project Manager"
-                                                value={formData.role}
-                                                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                                                required
-                                            />
-                                        </div>
-
-                                        <div className="pm-form-group">
-                                            <label className="pm-label">Industry *</label>
-                                            <input
-                                                type="text"
-                                                className="pm-input" placeholder="e.g. Information technology"
-                                                value={formData.industry}
-                                                onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="pm-form-row-2">
-                                        <div className="pm-form-group">
-                                            <label className="pm-label">Country *</label>
-                                            <input
-                                                type="text"
-                                                className="pm-input" placeholder="e.g. Bangladesh" autoComplete="country-name"
-                                                value={formData.country}
-                                                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                                                required
-                                            />
-                                        </div>
-
-                                        <div className="pm-form-group">
-                                            <label className="pm-label">City *</label>
-                                            <input
-                                                type="text"
-                                                className="pm-input" placeholder="e.g. Dhaka" autoComplete="address-level2"
-                                                value={formData.city}
-                                                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                    <ProfilePhoneField value={formData.phone} country={formData.country} error={formErrors.phone}
-                                        onChange={(phone) => {
-                                            setFormData((previous) => ({ ...previous, phone }));
-                                            if (formErrors.phone) setFormErrors((previous) => ({ ...previous, phone: '' }));
-                                        }} />
-                                </div>
-                            </div>
-
-                            {/* Section: About & Skills */}
-                            <div className="pm-card" id="about-skills">
-                                <div className="pm-card-body">
-                                    <h3 className="pm-card-title mb-4">About & skills</h3>
-
-                                    <div className="pm-form-group">
-                                        <label className="pm-label">About</label>
-                                        <textarea
-                                            rows={5}
-                                            className="pm-textarea" placeholder="Introduce your professional background and key achievements..."
-                                            value={formData.about}
-                                            onChange={(e) => setFormData({ ...formData, about: e.target.value })}
-                                            maxLength={500}
-                                        />
-                                        <span className="pm-char-count">{formData.about.length} / 500</span>
-                                    </div>
-
-                                    <div className="pm-form-group">
-                                        <label className="pm-label mb-2">Skills</label>
-                                        <div className="pm-skills-list mb-3">
-                                            {skillsList.map((skill) => (
-                                                <span key={skill} className="pm-skill-tag">
-                                                    {skill}
-                                                    <button
-                                                        type="button"
-                                                        className="pm-chip-del"
-                                                        onClick={() => handleRemoveSkill(skill)}
-                                                        title="Remove skill"
-                                                    >
-                                                        ×
-                                                    </button>
-                                                </span>
-                                            ))}
-                                        </div>
-
-                                        <div className="flex gap-2 relative">
-                                            <input
-                                                type="text"
-                                                placeholder="Type a skill and press Enter or click Add"
-                                                className="pm-input flex-1"
-                                                value={newSkillInput}
-                                                onChange={(e) => setNewSkillInput(e.target.value)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        e.preventDefault();
-                                                        handleAddSkill(newSkillInput);
-                                                    }
-                                                }}
-                                            />
-                                            <button
-                                                type="button"
-                                                className="pm-btn pm-btn-secondary pm-btn-sm"
-                                                onClick={() => handleAddSkill(newSkillInput)}
-                                            >
-                                                <Plus size={15} /> Add skill
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <ProfileEditSections
-                                active={editActiveSection}
-                                expanded={expandedSections}
-                                toggle={toggleSection}
-                                experiences={profileData.experiences.map((item) => ({ ...item }))}
-                                projects={profileData.projects.map((item) => ({ ...item }))}
-                                educations={profileData.educations.map((item) => ({ ...item }))}
-                                certifications={profileData.certifications.map((item) => ({ ...item }))}
-                                career={formData}
-                                links={{ linkedin_url: formData.linkedin_url, languages: formData.languages }}
-                                update={(changes) => setFormData((previous) => ({ ...previous, ...changes }))}
-                            />
-                            {Object.keys(formErrors).length > 0 &&
-                                <div role="alert" className="pm-profile-error pm-profile-form-errors">
-                                    {Object.values(formErrors).join(' ')}
-                                </div>}
-                        </div>
-
-                        {/* Right Quick Helper Sidebar */}
-                        <aside className="space-y-4">
-                            {/* Build From Resume CTA */}
-                            <div className="pm-card">
-                                <div className="pm-card-body">
-                                    <h4 className="pm-card-title text-(length:--pm-font-size-15px) mb-2 flex items-center gap-2">
-                                        <UploadCloud size={18} className="text-(color:--primary)" /> Build from your resume
-                                    </h4>
-                                    <p className="text-(length:--pm-font-size-13px) text-(color:--pm-tone-475569) mb-4">
-                                        Upload a resume to get suggested profile updates. Review each change before applying.
-                                    </p>
-                                    <button
-                                        type="button"
-                                        className="pm-btn pm-btn-primary pm-btn-sm w-full"
-                                        onClick={() => changeTab('imports')}
-                                    >
-                                        Upload DOCX or PDF
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Privacy Note */}
-                            <div className="pm-card">
-                                <div className="pm-card-body">
-                                    <h4 className="pm-card-title text-(length:--pm-font-size-15px) mb-2">Privacy</h4>
-                                    <p className="text-(length:--pm-font-size-13px) text-(color:--pm-tone-475569)">
-                                        Your profile is currently visible to <strong>Members only</strong>. Changes you make are updated instantly.
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Account Card */}
-                            <div className="pm-card">
-                                <div className="pm-card-body">
-                                    <h4 className="pm-card-title text-(length:--pm-font-size-15px) mb-2">Account</h4>
-                                    <div className="text-(length:--pm-font-size-13p5px) font-semibold text-(color:--pm-tone-0f172a) mb-1">{formData.name}</div>
-                                    <div className="text-(length:--pm-font-size-13px) text-(color:--pm-tone-475569) mb-2 flex items-center gap-1.5">
-                                        {profileData.email} <CheckCircle2 size={14} className="text-emerald-600" />
-                                    </div>
-                                    <Link href="/settings/security" className="text-(length:--pm-font-size-13px) text-(color:--primary) font-semibold hover:underline">
-                                        Manage password and security →
-                                    </Link>
-                                </div>
-                            </div>
-                        </aside>
-                    </div>
+                    <ProfileEditorPrototype
+                        profile={{
+                            ...profileData,
+                            experiences: profileData.experiences.map(item => ({ ...item })),
+                            projects: profileData.projects.map(item => ({ ...item })),
+                            educations: profileData.educations.map(item => ({ ...item })),
+                            certifications: profileData.certifications.map(item => ({ ...item })),
+                        }}
+                        onImport={() => changeTab('imports')}
+                        onCancel={() => changeTab('overview')}
+                    />
                 )}
 
                 {/* Resume & imports is isolated so overview/edit share persisted profile data only. */}
@@ -1065,17 +570,6 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                         initialVisibility={profileData.field_visibility}
                         globalVisibility={profileData.visibility}
                     />
-                )}
-                {currentTab === 'edit' && (
-                    <div className="pm-profile-sticky-save" role="group" aria-label="Profile edit actions">
-                        <span className="pm-profile-save-description">Review your profile changes before saving.</span>
-                        <div className="pm-profile-sticky-buttons">
-                            <button type="button" className="pm-btn pm-btn-secondary" disabled={isSaving}
-                                onClick={() => changeTab('overview')}>Cancel</button>
-                            <button type="button" className="pm-btn pm-btn-primary" disabled={isSaving}
-                                onClick={handleFormSubmit}>{isSaving ? 'Saving...' : 'Save changes'}</button>
-                        </div>
-                    </div>
                 )}
             </div>
         </MemberDashboardLayout>

@@ -136,7 +136,7 @@ export function MemberHomeHeader({ dashboard, active, actions, brandHref, joinLa
                     </summary>
                     <div className="pm-member-home-submenu">
                         <Link href={isMember ? '/dashboard/learning' : '/learning'} onClick={closeDropdown}><BookOpen aria-hidden="true"/>Course Library</Link>
-                        <Link href={isMember ? '/dashboard/learning' : '/learning'} onClick={closeDropdown}><BookOpen aria-hidden="true"/>My Learning</Link>
+                        {isMember && <Link href="/dashboard/learning" onClick={closeDropdown}><BookOpen aria-hidden="true"/>My Learning</Link>}
                         <Link href="/simulators/project" onClick={closeDropdown}><ClipboardCheck aria-hidden="true"/>Project Simulator</Link>
                     </div>
                 </details>}

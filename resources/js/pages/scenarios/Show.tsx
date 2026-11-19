@@ -5,19 +5,16 @@ import {
     ChevronDown,
     ChevronRight,
     ChevronUp,
-    Clock,
-    Cpu,
     Lock,
     MessageCircle,
     MoreHorizontal,
-    Sliders,
     Sparkles,
     Star,
-    Target,
-    Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Avatar } from '@/components/pm/Avatar';
+import { ScenarioStoryContent } from '@/components/scenarios/ScenarioStoryContent';
+import { ScenarioDetailsAside } from '@/components/scenarios/ScenarioDetailsAside';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
 import { EngagementActionBar } from '@/components/community/EngagementActionBar';
 import { CommentEngagementActions } from '@/components/community/CommentEngagementActions';
@@ -226,7 +223,7 @@ export default function Show({ scenario, responses, related }: Props) {
         <PublicLayout active="/daily-challenge" joinLabel="Join the community">
             <Head title={`${scenario.title} · PM Circle`} />
 
-            <div className="pm-container pm-page">
+            <div className="pm-container pm-page pm-scenario-detail-page">
                 {/* Breadcrumbs & back navigation */}
                 <nav className="pm-crumbs" aria-label="Breadcrumb">
                     <Link href={memberView ? '/dashboard' : '/'}>Home</Link> &nbsp;/&nbsp; <Link href={libraryRoot}>Daily Challenge</Link> &nbsp;/&nbsp;{' '}
@@ -239,73 +236,12 @@ export default function Show({ scenario, responses, related }: Props) {
                     </Link>
                 </div>
 
-                <div className="pm-two-column">
+                <div className="pm-two-column pm-scenario-detail-layout">
                     {/* Left Column: Scenario Content & Community Responses */}
                     <div className="pm-scenario-main-col">
-                        {/* Scenario Article Panel (pm2.png) */}
-                        <article className="pm-panel" style={{ padding: '32px', marginBottom: '24px' }}>
-                            <div className="pm-scenario-header-badges">
-                                <span className="pm-badge-scenario">{scenario.daily_slot && scenario.daily_slot === new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' }) ? "TODAY'S SCENARIO" : 'DAILY CHALLENGE'}</span>
-                                <span className="pm-badge-open">{scenario.status === 'closed' || expired ? 'Discussion closed' : 'Open for discussion'}</span>
-                            </div>
-
-                            <h1 className="pm-scenario-h1">{scenario.title}</h1>
-
-                            <div className="pm-scenario-meta-line">
-                                PM Circle Editorial &nbsp;·&nbsp;{' '}
-                                {new Date(scenario.published_at).toLocaleDateString('en-GB', {
-                                    day: 'numeric',
-                                    month: 'short',
-                                    year: 'numeric',
-                                })}{' '}
-                                &nbsp;·&nbsp; 4 min read
-                            </div>
-
-                            {scenario.topics && scenario.topics.length > 0 && (
-                                <div className="pm-tag-pills-row" style={{ marginBottom: '24px' }}>
-                                    {scenario.topics.map((t) => (
-                                        <span key={t} className="pm-tag-pill">
-                                            {t}
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-
-                            {scenario.ai_generated && <p className="pm-admin-hint">AI-generated educational scenario. Review the facts and exercise your own judgment.</p>}
-                            {scenario.expires_at && <p className="pm-admin-hint">
-                                <Clock size={14} style={{ verticalAlign: 'middle' }}/> Discussion closes {new Date(scenario.expires_at).toLocaleString('en-GB', { timeZone: 'Asia/Dhaka', dateStyle: 'medium', timeStyle: 'short' })} (Dhaka)
-                            </p>}
-
-                            {/* Section: The situation */}
-                            <h2 className="pm-scenario-section-heading">The situation</h2>
-                            {scenario.situation.split('\n\n').map((paragraph, idx) => (
-                                <p key={idx} className="pm-scenario-body-p">
-                                    {paragraph}
-                                </p>
-                            ))}
-
-                            {/* Section: What you know */}
-                            <h2 className="pm-scenario-section-heading">What you know</h2>
-                            <ul className="pm-bullet-points-list">
-                                {scenario.known_facts.map((fact, idx) => (
-                                    <li key={idx}>{fact}</li>
-                                ))}
-                            </ul>
-
-                            {/* Section: Your decision */}
-                            <div className="pm-decision-prompt-box">
-                                <div className="pm-decision-prompt-header">
-                                    <MessageCircle size={22} color="var(--primary)" />
-                                    <span>Your decision</span>
-                                </div>
-                                <p className="pm-decision-prompt-p">
-                                    What would you do first, who would you involve, and how would you explain the
-                                    trade-off?
-                                </p>
-                                <span className="pm-decision-prompt-sub">
-                                    Several approaches may be reasonable. Explain your assumptions.
-                                </span>
-                            </div>
+                        {/* Scenario article — shared presentation component */}
+                        <article className="pm-panel pm-scenario-detail-article">
+                            <ScenarioStoryContent scenario={scenario} />
 
                             {/* Action Row */}
                             <div className="pm-card-action-bar pm-scenario-engagement">
@@ -601,78 +537,7 @@ export default function Show({ scenario, responses, related }: Props) {
 
                     {/* Right Column: Scenario Metadata Sidebar (pm2.png) */}
                     <aside className="pm-scenario-sidebar-col">
-                        {/* 1. About this scenario */}
-                        <section className="pm-sidebar-card">
-                            <h3>About this scenario</h3>
-                            <div className="pm-info-row">
-                                <Sliders size={18} />
-                                <span>Difficulty</span>
-                                <strong>{scenario.difficulty}</strong>
-                            </div>
-                            <div className="pm-info-row">
-                                <Target size={18} />
-                                <span>Focus</span>
-                                <strong>{scenario.focus}</strong>
-                            </div>
-                            <div className="pm-info-row" style={{ borderBottom: 'none' }}>
-                                <Clock size={18} />
-                                <span>Practice time</span>
-                                <strong>5–{scenario.minutes} minutes</strong>
-                            </div>
-                        </section>
-
-                        {/* 2. How AI feedback works */}
-                        <section className="pm-sidebar-card">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                                <Cpu size={22} color="var(--primary)" />
-                                <h3 style={{ margin: 0, fontSize: 'var(--type-lead)' }}>How AI feedback works</h3>
-                            </div>
-                            <p style={{ fontSize: 'var(--type-small)', color: 'var(--text)', lineHeight: 'var(--type-line-body)' }}>
-                                Responses are reviewed for reasoning, trade-offs, stakeholder involvement and practical
-                                next steps.
-                            </p>
-                            <small
-                                style={{ display: 'block', color: 'var(--muted)', fontSize: 'var(--type-caption)', margin: '8px 0' }}
-                            >
-                                AI feedback can be imperfect. Use your judgment.
-                            </small>
-                            <a
-                                href="#assessment-criteria"
-                                className="pm-text-link"
-                                style={{ fontSize: 'var(--pm-font-size-13px)', display: 'inline-block', marginTop: '6px' }}
-                            >
-                                View assessment criteria →
-                            </a>
-                        </section>
-
-                        {/* 3. Your perspective belongs here */}
-                        <section className="pm-cta-guest-card">
-                            <Users size={28} className="pm-cta-guest-icon" />
-                            <h3 style={{ fontSize: 'var(--type-lead)', fontWeight: 'var(--pm-font-weight-800)', margin: '0 0 8px' }}>
-                                Your perspective belongs here.
-                            </h3>
-                            <p style={{ fontSize: 'var(--type-small)', color: 'var(--muted)', margin: '0 0 16px' }}>
-                                Respond, learn from feedback and track your progress.
-                            </p>
-                            <Link href="/register" className="pm-button pm-btn-full">
-                                Join the community — free
-                            </Link>
-                            {isGuest && (
-                                <span className="pm-cta-guest-login">
-                                    Already a member? <Link href="/login">Log in</Link>
-                                </span>
-                            )}
-                            <small
-                                style={{
-                                    display: 'block',
-                                    color: 'var(--muted)',
-                                    fontSize: 'var(--type-caption)',
-                                    marginTop: '16px',
-                                }}
-                            >
-                                Member photos and full profiles are visible after sign-in.
-                            </small>
-                        </section>
+                        <ScenarioDetailsAside scenario={scenario} isGuest={isGuest} />
 
                         {/* 4. Explore another situation */}
                         {related.length > 0 && (

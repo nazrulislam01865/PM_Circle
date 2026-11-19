@@ -22,6 +22,7 @@
 @import './pm-feature-pages.css';
 @import './pm-profile.css';
 @import './pm-profile-ux.css';
+@import './pm-profile-editor-prototype.css';
 @import './pm-profile-privacy.css';
 @import './pm-resume-imports.css';
 @import './pm-signup.css';
@@ -54,6 +55,7 @@
 @import './pm-post-reactions.css';
 @import './pm-member-navigation.css';
 @import './pm-activity-log.css';
+@import './pm-notifications.css';
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';

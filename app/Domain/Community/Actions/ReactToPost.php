@@ -35,6 +35,10 @@ final class ReactToPost
                         ->where('user_id', $user->id)->update(['type' => $type, 'updated_at' => now()]);
                 }
                 EngagementStats::applyReaction($post->id, $old, $type);
+                if ($old === null && $type !== null) {
+                    DB::afterCommit(static fn () => app(\App\Domain\Notifications\ActivityNotifier::class)
+                        ->forPostReaction($user, $post));
+                }
             }
 
             return EngagementStats::readsEnabled()

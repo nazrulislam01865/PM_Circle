@@ -31,7 +31,7 @@ class ProfileUpdateRequest extends FormRequest
             $fieldRules['field_visibility.'.$key] = ['required_with:field_visibility', Rule::in(['public', 'community', 'private'])];
         }
 
-        return array_merge($rules, $fieldRules, [
+        return array_merge($rules, $fieldRules, $this->editorRules(), [
             // Basic-profile saves require a valid private contact number. Independent
             // privacy-only PATCH requests may omit it to preserve existing controls.
             'phone' => [
@@ -63,4 +63,80 @@ class ProfileUpdateRequest extends FormRequest
             'contact_visibility' => ['nullable', 'string', 'in:private,members'],
         ]);
     }
+
+    /** Allowlisted prototype fields. Nested arrays are bounded and validated server-side. */
+    private function editorRules(): array
+    {
+        if (! $this->has('editor_details')) {
+            return [];
+        }
+
+        $rules = [
+            'editor_details' => ['required', 'array:current_organization,profile_photo_url,cover_photo_url,tools_software,delivery_methods,career,records'],
+            'editor_details.current_organization' => ['nullable', 'string', 'max:160'],
+            'editor_details.profile_photo_url' => ['nullable', 'url:https', 'max:500'],
+            'editor_details.cover_photo_url' => ['nullable', 'url:https', 'max:500'],
+            'editor_details.tools_software' => ['nullable', 'string', 'max:1000'],
+            'editor_details.delivery_methods' => ['nullable', 'string', 'max:500'],
+            'editor_details.career' => ['required', 'array:availability,target_roles,seniority,locations,work_arrangement,employment_type,notice_period,relocation'],
+            'editor_details.career.availability' => ['required', Rule::in(['open', 'not_looking'])],
+            'editor_details.career.relocation' => ['required', 'boolean'],
+            'editor_details.records' => ['required', 'array:experiences,projects,educations,certifications,courses,awards,publications,volunteering,languages,links'],
+            'removed_entries' => ['sometimes', 'array:experiences,projects,educations,certifications'],
+        ];
+
+        foreach (['target_roles', 'seniority', 'locations', 'work_arrangement', 'employment_type', 'notice_period'] as $key) {
+            $rules['editor_details.career.'.$key] = ['nullable', 'string', 'max:180'];
+        }
+
+        $sets = [
+            'experiences' => ['job_title', 'organization', 'employment_type', 'location', 'work_arrangement', 'start_month', 'end_month', 'is_current', 'responsibilities', 'achievements'],
+            'projects' => ['title', 'role', 'organization', 'industry', 'start_month', 'end_month', 'status', 'scale', 'scope', 'outcomes', 'work_url'],
+            'educations' => ['degree', 'institution', 'field_of_study', 'location', 'start_month', 'end_month', 'is_current', 'grade', 'honours'],
+            'certifications' => ['name', 'issuing_organization', 'issue_month', 'expiry_month', 'does_not_expire', 'credential_number', 'verification_url'],
+            'courses' => ['name', 'provider', 'completion_month', 'hours', 'evidence_url'],
+            'awards' => ['name', 'organization', 'award_month', 'details'],
+            'publications' => ['title', 'publisher', 'month', 'details', 'url'],
+            'volunteering' => ['role', 'organization', 'start_month', 'end_month', 'is_current', 'contribution'],
+            'languages' => ['name', 'proficiency'],
+            'links' => ['label', 'url'],
+        ];
+        $required = [
+            'experiences' => ['job_title', 'organization', 'start_month'],
+            'projects' => ['title', 'role'],
+            'educations' => ['degree', 'institution'],
+            'certifications' => ['name', 'issuing_organization'],
+            'courses' => ['name'], 'awards' => ['name'], 'publications' => ['title'],
+            'volunteering' => ['role', 'organization'],
+            'languages' => ['name'], 'links' => ['label', 'url'],
+        ];
+        foreach ($sets as $section => $columns) {
+            $prefix = 'editor_details.records.'.$section;
+            $rules[$prefix] = ['present', 'array', 'max:40'];
+            $rules[$prefix.'.*'] = ['required', 'array:id,'.implode(',', $columns)];
+            if (in_array($section, ['experiences', 'projects', 'educations', 'certifications'], true)) {
+                $rules[$prefix.'.*.id'] = ['sometimes', 'nullable', 'integer', 'min:1'];
+                $rules['removed_entries.'.$section] = ['sometimes', 'array', 'max:40'];
+                $rules['removed_entries.'.$section.'.*'] = ['integer', 'min:1', 'distinct'];
+            }
+            foreach ($columns as $column) {
+                $path = $prefix.'.*.'.$column;
+                if (in_array($column, ['is_current', 'does_not_expire'], true)) {
+                    $rules[$path] = ['required', 'boolean'];
+                } elseif (in_array($column, ['start_month', 'end_month', 'issue_month', 'expiry_month', 'completion_month', 'award_month', 'month'], true)) {
+                    $rules[$path] = in_array($column, $required[$section] ?? [], true)
+                        ? ['required', 'date_format:Y-m'] : ['nullable', 'date_format:Y-m'];
+                } elseif (in_array($column, ['work_url', 'verification_url', 'evidence_url', 'url'], true)) {
+                    $rules[$path] = in_array($column, $required[$section] ?? [], true)
+                        ? ['required', 'url:http,https', 'max:500'] : ['nullable', 'url:http,https', 'max:500'];
+                } else {
+                    $rules[$path] = [in_array($column, $required[$section] ?? [], true) ? 'required' : 'nullable', 'string',
+                        in_array($column, ['responsibilities', 'achievements', 'scope', 'outcomes', 'honours', 'details', 'contribution'], true) ? 'max:4000' : 'max:255'];
+                }
+            }
+        }
+
+        return $rules;
+    }
+
 }

@@ -1,10 +1,11 @@
 import { Link } from '@inertiajs/react';
 import {
     ArrowRight, Bookmark, CalendarDays, Check, CheckCircle2, ChevronDown, ChevronRight,
-    CircleHelp, Clock3, Coins, FileCheck2, Info, Layers3, Play, Sparkles, Target,
+    CircleHelp, Clock3, Coins, FileCheck2, Info, Layers3, Play, Sparkles, Target, RefreshCcw, BarChart3,
 } from 'lucide-react';
 import { Fragment, useState, type FormEvent, type ReactNode } from 'react';
 import { examResult, examReview } from '@/components/exam/ExamShared';
+import { PmpAiRefillPanel } from '@/components/exam/PmpAiRefillPanel';
 
 export type PmpWorkspaceAttempt = {
     id: number;
@@ -367,9 +368,9 @@ export function PmpHistory({ attempts, initialNextCursor, onStart, starting, can
             setLoadingOlder(false);
         }
     };
-    return <Surface>
-        <div className="pm-pmp-history-heading"><div><h2>Exam History</h2><p>All dates and times in Bangladesh time (Asia/Dhaka, UTC+06:00).</p></div>
-            <PrimaryAction onClick={onStart} disabled={starting || !canStart}><Play size={16} fill="currentColor"/>Start a New Mock Exam</PrimaryAction>
+    return <Surface className="pm-pmp-history-surface">
+        <div className="pm-pmp-history-heading"><div><h2>Exam history</h2><p>All times in Bangladesh time.</p></div>
+            <PrimaryAction onClick={onStart} disabled={starting || !canStart}><Play size={17} fill="currentColor"/>Start a new mock exam</PrimaryAction>
         </div>
         <div className="pm-pmp-history-filters">
             <label><Layers3 size={17}/><select aria-label="Exam type" value={kind} onChange={e => setKind(e.target.value)}>
@@ -381,10 +382,10 @@ export function PmpHistory({ attempts, initialNextCursor, onStart, starting, can
             <label><CalendarDays size={17}/><select aria-label="Exam date range" value={period} onChange={e => setPeriod(e.target.value)}>
                 <option value="all">Date range</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option>
             </select><ChevronDown size={16}/></label>
-            <span className="pm-pmp-sample-tag"><Info size={14}/> Your own attempts</span>
+            <span className="pm-pmp-sample-tag"><Info size={14}/> Your exam records</span>
         </div>
         <div className="pm-pmp-table-scroll"><table className="pm-pmp-history-table"><thead><tr>
-            <th>Exam</th><th>Date</th><th>Started</th><th>Finished</th><th>Time Allowed</th><th>Time Used</th><th>Time Left</th><th>Score</th><th>Status</th><th>Action</th>
+            <th>Exam</th><th>Date</th><th>Started</th><th>Finished</th><th>Time allowed</th><th>Time used</th><th>Time left</th><th>Score</th><th>Status</th><th>Action</th>
         </tr></thead><tbody>{rows.map(attempt => {
             const active = isResumable(attempt);
             const expired = attempt.status === 'in_progress' && !active;
@@ -400,9 +401,9 @@ export function PmpHistory({ attempts, initialNextCursor, onStart, starting, can
                 <td>{dateLabel(attempt.started_at, true)}</td><td>{timeLabel(attempt.started_at)}</td><td>{timeLabel(attempt.finished_at)}</td>
                 <td>{readableDuration(duration)}</td><td>{readableDuration(elapsed)}</td><td>{readableDuration(Math.max(0, duration - elapsed))}</td>
                 <td><strong>{attempt.status === 'completed' ? `${valuePercent(attempt)}%` : '—'}</strong></td>
-                <td><span className={`pm-pmp-status ${active ? 'is-progress' : 'is-completed'}`}>{expired ? 'Expired' : active ? 'In Progress' : 'Completed'}</span></td>
-                <td><SecondaryLink href={active ? `/exams/pmp/attempts/${attempt.id}` : expired ? examResult(attempt.id) : examReview(attempt.id)}>
-                    {active ? 'Resume' : expired ? 'View Result' : 'Review'}</SecondaryLink></td>
+                <td><span className={`pm-pmp-status ${expired ? 'is-expired' : active ? 'is-progress' : 'is-completed'}`}>{expired ? 'Expired' : active ? 'In progress' : 'Completed'}</span></td>
+                <td><Link className="pm-pmp-primary pm-pmp-history-action" href={active ? `/exams/pmp/attempts/${attempt.id}` : expired ? examResult(attempt.id) : examReview(attempt.id)}>
+                    {active ? 'Resume' : expired ? 'View result' : 'Review'}</Link></td>
             </tr>{expanded === attempt.id && <tr className="pm-pmp-details-row"><td colSpan={10}>
                 <div className="pm-pmp-history-details" aria-label="Expanded attempt summary">
                     <div><IconTile><Check/></IconTile><span>Answered <strong>{attempt.answered_count} of {attempt.total_questions}</strong></span></div>
@@ -419,45 +420,59 @@ export function PmpHistory({ attempts, initialNextCursor, onStart, starting, can
     </Surface>;
 }
 
-export function PmpAiUsage({ usage, onRefresh, loading = false, error = '' }: {
-    usage: PmpAiUsageData; onRefresh?: () => void; loading?: boolean; error?: string;
+export function PmpAiUsage({ usage, planDetails, onRefresh, loading = false, error = '' }: {
+    usage: PmpAiUsageData; planDetails: PmpPlanDetails;
+    onRefresh?: () => void; loading?: boolean; error?: string;
 }) {
     const percent = usage.allocated ? Math.min(100, Math.round(usage.used / usage.allocated * 100)) : 0;
-    const labels: Record<string, string> = {
-        question_explanation: 'Question explanations', follow_up: 'Follow-up questions',
+    const labels: Record<string, { title: string; description: string }> = {
+        question_explanation: { title: 'Question explanations', description: 'AI-powered explanations for practice and mock questions.' },
+        follow_up: { title: 'Follow-up questions', description: 'Clarifying questions about concepts and explanations.' },
+        study_insights: { title: 'Study insights', description: 'Study guidance and recommendations.' },
     };
+    const labelFor = (kind: string) => labels[kind] ?? { title: kind.replace(/_/g, ' '), description: 'Recorded AI activity.' };
+    const isPaid = planDetails.source === 'subscription';
     return <Surface className="pm-pmp-ai-surface">
-        <div className="pm-pmp-ai-top"><span>PMP® Exam Simulator</span><span className="pm-pmp-status is-completed">AI Usage</span>
-            <small><Info size={14}/> Server-recorded token activity</small></div>
-        <Panel><div className="pm-pmp-ai-lead"><IconTile><Sparkles/></IconTile><div><h2>AI Usage</h2>
-            <p>Track the PMP AI tokens allocated and consumed during your current billing cycle.</p></div>
-            {onRefresh && <button type="button" className="pm-pmp-secondary pm-pmp-ai-refresh" onClick={onRefresh} disabled={loading}>
-                {loading ? 'Refreshing…' : 'Refresh usage'}
-            </button>}</div>
-            {error && <p className="pm-pmp-action-error" role="alert">{error}</p>}
-            {usage.configured === false ? <p className="pm-pmp-muted" role="status">
-                AI usage information is unavailable until your plan's PMP AI limits are configured.
-            </p> : <>
-                <div className="pm-pmp-ai-stats">{[
-                    { label: 'Allocated', value: usage.allocated, icon: <Layers3/> },
-                    { label: 'Used', value: usage.used, icon: <Coins/> },
-                    { label: 'Remaining', value: usage.remaining, icon: <Clock3/> },
-                ].map(item => <div key={item.label}><IconTile>{item.icon}</IconTile><span>
-                    <strong>{item.value.toLocaleString('en-US')}</strong><small>{item.label}</small></span></div>)}</div>
-                <div className="pm-pmp-ai-usage"><div><strong>{percent}% usage</strong>
-                    <span>{usage.used.toLocaleString('en-US')} of {usage.allocated.toLocaleString('en-US')} allocated tokens used</span></div>
-                    <PercentBar percent={percent}/></div>
-                <Panel className="pm-pmp-ai-ledger"><h2>Activity Ledger</h2><p>Completed PMP tutoring requests in this billing cycle.</p>
-                    <div className="pm-pmp-ai-ledger-head"><span>AI feature</span><span>Tokens used</span></div>
-                    {(['question_explanation', 'follow_up'] as const).map(kind => {
-                        const tokens = usage.activity.find(item => item.kind === kind)?.tokens ?? 0;
-                        return <div className="pm-pmp-ai-ledger-row" key={kind}><IconTile><CircleHelp/></IconTile>
-                            <div><strong>{labels[kind]}</strong></div><b>{tokens.toLocaleString('en-US')}</b>
-                        </div>;
-                    })}
+        <div className="pm-pmp-ai-top"><strong>PMP® Exam Simulator</strong><span aria-hidden="true">·</span>
+            <span className={`pm-pmp-status ${isPaid ? 'is-completed' : 'is-progress'}`}>
+                {isPaid ? 'Purchased' : planDetails.source === 'complimentary' ? 'Complimentary' : 'Plan not active'}</span>
+            <small><Info size={15}/> Live account data</small>
+        </div>
+        <div className="pm-pmp-ai-grid">
+            <div className="pm-pmp-ai-main">
+                <Panel className="pm-pmp-ai-balance">
+                    <div className="pm-pmp-ai-lead"><IconTile><Sparkles/></IconTile><div>
+                        <h2>AI usage and refills</h2>
+                        <p>Track your AI token usage for question explanations, follow-up questions, and study insights, and review your current allocation.</p>
+                    </div>{onRefresh && <button type="button" className="pm-pmp-ai-refresh" onClick={onRefresh} disabled={loading}
+                        aria-label="Refresh AI usage" title="Refresh AI usage"><RefreshCcw size={17} className={loading ? 'is-spinning' : ''}/></button>}</div>
+                    {error && <p className="pm-pmp-action-error" role="alert">{error}</p>}
+                    {usage.configured === false ? <p className="pm-pmp-muted" role="status">
+                        Your PMP token limit is not configured yet. Contact support if you have an eligible active plan.
+                    </p> : <>
+                        <div className="pm-pmp-ai-stats">{[
+                            { label: 'Allocated', value: usage.allocated, icon: <Layers3/> },
+                            { label: 'Used', value: usage.used, icon: <Coins/> },
+                            { label: 'Remaining', value: usage.remaining, icon: <RefreshCcw/> },
+                        ].map(item => <div key={item.label}><IconTile>{item.icon}</IconTile><span>
+                            <strong>{item.value.toLocaleString('en-US')}</strong><small>{item.label}</small></span></div>)}</div>
+                        <div className="pm-pmp-ai-usage"><div><strong>{percent}% usage</strong>
+                            <span>{usage.used.toLocaleString('en-US')} of {usage.allocated.toLocaleString('en-US')} tokens used</span></div>
+                            <PercentBar percent={percent}/></div>
+                        {Boolean(usage.reserved) && <p className="pm-pmp-muted" role="status">
+                            {(usage.reserved ?? 0).toLocaleString('en-US')} tokens reserved for replies in progress.</p>}
+                    </>}
                 </Panel>
-                {Boolean(usage.reserved) && <p className="pm-pmp-muted" role="status">{(usage.reserved ?? 0).toLocaleString('en-US')} tokens are temporarily reserved for replies in progress.</p>}
-            </>}
-        </Panel>
+                <Panel className="pm-pmp-ai-ledger"><h2>Activity ledger</h2><p>Token usage by AI feature in the current reporting period.</p>
+                    <div className="pm-pmp-ai-ledger-head"><span>AI feature</span><span>Tokens used</span></div>
+                    {usage.activity.length ? usage.activity.map(item => <div className="pm-pmp-ai-ledger-row" key={item.kind}>
+                        <IconTile>{item.kind === 'study_insights' ? <BarChart3/> : <CircleHelp/>}</IconTile>
+                        <div><strong>{labelFor(item.kind).title}</strong><small>{labelFor(item.kind).description}</small></div>
+                        <b>{item.tokens.toLocaleString('en-US')}</b></div>)
+                        : <p className="pm-pmp-empty">No completed AI activity recorded for this period.</p>}
+                </Panel>
+            </div>
+            <PmpAiRefillPanel eligible={isPaid}/>
+        </div>
     </Surface>;
 }

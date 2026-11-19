@@ -85,7 +85,7 @@ class PostController extends Controller
         if (EngagementStats::readsEnabled()) {
             $stats = \Illuminate\Support\Facades\DB::table('post_engagement_stats')
                 ->where('post_id', $post->id)->first();
-            foreach (['comments' => fn ($query) => $query->visible(), 'reactions', 'likes', 'loves'] as $label) {
+            foreach (['comments', 'reactions', 'likes', 'loves'] as $label) {
                 $column = match ($label) {
                     'comments' => 'comments_count', 'reactions' => 'reactions_count',
                     'likes' => 'like_count', 'loves' => 'love_count',
@@ -231,7 +231,7 @@ class PostController extends Controller
         $post = $action->execute($request->user(), $request->validated());
         $message = match ($post->status) {
             'pending_check' => 'Checking your post. It will appear in the feed once it passes the check.',
-            'pending_review' => 'Your anonymous post has been sent to the moderation team for review.',
+            'pending_review' => 'Your post is awaiting an additional safety review.',
             default => 'Your post has been published.',
         };
         return to_route('dashboard')->with('status', $message);

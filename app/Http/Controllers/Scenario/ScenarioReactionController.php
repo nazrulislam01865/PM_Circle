@@ -72,7 +72,13 @@ class ScenarioReactionController extends Controller
     {
         $this->ensureResponse($scenario, $response);
         $type = $request->validate(['type' => ['required', Rule::in(self::TYPES)]])['type'];
-        $response->reactions()->updateOrCreate(['user_id' => $request->user()->id], ['type' => $type]);
+        $reaction = $response->reactions()->updateOrCreate(
+            ['user_id' => $request->user()->id], ['type' => $type],
+        );
+        if ($reaction->wasRecentlyCreated) {
+            app(\App\Domain\Notifications\ActivityNotifier::class)
+                ->forScenarioReaction($request->user(), $response, $scenario->slug);
+        }
 
         return $this->result($request, $type, $response->reactions()->count());
     }

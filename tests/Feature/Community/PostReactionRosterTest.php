@@ -8,6 +8,7 @@ use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 final class PostReactionRosterTest extends TestCase
@@ -32,6 +33,30 @@ final class PostReactionRosterTest extends TestCase
             'status' => $status,
             'published_at' => now(),
         ]);
+    }
+
+    public function test_post_detail_renders_optimized_engagement_counts_without_a_match_error(): void
+    {
+        config()->set('community.engagement_stats_writes', true);
+        config()->set('community.engagement_stats_reads', true);
+        $post = $this->createTestPost();
+
+        DB::table('post_engagement_stats')->where('post_id', $post->id)->update([
+            'comments_count' => 4,
+            'reactions_count' => 3,
+            'like_count' => 2,
+            'love_count' => 1,
+        ]);
+
+        $this->get("/posts/{$post->id}")->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->component('community/PostShow')
+            ->where('post.comments_count', 4)
+            ->where('post.reactions_count', 3)
+            ->where('post.likes_count', 2)
+            ->where('post.loves_count', 1)
+            ->where('post.reaction_breakdown.like', 2)
+            ->where('post.reaction_breakdown.love', 1)
+            ->etc());
     }
 
     public function test_popup_lists_real_reactors_and_filters_by_type_with_profile_privacy(): void

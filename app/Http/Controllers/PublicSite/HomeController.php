@@ -13,13 +13,23 @@ use App\Models\Post;
 use App\Models\Scenario;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class HomeController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response|RedirectResponse
     {
+        // The public homepage is for guests. Members should return to their
+        // authenticated home even when an older link still points to "/".
+        // Keep administrator access to the public site preview unchanged.
+        $user = $request->user();
+        if ($user && ! $user->is_admin && $user->status === 'active') {
+            return to_route('dashboard');
+        }
+
         $content = HomePageContent::query()->where('key', 'home')->first()?->content ?? [];
         $demo = app()->environment(['local', 'testing']) && config('pm-circle.demo_content_enabled');
         $visible = fn (string $section): bool => data_get($content, 'sections.'.$section, true) !== false;

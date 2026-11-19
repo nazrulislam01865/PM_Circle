@@ -176,6 +176,42 @@ final class AiCreditService
         return $grant->reserved === 0 && $grant->consumed === 0;
     }
 
+    /** Revoke unspent monthly credits if the verified subscription payment is reversed.
+     * Consumed or reserved credits require manual financial review, never a negative wallet.
+     * Caller owns the surrounding payment settlement transaction.
+     */
+    public function revokeSubscriptionCycles(int $userId, int $subscriptionId): bool
+    {
+        $this->wallet($userId);
+        $grants = DB::table('ai_credit_grants')->where('user_id', $userId)
+            ->where('source', 'subscription_cycle')
+            ->where('source_ref', 'like', 'subscription:'.$subscriptionId.':cycle:%')
+            ->orderBy('id')->lockForUpdate()->get();
+        $fullyRevoked = true;
+        foreach ($grants as $grant) {
+            $wallet = $this->wallet($userId);
+            if ($grant->available > 0) {
+                if ($wallet->available < $grant->available) {
+                    throw new AiFailure('LEDGER_RECONCILIATION_REQUIRED', 503);
+                }
+                DB::table('ai_credit_grants')->where('id', $grant->id)->update([
+                    'available' => 0, 'expired' => $grant->expired + $grant->available,
+                    'updated_at' => now(),
+                ]);
+                DB::table('ai_credit_wallets')->where('user_id', $userId)->update([
+                    'available' => $wallet->available - $grant->available,
+                    'version' => $wallet->version + 1, 'updated_at' => now(),
+                ]);
+                $this->event($userId, $grant->id, null, 'chargeback_revoke',
+                    -$grant->available, 0, 0, "grant:{$grant->id}:chargeback_revoke");
+            }
+            if ($grant->reserved > 0 || $grant->consumed > 0) {
+                $fullyRevoked = false;
+            }
+        }
+        return $fullyRevoked;
+    }
+
     public function expire(int $limit = 200): int
     {
         $ids = DB::table('ai_credit_grants')->where('available', '>', 0)

@@ -34,11 +34,12 @@ $page = $read('resources/js/pages/settings/profile.tsx');
 $assert(str_contains($request, 'Rule::requiredIf') && str_contains($request, "'phone' => [")
     && str_contains($request, "'tab') === 'edit'") && str_contains($request, "7 to 15 digits"),
     'Full profile updates require a valid phone on the server without blocking unrelated partial updates');
-$assert(str_contains($phone, 'required aria-required="true"')
-    && str_contains($phone, 'pm-profile-phone-error')
-    && str_contains($page, 'formErrors.phone')
-    && str_contains($page, "Phone number is required."),
-    'Phone field has client validation, accessible errors and a required indicator');
+$prototype = $read('resources/js/components/profile/ProfileEditorPrototype.tsx');
+$assert(str_contains($prototype, 'digits.length < 7')
+    && str_contains($prototype, 'Contact phone with country code')
+    && str_contains($prototype, 'aria-invalid={Boolean(error)}')
+    && str_contains($prototype, 'Full name is required.'),
+    'Prototype phone editor validates input client-side and exposes accessible errors');
 $css = $read('resources/css/pm-profile-ux.css');
 $assert(str_contains($css, 'position: sticky; bottom: var(--space-3)')
     && ! str_contains($css, 'position: fixed; bottom: var(--space-3)')

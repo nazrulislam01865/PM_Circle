@@ -3,6 +3,7 @@ import { MemberHomeHeader } from '@/components/dashboard/MemberHomeHeader';
 import { MemberSecondaryNavigation } from '@/components/dashboard/MemberSecondaryNavigation';
 import { usePage } from '@inertiajs/react';
 import type { DashboardShellData } from '@/types/dashboard';
+import { NotificationCenterProvider } from '@/components/notifications/NotificationCenter';
 
 type HeaderProps = {
     active?: string;
@@ -18,10 +19,10 @@ type HeaderProps = {
 export function SiteHeader({ active, actions, brandHref, joinLabel, authenticatedMemberNavigation = false }: HeaderProps) {
     const { auth, memberShell } = usePage<{ auth?: { user?: { is_admin?: boolean } | null }; memberShell?: DashboardShellData | null }>().props;
     if (authenticatedMemberNavigation && memberShell && auth?.user && !auth.user.is_admin) {
-        return <div className="pm-member-exam-navigation">
+        return <NotificationCenterProvider><div className="pm-member-exam-navigation">
             <MemberHomeHeader dashboard={memberShell} active={active} actions={actions} brandHref={brandHref} joinLabel={joinLabel} />
             <MemberSecondaryNavigation />
-        </div>;
+        </div></NotificationCenterProvider>;
     }
-    return <MemberHomeHeader active={active} actions={actions} brandHref={brandHref} joinLabel={joinLabel} />;
+    return <NotificationCenterProvider><MemberHomeHeader active={active} actions={actions} brandHref={brandHref} joinLabel={joinLabel} /></NotificationCenterProvider>;
 }

@@ -174,7 +174,7 @@ export default function Index({ shell, availableQuestions, fullLength, examSetti
                     onStart={onStart} onFocus={onFocus} starting={starting} canStart={availableQuestions > 0} fullQuestionCount={examSettings.full_question_count}/>}
                 {active === 'history' && <PmpHistory attempts={attempts} initialNextCursor={historyNextCursor}
                     onStart={onStart} starting={starting} canStart={availableQuestions > 0} fullQuestionCount={examSettings.full_question_count}/>}
-                {active === 'ai' && <PmpAiUsage usage={currentUsage} onRefresh={() => void refreshUsage()} loading={usageLoading} error={usageError}/>}
+                {active === 'ai' && <PmpAiUsage usage={currentUsage} planDetails={planDetails} onRefresh={() => void refreshUsage()} loading={usageLoading} error={usageError}/>}
             </div>
         </div>
         <PmpStartExamDialog open={startDialogOpen} phase={startDialogPhase} coverage={startCoverage}

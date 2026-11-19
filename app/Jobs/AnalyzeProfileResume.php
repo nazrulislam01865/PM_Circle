@@ -3,8 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ProfileImportSession;
-use App\Services\Resume\ResumeImportAnalyzer;
-use App\Services\Resume\ResumeTextExtractor;
+use App\Domain\AI\Services\CvExtractionService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
@@ -14,19 +13,22 @@ class AnalyzeProfileResume implements ShouldQueue
 {
     use Queueable;
 
-    public int $tries = 2;
-    public int $timeout = 60;
+    // Provider timeouts are ambiguous; require an explicit member retry to avoid duplicate charges.
+    public int $tries = 1;
+    public int $timeout = 80;
 
     public function __construct(public readonly int $importId) {}
 
-    public function handle(ResumeTextExtractor $reader, ResumeImportAnalyzer $analyzer): void
+    public function handle(CvExtractionService $extractor): void
     {
         $import = ProfileImportSession::with('resume')->find($this->importId);
         if (! $import || $import->status !== 'processing' || ! $import->resume || $import->resume->user_id !== $import->user_id) {
             return;
         }
 
-        $result = $analyzer->analyze($reader->extract($import->resume));
+        $consented = ($import->extracted_data['ai_consent'] ?? false) === true;
+        $result = $extractor->analyze($import->resume, $consented);
+        $result['ai_consent'] = $consented;
         // One conditional UPDATE prevents a slow previous attempt from restoring a
         // cancelled import after the member retries or removes its source file.
         ProfileImportSession::query()
@@ -47,8 +49,8 @@ class AnalyzeProfileResume implements ShouldQueue
             ]);
             $import->update([
                 'status' => 'failed',
-                'extracted_data' => ['fields' => [], 'warnings' => [
-                    'The document could not be analysed. Check that it contains selectable text and retry, or ask support to check the processing service.',
+                'extracted_data' => ['fields' => [], 'ai_consent' => ($import->extracted_data['ai_consent'] ?? false) === true, 'warnings' => [
+                    'The document could not be analysed. Check the document and AI provider configuration, then retry. Scanned files require AI extraction to be enabled.',
                 ]],
             ]);
         }

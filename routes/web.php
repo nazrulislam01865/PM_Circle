@@ -143,6 +143,15 @@ Route::middleware(['auth', 'pm.member', 'verified'])->group(function () {
     Route::get('/dashboard/features/{feature}', AccountFeatureController::class)->name('dashboard.features');
 });
 
+// Authenticated, member-scoped notification feed and read-state operations.
+Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded', 'throttle:60,1'])
+    ->prefix('notifications')->name('notifications.')->group(function (): void {
+        $controller = \App\Http\Controllers\Account\NotificationController::class;
+        Route::get('/feed', [$controller, 'index'])->name('feed');
+        Route::post('/read-all', [$controller, 'readAll'])->name('read-all');
+        Route::post('/{notification}/read', [$controller, 'read'])->whereUuid('notification')->name('read');
+    });
+
 Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded'])->group(function () {
     Route::get('/interview-preparation', [InterviewController::class, 'index'])->name('interview.index');
     Route::post('/interview-preparation/start', [InterviewController::class, 'start'])->middleware('throttle:10,1')->name('interview.start');
@@ -308,15 +317,22 @@ Route::middleware(['auth', 'pm.admin', 'verified', 'throttle:60,1'])
             ->whereUuid('uuid')->name('requests.refund-unknown');
     });
 
-Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded', 'throttle:10,1'])
-    ->prefix('billing')->name('billing.ai.')->group(function (): void {
+Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded'])
+    ->prefix('billing')->name('billing.')->group(function (): void {
         $controller = \App\Http\Controllers\Billing\AiCreditCheckoutController::class;
-        Route::get('/ai-packages', [$controller, 'packages'])->name('packages');
-        Route::post('/ai-checkout', [$controller, 'checkout'])->name('checkout');
-        Route::get('/ai-orders/{uuid}', [$controller, 'order'])->whereUuid('uuid')->name('orders');
+        // Server-calculated membership amounts only; clients cannot submit amounts or payment status.
+        Route::post('/membership-checkout',
+            [\App\Http\Controllers\Billing\PaymentCheckoutController::class, 'membership'])
+            ->middleware('throttle:6,1')->name('membership.checkout');
+        Route::get('/orders/{uuid}',
+            [\App\Http\Controllers\Billing\PaymentCheckoutController::class, 'show'])
+            ->middleware('throttle:60,1')->whereUuid('uuid')->name('orders.show');
+        Route::get('/ai-packages', [$controller, 'packages'])->middleware('throttle:30,1')->name('ai.packages');
+        Route::post('/ai-checkout', [$controller, 'checkout'])->middleware('throttle:6,1')->name('ai.checkout');
+        Route::get('/ai-orders/{uuid}', [$controller, 'order'])->middleware('throttle:60,1')->whereUuid('uuid')->name('ai.orders');
     });
-// Signature and independently verified transaction are mandatory; default adapter always rejects.
+// One shared endpoint for membership and AI events. A verified provider adapter is mandatory; default rejects.
 Route::post('/webhooks/payments/{provider}',
     [\App\Http\Controllers\Billing\AiCreditCheckoutController::class, 'webhook'])
-    ->middleware('throttle:60,1')->where('provider', '[a-z0-9_-]{2,40}')
+    ->middleware('throttle:30,1')->where('provider', 'bkash|nagad')
     ->name('webhooks.ai-payments');

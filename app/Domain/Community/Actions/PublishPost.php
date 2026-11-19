@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use RuntimeException;
 use Throwable;
 
@@ -17,6 +18,13 @@ class PublishPost
     public function execute(User $user, array $data): Post
     {
         if (! config('pm-ai.post_check_enabled', false)) {
+            // Anonymous posts must not bypass AI checks or fall back to manual approval.
+            if (! empty($data['is_anonymous'])) {
+                throw ValidationException::withMessages([
+                    'body' => 'Anonymous posting is temporarily unavailable while AI checking is disabled.',
+                ]);
+            }
+
             return $this->publishLegacy($user, $data);
         }
         $image = $data['image'] ?? null;
@@ -86,8 +94,8 @@ class PublishPost
                     'is_anonymous' => (bool) ($data['is_anonymous'] ?? false),
                     'image_path' => $storedPath && ($data['visibility'] ?? 'public') !== 'members' ? '/post-media/'.basename($storedPath) : null,
                     'visibility' => $data['visibility'] ?? 'public',
-                    'status' => ! empty($data['is_anonymous']) ? 'pending_review' : 'published',
-                    'published_at' => ! empty($data['is_anonymous']) ? null : now(),
+                    'status' => 'published',
+                    'published_at' => now(),
                     'ai_generated' => false,
                 ]);
                 if ($storedPath && $post->visibility === 'members') {

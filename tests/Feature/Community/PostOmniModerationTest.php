@@ -94,6 +94,89 @@ final class PostOmniModerationTest extends TestCase
             && $request->data()['model'] === 'omni-moderation-latest');
     }
 
+    public function test_clean_anonymous_post_is_published_by_ai_without_admin_approval(): void
+    {
+        $this->response();
+        $author = User::factory()->create(['onboarding_step' => 3, 'email_verified_at' => now()]);
+        $viewer = User::factory()->create(['onboarding_step' => 3, 'email_verified_at' => now()]);
+        $post = app(PublishPost::class)->execute($author, [
+            'body' => 'Anonymous project management question.',
+            'topic' => 'Ask the community', 'visibility' => 'public', 'is_anonymous' => true,
+        ]);
+        $this->assertSame('pending_check', $post->status);
+        $this->assertNull($post->published_at);
+        $this->assertSame([], app(\App\Domain\Community\Queries\FeedQuery::class)
+            ->page('all', 'All', null, $viewer)['data']);
+        Queue::assertPushed(CheckCommunityPost::class);
+
+        $this->process($post);
+        $post->refresh();
+        $this->assertSame('published', $post->status);
+        $this->assertNotNull($post->published_at);
+        $this->assertTrue($post->is_anonymous);
+        $this->assertSame($author->id, $post->author_id);
+        $this->assertSame('completed', DB::table('post_check_runs')
+            ->where('post_id', $post->id)->value('status'));
+
+        $feed = app(\App\Domain\Community\Queries\FeedQuery::class)
+            ->page('all', 'All', null, $viewer)['data'];
+        $this->assertCount(1, $feed);
+        $this->assertSame('Anonymous member', $feed[0]['author']['name']);
+        $this->assertArrayNotHasKey('author_id', $feed[0]);
+        $this->assertEmpty($feed[0]['author']['id'] ?? null);
+    }
+
+    public function test_flagged_anonymous_post_is_not_auto_published(): void
+    {
+        $this->response(['harassment']);
+        $author = User::factory()->create(['onboarding_step' => 3, 'email_verified_at' => now()]);
+        $post = app(PublishPost::class)->execute($author, [
+            'body' => 'Content that must be reviewed by the AI.',
+            'topic' => 'From my project', 'is_anonymous' => true,
+        ]);
+        $this->process($post);
+        $this->assertSame('restricted', $post->fresh()->status);
+        $this->assertNull($post->fresh()->published_at);
+        $this->assertSame(1, DB::table('post_check_violations')->where('post_id', $post->id)->count());
+    }
+
+    public function test_anonymous_post_cannot_bypass_ai_when_checker_is_disabled(): void
+    {
+        config()->set('pm-ai.post_check_enabled', false);
+        $author = User::factory()->create(['onboarding_step' => 3, 'email_verified_at' => now()]);
+        try {
+            app(PublishPost::class)->execute($author, [
+                'body' => 'An unchecked anonymous message.',
+                'topic' => 'From my project', 'is_anonymous' => true,
+            ]);
+            $this->fail('Anonymous posting must fail closed without AI checking.');
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            $this->assertArrayHasKey('body', $exception->errors());
+        }
+        $this->assertSame(0, DB::table('posts')->where('author_id', $author->id)->count());
+        $this->assertSame(0, DB::table('post_check_runs')->count());
+        Queue::assertNotPushed(CheckCommunityPost::class);
+    }
+
+    public function test_anonymous_edit_cannot_skip_ai_when_checker_is_disabled(): void
+    {
+        $this->response();
+        $author = User::factory()->create(['onboarding_step' => 3, 'email_verified_at' => now()]);
+        $post = app(PublishPost::class)->execute($author, [
+            'body' => 'Original anonymous content.',
+            'topic' => 'From my project', 'is_anonymous' => true,
+        ]);
+        $this->process($post);
+        $this->assertSame('published', $post->fresh()->status);
+
+        config()->set('pm-ai.post_check_enabled', false);
+        $this->actingAs($author)->patchJson('/posts/'.$post->id, [
+            'body' => 'An unchecked anonymous edit.',
+        ])->assertUnprocessable()->assertJsonValidationErrors('body');
+        $this->assertSame('Original anonymous content.', $post->fresh()->body);
+        $this->assertSame('published', $post->fresh()->status);
+    }
+
     public function test_flagged_post_is_restricted_without_publication(): void
     {
         $this->response(['harassment']);

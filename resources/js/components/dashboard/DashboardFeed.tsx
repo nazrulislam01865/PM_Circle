@@ -51,7 +51,7 @@ export function DashboardFeed({ dashboard, submittingPost = null }: { dashboard:
             const data = await response.json() as PostCheckFeedData;
             const completed = postChecks.posts.some(post => post.status === 'pending_check' && !data.posts.some(next => next.id === post.id && next.status === 'pending_check'));
             setPostChecks(data);
-            if (completed) router.reload({ only: ['dashboard'], preserveScroll: true });
+            if (completed) router.reload({ only: ['dashboard'] });
         } catch { /* An unavailable status endpoint must never expose or publish a post. */ }
     };
     useEffect(() => {

@@ -5,11 +5,13 @@ import {
     ChevronDown,
     ChevronRight,
     ChevronUp,
+    Cpu,
     Lock,
     MessageCircle,
     MoreHorizontal,
     Sparkles,
     Star,
+    Target,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Avatar } from '@/components/pm/Avatar';
@@ -128,7 +130,7 @@ export default function Show({ scenario, responses, related }: Props) {
         let attempts = 0;
         const timer = window.setInterval(() => {
             if (attempts++ >= 19) { window.clearInterval(timer); return; }
-            router.reload({ only: ['responses'], preserveScroll: true, preserveState: true });
+            router.reload({ only: ['responses'] });
         }, 8000);
         return () => window.clearInterval(timer);
     }, [ownQueued]);

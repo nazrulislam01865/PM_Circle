@@ -124,7 +124,7 @@ export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onU
                 const result = await response.json() as { body: string; image_path: string | null };
                 onUpdated?.(result);
                 onClose();
-                router.reload({ preserveScroll: true });
+                router.reload();
             }).catch(reason => setError(reason instanceof Error ? reason.message : 'Unable to update the post.')).finally(() => setBusy(false));
         } else {
             payload.append('topic', topic);

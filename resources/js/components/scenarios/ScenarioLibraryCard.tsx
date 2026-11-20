@@ -1,5 +1,6 @@
 import { Link, router } from '@inertiajs/react';
-import { ArrowRight, Bookmark, MessageCircle, ThumbsUp } from 'lucide-react';
+import { ArrowRight, Bookmark, MessageCircle } from 'lucide-react';
+import { ReactionGlyph } from '@/components/home/HomeEngagement';
 
 export type LibraryScenario = {
     id: number;
@@ -54,7 +55,7 @@ export function ScenarioLibraryCard({ scenario, featured, canInteract, onJoin, h
                 <div className="pm-challenge-item-actions">
                     {!featured && <div className="pm-challenge-metrics">
                         <Link href={link} aria-label={`${scenario.responses_count} responses`}><MessageCircle size={17} aria-hidden="true"/><span>{scenario.responses_count}</span></Link>
-                        <button type="button" className={scenario.viewer_liked ? 'is-selected' : ''} aria-label={scenario.viewer_liked ? 'Unlike scenario' : 'Like scenario'} aria-pressed={!!scenario.viewer_liked} onClick={() => request(`/scenarios/${scenario.id}/reactions`, !!scenario.viewer_liked)}><ThumbsUp size={17} aria-hidden="true"/><span>{scenario.likes_count}</span></button>
+                        <button type="button" className={scenario.viewer_liked ? 'is-selected' : ''} aria-label={scenario.viewer_liked ? 'Unlike scenario' : 'Like scenario'} aria-pressed={!!scenario.viewer_liked} onClick={() => request(`/scenarios/${scenario.id}/reactions`, !!scenario.viewer_liked)}><ReactionGlyph type="like" size={17}/><span>{scenario.likes_count}</span></button>
                         <button type="button" className={scenario.viewer_bookmarked ? 'is-selected' : ''} aria-label={scenario.viewer_bookmarked ? 'Remove bookmark' : 'Bookmark scenario'} aria-pressed={!!scenario.viewer_bookmarked} onClick={() => request(`/scenarios/${scenario.id}/bookmark`, !!scenario.viewer_bookmarked)}><Bookmark size={17} aria-hidden="true" fill={scenario.viewer_bookmarked ? 'currentColor' : 'none'}/></button>
                     </div>}
                     <Link className="pm-challenge-read" href={link}>Read full scenario <ArrowRight size={18} aria-hidden="true" /></Link>

@@ -3,10 +3,11 @@ import { ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import {
     CourseAccessCard, CourseDetailCurriculum, CourseDetailExtraPanel, CourseDetailHero,
+    CourseDetailPracticePanel, CourseDetailResourcesPanel,
     CourseDetailOverview, CourseDetailTabs, CourseProviderCard, type CourseDetailTab,
 } from '@/components/learning/CourseDetail';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
-import type { DemoCourseDetailData } from '@/types/learning';
+import type { CoursePracticeSettings, CourseResourceData, DemoCourseDetailData } from '@/types/learning';
 import { demoCourseHref } from '@/types/learning';
 
 type CourseShowProps = {
@@ -17,9 +18,11 @@ type CourseShowProps = {
     enrolled: boolean;
     saved: boolean;
     memberTier: 'free' | 'plus' | 'pro';
+    practice: CoursePracticeSettings;
+    resources: CourseResourceData[];
 };
 
-export default function CourseShow({ course, isMember, isAuthenticated, eligible, enrolled, saved, memberTier }: CourseShowProps) {
+export default function CourseShow({ course, isMember, isAuthenticated, eligible, enrolled, saved, memberTier, practice, resources }: CourseShowProps) {
     const [submitting, setSubmitting] = useState(false);
     const [saving, setSaving] = useState(false);
     const [tab, setTab] = useState<CourseDetailTab>('overview');
@@ -76,7 +79,9 @@ export default function CourseShow({ course, isMember, isAuthenticated, eligible
                             <CourseDetailOverview course={course} />
                             <CourseDetailCurriculum course={course} canRead={canRead} />
                         </> : tab === 'curriculum' ? <CourseDetailCurriculum course={course} canRead={canRead} />
-                            : <CourseDetailExtraPanel active={tab} course={course} />}
+                            : tab === 'practice' ? <CourseDetailPracticePanel course={course} practice={practice} canRead={canRead} />
+                                : tab === 'resources' ? <CourseDetailResourcesPanel course={course} resources={resources} canRead={canRead} />
+                                    : <CourseDetailExtraPanel active={tab} course={course} practice={practice} />}
                     </div>
                     <aside className="pm-course-detail-aside" aria-label="Course enrollment and provider">
                         <CourseAccessCard course={course} isMember={isMember} isAuthenticated={isAuthenticated}

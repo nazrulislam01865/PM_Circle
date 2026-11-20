@@ -53,6 +53,7 @@
 @import './pm-header-prototype.css';
 @import './pm-profile-reward.css';
 @import './pm-post-reactions.css';
+@import './pm-reaction-assets.css';
 @import './pm-member-navigation.css';
 @import './pm-activity-log.css';
 @import './pm-notifications.css';
@@ -169,3 +170,8 @@
 @media (max-width: 42rem) {
     :root { --text-h1: 1.5rem; --line-h1: 2rem; --control-height: var(--control-touch); }
 }
+
+@import './pm-course-practice.css';
+
+/* Shared small-screen constraints, after feature CSS to avoid specificity regressions. */
+@import './pm-mobile-layout.css';

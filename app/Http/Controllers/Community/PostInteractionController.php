@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Domain\Community\Actions\ReactToPost;
 use App\Domain\Community\Actions\ReactToComment;
 use App\Domain\Community\Services\EngagementStats;
+use App\Support\Community\ReactionIconCatalog;
 use App\Domain\Community\Services\PostCheckPolicy;
 use App\Domain\AI\Jobs\CheckCommunityComment;
 use App\Support\ProfileMediaUrl;
@@ -233,7 +234,7 @@ class PostInteractionController extends Controller
         $this->ensurePublic($post, $request);
         $this->ensureWritesOpen();
         abort_unless($comment->post_id === $post->id && ! $comment->trashed() && $comment->isVisible(), 404);
-        $data = $request->validate(['type' => ['required', Rule::in(['like', 'love', 'care', 'haha', 'wow', 'sad', 'angry'])]]);
+        $data = $request->validate(['type' => ['required', Rule::in(ReactionIconCatalog::activeTypes())]]);
         $result = $action->execute($request->user(), $comment, $data['type']);
 
         return $request->expectsJson() ? response()->json($result) : back();
@@ -253,7 +254,7 @@ class PostInteractionController extends Controller
     {
         $this->ensurePublic($post, $request);
         $this->ensureWritesOpen();
-        $data = $request->validate(['type' => ['required', Rule::in(['like', 'love', 'care', 'haha', 'wow', 'sad', 'angry'])]]);
+        $data = $request->validate(['type' => ['required', Rule::in(ReactionIconCatalog::activeTypes())]]);
         $count = $action->execute($request->user(), $post, $data['type']);
         return $request->expectsJson()
             ? response()->json(['reaction' => $data['type'], 'count' => $count])
@@ -275,20 +276,24 @@ class PostInteractionController extends Controller
     {
         $this->ensurePublic($post, $request);
         $input = $request->validate([
-            'type' => ['nullable', Rule::in(EngagementStats::TYPES)],
+            'type' => ['nullable', Rule::in(ReactionIconCatalog::allTypes())],
             'after' => ['nullable', 'integer', 'min:1'],
         ]);
 
-        $counts = array_fill_keys(EngagementStats::TYPES, 0);
+        $counts = array_fill_keys(ReactionIconCatalog::allTypes(), 0);
         if (EngagementStats::readsEnabled()) {
             $stats = DB::table('post_engagement_stats')->where('post_id', $post->id)
                 ->first(array_map(fn (string $type): string => $type.'_count', EngagementStats::TYPES));
             foreach (EngagementStats::TYPES as $type) {
                 $counts[$type] = (int) ($stats->{$type.'_count'} ?? 0);
             }
-        } else {
+        }
+        // Custom reaction counts are not stored as dynamically named SQL columns.
+        // One bounded grouped query handles new and archived types, even with counter reads enabled.
+        $customTypes = array_keys(ReactionIconCatalog::custom());
+        if ($customTypes || ! EngagementStats::readsEnabled()) {
             $grouped = DB::table('post_reactions')->where('post_id', $post->id)
-                ->whereIn('type', EngagementStats::TYPES)
+                ->whereIn('type', EngagementStats::readsEnabled() ? $customTypes : ReactionIconCatalog::allTypes())
                 ->select('type')->selectRaw('COUNT(*) AS total')->groupBy('type')->get();
             foreach ($grouped as $row) {
                 $counts[$row->type] = (int) $row->total;
@@ -299,7 +304,7 @@ class PostInteractionController extends Controller
             ->join('users as users', 'users.id', '=', 'r.user_id')
             ->leftJoin('profiles as profile', 'profile.user_id', '=', 'users.id')
             ->where('r.post_id', $post->id)
-            ->whereIn('r.type', EngagementStats::TYPES)
+            ->whereIn('r.type', ReactionIconCatalog::allTypes())
             ->when(isset($input['type']), fn ($query) => $query->where('r.type', $input['type']))
             ->when(isset($input['after']), fn ($query) => $query->where('r.id', '<', $input['after']))
             ->orderByDesc('r.id')->limit(21)

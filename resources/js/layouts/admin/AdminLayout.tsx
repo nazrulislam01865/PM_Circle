@@ -1,6 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { useEffect, useState, type ReactNode } from 'react';
-import { ChevronDown, ChevronRight, Database, ExternalLink, Flag, House, LayoutDashboard, LogOut, Menu, PanelTop, ClipboardCheck, Gift, Route, Gauge, CalendarDays, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Database, ExternalLink, Flag, House, LayoutDashboard, LogOut, Menu, PanelTop, ClipboardCheck, Gift, Route, Gauge, CalendarDays, X, BookOpen, Heart } from 'lucide-react';
 import { Brand } from '@/components/pm/Brand';
 import { homepageSections, type HomepageSection, type HomepageSectionVisibility } from '@/components/admin/homepage-sections';
 import { pmpPublicSections } from '@/components/admin/pmp-public-sections';
@@ -24,9 +24,10 @@ type Props = {
 export function AdminLayout({ title, subtitle, children, active, selectedHomeSection, onSelectHomeSection, homepageVisibility, selectedCatalogCategory, selectedPmpSection, onSelectPmpSection, pmpVisibility }: Props) {
     const isHomepage = active === '/admin/homepage';
     const isMaster = active === '/admin/master-data';
-    const isNavigation = active === '/admin/navigation';
+    const isNavigation = active === '/admin/navigation' || active === '/admin/footer';
     const isPmp = active === '/admin/exam-simulator/pmp';
     const isPmpBank = active === '/admin/exam-simulator/pmp/questions';
+    const isLearning = active.startsWith('/admin/learning/courses');
     const [homeOpen, setHomeOpen] = useState(isHomepage);
     const [masterOpen, setMasterOpen] = useState(isMaster);
     const [navOpen, setNavOpen] = useState(isNavigation);
@@ -44,7 +45,7 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
     const pmpLabel = isPmp ? pmpPublicSections.find(section => section.key === selectedPmpSection)?.title : undefined;
 
     function adminGroup(icon: ReactNode, label: string, base: string, opened: boolean, toggle: () => void, groups: readonly { key: string; label: string }[]) {
-        const activeGroup = active === base;
+        const activeGroup = active === base || (base === '/admin/navigation' && active === '/admin/footer');
         const id = `admin-${base.replace(/\W/g, '-')}-children`;
         return <>
             <div className={`pm-admin-nav-parent ${activeGroup ? 'is-current-group' : ''}`}>
@@ -62,6 +63,12 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
                     onClick={() => setMobileOpen(false)}>
                     <span className="pm-admin-submenu-marker" aria-hidden="true"/><span>{group.label}</span>
                 </Link>)}
+                {base === '/admin/navigation' && <Link href="/admin/footer"
+                    aria-current={active === '/admin/footer' ? 'page' : undefined}
+                    className={`pm-admin-submenu-link ${active === '/admin/footer' ? 'is-active' : ''}`}
+                    onClick={() => setMobileOpen(false)}>
+                    <span className="pm-admin-submenu-marker" aria-hidden="true"/><span>Shared site footer</span>
+                </Link>}
             </div>}
         </>;
     }
@@ -79,6 +86,10 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
                     <LayoutDashboard size={18} aria-hidden="true"/> <span>Overview</span>
                 </Link>
                 <Link href="/admin/post-reports" className={`pm-admin-nav-link ${active === "/admin/post-reports" ? "is-active" : ""}`} onClick={() => setMobileOpen(false)}><Flag size={18} aria-hidden="true"/><span>Community moderation</span></Link>
+                <Link href="/admin/reaction-icons" aria-current={active === '/admin/reaction-icons' ? 'page' : undefined}
+                    className={`pm-admin-nav-link ${active === '/admin/reaction-icons' ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
+                    <Heart size={18} aria-hidden="true"/><span>Reaction icons</span>
+                </Link>
                 <Link href="/admin/profile-rewards" aria-current={active === '/admin/profile-rewards' ? 'page' : undefined}
                     className={`pm-admin-nav-link ${active === '/admin/profile-rewards' ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
                     <Gift size={18} aria-hidden="true"/><span>Profile rewards</span>
@@ -110,7 +121,8 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
                                 <span className="pm-admin-submenu-marker" aria-hidden="true"/><span>{section.name}</span>
                                 {homepageVisibility && !homepageVisibility[section.key] && <span className="pm-admin-submenu-status">Hidden</span>}
                             </button>
-                            : <Link key={section.key} href={`/admin/homepage?section=${section.key}`} className="pm-admin-submenu-link" onClick={() => setMobileOpen(false)}>
+                            : <Link key={section.key} href={`/admin/homepage?section=${section.key}`}
+                                className={`pm-admin-submenu-link ${selected ? 'is-active' : ''}`} aria-current={selected ? 'page' : undefined} onClick={() => setMobileOpen(false)}>
                                 <span className="pm-admin-submenu-marker" aria-hidden="true"/><span>{section.name}</span>
                             </Link>;
                     })}
@@ -131,17 +143,21 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
                         const selected = isPmp && section.key === selectedPmpSection;
                         const contents = <><span className="pm-admin-submenu-marker" aria-hidden="true"/><span>{section.title}</span>
                             {pmpVisibility && !pmpVisibility[section.key] && <span className="pm-admin-submenu-status">Hidden</span>}</>;
-                        return isPmp && onSelectPmpSection
+                        return section.key !== 'footer' && isPmp && onSelectPmpSection
                             ? <button key={section.key} type="button" className={`pm-admin-submenu-link ${selected ? 'is-active' : ''}`}
                                 aria-current={selected ? 'step' : undefined}
                                 onClick={() => { onSelectPmpSection(section.key); setMobileOpen(false); }}>{contents}</button>
-                            : <Link key={section.key} href={`/admin/exam-simulator/pmp?section=${section.key}`}
+                            : <Link key={section.key} href={section.key === 'footer' ? '/admin/footer' : `/admin/exam-simulator/pmp?section=${section.key}`}
                                 className="pm-admin-submenu-link" onClick={() => setMobileOpen(false)}>{contents}</Link>;
                     })}
                 </div>}
                 <Link href="/admin/exam-simulator/pmp/questions" aria-current={isPmpBank ? 'page' : undefined}
                     className={`pm-admin-nav-link ${isPmpBank ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
                     <ClipboardCheck size={18} aria-hidden="true"/><span>PMP questions &amp; settings</span>
+                </Link>
+                <Link href="/admin/learning/courses" aria-current={isLearning ? 'page' : undefined}
+                    className={`pm-admin-nav-link ${isLearning ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
+                    <BookOpen size={18} aria-hidden="true"/><span>Course library</span>
                 </Link>
                 {adminGroup(<Route size={18} aria-hidden="true"/>, 'Navigation control', '/admin/navigation', navOpen, () => setNavOpen(value => !value), navigationGroups)}
                 {adminGroup(<Database size={18} aria-hidden="true"/>, 'Master data', '/admin/master-data', masterOpen, () => setMasterOpen(value => !value), dropdownGroups)}

@@ -152,8 +152,11 @@ final class PmpExamBankController extends Controller
 
     public function import(ImportPmpExamQuestionsRequest $request, PmpQuestionImporter $importer): RedirectResponse
     {
-        $imported = $importer->import($request->file('file'));
-        return back()->with('status', "{$imported} PMP questions imported successfully.");
+        $activateAll = $request->boolean('activate_all');
+        $imported = $importer->import($request->file('file'), $activateAll);
+        $suffix = $activateAll ? ' All imported questions are approved and active.' : '';
+
+        return back()->with('status', "{$imported} PMP questions imported successfully.{$suffix}");
     }
 
     public function template(): BinaryFileResponse

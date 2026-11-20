@@ -116,15 +116,92 @@ final class PmpExamAdminManagementTest extends TestCase
 
         $template = resource_path('templates/pmp-question-import.xlsx');
         $this->assertFileExists($template);
+        $method = new \ReflectionMethod(\App\Services\Exam\PmpQuestionImporter::class, 'xlsx');
+        $rows = $method->invoke(app(\App\Services\Exam\PmpQuestionImporter::class), $template);
+        $this->assertCount(1, $rows, 'The downloadable template must have no sample questions.');
+        $this->assertSame(\App\Services\Exam\PmpQuestionContent::WORKBOOK_HEADERS, $rows[0]);
         $this->post('/admin/exam-simulator/pmp/questions/import', [
             'file' => new UploadedFile($template, 'pm-circle-pmp-question-template.xlsx',
                 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true),
-        ])->assertRedirect();
+        ])->assertSessionHasErrors('file');
+        $this->assertSame(0, DB::table('pmp_exam_questions')->count());
+
+        // Keep source test data separately; the admin download must remain blank.
+        $original = base_path('tests/Fixtures/pmp-question-bank-original.xlsx');
+        $this->post('/admin/exam-simulator/pmp/questions/import', [
+            'file' => new UploadedFile($original, 'pm-circle-pmp-questions.xlsx',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true),
+        ])->assertSessionHasNoErrors()->assertRedirect();
         $this->assertSame(100, DB::table('pmp_exam_questions')->count());
         $this->assertDatabaseHas('pmp_exam_questions', [
             'code' => 'PMC-PMP-0001', 'correct_option' => 'C',
             'review_status' => 'Editorial draft', 'is_active' => false,
         ]);
+    }
+
+    public function test_instant_activation_approves_and_publishes_every_imported_question(): void
+    {
+        $this->actingAs($this->admin());
+        $original = base_path('tests/Fixtures/pmp-question-bank-original.xlsx');
+        $this->post('/admin/exam-simulator/pmp/questions/import', [
+            'file' => new UploadedFile($original, 'pmp-original.xlsx',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true),
+            'activate_all' => '1',
+        ])->assertSessionHasNoErrors()->assertRedirect();
+
+        $this->assertSame(100, DB::table('pmp_exam_questions')->count());
+        $this->assertSame(100, DB::table('pmp_exam_questions')->where('is_active', true)->count());
+        $this->assertSame(100, DB::table('pmp_exam_questions')->where('review_status', 'Approved')->count());
+        $source = DB::table('pmp_exam_questions')->where('code', 'PMC-PMP-0001')->first();
+        $this->assertSame('C', $source->correct_option);
+        $this->assertSame(json_decode($source->options, true)['C'], $source->correct_answer_text);
+        $this->assertNotEmpty($source->eco_task_id);
+        $this->assertNotEmpty($source->eco_reference);
+        $this->assertCount(4, json_decode($source->option_rationales, true, 512, JSON_THROW_ON_ERROR));
+
+        // Retrying must never overwrite any already published question or attempt.
+        $this->post('/admin/exam-simulator/pmp/questions/import', [
+            'file' => new UploadedFile($original, 'pmp-original.xlsx',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true),
+            'activate_all' => true,
+        ])->assertSessionHasErrors('file');
+        $this->assertSame(100, DB::table('pmp_exam_questions')->count());
+    }
+
+    public function test_instant_activation_is_not_allowed_without_admin_access(): void
+    {
+        $content = "code,domain,question,option_a,option_b,option_c,option_d,correct\n".
+            "pmp-unauthorized,People,Question?,A,B,C,D,B\n";
+        $this->actingAs($this->member())->post('/admin/exam-simulator/pmp/questions/import', [
+            'file' => UploadedFile::fake()->createWithContent('question.csv', $content),
+            'activate_all' => true,
+        ])->assertForbidden();
+        $this->assertSame(0, DB::table('pmp_exam_questions')->count());
+    }
+
+    public function test_instant_activation_does_not_allow_invalid_answer_rows(): void
+    {
+        $this->actingAs($this->admin());
+        $headers = \App\Services\Exam\PmpQuestionContent::WORKBOOK_HEADERS;
+        $row = [
+            'pmp-activate-bad', 'People', 'I-01', 'Agree outcome', 'Moderate', 'Hybrid',
+            'Question?', 'One', 'Two', 'Three', 'Four', 'B', 'WRONG TEXT',
+            'Explanation', 'A rationale', 'B rationale', 'C rationale', 'D rationale',
+            'Takeaway', 'Concept', 'Stakeholders', 'Stakeholder Management', 'Healthcare',
+            'Single Select', 'PMBOK Guide', '2.1', 'Stakeholders', 30,
+            'July 2026 ECO', 'Editorial draft',
+        ];
+        $handle = fopen('php://temp', 'w+');
+        fputcsv($handle, $headers, ',', '"', '');
+        fputcsv($handle, $row, ',', '"', '');
+        rewind($handle);
+        $content = stream_get_contents($handle);
+        fclose($handle);
+        $this->post('/admin/exam-simulator/pmp/questions/import', [
+            'file' => UploadedFile::fake()->createWithContent('invalid.csv', $content),
+            'activate_all' => true,
+        ])->assertSessionHasErrors('file');
+        $this->assertSame(0, DB::table('pmp_exam_questions')->count());
     }
 
     public function test_word_question_import_is_rejected(): void
@@ -159,7 +236,7 @@ final class PmpExamAdminManagementTest extends TestCase
     public function test_official_thirty_column_excel_template_imports_complete_editorial_metadata(): void
     {
         $this->actingAs($this->admin());
-        $template = resource_path('templates/pmp-question-import.xlsx');
+        $template = base_path('tests/Fixtures/pmp-question-bank-original.xlsx');
         $this->post('/admin/exam-simulator/pmp/questions/import', [
             'file' => new UploadedFile($template, 'pm-circle-pmp-question-template.xlsx',
                 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true),
@@ -231,7 +308,7 @@ final class PmpExamAdminManagementTest extends TestCase
     public function test_exact_supplied_excel_preserves_each_of_30_columns_for_all_100_rows(): void
     {
         $this->actingAs($this->admin());
-        $template = resource_path('templates/pmp-question-import.xlsx');
+        $template = base_path('tests/Fixtures/pmp-question-bank-original.xlsx');
         $this->post('/admin/exam-simulator/pmp/questions/import', [
             'file' => new UploadedFile($template, 'PM_Circle_PMP_Question_Bank.xlsx',
                 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true),

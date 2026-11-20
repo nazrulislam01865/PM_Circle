@@ -47,6 +47,8 @@ class HandleInertiaRequests extends Middleware
             'emailVerificationRequired' => config('pm-circle.email_verification_required'),
             'siteNavigation' => fn () => $request->is('admin', 'admin/*') ? null : \App\Support\Admin\SiteNavigation::links(),
             'siteFooter' => fn () => $request->is('admin', 'admin/*') ? null : \App\Support\Exam\PmpPublicContent::load()['footer'],
+            'reactionIcons' => fn () => $request->is('admin', 'admin/*') ? [] : \App\Support\Community\ReactionIconCatalog::urls(),
+            'reactionDefinitions' => fn () => $request->is('admin', 'admin/*') ? [] : \App\Support\Community\ReactionIconCatalog::definitions(),
             // One cached, admin-configured offer shared by all guest and member headers.
             // Do not issue individual coupons here; the reward itself remains member-scoped.
             'rewardPromotion' => fn () => $request->is('admin', 'admin/*') || $request->user()?->is_admin === true

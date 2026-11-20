@@ -28,7 +28,10 @@ export function useExamStart() {
             });
             if (!response.ok) {
                 if (response.status === 429) throw new Error('Too many exam starts. Please try again shortly.');
-                if (response.status === 409) throw new Error('Your available question set has changed. Reopen the start dialog to refresh question coverage.');
+                if (response.status === 409) {
+                    const conflict = await response.json().catch(() => null) as { message?: unknown } | null;
+                    throw new Error(typeof conflict?.message === 'string' ? conflict.message : 'Question availability has changed. Reopen the start dialog.');
+                }
                 if (response.status === 419) throw new Error('Your session has expired. Refresh the page and try again.');
                 if (response.status === 403) throw new Error('Your membership does not currently allow this practice exam.');
                 throw new Error('Unable to start the exam. Please try again.');

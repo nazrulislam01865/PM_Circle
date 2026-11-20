@@ -1,0 +1,103 @@
+/* Shared uploaded reaction asset: keep all existing picker sizes and the Lucide fallback. */
+.pm-reaction-image {
+    display: block;
+    flex: none;
+    max-width: 100%;
+    object-fit: contain;
+    border: 0;
+    background: transparent;
+}
+.pm-post-reaction-icon .pm-reaction-image { max-width: 100%; max-height: 100%; }
+
+/* Admin editor inherits the approved design tokens and existing control styles. */
+.pm-reaction-admin-intro { display: flex; align-items: flex-start; gap: var(--s3); }
+.pm-reaction-admin-intro > svg { flex: none; color: var(--blue); }
+.pm-reaction-admin-intro h2 { font: var(--semibold) var(--text-h4)/var(--line-h4) var(--font-ui); }
+.pm-reaction-admin-intro p { color: var(--muted); font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui); }
+.pm-reaction-admin-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s4); }
+.pm-reaction-admin-card { display: grid; align-content: start; gap: var(--s4); }
+.pm-reaction-admin-heading { display: flex; align-items: center; gap: var(--s3); }
+.pm-reaction-admin-heading h2 { font: var(--semibold) var(--text-h4)/var(--line-h4) var(--font-ui); }
+.pm-reaction-admin-heading p { color: var(--muted); font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui); }
+.pm-reaction-admin-preview { display: grid; place-items: center; flex: none; width: 3.5rem; height: 3.5rem; border: 1px solid var(--border); border-radius: var(--radius-pill); background: var(--blue-soft); color: var(--reaction-like); }
+.pm-reaction-admin-preview.is-love { color: var(--reaction-love); background: var(--pm-home-reaction-bg-love); }
+.pm-reaction-admin-preview.is-care { color: var(--reaction-care); background: var(--pm-home-reaction-bg-care); }
+.pm-reaction-admin-preview.is-haha { color: var(--reaction-haha); background: var(--pm-home-reaction-bg-haha); }
+.pm-reaction-admin-preview.is-wow { color: var(--reaction-wow); background: var(--pm-home-reaction-bg-wow); }
+.pm-reaction-admin-preview.is-sad { color: var(--reaction-sad); background: var(--pm-home-reaction-bg-sad); }
+.pm-reaction-admin-preview.is-angry { color: var(--reaction-angry); background: var(--pm-home-reaction-bg-angry); }
+.pm-reaction-admin-form { display: grid; gap: var(--s3); }
+.pm-reaction-admin-selected { display: flex; align-items: center; min-width: 0; gap: var(--s2); color: var(--muted); font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui); overflow-wrap: anywhere; }
+.pm-reaction-admin-selected img { flex: none; width: 3rem; height: 3rem; object-fit: contain; border: 1px solid var(--border); border-radius: var(--radius-control); }
+.pm-reaction-admin-actions { display: flex; flex-wrap: wrap; gap: var(--s2); }
+@media (max-width: 53rem) { .pm-reaction-admin-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* Custom reactions inherit neutral centralized colors until an uploaded icon is rendered. */
+.pm-home-reaction-choice:not(.is-like, .is-love, .is-care, .is-haha, .is-wow, .is-sad, .is-angry) {
+    background: var(--blue-soft); color: var(--blue);
+}
+.pm-home-reaction-main[aria-pressed='true']:not(.is-like, .is-love, .is-care, .is-haha, .is-wow, .is-sad, .is-angry) {
+    color: var(--blue);
+}
+.pm-post-reaction-icon:not(.is-like, .is-love, .is-care, .is-haha, .is-wow, .is-sad, .is-angry) {
+    background: var(--blue-soft); color: var(--blue);
+}
+/* The picker wraps after the original seven; no horizontal overflow when admins add reactions. */
+.pm-home-reaction-options[data-many='true'] {
+    flex-wrap: wrap; justify-content: center; width: max-content;
+    max-width: min(25.625rem, calc(100vw - 2rem)); max-height: 15rem;
+    overflow-y: auto; border-radius: var(--radius-card);
+}
+
+/* Compact admin list replaces large upload cards; reuse the approved PM Circle tokens. */
+.pm-reaction-manager-page { display: grid; gap: var(--s4); min-width: 0; }
+.pm-reaction-manager-toolbar { display: flex; justify-content: space-between; align-items: center; gap: var(--s3); flex-wrap: wrap; }
+.pm-reaction-manager-toolbar p { color: var(--muted); font: var(--regular) var(--text-ui)/var(--line-ui) var(--font-ui); }
+.pm-reaction-manager-toolbar strong { color: var(--ink); font-weight: var(--semibold); }
+.pm-reaction-manager-section { padding: 0; overflow: hidden; }
+.pm-reaction-manager-section-head { padding: var(--s4) var(--s5); border-bottom: 1px solid var(--border); }
+.pm-reaction-manager-section-head h2, .pm-reaction-manager-create-heading h3 { color: var(--ink); font: var(--semibold) var(--text-h4)/var(--line-h4) var(--font-ui); }
+.pm-reaction-manager-section-head p, .pm-reaction-manager-create-heading p { color: var(--muted); font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui); }
+.pm-reaction-manager-list { display: grid; }
+.pm-reaction-manager-row { display: grid; min-width: 0; gap: var(--s2); padding: var(--s3) var(--s5); border-bottom: 1px solid var(--border); }
+.pm-reaction-manager-row:last-child { border-bottom: 0; }
+.pm-reaction-manager-main { display: flex; gap: var(--s3); align-items: center; min-width: 0; }
+.pm-reaction-manager-main .pm-reaction-admin-preview { width: 3rem; height: 3rem; }
+.pm-reaction-manager-name { min-width: 0; flex: 1; }
+.pm-reaction-manager-name h3 { font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui); color: var(--ink); }
+.pm-reaction-manager-name p { font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui); color: var(--muted); }
+.pm-reaction-manager-controls { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: var(--s2); }
+.pm-reaction-manager-file { position: absolute; width: 1px; height: 1px; padding: 0; opacity: 0; pointer-events: none; }
+.pm-reaction-manager-pending { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s2); padding: var(--s2) var(--s3); background: var(--canvas); border-radius: var(--radius-control); }
+.pm-reaction-manager-pending img, .pm-reaction-manager-image-picker img { object-fit: contain; width: 2.5rem; height: 2.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-control); }
+.pm-reaction-manager-filename { min-width: 0; flex: 1; overflow-wrap: anywhere; font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui); color: var(--muted); }
+.pm-reaction-manager-edit { display: flex; align-items: flex-end; flex-wrap: wrap; gap: var(--s3); padding: var(--s3); background: var(--canvas); border-radius: var(--radius-control); }
+.pm-reaction-manager-edit .pm-admin-field { flex: 1 1 14rem; }
+.pm-reaction-manager-edit .pm-reaction-manager-hint { flex-basis: 100%; }
+.pm-reaction-manager-toggle { display: inline-flex; align-items: center; gap: var(--s2); min-height: var(--control-height); color: var(--ink); font: var(--medium) var(--text-ui)/var(--line-ui) var(--font-ui); }
+.pm-reaction-manager-toggle input { width: 1rem; height: 1rem; accent-color: var(--blue); }
+.pm-reaction-manager-hint { color: var(--muted); font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui); }
+.pm-reaction-manager-success { color: var(--green); font: var(--medium) var(--text-sm)/var(--line-sm) var(--font-ui); }
+.pm-reaction-manager-create { display: grid; gap: var(--s3); }
+.pm-reaction-manager-create-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s2); }
+.pm-reaction-manager-icon-button { display: inline-grid; place-items: center; width: var(--control-height); height: var(--control-height); background: transparent; border: 0; border-radius: var(--radius-control); color: var(--muted); cursor: pointer; }
+.pm-reaction-manager-icon-button:hover { background: var(--canvas); color: var(--blue); }
+.pm-reaction-manager-create-fields { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: var(--s4); align-items: end; }
+.pm-reaction-manager-image-picker { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s2); min-width: 0; }
+.pm-reaction-manager-field-label { width: 100%; font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui); }
+.pm-reaction-manager-image-picker .pm-reaction-manager-filename { flex: 0 1 10rem; }
+.pm-reaction-manager-empty { padding: var(--s6) var(--s5); color: var(--muted); font: var(--regular) var(--text-body)/var(--line-body) var(--font-ui); }
+@media (max-width: 53rem) {
+    .pm-reaction-manager-create-fields { grid-template-columns: minmax(0,1fr); }
+    .pm-reaction-manager-main { flex-wrap: wrap; }
+    .pm-reaction-manager-controls { flex: 1 1 100%; justify-content: flex-start; padding-left: calc(3rem + var(--s3)); }
+}
+@media (max-width: 42rem) {
+    .pm-reaction-manager-section-head, .pm-reaction-manager-row { padding-inline: var(--s3); }
+    .pm-reaction-manager-controls { padding-left: 0; }
+    .pm-reaction-manager-controls .pm-admin-button { min-height: var(--control-touch); }
+}
+
+.pm-home-reaction-options[data-many='true'] { bottom: 100%; }
+.pm-home-reaction-remove-archived { width: 100%; min-height: var(--control-height); border: 0; border-radius: var(--radius-control); background: var(--canvas); color: var(--blue); cursor: pointer; font: var(--semibold) var(--text-sm)/var(--line-sm) var(--font-ui); }
+.pm-home-reaction-remove-archived:hover { background: var(--blue-soft); }

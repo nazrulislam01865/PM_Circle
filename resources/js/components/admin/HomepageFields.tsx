@@ -1,8 +1,9 @@
-import { ArrowDown, ArrowUp, Plus, Trash2, UploadCloud } from 'lucide-react';
-import { useRef, useState, type ChangeEvent } from 'react';
+import { ArrowDown, ArrowUp, ChevronDown, ChevronRight, Plus, Trash2, UploadCloud } from 'lucide-react';
+import { useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import { PMDropdown } from '@/components/pm/PMDropdown';
+import { homepageDefaultIcon } from '@/components/home/HomeDefaultIcons';
 
-export type EditorField = { key: string; label: string; kind?: 'textarea' | 'select' | 'route' | 'lines' | 'image'; choices?: { value: string; label: string }[] };
+export type EditorField = { key: string; label: string; kind?: 'textarea' | 'select' | 'route' | 'lines' | 'image' | 'fixed-icon'; category?: string; choices?: { value: string; label: string }[] };
 export type EditorOptions = { id: number; title?: string; name?: string }[];
 
 export function ContentField({ id: fieldId, label, value, onChange, type = 'text', choices, error, hint }: {
@@ -14,8 +15,13 @@ export function ContentField({ id: fieldId, label, value, onChange, type = 'text
         {type === 'route' ? <div className="pm-admin-route-inputs">
             <input id={id} value={value} placeholder="Enter a same-site path (e.g. /community)"
                 aria-invalid={Boolean(error)} autoComplete="off" onChange={event => onChange(event.target.value)}/>
-            <PMDropdown id={`${id}-suggestion`} value={(choices ?? []).some(option => option.value === value) ? value : ''}
-                onValueChange={onChange} options={choices ?? []} placeholder="Or choose a suggested page" aria-label={`Suggested destination for ${label}`}/>
+            {(choices ?? []).length > 0 && <details className="pm-admin-route-chooser">
+                <summary>Choose a suggested page</summary>
+                <div className="pm-admin-route-chooser-options">
+                    <PMDropdown id={`${id}-suggestion`} value={(choices ?? []).some(option => option.value === value) ? value : ''}
+                        onValueChange={onChange} options={choices ?? []} placeholder="Select a page" aria-label={`Suggested destination for ${label}`}/>
+                </div>
+            </details>}
         </div>
         : type === 'textarea' ? <textarea id={id} rows={3} value={value} aria-invalid={Boolean(error)} onChange={event => onChange(event.target.value)}/>
             : type === 'select' ? <PMDropdown id={id} value={value} onValueChange={onChange}
@@ -30,10 +36,11 @@ export function ContentField({ id: fieldId, label, value, onChange, type = 'text
     </div>;
 }
 
-export function RepeatableItems({ title, path, rows, fields, onChange, errors, max = 10, layout = 'grid' }: {
+export function RepeatableItems({ title, path, rows, fields, onChange, errors, max = 10, layout = 'grid', collapsible = false }: {
     title: string; path: string; rows: Record<string, unknown>[]; fields: EditorField[];
-    onChange: (items: Record<string, unknown>[]) => void; errors: Record<string, string>; max?: number; layout?: 'grid' | 'stacked';
+    onChange: (items: Record<string, unknown>[]) => void; errors: Record<string, string>; max?: number; layout?: 'grid' | 'stacked'; collapsible?: boolean;
 }) {
+    const [expanded, setExpanded] = useState<number>(0);
     const setItem = (index: number, key: string, value: string) => onChange(rows.map((row, i) => i === index ? { ...row, [key]: fields.find(f => f.key === key)?.kind === 'lines'
         ? value.split('\n').map(s => s.trim()).filter(Boolean) : value } : row));
     const needsMaster = fields.some(field => field.kind === 'select' && !field.choices?.length);
@@ -45,27 +52,35 @@ export function RepeatableItems({ title, path, rows, fields, onChange, errors, m
     };
     return <div className="pm-admin-repeater">
         <div className="pm-admin-list-heading"><h3>{title} <span>({rows.length})</span></h3>
-            <button type="button" className="pm-admin-button pm-admin-button-quiet" disabled={rows.length >= max || needsMaster} onClick={() => onChange([...rows, Object.fromEntries(fields.map(field => [field.key, field.kind === 'lines' ? [] : field.kind === 'image' ? '' : field.choices?.[0]?.value ?? '']))])}><Plus size={16}/> Add item</button>
+            <button type="button" className="pm-admin-button pm-admin-button-quiet" disabled={rows.length >= max || needsMaster} onClick={() => onChange([...rows, Object.fromEntries(fields.map(field => [field.key, field.kind === 'lines' ? [] : field.kind === 'image' ? '' : field.kind === 'fixed-icon' && field.choices?.length ? field.choices[rows.length % field.choices.length].value : field.choices?.[0]?.value ?? '']))])}><Plus size={16}/> Add item</button>
         </div>
         {rows.length === 0 && <p className="pm-admin-empty">No items. Add a card to display it on the homepage.</p>}
         {rows.map((row, index) => <div className="pm-admin-repeat-card" key={`${path}-${index}`}>
-            <div className="pm-admin-repeat-header"><strong>Item {index + 1}</strong>
+            <div className="pm-admin-repeat-header">{collapsible ? <button type="button" className="pm-admin-repeat-toggle" aria-expanded={expanded === index} onClick={() => setExpanded(expanded === index ? -1 : index)}>
+                {expanded === index ? <ChevronDown size={16}/> : <ChevronRight size={16}/>}<strong>{String(row.title || row.category || row.name || `Item ${index + 1}`)}</strong></button>
+                : <strong>Item {index + 1}</strong>}
                 <div className="pm-admin-icon-actions">
                     <button type="button" aria-label={`Move item ${index + 1} up`} disabled={index === 0} onClick={() => move(index, -1)}><ArrowUp size={16}/></button>
                     <button type="button" aria-label={`Move item ${index + 1} down`} disabled={index === rows.length - 1} onClick={() => move(index, 1)}><ArrowDown size={16}/></button>
                     <button type="button" aria-label={`Remove item ${index + 1}`} onClick={() => onChange(rows.filter((_, i) => i !== index))}><Trash2 size={16}/></button>
                 </div></div>
-            <div className={`pm-admin-field-grid ${layout === 'stacked' ? 'pm-admin-field-stack' : ''}`}>{fields.map(field => field.kind === 'image'
+            {(!collapsible || expanded === index) && <div className={`pm-admin-field-grid ${layout === 'stacked' ? 'pm-admin-field-stack' : ''}`}>{fields.map(field => field.kind === 'fixed-icon' ? null : field.kind === 'image'
                 ? <div className="pm-admin-field pm-admin-icon-upload-field" key={field.key}>
                     <span className="pm-admin-field-label">{field.label} · {index + 1} (optional)</span>
-                    <HomepageImageUploader variant="icon" value={String(row[field.key] ?? '')} onChange={value => setItem(index, field.key, value)}/>
+                    <HomepageImageUploader variant="icon" value={String(row[field.key] ?? '')} onChange={value => setItem(index, field.key, value)}
+                        fallbackPreview={(() => {
+                            const iconField = fields.find(candidate => candidate.kind === 'fixed-icon');
+                            if (!iconField) return undefined;
+                            const Icon = homepageDefaultIcon(iconField.category ?? '', String(row[iconField.key] ?? ''));
+                            return <Icon size={30} aria-hidden="true"/>;
+                        })()}/>
                     {errors[`${path}.${index}.${field.key}`] && <span role="alert" className="pm-admin-error">{errors[`${path}.${index}.${field.key}`]}</span>}
                 </div>
                 : <ContentField key={field.key} id={`item-${path.replace(/[^a-zA-Z0-9]/g, '-')}-${index}-${field.key}`} label={`${field.label} · ${index + 1}`}
                     value={field.kind === 'lines' ? ((row[field.key] as string[] | undefined) ?? []).join('\n') : String(row[field.key] ?? '')}
                     type={field.kind === 'textarea' || field.kind === 'lines' ? 'textarea' : field.kind === 'select' ? 'select' : field.kind === 'route' ? 'route' : 'text'}
                     choices={field.choices} onChange={value => setItem(index, field.key, value)}
-                    error={errors[`${path}.${index}.${field.key}`]}/>)}</div>
+                    error={errors[`${path}.${index}.${field.key}`]}/>)}</div>}
         </div>)}
         {errors[path] && <span role="alert" className="pm-admin-error">{errors[path]}</span>}
     </div>;
@@ -86,7 +101,7 @@ export function FeaturedSelector({ label, hint, options, selected, onChange, max
     </div>;
 }
 
-export function HomepageImageUploader({ value, onChange, variant = 'portrait' }: { value: string; onChange: (url: string) => void; variant?: 'portrait' | 'icon' }) {
+export function HomepageImageUploader({ value, onChange, variant = 'portrait', fallbackPreview, fallbackImage }: { value: string; onChange: (url: string) => void; variant?: 'portrait' | 'icon'; fallbackPreview?: ReactNode; fallbackImage?: string }) {
     const inputRef = useRef<HTMLInputElement>(null);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
@@ -117,14 +132,15 @@ export function HomepageImageUploader({ value, onChange, variant = 'portrait' }:
         finally { setBusy(false); event.target.value = ''; }
     }
     return <div className={`pm-admin-upload ${variant === 'icon' ? 'pm-admin-upload-icon' : ''}`}>
-        {value && <img src={value} alt={variant === 'icon' ? 'Selected icon preview' : 'Selected homepage portrait'}/>}
+        {(value || fallbackImage) ? <img src={value || fallbackImage} alt={value ? 'Uploaded image preview' : 'Default image preview'}/>
+            : fallbackPreview && <span className="pm-admin-default-icon-preview" aria-label="Current default icon">{fallbackPreview}</span>}
         <button type="button" className="pm-admin-button pm-admin-button-quiet" disabled={busy}
             onClick={() => inputRef.current?.click()}>
-            <UploadCloud size={16}/>{busy ? 'Uploading…' : variant === 'icon' ? 'Upload icon' : 'Upload image'}
+            <UploadCloud size={16}/>{busy ? 'Uploading…' : value ? 'Replace image' : variant === 'icon' ? 'Upload icon' : 'Upload image'}
         </button>
         <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" disabled={busy}
             onChange={upload} className="pm-admin-file-input" hidden/>
-        {value && <button type="button" className="pm-admin-button pm-admin-button-quiet" onClick={() => onChange('')}>Clear image</button>}
+        {value && <button type="button" className="pm-admin-button pm-admin-button-quiet" onClick={() => onChange('')}>{fallbackImage || fallbackPreview ? 'Use default' : 'Remove image'}</button>}
         {variant === 'icon' && <small className="pm-admin-hint">36 × 36 px display · transparent PNG recommended · max 2 MB</small>}
         {error && <span role="alert" className="pm-admin-error">{error}</span>}
     </div>;

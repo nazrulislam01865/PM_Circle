@@ -5,12 +5,14 @@ namespace App\Http\Controllers\PublicSite;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Onboarding\OnboardingController;
 use App\Models\HomePageContent;
+use App\Support\Home\HomeAiFeaturesContent;
 use App\Domain\Community\Services\EngagementStats;
 use App\Domain\Identity\Services\ProfileFieldPrivacy;
 use App\Domain\Community\Queries\PostReactionSummary;
 use App\Models\CareerJob;
 use App\Models\Post;
 use App\Models\Scenario;
+use App\Support\Community\ReactionIconCatalog;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\RedirectResponse;
@@ -31,6 +33,7 @@ class HomeController extends Controller
         }
 
         $content = HomePageContent::query()->where('key', 'home')->first()?->content ?? [];
+        $content['ai_features'] = HomeAiFeaturesContent::withDefaults($content['ai_features'] ?? []);
         $demo = app()->environment(['local', 'testing']) && config('pm-circle.demo_content_enabled');
         $visible = fn (string $section): bool => data_get($content, 'sections.'.$section, true) !== false;
         $scenarioId = data_get($content, 'scenario.featured_id');
@@ -49,12 +52,12 @@ class HomeController extends Controller
             ->where('published_at', '<=', now())
             ->select(['id', 'slug', 'title', 'summary', 'topics'])
             ->withCount(['reactions as reactions_count' => fn ($query) => $query
-                ->whereIn('type', ['like', 'love', 'care', 'haha', 'wow', 'sad', 'angry'])])
+                ->whereIn('type', ReactionIconCatalog::allTypes())])
             ->when($viewerId, fn ($query) => $query->addSelect([
                 'viewer_reaction' => DB::table('scenario_reactions')->select('type')
                     ->whereColumn('scenario_id', 'scenarios.id')
                     ->where('user_id', $viewerId)
-                    ->whereIn('type', ['like', 'love', 'care', 'haha', 'wow', 'sad', 'angry'])
+                    ->whereIn('type', ReactionIconCatalog::allTypes())
                     ->limit(1),
             ]))->latest('published_at')->first() : null;
 

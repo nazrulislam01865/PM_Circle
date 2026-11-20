@@ -29,14 +29,18 @@ if (! is_file($root.'/resources/templates/pmp-question-import.xlsx')) {
     fwrite(STDERR, "FAIL: XLSX template is missing\n");
     exit(1);
 }
-// Keep the picker and import button in one grid row, with guidance underneath.
+// Keep the picker and submit action adjacent; activation and progress occupy their own rows.
 $importPage = $contents('resources/js/pages/admin/PmpQuestionBank.tsx');
 $importCss = $contents('resources/css/pm-admin.css');
-if (! preg_match('/<form onSubmit=\{importQuestions\}[^>]*>\s*<span className="pm-pmp-import-label".*?<div className="pm-pmp-import-picker">.*?<\/div>\s*<button type="submit".*?<\/button>\s*<span id="pmp-import-guidance"/s', $importPage) ||
+if (! preg_match('/<div className="pm-pmp-import-picker">.*?<\/div>\s*<button type="submit".*?<\/button>/s', $importPage) ||
+    ! str_contains($importPage, 'checked={activateAll}') ||
+    ! str_contains($importPage, "onProgress: progress =>") ||
+    ! str_contains($importPage, 'Validating and saving questions') ||
     ! str_contains($importCss, '.pm-pmp-bank-import > .pm-admin-button { align-self: stretch; }') ||
-    ! str_contains($importCss, '.pm-pmp-bank-import > .pm-pmp-import-hint,') ||
-    ! str_contains($importCss, '.pm-pmp-bank-import, .pm-pmp-bank-filters { grid-template-columns: minmax(0, 1fr); }')) {
-    fwrite(STDERR, "FAIL: PMP import picker and button are not aligned in the same responsive row\n");
+    ! str_contains($importCss, '.pm-pmp-import-activation, .pm-pmp-import-progress { grid-column: 1 / -1; }') ||
+    ! str_contains($importCss, '.pm-pmp-bank-import, .pm-pmp-bank-filters { grid-template-columns: minmax(0, 1fr); }') ||
+    str_contains($importPage, 'pmp-import-guidance')) {
+    fwrite(STDERR, "FAIL: PMP import picker, action, approval or progress is missing\n");
     exit(1);
 }
 echo "PASS: XLSX template, Excel/CSV-only imports, accessible picker and responsive header routes\n";

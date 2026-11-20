@@ -13,7 +13,7 @@ final class PmpQuestionImporter
 {
     public const HEADERS = PmpQuestionContent::WORKBOOK_HEADERS;
 
-    public function import(UploadedFile $file): int
+    public function import(UploadedFile $file, bool $activateAll = false): int
     {
         $extension = strtolower($file->getClientOriginalExtension());
         $rows = match ($extension) {
@@ -112,7 +112,9 @@ final class PmpQuestionImporter
                     'eco_reference' => $value('eco_reference') ?: null,
                     'review_status' => $value('review_status'),
                 ];
-                // Administrator-approved rows may be published; editorial drafts remain inactive.
+                // Explicit admin import option approves new rows before activation.
+                // Without it, retain the source review state and current publication rules.
+                $data['review_status'] = $activateAll ? 'Approved' : $data['review_status'];
                 $data['is_active'] = $data['review_status'] === 'Approved';
                 $data['other_options'] = PmpQuestionContent::otherOptionRationales($rationales, $correct);
                 $data['references'] = PmpQuestionContent::referenceSummary($data);
@@ -125,7 +127,7 @@ final class PmpQuestionImporter
                 if (! in_array($active, ['1', '0', 'yes', 'no', 'true', 'false'], true)) {
                     $errors[] = "Row {$line}: active must be yes/no or 1/0.";
                 }
-                $data['is_active'] = in_array($active, ['1', 'yes', 'true'], true);
+                $data['is_active'] = $activateAll || in_array($active, ['1', 'yes', 'true'], true);
                 $data['review_status'] = $data['is_active'] ? 'Approved' : 'Editorial draft';
             }
 

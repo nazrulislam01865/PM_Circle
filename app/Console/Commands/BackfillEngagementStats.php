@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Domain\Community\Services\EngagementStats;
 use App\Models\Post;
+use App\Support\Community\ReactionIconCatalog;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -55,11 +56,14 @@ final class BackfillEngagementStats extends Command
                     foreach (EngagementStats::TYPES as $type) {
                         $expected[$type.'_count'] = 0;
                     }
+                    $expected['other_reactions_count'] = 0;
                     foreach ($types[$id] ?? [] as $reaction) {
-                        if (! in_array($reaction->type, EngagementStats::TYPES, true)) {
+                        if (! in_array($reaction->type, ReactionIconCatalog::allTypes(), true)) {
                             throw new \RuntimeException('Unsupported reaction type detected for post '.$id);
                         }
-                        $expected[$reaction->type.'_count'] = (int) $reaction->total;
+                        $column = in_array($reaction->type, EngagementStats::TYPES, true)
+                            ? $reaction->type.'_count' : 'other_reactions_count';
+                        $expected[$column] += (int) $reaction->total;
                         $expected['reactions_count'] += (int) $reaction->total;
                     }
                     if ($verify) {

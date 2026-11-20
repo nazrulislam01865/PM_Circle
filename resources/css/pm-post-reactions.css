@@ -1,15 +1,11 @@
 /* Shared member/public reaction summary and roster. All dimensions, colors, type use approved UI tokens. */
-/* A persistent right-side group: Save stays right even with zero reactions. */
-.pm-unified-post-card .pm-engagement-actions > .pm-post-engagement-trailing {
-    display: inline-flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: var(--s2);
-    flex: 0 0 auto;
-    min-width: 0;
+/* The reaction count is a peer of the actions, not nested in Save.
+   Desktop keeps the count and Save right-aligned; mobile gives the count
+   its own unobstructed row while the four actions share equal slots. */
+.pm-unified-post-card .pm-engagement-actions > .pm-post-reaction-summary {
     margin-inline-start: auto;
 }
-.pm-unified-post-card .pm-post-engagement-trailing > .pm-post-save-action {
+.pm-unified-post-card .pm-engagement-actions > .pm-post-save-action {
     margin-inline-start: 0;
 }
 .pm-post-hidden-hint {
@@ -115,15 +111,7 @@
 .pm-post-reactions-feedback button, .pm-post-reactions-more { color: var(--blue); background: transparent; border: 0; cursor: pointer; font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui); }
 .pm-post-reactions-more { display: block; width: 100%; min-height: var(--control-touch); margin-block: var(--s2); }
 @media (max-width: 42rem) {
-    .pm-unified-post-card .pm-card-action-bar .pm-engagement-actions { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-    .pm-unified-post-card .pm-engagement-actions > :is(.pm-home-reaction-root, .pm-home-share-wrap),
-    .pm-unified-post-card .pm-engagement-actions > button.pm-home-action:not(.pm-post-save-action) { grid-column: span 2; }
-    .pm-unified-post-card .pm-engagement-actions > .pm-post-engagement-trailing {
-        grid-column: 1 / -1;
-        justify-self: end;
-        justify-content: flex-end;
-        margin-inline-start: auto;
+    .pm-post-reactions-dialog[data-slot='dialog-content'] {
+        width: min(calc(100vw - var(--s4)), 440px);
     }
-    .pm-unified-post-card .pm-post-engagement-trailing > .pm-post-save-action { width: auto; flex-direction: row; white-space: nowrap; }
-    .pm-post-reactions-dialog[data-slot='dialog-content'] { width: min(calc(100vw - var(--s4)), 440px); }
 }

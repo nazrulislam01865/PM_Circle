@@ -1,0 +1,10 @@
+/* Self-hosted Rajdhani from the user-supplied font package.
+   OFL license: /fonts/rajdhani/OFL.txt
+   All UI sizes and weights are controlled by resources/css/pm-design-tokens.css. */
+@font-face {
+    font-family: "Rajdhani";
+    src: url("/fonts/rajdhani/Rajdhani-Variable.woff2") format("woff2");
+    font-style: normal;
+    font-weight: 300 700;
+    font-display: swap;
+}

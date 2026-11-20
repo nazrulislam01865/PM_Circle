@@ -27,8 +27,8 @@
     mask-image: linear-gradient(to right, transparent 0%, #000 22%);
 }
 .pm-pmp-public-hero-copy { position: relative; z-index: 1; width: 54%; padding: var(--s8); }
-.pm-pmp-public-hero h1 { font-size: clamp(var(--text-h1), 2.35vw, var(--text-stat)); line-height: 1.2; font-weight: var(--bold); letter-spacing: -.025em; }
-.pm-pmp-public-hero h1 sup { font-size: .48em; vertical-align: super; }
+.pm-pmp-public-hero h1 { font-size: var(--text-h1); line-height: var(--line-h1); font-weight: var(--bold); letter-spacing: -.025em; }
+.pm-pmp-public-hero h1 sup { font-size: var(--text-sm); vertical-align: super; }
 .pm-pmp-public-hero p { max-width: 38rem; margin: var(--s3) 0 var(--s5); font-size: var(--text-body); line-height: var(--line-body); color: var(--muted); }
 .pm-pmp-public-actions { display: flex; flex-wrap: wrap; gap: var(--s2); }
 .pm-pmp-public-button {
@@ -169,7 +169,7 @@
 .pm-pmp-public-payment-marks .is-mastercard i { display: block; width: 18px; height: 18px; border-radius: 50%; background: #eb001b; }
 .pm-pmp-public-payment-marks .is-mastercard i + i { margin-left: -7px; background: #f79e1b; }
 .pm-pmp-public-payment-marks .is-amex { background: var(--blue); color: var(--surface); }
-.pm-pmp-public-payment-marks .is-discover { font-size: 9px; color: var(--ink); }
+.pm-pmp-public-payment-marks .is-discover { font-size: var(--text-xs); color: var(--ink); }
 .pm-pmp-public-legal p { color: var(--muted); font-size: var(--text-xs); line-height: var(--line-sm); margin-top: var(--s1); }
 @media (max-width: 1050px) {
     .pm-pmp-public-benefit-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }

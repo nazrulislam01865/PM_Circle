@@ -31,6 +31,7 @@ final class HomePageContentSeeder extends Seeder
                 ],
             ],
             'pathway' => self::pathwayDefaults(),
+            'ai_features' => config('home-ai-features'),
             'scenario' => [
                 'heading' => "Today's scenario", 'status_label' => 'Open for discussion',
                 'button_label' => 'Read scenario & join discussion', 'view_all_label' => 'View all', 'read_button_label' => 'Read scenario',
@@ -86,7 +87,7 @@ final class HomePageContentSeeder extends Seeder
                     'hint' => 'For aspiring PMs, experienced practitioners, trainers and leaders.',
                 ],
             ],
-            'sections' => ['hero' => true, 'pathway' => true, 'scenario' => true, 'community' => true, 'members' => true, 'skills' => true, 'career_features' => true, 'careers' => true],
+            'sections' => ['hero' => true, 'pathway' => true, 'ai_features' => true, 'scenario' => true, 'community' => true, 'members' => true, 'skills' => true, 'career_features' => true, 'careers' => true],
             'demo_scenario_engagement' => ['likes' => 42, 'responses' => 128],
         ]]);
         $content = $page->content;
@@ -110,8 +111,9 @@ final class HomePageContentSeeder extends Seeder
                 'demo_response_emails' => ['demo-priya@example.invalid', 'demo-marcus@example.invalid'],
             ],
             'careers' => ['jobs_view_all_label' => 'View all jobs', 'show_sample_opportunities' => false, 'empty_message' => 'Verified job opportunities will appear here when the careers module is launched.'],
-            'members' => ['empty_message' => 'Be among the first members to join the community.'],
-            'sections' => ['hero' => true, 'pathway' => true, 'scenario' => true, 'community' => true, 'members' => true, 'skills' => true, 'career_features' => ($content['sections']['careers'] ?? true), 'careers' => true],
+            'members' => ['button_url' => '/members', 'empty_message' => 'Be among the first members to join the community.'],
+            'sections' => ['hero' => true, 'pathway' => true, 'ai_features' => true, 'scenario' => true, 'community' => true, 'members' => true, 'skills' => true, 'career_features' => ($content['sections']['careers'] ?? true), 'careers' => true],
+            'ai_features' => config('home-ai-features'),
             'community' => [
                 'empty_message' => 'The discussion is just getting started. Share your first lesson or question to help others grow.',
                 'topics' => ['All', 'I learned', 'From my project', 'Ask the community'],
@@ -147,7 +149,7 @@ final class HomePageContentSeeder extends Seeder
             'exams' => [
                 'heading' => 'Practise today. Prepare for your next certification.',
                 'description' => 'Explore exam simulators for your next professional milestone.',
-                'compare_label' => 'Compare plans',
+                'compare_label' => 'Compare plans', 'compare_url' => '/pricing',
                 'more_label' => 'Explore more exam simulators',
                 'items' => [
                     [
@@ -180,6 +182,7 @@ final class HomePageContentSeeder extends Seeder
                 'heading' => 'Good technical skills need clear communication.',
                 'description' => 'Build confidence in professional emails, team updates, interviews and resume writing.',
                 'button_label' => 'Explore professional skills',
+                'button_url' => '/learning', 'icon_image' => '',
             ],
         ];
     }

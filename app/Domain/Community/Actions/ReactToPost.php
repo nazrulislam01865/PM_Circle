@@ -5,6 +5,7 @@ namespace App\Domain\Community\Actions;
 use App\Domain\Community\Services\EngagementStats;
 use App\Models\Post;
 use App\Models\User;
+use App\Support\Community\ReactionIconCatalog;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -13,7 +14,7 @@ final class ReactToPost
     /** Desired-state operation: null removes a reaction, repeat requests make no change. */
     public function execute(User $user, Post $post, ?string $type): int
     {
-        if ($type !== null && ! in_array($type, EngagementStats::TYPES, true)) {
+        if ($type !== null && ! in_array($type, ReactionIconCatalog::activeTypes(), true)) {
             throw new InvalidArgumentException('Unsupported post reaction type.');
         }
         return DB::transaction(function () use ($user, $post, $type): int {

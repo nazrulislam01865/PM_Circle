@@ -43,7 +43,7 @@ export default function Home({ content, iconAssets, isDemo, scenario, scenarioRe
                     <Link href={hero?.secondary_url || '/community'} className="pm-button pm-button-outline">{hero?.secondary_label}</Link></div>
             </div><CommunityOrbit people={people} content={hero}/></div></section>}
             {visible('pathway') && <HomePathway content={content.pathway} iconAssets={iconAssets} promotion={rewardPromotion} isMember={Boolean(auth?.user && !auth.user.is_admin)}/>}
-            <HomeAiFeatures/>
+            {visible('ai_features') && content.ai_features && <HomeAiFeatures content={content.ai_features}/>}
             {(visible('scenario') || visible('community') || visible('members') || visible('skills')) && <div className={`pm-container pm-home-showcases ${!(visible('scenario') || visible('community')) || !(visible('members') || visible('skills')) ? 'pm-home-showcases-single' : ''}`}>
                 <div className="pm-home-main">
                     {visible('scenario') && <ScenarioPreview scenario={scenario} responses={scenarioResponses ?? []} content={content.scenario} canInteract={canInteract} onJoin={setJoinAction}/>}

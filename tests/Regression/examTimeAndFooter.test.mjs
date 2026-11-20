@@ -48,13 +48,13 @@ test('invalid durations and clock drift never show a negative or overfull progre
 
 test('shared footer covers public/member/exam results and preserves previously approved focus exceptions', () => {
     for (const path of [
-        '/contact', '/community', '/members', '/learning', '/pricing', '/pm-trends',
+        '/', '/home', '/contact', '/community', '/members', '/learning', '/pricing', '/pm-trends',
         '/settings/profile', '/dashboard/features/scrum', '/simulators/scrum',
         '/exam-simulator/pmp', '/exams/pmp', '/exams/pmp/attempts/123/result',
         '/exams/pmp/attempts/123/review', '/exams/pmp?tab=history',
     ]) assert.equal(shouldShowSiteFooter(path), true, `Footer missing on ${path}`);
     for (const path of [
-        '/', '/home', '/dashboard', '/dashboard/home', '/exams/pmp/attempts/123',
+        '/dashboard', '/dashboard/home', '/exams/pmp/attempts/123',
         '/exams/pmp/attempts/123?active=1', '/admin', '/admin/profile-rewards',
     ]) assert.equal(shouldShowSiteFooter(path), false, `Unexpected footer on ${path}`);
 });

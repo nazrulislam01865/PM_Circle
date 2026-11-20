@@ -7,6 +7,7 @@ use App\Domain\DailyChallenge\Jobs\QueueDailyChallengeReview;
 use App\Domain\DailyChallenge\Services\DailyChallengeSettings;
 use Throwable;
 use App\Models\Scenario;
+use App\Support\Community\ReactionIconCatalog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -122,7 +123,7 @@ class ScenarioController extends Controller
 
         $viewerId = $request->user()?->id;
         $scenario->loadCount(['reactions as reactions_count' => fn ($query) => $query
-            ->whereIn('type', ['like', 'love', 'care', 'haha', 'wow', 'sad', 'angry'])]);
+            ->whereIn('type', ReactionIconCatalog::allTypes())]);
 
         if ($viewerId) {
             $myActions = $scenario->reactions()->where('user_id', $viewerId)->pluck('type');

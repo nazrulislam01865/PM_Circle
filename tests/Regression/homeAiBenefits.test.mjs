@@ -27,37 +27,35 @@ function cssVariables(source) {
 
 test('section order remains between skills pathway and Today\'s scenario', () => {
     const pathway = home.indexOf('<HomePathway ');
-    const ai = home.indexOf('<HomeAiFeatures/>');
+    const ai = home.indexOf('<HomeAiFeatures content={content.ai_features}/>');
     const scenario = home.indexOf('<ScenarioPreview ');
     assert.ok(pathway !== -1 && ai > pathway && scenario > ai);
-    assert.equal(home.split('<HomeAiFeatures/>').length - 1, 1);
+    assert.equal(home.split('<HomeAiFeatures content={content.ai_features}/>').length - 1, 1);
 });
 
-test('four cards keep the approved prototype text, assets, and pricing destination', () => {
+test('four cards retain the approved prototype defaults and are admin editable', () => {
+    const defaults = read('config/home-ai-features.php');
     for (const phrase of [
         'How AI helps you on PM Circle', 'Explore Plus plans',
         'Exam Simulator', 'Ask AI about any question',
-        'After your mock, ask follow-up questions in Question Review.',
         'Daily Challenge', 'A new AI challenge every day',
-        'Get AI feedback on your response and improve your reasoning.',
         'Community Feed', 'AI helps keep the feed safe',
-        'AI checks every post. Admins make the final call.',
         'Learn & Practice', 'Learn with AI support',
-        'Get AI guidance as you learn and practise.',
-    ]) assert.ok(benefits.includes(phrase), phrase);
-    assert.match(benefits, /href="\/pricing"/);
+    ]) assert.ok(defaults.includes(phrase), phrase);
+    assert.match(benefits, /href=\{content.button_url\}/);
+    assert.match(read('resources/js/pages/admin/Homepage.tsx'), /selected === 'ai_features'/);
 });
 
 test('local WebP images remain lazy, accessible, and bandwidth efficient', () => {
     for (const file of images) {
-        assert.ok(benefits.includes(file));
+        assert.ok(read('config/home-ai-features.php').includes(file));
         const path = new URL(`public/images/home/ai-features/${file}`, root);
         const bytes = statSync(path).size;
         assert.ok(bytes > 0 && bytes < 80_000, `${file}: ${bytes} bytes`);
     }
     assert.match(benefits, /loading="lazy"/);
     assert.match(benefits, /decoding="async"/);
-    assert.match(benefits, /alt=\{benefit.illustrationDescription\}/);
+    assert.match(benefits, /alt=\{benefit.alt\}/);
     assert.doesNotMatch(benefits, /fetch\(|axios\.|useEffect\(|useState\(/);
 });
 

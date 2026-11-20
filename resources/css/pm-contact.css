@@ -127,3 +127,15 @@
     .pm-unified-footer-subscribe-row { flex-wrap:wrap; }
     .pm-unified-footer-compact .pm-unified-footer-subscribe-row { flex-wrap:nowrap; }
 }
+
+.pm-unified-footer-bottom .pm-unified-footer-disclaimer{margin-top:var(--s2)}
+
+/* Optional shared footer display controls: the default four-column design is unchanged. */
+.pm-unified-footer-grid-adjustable{grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr))}
+.pm-unified-footer-brand-image{width:2.75rem;height:2.75rem;object-fit:contain;flex:none}
+.pm-unified-footer-compact .pm-unified-footer-brand-image{width:2.0625rem;height:2.0625rem}
+.pm-unified-footer-payment-image{display:block;max-width:8rem;max-height:2rem;width:auto;height:auto;object-fit:contain}
+@media(max-width:42rem){.pm-unified-footer-grid-adjustable{grid-template-columns:minmax(0,1fr)}}
+
+.pm-unified-footer-compact-grid-adjustable{grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr))}
+@media(max-width:42rem){.pm-unified-footer-compact-grid-adjustable{grid-template-columns:minmax(0,1fr)}}

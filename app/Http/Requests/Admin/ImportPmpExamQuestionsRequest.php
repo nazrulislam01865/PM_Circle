@@ -15,6 +15,7 @@ final class ImportPmpExamQuestionsRequest extends FormRequest
     {
         return [
             'file' => ['required', 'file', 'max:5120', 'mimes:csv,txt,xlsx'],
+            'activate_all' => ['sometimes', 'boolean'],
         ];
     }
 }

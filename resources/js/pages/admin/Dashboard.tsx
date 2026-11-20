@@ -21,7 +21,7 @@ export default function Dashboard({ homepage, stats }: Props) {
         </article>)}</div>
         <section className="pm-admin-panel pm-admin-dashboard-action">
             <div><span className="pm-admin-kicker">HOMEPAGE MANAGEMENT</span><h2>Homepage control</h2>
-                <p>Edit the public hero, career pathway, daily challenge labels, community cards, skills and career highlights. All changes are saved in the existing homepage content record.</p>
+                <p>Manage the public hero, career pathway, AI features, challenges, community, careers and shared footer. Homepage content stays in its existing record; the footer uses its centralized editor.</p>
                 <div className="pm-admin-meta"><CalendarClock size={17} aria-hidden="true"/>
                     {homepage.updatedAt ? `Last saved ${new Date(homepage.updatedAt).toLocaleString()}${homepage.updatedBy ? ` by ${homepage.updatedBy}` : ''}` : 'Not configured yet'}
                 </div>

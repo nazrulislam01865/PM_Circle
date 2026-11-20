@@ -17,9 +17,10 @@ export type DemoCourseData = {
     title: string;
     summary: string;
     category: string;
-    level: 'Beginner' | 'Intermediate' | 'Advanced';
+    level: string;
     minutes: number;
     thumbnail: number;
+    coverUrl?: string | null;
     accessTier: 'free' | 'paid';
     enrolled: boolean;
     saved: boolean;
@@ -29,6 +30,14 @@ export type DemoCourseDetailData = Omit<DemoCourseData, 'enrolled' | 'saved'> & 
     overview?: string;
     objectives?: string[];
     outline?: { title: string; topics: string[] }[];
+};
+export type CoursePracticeSettings = {
+    enabled: boolean; questionCount: number; durationMinutes: number; available: number;
+    sections: { title: string; available: number; topics: { title: string; available: number }[] }[];
+};
+export type CourseResourceData = {
+    id: number; title: string; section: string; description: string | null;
+    kind: 'link' | 'file';
 };
 export const demoCourseHref = (slug: string) => `/learning/courses/${encodeURIComponent(slug)}`;
 export type LearningActivityData = {

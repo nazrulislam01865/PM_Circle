@@ -163,7 +163,7 @@ export function MemberHomeHeader({ dashboard, active, actions, brandHref, joinLa
             {user?.is_admin && <div className="pm-member-home-header-actions"><Link href="/admin" className="pm-member-home-admin-link">Administration</Link></div>}
             {!user && <div className="pm-member-home-header-actions pm-member-home-guest-actions">
                 <Link href="/login" className="pm-member-home-guest-login">Log in</Link>
-                <Link href="/register" className="pm-button pm-member-home-guest-join">{joinLabel}</Link>
+                <Link href="/register" className="pm-button pm-member-home-guest-join" aria-label={joinLabel}><span className="pm-guest-join-full" aria-hidden="true">{joinLabel}</span><span className="pm-guest-join-compact" aria-hidden="true">Join free</span></Link>
             </div>}
             <details className="pm-member-home-utility-group" onKeyDown={closeOnEscape} onMouseLeave={closeDropdownOnMouseLeave}>
                 <summary aria-label="More PM Circle links"><Menu aria-hidden="true"/></summary>

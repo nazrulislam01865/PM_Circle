@@ -95,3 +95,7 @@
 .pm-pmp-start-dialog.is-history .pm-pmp-start-table :is(th, td) { padding-block: var(--s1); }
 .pm-pmp-start-dialog.is-history .pm-pmp-start-footer { padding-block: var(--s4); }
 @media (max-width: 42rem) { .pm-pmp-start-dialog.is-history .pm-pmp-start-body { padding: var(--s4); } }
+
+.pm-pmp-start-exam-spec { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); padding: var(--s2) var(--s3); background: var(--canvas); border: 1px solid var(--border); border-radius: var(--radius-control); font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui); }
+.pm-pmp-start-exam-spec span + span { border-left: 1px solid var(--border); padding-left: var(--s3); }
+.pm-pmp-start-exam-spec strong { font-variant-numeric: tabular-nums; color: var(--blue); }

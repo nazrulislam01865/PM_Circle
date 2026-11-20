@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Scenario;
 use App\Http\Controllers\Controller;
 use App\Models\Scenario;
 use App\Models\ScenarioResponse;
+use App\Support\Community\ReactionIconCatalog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,6 @@ use Illuminate\Validation\Rule;
 
 class ScenarioReactionController extends Controller
 {
-    private const TYPES = ['like', 'love', 'care', 'haha', 'wow', 'sad', 'angry'];
 
     /** The existing save reaction is independent of emoji reactions. */
     public function bookmark(Request $request, Scenario $scenario): RedirectResponse
@@ -41,7 +41,7 @@ class ScenarioReactionController extends Controller
     public function reactToScenario(Request $request, Scenario $scenario): JsonResponse|RedirectResponse
     {
         abort_unless(in_array($scenario->status, ['published', 'closed'], true), 404);
-        $type = $request->validate(['type' => ['required', Rule::in(self::TYPES)]])['type'];
+        $type = $request->validate(['type' => ['required', Rule::in(ReactionIconCatalog::activeTypes())]])['type'];
 
         // Existing scenario_reactions supports multiple types and 'save'. Locking
         // the member row serializes this member's reaction changes without locking
@@ -49,29 +49,29 @@ class ScenarioReactionController extends Controller
         DB::transaction(function () use ($request, $scenario, $type): void {
             DB::table('users')->where('id', $request->user()->id)->lockForUpdate()->first(['id']);
             DB::table('scenario_reactions')->where('user_id', $request->user()->id)
-                ->where('scenario_id', $scenario->id)->whereIn('type', self::TYPES)->delete();
+                ->where('scenario_id', $scenario->id)->whereIn('type', ReactionIconCatalog::allTypes())->delete();
             DB::table('scenario_reactions')->insert([
                 'user_id' => $request->user()->id, 'scenario_id' => $scenario->id,
                 'type' => $type, 'created_at' => now(), 'updated_at' => now(),
             ]);
         });
 
-        return $this->result($request, $type, $scenario->reactions()->whereIn('type', self::TYPES)->count());
+        return $this->result($request, $type, $scenario->reactions()->whereIn('type', ReactionIconCatalog::allTypes())->count());
     }
 
     public function unreactToScenario(Request $request, Scenario $scenario): JsonResponse|RedirectResponse
     {
         abort_unless(in_array($scenario->status, ['published', 'closed'], true), 404);
         $scenario->reactions()->where('user_id', $request->user()->id)
-            ->whereIn('type', self::TYPES)->delete();
+            ->whereIn('type', ReactionIconCatalog::allTypes())->delete();
 
-        return $this->result($request, null, $scenario->reactions()->whereIn('type', self::TYPES)->count());
+        return $this->result($request, null, $scenario->reactions()->whereIn('type', ReactionIconCatalog::allTypes())->count());
     }
 
     public function reactToResponse(Request $request, Scenario $scenario, ScenarioResponse $response): JsonResponse|RedirectResponse
     {
         $this->ensureResponse($scenario, $response);
-        $type = $request->validate(['type' => ['required', Rule::in(self::TYPES)]])['type'];
+        $type = $request->validate(['type' => ['required', Rule::in(ReactionIconCatalog::activeTypes())]])['type'];
         $reaction = $response->reactions()->updateOrCreate(
             ['user_id' => $request->user()->id], ['type' => $type],
         );

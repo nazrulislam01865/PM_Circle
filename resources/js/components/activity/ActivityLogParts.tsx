@@ -4,6 +4,7 @@ import {
     Info, ListFilter, MessageCircle, Reply, Target, ThumbsUp, type LucideIcon,
 } from 'lucide-react';
 import type { ChangeEvent, ReactNode } from 'react';
+import { ReactionGlyph } from '@/components/home/HomeEngagement';
 
 export type ActivityType = 'exam' | 'post' | 'reply' | 'scenario' | 'save' | 'reaction' | 'lesson' | 'quiz';
 export type ActivityFilters = { type: 'all' | ActivityType; range: 'all' | 'today' | '7days' | '30days' | '90days'; sort: 'newest' | 'oldest' };
@@ -60,7 +61,7 @@ export function ActivityRow({ entry }: { entry: ActivityEntry }) {
     const { title, icon: Icon, tone } = activityMeta[entry.type];
     const isFocused = entry.type === 'exam' && entry.detail === 'Focused PMP practice';
     return <div className="pm-activity-row">
-        <div className={`pm-activity-icon is-${tone}`} aria-hidden="true"><Icon strokeWidth={2} /></div>
+        <div className={`pm-activity-icon is-${tone}`} aria-hidden="true">{entry.type === 'reaction' ? <ReactionGlyph type="like" size={20}/> : <Icon strokeWidth={2} />}</div>
         <div className="pm-activity-row-copy">
             <Link href={entry.href} className="pm-activity-title">{isFocused ? 'Finished PMP practice quiz' : title}</Link>
             <p title={entry.detail}>{entry.detail}</p>

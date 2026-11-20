@@ -81,6 +81,47 @@ final class PmpExamStartSelectionTest extends TestCase
         $this->assertSame(3, DB::table('pmp_exam_attempts')->where('user_id', $member->id)->count());
     }
 
+    public function test_admin_configured_counts_and_minutes_are_exact_and_insufficient_banks_cannot_start(): void
+    {
+        $this->questions(5);
+        DB::table('pmp_exam_settings')->insert([
+            'id' => 1, 'full_question_count' => 6, 'full_duration_minutes' => 48,
+            'focused_question_count' => 4, 'focused_duration_minutes' => 15,
+            'shuffle_questions' => false, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $member = $this->member();
+        $this->actingAs($member)->getJson('/exams/pmp/start-options')->assertOk()
+            ->assertJsonPath('bankTotal', 5)->assertJsonPath('examSize', 0)
+            ->assertJsonPath('fullQuestionCount', 6)->assertJsonPath('fullDurationMinutes', 48);
+        $this->postJson('/exams/pmp/start', ['selection' => 'random'])->assertStatus(409);
+        $this->assertDatabaseCount('pmp_exam_attempts', 0);
+
+        // Focused practice has its own administrator-controlled question count and time.
+        $focusedUrl = $this->postJson('/exams/pmp/start', [
+            'mode' => 'focused', 'domain' => 'Process',
+        ])->assertOk()->json('takeUrl');
+        $focused = DB::table('pmp_exam_attempts')->find((int) basename($focusedUrl));
+        $this->assertSame(4, (int) $focused->total_questions);
+        $this->assertSame(15, (int) round(\Carbon\Carbon::parse($focused->started_at)->diffInMinutes($focused->expires_at, true)));
+
+        DB::table('pmp_exam_settings')->where('id', 1)->update(['focused_question_count' => 6]);
+        $this->postJson('/exams/pmp/start', ['mode' => 'focused', 'domain' => 'Process'])->assertStatus(409);
+        $this->assertDatabaseCount('pmp_exam_attempts', 1);
+
+        DB::table('pmp_exam_settings')->where('id', 1)->update([
+            'full_question_count' => 3, 'full_duration_minutes' => 27,
+        ]);
+        $this->getJson('/exams/pmp/start-options')->assertOk()
+            ->assertJsonPath('examSize', 3)->assertJsonPath('fullDurationMinutes', 27);
+        $fullUrl = $this->postJson('/exams/pmp/start', ['selection' => 'random'])->assertOk()->json('takeUrl');
+        $full = DB::table('pmp_exam_attempts')->find((int) basename($fullUrl));
+        $this->assertSame(3, (int) $full->total_questions);
+        $this->assertSame(27, (int) round(\Carbon\Carbon::parse($full->started_at)->diffInMinutes($full->expires_at, true)));
+
+        DB::table('pmp_exam_settings')->where('id', 1)->update(['full_duration_minutes' => 40]);
+        $this->assertSame(27, (int) round(\Carbon\Carbon::parse($full->started_at)->diffInMinutes($full->expires_at, true)));
+    }
+
     public function test_imported_approved_workbook_questions_become_active_without_approving_drafts(): void
     {
         $admin = User::factory()->create(['is_admin' => true, 'onboarding_step' => 3]);

@@ -9,7 +9,8 @@ return [
     'api_key' => env('OPENAI_API_KEY'),
     // Dedicated restricted key for Daily Challenge only. Never expose it through an admin response.
     'daily_challenge_api_key' => env('OPENAI_DAILY_CHALLENGE_API_KEY'),
-    // Dedicated key for community posts, comments and replies; never shared with other AI features.
+    // Post Check Omni moderation key; also used ONLY for Daily Challenge input/output moderation.
+    // Daily Challenge generation and evaluation continue using daily_challenge_api_key.
     'post_check_api_key' => env('OPENAI_POST_CHECK_API_KEY'),
     // Opt in to the Moderations API without changing existing Responses-based installations.
     'post_check_provider' => env('PM_AI_POST_CHECK_PROVIDER', 'responses'),

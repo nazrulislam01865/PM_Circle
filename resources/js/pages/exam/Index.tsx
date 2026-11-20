@@ -13,8 +13,9 @@ import type { DashboardShellData } from '@/types/dashboard';
 type Props = {
     shell: DashboardShellData;
     availableQuestions: number;
+    activeQuestionCount: number;
     fullLength: boolean;
-    examSettings: { enabled: boolean; full_question_count: number; focused_question_count: number; };
+    examSettings: { enabled: boolean; full_question_count: number; full_duration_minutes: number; focused_question_count: number; };
     planCode: string;
     planDetails: PmpPlanDetails;
     targetExamDate: string | null;
@@ -28,7 +29,7 @@ type Props = {
 const dashboardTabs: PmpDashboardTab[] = ['overview', 'performance', 'history', 'ai'];
 
 /** Four prototype-matched views, one visible at a time. No navigation requests for tab changes. */
-export default function Index({ shell, availableQuestions, fullLength, examSettings, planCode, planDetails,
+export default function Index({ shell, availableQuestions, activeQuestionCount, fullLength, examSettings, planCode, planDetails,
     targetExamDate, attemptTotals, aiUsage, attempts, topicAccuracy, historyNextCursor }: Props) {
     const page = usePage();
     const [active, setActive] = useState<PmpDashboardTab>(() => {
@@ -94,6 +95,7 @@ export default function Index({ shell, availableQuestions, fullLength, examSetti
         const request = new AbortController();
         coverageRequest.current = request;
         setStartDialogPhase('loading');
+        setStartCoverage(null);
         setStartDialogError('');
         clearStartError();
         try {
@@ -107,7 +109,7 @@ export default function Index({ shell, availableQuestions, fullLength, examSetti
                 throw new Error('Could not retrieve question bank coverage. Please try again.');
             }
             const result = await response.json() as PmpExamCoverage;
-            if (![result.bankTotal, result.usedCount, result.unseenCount, result.examSize, result.fullQuestionCount]
+            if (![result.bankTotal, result.usedCount, result.unseenCount, result.examSize, result.fullQuestionCount, result.fullDurationMinutes]
                 .every(value => Number.isSafeInteger(value) && value >= 0)) {
                 throw new Error('Question bank coverage is temporarily unavailable. Please try again.');
             }
@@ -168,7 +170,9 @@ export default function Index({ shell, availableQuestions, fullLength, examSetti
             <div className="pm-pmp-dashboard-main" id="pmp-dashboard-content" role="tabpanel" aria-labelledby={`pm-pmp-tab-${active}`} tabIndex={0}>
                 {active === 'overview' && <PmpOverview attempts={attempts} planCode={planCode} planDetails={planDetails}
                     attemptTotals={attemptTotals} aiUsage={currentUsage} topics={topicAccuracy} targetExamDate={targetExamDate}
-                    availableQuestions={availableQuestions} fullLength={fullLength} fullQuestionCount={examSettings.full_question_count} focusedQuestionCount={examSettings.focused_question_count}
+                    availableQuestions={availableQuestions} activeQuestionCount={activeQuestionCount} fullLength={fullLength}
+                    examEnabled={examSettings.enabled} fullQuestionCount={examSettings.full_question_count}
+                    fullDurationMinutes={examSettings.full_duration_minutes} focusedQuestionCount={examSettings.focused_question_count}
                     onStart={onStart} onFocus={onFocus} starting={starting} onAi={() => openTab('ai')}/>}
                 {active === 'performance' && <PmpPerformance attempts={attempts} topics={topicAccuracy}
                     onStart={onStart} onFocus={onFocus} starting={starting} canStart={availableQuestions > 0} fullQuestionCount={examSettings.full_question_count}/>}

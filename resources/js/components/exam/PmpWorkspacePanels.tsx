@@ -135,11 +135,12 @@ function studyTopics(topics: PmpTopicRow[], completed: PmpWorkspaceAttempt[], ma
 }
 
 export function PmpOverview({ attempts, planCode, planDetails, targetExamDate, attemptTotals, aiUsage,
-    topics, availableQuestions, fullLength, fullQuestionCount, focusedQuestionCount, onStart, onFocus, starting, onAi }: {
+    topics, availableQuestions, activeQuestionCount, fullLength, examEnabled, fullQuestionCount, fullDurationMinutes, focusedQuestionCount, onStart, onFocus, starting, onAi }: {
     attempts: PmpWorkspaceAttempt[]; planCode: string; planDetails: PmpPlanDetails;
     targetExamDate: string | null; attemptTotals: { completed: number; inProgress: number; practiceCompleted: number; latestScore: number | null };
     aiUsage: PmpAiUsageData;
-    topics: PmpTopicRow[]; availableQuestions: number; fullLength: boolean; fullQuestionCount: number; focusedQuestionCount: number;
+    topics: PmpTopicRow[]; availableQuestions: number; activeQuestionCount: number; fullLength: boolean; examEnabled: boolean;
+    fullQuestionCount: number; fullDurationMinutes: number; focusedQuestionCount: number;
     onStart: () => void; onFocus: (domain: string) => void; starting: boolean; onAi: () => void;
 }) {
     const activeAttempt = attempts.find(isResumable);
@@ -191,7 +192,9 @@ export function PmpOverview({ attempts, planCode, planDetails, targetExamDate, a
                 <span className="pm-pmp-sample-tag"><Info size={13}/> Your exam activity</span></div>
             <div className="pm-pmp-heading-action"><PrimaryAction onClick={onStart} disabled={!availableQuestions || starting}>
                 <Play size={17} fill="currentColor"/> {starting ? 'Starting exam...' : 'Start a New Mock Exam'}
-            </PrimaryAction><span>{fullLength ? `Unlimited ${fullQuestionCount}-question mock attempts with active access` : `${availableQuestions} active practice questions available`}</span></div>
+            </PrimaryAction><span>{!examEnabled ? 'New mock exams are currently paused by the administrator.'
+                : fullLength ? `${fullQuestionCount} questions · ${fullDurationMinutes} minutes per mock`
+                : `${activeQuestionCount} of ${fullQuestionCount} required questions active · Full mocks temporarily unavailable`}</span></div>
         </div>
         <div className="pm-pmp-overview-cards">
             <Panel><div className="pm-pmp-card-title"><IconTile><CalendarDays/></IconTile><strong>Current Plan · {planCode.toUpperCase()}</strong></div>

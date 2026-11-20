@@ -40,24 +40,24 @@ final class UpdateHomepageRequest extends FormRequest
         }];
         $r = [
             'version' => ['required', 'integer', 'min:1'],
-            'content' => ['required', 'array:sections,hero,pathway,scenario,community,members,skills,careers'],
-            'content.sections' => ['required', 'array:hero,pathway,scenario,community,members,skills,career_features,careers'],
+            'content' => ['required', 'array:sections,hero,pathway,ai_features,scenario,community,members,skills,careers'],
+            'content.sections' => ['required', 'array:hero,pathway,ai_features,scenario,community,members,skills,career_features,careers'],
         ];
 
-        foreach (['hero', 'pathway', 'scenario', 'community', 'members', 'skills', 'career_features', 'careers'] as $key) {
+        foreach (['hero', 'pathway', 'ai_features', 'scenario', 'community', 'members', 'skills', 'career_features', 'careers'] as $key) {
             $r["content.sections.{$key}"] = ['required', 'boolean'];
         }
 
         $fields = [
             'hero' => ['eyebrow' => $label, 'title' => $text, 'description' => $body, 'primary_label' => $label, 'secondary_label' => $label, 'primary_url' => $requiredRoute, 'secondary_url' => $requiredRoute, 'caption_learn' => $label, 'caption_discuss' => $label, 'caption_career' => $label],
             'scenario' => ['view_all_url' => $route, 'read_url' => $route, 'discussion_url' => $route, 'heading' => $label, 'status_label' => $label, 'button_label' => $label, 'read_button_label' => $label, 'discussion_button_label' => $label, 'responses_heading' => $label, 'score_label' => $label, 'view_all_label' => $label, 'empty_message' => $body, 'empty_responses_message' => $body, 'hint' => $body],
-            'members' => ['heading' => $text, 'hint' => $body, 'button_label' => $label, 'empty_message' => $body],
+            'members' => ['heading' => $text, 'hint' => $body, 'button_label' => $label, 'button_url' => $requiredRoute, 'empty_message' => $body],
             'skills' => ['heading' => $text],
             'community' => ['view_all_url' => $route, 'button_url' => $route, 'heading' => $text, 'view_all_label' => $label, 'prompt_title' => $text, 'prompt_description' => $body, 'button_label' => $label, 'empty_message' => $body],
             'careers' => ['jobs_url' => $route, 'heading' => $text, 'opportunities_heading' => $text, 'jobs_view_all_label' => $label, 'empty_message' => $body],
             'pathway.steps' => ['heading' => $text],
-            'pathway.exams' => ['heading' => $text, 'description' => $body, 'compare_label' => $label, 'more_label' => $label],
-            'pathway.banner' => ['heading' => $text, 'description' => $body, 'button_label' => $label],
+            'pathway.exams' => ['heading' => $text, 'description' => $body, 'compare_label' => $label, 'compare_url' => $requiredRoute, 'more_label' => $label],
+            'pathway.banner' => ['heading' => $text, 'description' => $body, 'button_label' => $label, 'button_url' => $requiredRoute, 'icon_image' => $iconImage],
             'careers.resume' => ['button_url' => $route, 'icon_image' => $iconImage, 'title' => $text, 'description' => $body, 'button_label' => $label],
             'careers.join' => ['button_url' => $route, 'heading' => $text, 'description' => $body, 'button_label' => $label, 'hint' => $body],
         ];
@@ -78,6 +78,19 @@ final class UpdateHomepageRequest extends FormRequest
 
         $r += [
             'content.pathway' => ['required', 'array:steps,exams,banner'],
+            'content.ai_features' => ['required', 'array:heading,button_label,button_url,cards'],
+            'content.ai_features.heading' => $text,
+            'content.ai_features.button_label' => $label,
+            'content.ai_features.button_url' => $requiredRoute,
+            'content.ai_features.cards' => ['required', 'array', 'size:4'],
+            'content.ai_features.cards.*' => ['required', 'array:category,title,description,illustration,alt,icon,image'],
+            'content.ai_features.cards.*.category' => $label,
+            'content.ai_features.cards.*.title' => $text,
+            'content.ai_features.cards.*.description' => $body,
+            'content.ai_features.cards.*.alt' => $label,
+            'content.ai_features.cards.*.icon' => ['required', 'string', Rule::in(['clipboard-check', 'calendar-days', 'users-round', 'book-open'])],
+            'content.ai_features.cards.*.illustration' => ['required', 'string', Rule::in(array_column(config('home-ai-features.cards'), 'illustration'))],
+            'content.ai_features.cards.*.image' => $iconImage,
             'content.hero.people' => ['present', 'array', 'max:5'],
             'content.hero.people.*' => ['array:name,avatar_path'],
             'content.hero.people.*.name' => $label,
@@ -101,12 +114,14 @@ final class UpdateHomepageRequest extends FormRequest
             'content.pathway.steps.items.*.icon' => $choice('pathway_step_icon'),
             'content.pathway.steps.items.*.icon_image' => $iconImage,
             'content.pathway.exams.items' => ['present', 'array', 'max:10'],
-            'content.pathway.exams.items.*' => ['array:title,description,icon,icon_image,features,button_label,plans_label'],
+            'content.pathway.exams.items.*' => ['array:title,description,icon,icon_image,features,button_label,button_url,plans_label,plans_url'],
             'content.pathway.exams.items.*.title' => $text,
             'content.pathway.exams.items.*.description' => $body,
             'content.pathway.exams.items.*.icon' => $choice('pathway_exam_icon'),
             'content.pathway.exams.items.*.icon_image' => $iconImage,
             'content.pathway.exams.items.*.button_label' => $label,
+            'content.pathway.exams.items.*.button_url' => $requiredRoute,
+            'content.pathway.exams.items.*.plans_url' => $requiredRoute,
             'content.pathway.exams.items.*.plans_label' => $label,
             'content.pathway.exams.items.*.features' => ['present', 'array', 'max:8'],
             'content.pathway.exams.items.*.features.*' => $label,

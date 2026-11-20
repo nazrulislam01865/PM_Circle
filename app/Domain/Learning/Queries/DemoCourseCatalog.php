@@ -2,10 +2,11 @@
 
 namespace App\Domain\Learning\Queries;
 
+use App\Models\LearningCourse;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
-/** Read-only demo catalog; at most one enrollment and one bookmark lookup per member. */
+/** Database-backed catalog, retaining existing routes and member enrollment keys. */
 final class DemoCourseCatalog
 {
     public function all(?User $user): array
@@ -15,16 +16,34 @@ final class DemoCourseCatalog
         $saved = $user ? DB::table('learning_demo_course_saves')
             ->where('user_id', $user->id)->pluck('course_slug')->flip() : collect();
 
-        return collect(config('demo-learning-courses.courses', []))->map(fn (array $course) => [
-            ...collect($course)->except('lessons')->all(),
-            'enrolled' => $enrolled->has($course['slug']),
-            'saved' => $saved->has($course['slug']),
-        ])->all();
+        return LearningCourse::query()->where('is_published', true)
+            ->orderBy('sort_order')->orderBy('id')
+            ->get(['slug', 'title', 'summary', 'category', 'level', 'minutes', 'thumbnail', 'cover_path', 'access_tier'])
+            ->map(fn (LearningCourse $course) => [
+                ...$course->catalogData(),
+                'enrolled' => $enrolled->has($course->slug),
+                'saved' => $saved->has($course->slug),
+            ])->all();
+    }
+
+    /** Minimal lookup for enrollment and bookmarks, without loading course content. */
+    public function accessTier(string $slug): ?string
+    {
+        return LearningCourse::query()->where('slug', $slug)
+            ->where('is_published', true)->value('access_tier');
     }
 
     public function find(string $slug): ?array
     {
-        return collect(config('demo-learning-courses.courses', []))
-            ->firstWhere('slug', $slug);
+        $course = LearningCourse::query()->where('slug', $slug)
+            ->where('is_published', true)->first();
+
+        return $course ? [
+            ...$course->catalogData(),
+            'overview' => $course->overview,
+            'objectives' => $course->objectives ?? [],
+            'outline' => $course->outline ?? [],
+            'lessons' => $course->lessons ?? [],
+        ] : null;
     }
 }

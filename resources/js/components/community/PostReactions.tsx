@@ -2,7 +2,7 @@ import { Link } from '@inertiajs/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Avatar } from '@/components/pm/Avatar';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { reactionOptions, type ReactionType } from '@/components/home/HomeEngagement';
+import { ReactionGlyph, useReactionOptions, type ReactionType } from '@/components/home/HomeEngagement';
 
 export type ReactionCounts = Partial<Record<ReactionType, number>>;
 
@@ -17,11 +17,11 @@ type ReactionPage = { total: number; counts: ReactionCounts; data: Reactor[]; ne
 type Tab = ReactionType | 'all';
 
 function ReactionMark({ type, size = 18 }: { type: ReactionType; size?: number }) {
-    const option = reactionOptions.find(item => item.type === type);
+    const options = useReactionOptions(true);
+    const option = options.find(item => item.type === type);
     if (!option) return null;
-    const Icon = option.Icon;
     return <span className={`pm-post-reaction-icon is-${type}`} title={option.label}
-        aria-label={`${option.label} reaction`}><Icon size={size} aria-hidden={true}/></span>;
+        aria-label={`${option.label} reaction`}><ReactionGlyph type={type} size={size}/></span>;
 }
 
 /** Compact summary; the full roster is fetched ONLY on click, never for every feed post. */
@@ -32,7 +32,8 @@ export function PostReactionSummary({ postId, total, counts, onRefresh }: {
     onRefresh: (total: number, counts: ReactionCounts) => void;
 }) {
     const [open, setOpen] = useState(false);
-    const displayed = reactionOptions.filter(option => (counts[option.type] ?? 0) > 0)
+    const options = useReactionOptions(true);
+    const displayed = options.filter(option => (counts[option.type] ?? 0) > 0)
         .sort((a, b) => (counts[b.type] ?? 0) - (counts[a.type] ?? 0))
         .slice(0, 3);
 
@@ -60,6 +61,7 @@ function PostReactionDialog({ postId, initialTotal, initialCounts, onClose, onRe
     onRefresh: (total: number, counts: ReactionCounts) => void;
 }) {
     const [tab, setTab] = useState<Tab>('all');
+    const options = useReactionOptions(true);
     const [counts, setCounts] = useState<ReactionCounts>(initialCounts);
     const [total, setTotal] = useState(initialTotal);
     const [users, setUsers] = useState<Reactor[]>([]);
@@ -132,7 +134,7 @@ function PostReactionDialog({ postId, initialTotal, initialCounts, onClose, onRe
                 }}>
                 <button type="button" role="tab" aria-selected={tab === 'all'} tabIndex={tab === 'all' ? 0 : -1}
                     className={tab === 'all' ? 'is-selected' : ''} onClick={() => { if (tab !== 'all') { setUsers([]); setTab('all'); } }}>All {total}</button>
-                {reactionOptions.filter(option => (counts[option.type] ?? 0) > 0).map(({ type, label }) =>
+                {options.filter(option => (counts[option.type] ?? 0) > 0).map(({ type, label }) =>
                     <button key={type} type="button" role="tab" aria-label={`${label} ${counts[type]}`} aria-selected={tab === type} tabIndex={tab === type ? 0 : -1}
                         className={tab === type ? 'is-selected' : ''} onClick={() => { if (tab !== type) { setUsers([]); setTab(type); } }}>
                         <ReactionMark type={type} size={17}/>

@@ -1,6 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react';
-import { AlertCircle, Bookmark, Heart, ImageIcon, MessageCircle, Pencil, RefreshCw, Repeat2, Share2, ShieldAlert, Trash2 } from 'lucide-react';
+import { AlertCircle, Bookmark, ImageIcon, MessageCircle, Pencil, RefreshCw, Repeat2, Share2, ShieldAlert, Trash2 } from 'lucide-react';
 import { Avatar } from '@/components/pm/Avatar';
+import { ReactionGlyph } from '@/components/home/HomeEngagement';
 import { PostContent } from '@/components/community/PostContent';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 
@@ -148,7 +149,7 @@ export function PostCheckCard({ post, owner, onRefresh }: { post: PostCheckPrevi
             {error && <p className="pm-post-action-error" role="alert">{error}</p>}
         </div>
         {restricted ? <div className="pm-post-check-restricted-actions"><button type="button" className="pm-button pm-button-outline" onClick={() => setEditOpen(true)}><Pencil size={16}/> Edit post</button><button type="button" className="pm-button pm-post-check-post-again" disabled>Post again</button><small>Edit before reposting</small></div>
-            : <footer className="pm-post-check-quiet-actions" aria-label="Engagement is available after publication"><span><Heart size={18}/> Love</span><span><MessageCircle size={18}/> Comments</span><span><Share2 size={18}/> Share</span><span><Bookmark size={18}/> Save</span></footer>}
+            : <footer className="pm-post-check-quiet-actions" aria-label="Engagement is available after publication"><span><ReactionGlyph type="love" size={18}/> Love</span><span><MessageCircle size={18}/> Comments</span><span><Share2 size={18}/> Share</span><span><Bookmark size={18}/> Save</span></footer>}
         {editOpen && <RestrictedPostDialog post={post} open={editOpen} onClose={() => setEditOpen(false)} onSubmitted={onRefresh}/>}
     </article>;
 }

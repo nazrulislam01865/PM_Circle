@@ -310,7 +310,7 @@
 .pm-interview-results-ident { align-content: center; }
 .pm-interview-results-overall { min-height: 5.5rem; display: grid; align-content: center; justify-items: center; padding-left: var(--s3); text-align: center; border-left: 1px solid var(--border); }
 .pm-interview-results-overall > span { font-weight: var(--semibold); }
-.pm-interview-results-overall strong { font-size: calc(var(--text-stat) + .375rem); line-height: var(--line-stat); }
+.pm-interview-results-overall strong { font-size: var(--text-stat); line-height: var(--line-stat); }
 .pm-interview-results-overall small { font-weight: var(--medium); color: var(--ink); }
 .pm-interview-results-level { align-self: stretch; justify-content: center; padding: var(--s3); }
 .pm-interview-results-level > div { gap: var(--s2); }
@@ -342,8 +342,8 @@
 .pm-interview-trend-card .pm-interview-card-body { display: grid; align-items: center; }
 .pm-interview-trend-graph { width: 100%; min-width: 0; }
 .pm-interview-trend-graph svg { width: 100%; height: auto; display: block; overflow: visible; }
-.pm-interview-trend-label { font-family: var(--font-ui); font-size: 12px; fill: var(--muted); font-variant-numeric: tabular-nums; }
-.pm-interview-trend-point { font-family: var(--font-ui); font-size: 13px; fill: var(--ink); font-weight: var(--semibold); font-variant-numeric: tabular-nums; }
+.pm-interview-trend-label { font-family: var(--font-ui); font-size: var(--text-xs); fill: var(--muted); font-variant-numeric: tabular-nums; }
+.pm-interview-trend-point { font-family: var(--font-ui); font-size: var(--text-sm); fill: var(--ink); font-weight: var(--semibold); font-variant-numeric: tabular-nums; }
 .pm-interview-trend-point.is-latest { fill: var(--surface); }
 .pm-interview-chart-note { font-size: var(--text-xs); color: var(--muted); text-align: center; }
 .pm-interview-history-card .pm-interview-card-body { padding-top: var(--s2); }

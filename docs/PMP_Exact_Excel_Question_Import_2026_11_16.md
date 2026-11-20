@@ -1,5 +1,8 @@
 # PM Circle PMP — Exact Excel Template and 30-Column Persistence
 
+> **2026-11-20 change:** This file documents the previous source-workbook download behavior. The admin download is now a clean, header-only 30-column template; the original 100-row workbook is retained only as `tests/Fixtures/pmp-question-bank-original.xlsx` for regression testing. See `docs/PMP_QUESTION_IMPORT_CLEAN_TEMPLATE_2026_11_20.md`.
+
+
 ## Source of truth
 
 - Original user-supplied workbook: `PM_Circle_PMP_Question_Bank(1).xlsx`

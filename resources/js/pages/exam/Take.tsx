@@ -280,13 +280,18 @@ export default function Take({ attempt, questions, responses: initial }: {
                                 : <button className="btn pm-exam-action" disabled={!canVisit(index + 1)} title={!canVisit(index + 1) ? 'Answer this and preceding questions to continue' : undefined} onClick={() => goto(index + 1)}>Next <ArrowRight size={18}/></button>}</div>}</footer>
             </section><aside className="pm-exam-panel pm-exam-navigator"><h2>Question Navigator</h2><div className="pm-exam-navigator-grid">
                 {navigator.map((q, offset) => { const i = navStart + offset; const marked = responses[q.id]?.marked;
-                    return <button type="button" key={q.id} aria-label={`Question ${i + 1}${marked ? ', marked for review' : ''}`} aria-current={i === index ? 'true' : undefined} className={`${i === index ? 'is-current' : ''} ${responses[q.id]?.choice ? 'is-answered' : ''}`}
+                    return <button type="button" key={q.id} aria-label={`Question ${i + 1}${responses[q.id]?.choice ? ', answered' : ', not answered'}${marked ? ', marked for review' : ''}`} aria-current={i === index ? 'true' : undefined} className={`${i === index ? 'is-current' : ''} ${responses[q.id]?.choice ? 'is-answered' : ''}`}
                         disabled={!canVisit(i)} onClick={() => marked ? startMarkedReview(i) : goto(i)}>{i + 1}{marked && <Flag size={12} fill="currentColor"/>}</button>;
                 })}</div>
                 {questions.length > 20 && <div className="pm-exam-nav-pages"><button type="button" disabled={navStart === 0} onClick={() => setNavStart(Math.max(0, navStart - 20))}><ChevronLeft/>Prev 20</button>
                     <button type="button" disabled={navStart + 20 >= questions.length} onClick={() => setNavStart(navStart + 20)}>Next 20<ChevronRight/></button></div>}
-                <div className="pm-exam-nav-legend"><span><i className="is-answered"/>Answered ({answeredCount})</span><span><i/>Not Answered ({questions.length - answeredCount})</span>
-                    <span><i className="is-current"/>Current Question ({index + 1})</span><span><Flag size={18}/>Marked for Review ({markedCount})</span></div>
+                <div className="pm-exam-nav-summary" aria-label="Exam progress">
+                    <div><strong>{answeredCount}</strong><span>Answered</span></div>
+                    <div><strong>{questions.length - answeredCount}</strong><span>Remaining</span></div>
+                    <div><strong>{markedCount}</strong><span>Marked</span></div>
+                </div>
+                <p className="pm-exam-nav-key"><span><i className="is-answered"/>Answered</span>
+                    <span><i className="is-current"/>Current</span><span><Flag size={14}/>Marked</span></p>
                 {markedCount > 0 && <div className="pm-exam-navigator-actions"><button type="button" className="btn secondary pm-exam-action" onClick={() => startMarkedReview()}>Review Marked Questions</button>
                     <button type="button" className="btn secondary pm-exam-action" onClick={() => setFinishOpen(true)}>Exam Summary</button></div>}
             </aside></div>

@@ -133,3 +133,18 @@
     .pm-course-detail-accordion ul { padding-left: var(--space-4); }
 }
 @media (prefers-reduced-motion: reduce) { .pm-course-detail-accordion summary > svg { transition: none; } }
+/* Course-specific practice and resources: shared PM Circle system tokens. */
+.pm-course-practice-summary{display:flex;gap:var(--s4);flex-wrap:wrap;margin-block:var(--s3)}
+.pm-course-practice-summary span{display:inline-flex;gap:var(--s2);align-items:center;color:var(--muted);font-size:var(--text-ui)}
+.pm-course-practice-field{display:grid;gap:var(--s2);max-width:30rem;margin-bottom:var(--s3);font-size:var(--text-ui)}
+.pm-course-practice-field select{min-height:var(--control-height);padding:var(--s2) var(--s3);border:1px solid var(--control-border);background:var(--surface);border-radius:var(--radius-control);color:var(--ink)}
+.pm-course-practice-hint{color:var(--muted);font-size:var(--text-sm)}
+.pm-course-practice-error{color:var(--red);font-size:var(--text-sm)}
+.pm-course-practice-start{max-width:20rem}
+.pm-course-resource-list{display:grid;gap:var(--s2);margin-top:var(--s3)}
+.pm-course-resource-item{display:flex;justify-content:space-between;align-items:center;gap:var(--s3);border:1px solid var(--border);border-radius:var(--radius-control);padding:var(--s3)}
+.pm-course-resource-item>div{display:grid;gap:var(--s1)}
+.pm-course-resource-item strong{font-size:var(--text-ui)}
+.pm-course-resource-item span{color:var(--muted);font-size:var(--text-sm)}
+.pm-course-resource-locked{display:inline-flex;align-items:center;gap:var(--s1)}
+@media(max-width:42rem){.pm-course-resource-item{align-items:stretch;flex-direction:column}}

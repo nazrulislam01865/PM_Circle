@@ -30,11 +30,6 @@ final class UpdatePmpPublicPageRequest extends FormRequest
                 $fail('Choose an icon uploaded through the admin editor or a bundled PMP image.');
             }
         }];
-        $sameSite = ['required', 'string', 'max:160', function (string $attribute, mixed $value, \Closure $fail): void {
-            if (! is_string($value) || ! HomepageMasterData::isAllowedNewValue('footer_menu', $value)) {
-                $fail('Choose a valid existing public page destination.');
-            }
-        }];
         $https = ['required', 'string', 'url:http,https', 'max:2048', function (string $name, mixed $value, \Closure $fail): void {
             if (! is_string($value) || ! str_starts_with($value, 'https://')) {
                 $fail('Use an HTTPS URL.');
@@ -116,29 +111,7 @@ final class UpdatePmpPublicPageRequest extends FormRequest
             'content.testimonials.items.*.role' => $text,
             'content.testimonials.items.*.quote' => $body,
             'content.testimonials.items.*.image' => $icon,
-            'content.footer' => ['required', 'array:description,explore_heading,support_heading,newsletter_heading,newsletter_placeholder,newsletter_button,payment_usd,payment_bdt,explore_links,support_links,social,social_icons,legal_notice,disclaimer'],
-            'content.footer.description' => $body,
-            'content.footer.explore_heading' => $text,
-            'content.footer.support_heading' => $text,
-            'content.footer.newsletter_heading' => $text,
-            'content.footer.newsletter_placeholder' => $text,
-            'content.footer.newsletter_button' => $text,
-            'content.footer.payment_usd' => $text,
-            'content.footer.payment_bdt' => $text,
-            'content.footer.explore_links' => ['required', 'array', 'min:1', 'max:8'],
-            'content.footer.support_links' => ['required', 'array', 'min:1', 'max:8'],
-            'content.footer.explore_links.*' => ['required', 'array:label,href'],
-            'content.footer.support_links.*' => ['required', 'array:label,href'],
-            'content.footer.explore_links.*.label' => $text,
-            'content.footer.support_links.*.label' => $text,
-            'content.footer.explore_links.*.href' => $sameSite,
-            'content.footer.support_links.*.href' => $sameSite,
-            'content.footer.social' => ['required', 'array:linkedin,facebook,instagram,youtube'],
-            'content.footer.social.*' => $https,
-            'content.footer.social_icons' => ['required', 'array:linkedin,facebook,instagram,youtube'],
-            'content.footer.social_icons.*' => $icon,
-            'content.footer.legal_notice' => $body,
-            'content.footer.disclaimer' => $body,
+            ...\App\Support\Admin\SiteFooterValidation::rules('content.footer'),
         ];
     }
 

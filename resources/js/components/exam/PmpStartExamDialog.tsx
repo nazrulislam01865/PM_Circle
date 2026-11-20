@@ -10,6 +10,7 @@ export type PmpExamCoverage = {
     unseenCount: number;
     examSize: number;
     fullQuestionCount: number;
+    fullDurationMinutes: number;
 };
 
 type Props = {
@@ -95,10 +96,18 @@ export function PmpStartExamDialog({ open, phase, coverage, attempts, completedC
                         <Dialog.Description className="pm-pmp-start-sr-only" id="pm-pmp-start-description">
                             Choose which questions will appear in your next PMP mock examination.
                         </Dialog.Description>
+                        {coverage && <div className="pm-pmp-start-exam-spec" aria-label="Administrator-configured mock exam">
+                            <span><strong>{coverage.fullQuestionCount}</strong> questions</span>
+                            <span><strong>{coverage.fullDurationMinutes}</strong> minutes</span>
+                        </div>}
                         {phase === 'loading' ? <div className="pm-pmp-start-loading" role="status">
                             <LoaderCircle className="pm-pmp-start-loading-icon" size={30} aria-hidden="true"/>
                             Checking your question bank coverage...
-                        </div> : coverage && total > 0 ? <>
+                        </div> : coverage && available === 0 ? <StartNotice variant="warning">
+                            <strong>Mock exam is not ready</strong>
+                            <p>{total} active questions are available. The administrator has configured {coverage.fullQuestionCount} questions per mock.</p>
+                            <p>New full mocks will be available once enough questions are activated or the exam settings are updated.</p>
+                        </StartNotice> : coverage && total > 0 ? <>
                             {exhausted ? <>
                                 <div className="pm-pmp-start-coverage-head">
                                     <strong>Question bank coverage</strong>
@@ -149,9 +158,6 @@ export function PmpStartExamDialog({ open, phase, coverage, attempts, completedC
                                         title="Random question set" description="Draw from the full question bank. Previously used questions may appear."/>
                                 </div>
                             </>}
-                            {coverage.bankTotal < coverage.fullQuestionCount && <p className="pm-pmp-start-hint">
-                                {coverage.bankTotal} active questions are available; this attempt will contain a shorter set than the configured {coverage.fullQuestionCount} questions.
-                            </p>}
                         </> : <p className="pm-pmp-start-empty">
                             {error || 'No active questions are available. Ask an administrator to review and activate the question bank.'}
                         </p>}

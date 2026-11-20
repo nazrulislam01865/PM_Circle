@@ -32,10 +32,24 @@ final class QueueDailyChallengeReview implements ShouldQueue
             $this->failReview();
             return;
         }
+        // The initial request remains stable across queue-delivery retries. A separately
+        // authorized recovery can create a NEW idempotent attempt only after every prior
+        // request has reached a terminal failed state. Never replay ambiguous provider calls.
+        $requests = DB::table('ai_requests')
+            ->where('feature_code', 'daily_challenge_review')
+            ->where('subject_type', 'scenario_response')
+            ->where('subject_id', $response->id);
+        if ((clone $requests)->whereNotIn('status', ['failed', 'cancelled'])->exists()) {
+            return;
+        }
+        $priorCount = (clone $requests)->count();
+        $clientKey = 'pm-circle:daily-challenge-response:'.$response->id;
+        if ($priorCount > 0) {
+            $clientKey .= ':recovery:'.$priorCount;
+        }
         try {
             $gateway->submit($response->user, [
-                'client_request_key' => Uuid::uuid5(Uuid::NAMESPACE_DNS,
-                    'pm-circle:daily-challenge-response:'.$response->id)->toString(),
+                'client_request_key' => Uuid::uuid5(Uuid::NAMESPACE_DNS, $clientKey)->toString(),
                 'feature' => 'daily_challenge_review',
                 'subject' => ['response_id' => $response->id],
                 'accepted_max_credits' => 0,

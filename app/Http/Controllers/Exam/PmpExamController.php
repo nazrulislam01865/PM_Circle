@@ -104,8 +104,9 @@ final class PmpExamController extends Controller
 
         return Inertia::render('exam/Index', [
             'shell' => $overview->shell($request->user()),
-            'availableQuestions' => $rules['enabled'] ? min($rules['full_question_count'], $questions) : 0,
-            'fullLength' => $questions >= $rules['full_question_count'],
+            'availableQuestions' => $rules['enabled'] && $questions >= $rules['full_question_count'] ? $rules['full_question_count'] : 0,
+            'fullLength' => $rules['enabled'] && $questions >= $rules['full_question_count'],
+            'activeQuestionCount' => $questions,
             'examSettings' => $rules,
             'planCode' => $plan['code'],
             'planDetails' => $plan,
@@ -201,8 +202,9 @@ final class PmpExamController extends Controller
             'bankTotal' => $active,
             'usedCount' => $used,
             'unseenCount' => max(0, $active - $used),
-            'examSize' => min($active, $rules['full_question_count']),
+            'examSize' => $active >= $rules['full_question_count'] ? $rules['full_question_count'] : 0,
             'fullQuestionCount' => $rules['full_question_count'],
+            'fullDurationMinutes' => $rules['full_duration_minutes'],
         ]);
     }
 
@@ -236,8 +238,8 @@ final class PmpExamController extends Controller
                 $fresh = $this->selectQuestionIds(
                     (clone $query)->whereNotIn('id', $used), $limit, $rules['shuffle_questions']
                 );
-                if ($selection === 'new' && count($fresh) < min($limit, DB::table('pmp_exam_questions')->where('is_active', true)->count())) {
-                    abort(409, 'Not enough unseen questions remain for a new-only set. Reopen the exam dialog.');
+                if ($selection === 'new' && count($fresh) < $limit) {
+                    abort(409, 'Not enough unseen questions remain for the configured exam size. Choose a mixed or random set.');
                 }
                 $ids = $fresh;
                 if ($selection === 'mixed' && count($ids) < $limit && $used !== []) {
@@ -249,15 +251,14 @@ final class PmpExamController extends Controller
                     shuffle($ids);
                 }
             }
-            abort_if($ids === [], 409, 'No active questions are available for this practice selection.');
+            abort_if(count($ids) < $limit, 409, $focused
+                ? 'Not enough active questions are available in this domain for the configured focused practice size.'
+                : 'Not enough active questions are available for the administrator-configured mock exam size.');
             // Prevent a concurrent admin edit from changing the answer key between
             // question selection and insertion of this new attempt.
             DB::table('pmp_exam_questions')->whereIn('id', $ids)->orderBy('id')->sharedLock()->get(['id']);
             $count = count($ids);
             $minutes = $focused ? $rules['focused_duration_minutes'] : $rules['full_duration_minutes'];
-            if (! $focused && $count < $rules['full_question_count']) {
-                $minutes = max(10, (int) ceil($count * $minutes / $rules['full_question_count']));
-            }
             $now = now();
             return DB::table('pmp_exam_attempts')->insertGetId([
                 'user_id' => $userId, 'status' => 'in_progress',

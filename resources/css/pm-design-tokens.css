@@ -6,7 +6,7 @@
     /* Canonical values from PM_Circle_UI_Style_Guide (2).html.
        Edit these variables rather than authoring page-specific color or type scales. */
     color-scheme: light;
-    --font-ui: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-ui: "Rajdhani", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --text-xs: .75rem;
     --text-donut-label: .6875rem; /* Compact review circle label; keeps the text within the ring. */
     --line-xs: 1rem;
@@ -232,7 +232,7 @@
     --sidebar-ring: oklch(0.87 0 0);
 
     /* Illustration typography */
-    --pm-font-illustration: Arial, sans-serif;
+    --pm-font-illustration: var(--font-ui);
 
     /* Exact legacy color, font, radius and control metrics. */
     --pm-color-fx-138: rgba(23, 43, 77, 0.05);

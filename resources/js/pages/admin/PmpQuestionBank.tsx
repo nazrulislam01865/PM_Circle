@@ -55,11 +55,15 @@ export default function PmpQuestionBank({ settings, questions, stats, filters }:
     const [question, setQuestion] = useState<Question | null>(null);
     const [query, setQuery] = useState(filters);
     const [file, setFile] = useState<File | null>(null);
+    const [activateAll, setActivateAll] = useState(false);
+    const [importStage, setImportStage] = useState<'idle' | 'uploading' | 'processing' | 'complete' | 'failed'>('idle');
+    const [uploadPercent, setUploadPercent] = useState(0);
     const fileInput = useRef<HTMLInputElement>(null);
     const [busy, setBusy] = useState(false);
     const [fileMessage, setFileMessage] = useState('');
     const [errors, setErrors] = useState<Record<string, string>>({});
     const chooseImportFile = (selected: File | null) => {
+        setImportStage('idle'); setUploadPercent(0);
         setFileMessage('');
         setErrors(current => { if (!current.file) return current; const rest = { ...current }; delete rest.file; return rest; });
         if (!selected) { setFile(null); return; }
@@ -100,11 +104,21 @@ export default function PmpQuestionBank({ settings, questions, stats, filters }:
     };
     const importQuestions = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault(); if (!file || busy) return;
-        setBusy(true); setErrors({});
-        router.post('/admin/exam-simulator/pmp/questions/import', { file }, {
+        setBusy(true); setErrors({}); setUploadPercent(0); setImportStage('uploading');
+        router.post('/admin/exam-simulator/pmp/questions/import', { file, activate_all: activateAll }, {
             forceFormData: true, preserveScroll: true,
-            onSuccess: () => { setFile(null); setFileMessage(''); if (fileInput.current) fileInput.current.value = ''; },
-            onError: setErrors, onFinish: () => setBusy(false),
+            onProgress: progress => {
+                const percentage = progress?.percentage ?? 0;
+                setUploadPercent(percentage);
+                if (percentage >= 100) setImportStage('processing');
+            },
+            onSuccess: () => {
+                setImportStage('complete'); setUploadPercent(100);
+                setFile(null); setActivateAll(false); setFileMessage('');
+                if (fileInput.current) fileInput.current.value = '';
+            },
+            onError: newErrors => { setErrors(newErrors); setImportStage('failed'); },
+            onFinish: () => setBusy(false),
         });
     };
     const updateRules = (key: keyof Settings, value: Settings[keyof Settings]) => setRules(current => ({ ...current, [key]: value }));
@@ -123,9 +137,14 @@ export default function PmpQuestionBank({ settings, questions, stats, filters }:
         <Head title="PMP exam management | PM Circle"/>
         {flash?.status && <p className="pm-admin-notice pm-admin-notice-success" role="status"><CheckCircle2 size={17}/>{flash.status}</p>}
         {otherErrors.length > 0 && <div className="pm-admin-notice pm-admin-notice-error" role="alert"><AlertCircle size={18}/><span>{otherErrors.join(' ')}</span></div>}
-        <div className="pm-admin-stats">
-            <article className="pm-admin-panel pm-admin-stat"><span>Questions</span><strong className="pm-admin-stat-number">{stats.total}</strong></article>
+        <div className="pm-admin-stats pm-pmp-bank-stats">
+            <article className="pm-admin-panel pm-admin-stat"><span>Total questions</span><strong className="pm-admin-stat-number">{stats.total}</strong></article>
             <article className="pm-admin-panel pm-admin-stat"><span>Active questions</span><strong className="pm-admin-stat-number">{stats.active}</strong></article>
+            <article className="pm-admin-panel pm-pmp-bank-rule-summary">
+                <div><span>Full mock · current settings</span><strong>{settings.full_question_count} questions <span aria-hidden="true">·</span> {settings.full_duration_minutes} min</strong>
+                    <small>{!settings.enabled ? 'New exams paused' : stats.active >= settings.full_question_count ? 'Ready for new full mocks' : `${settings.full_question_count - stats.active} more active questions needed`}</small></div>
+                <button type="button" className="pm-admin-button pm-admin-button-quiet" onClick={() => setTab('settings')}>Edit settings</button>
+            </article>
         </div>
         {stats.ready > 0 && <div className="pm-admin-notice" role="status">
             <ShieldCheck size={18} aria-hidden="true"/>
@@ -143,30 +162,58 @@ export default function PmpQuestionBank({ settings, questions, stats, filters }:
             <button type="button" className={tab === 'bank' ? 'is-active' : ''} onClick={() => setTab('bank')}>Question bank and import</button>
             <button type="button" className={tab === 'settings' ? 'is-active' : ''} onClick={() => setTab('settings')}>Exam settings</button>
         </nav>
-        {tab === 'settings' ? <section className="pm-admin-panel pm-pmp-bank-panel">
-            <h2>Exam configuration</h2>
-            <p className="pm-pmp-bank-description">Changes apply to newly started exams. Completed and ongoing attempts retain their original question IDs, timer and scoring thresholds.</p>
+        {tab === 'settings' ? <section className="pm-admin-panel pm-pmp-bank-panel pm-pmp-settings-panel">
+            <div className="pm-pmp-bank-heading"><div><h2>Exam configuration</h2>
+                <p>Choose the exact number of questions and time allowed for new attempts.</p></div></div>
+            <p className="pm-pmp-bank-description">Settings apply to new attempts only; ongoing and completed exams remain unchanged.</p>
             <form className="pm-pmp-bank-form" onSubmit={saveSettings}>
-                <label className="pm-pmp-bank-checkbox"><input type="checkbox" checked={rules.enabled} onChange={e => updateRules('enabled', e.target.checked)}/> Allow members to start new PMP exams</label>
-                <div className="pm-admin-field-grid">
-                    {([['full_question_count', 'Full mock questions (1–180)', 1, 180], ['full_duration_minutes', 'Full mock duration (minutes)', 1, 480],
-                        ['focused_question_count', 'Focused practice questions', 1, 100], ['focused_duration_minutes', 'Focused practice duration (minutes)', 1, 240],
-                        ['sample_duration_seconds', 'Public sample duration (seconds)', 30, 900],
-                        ['needs_improvement_below', 'Needs improvement below (%)', 1, 97],
-                        ['target_below', 'Practice target starts at (%)', 2, 98],
-                        ['above_target_from', 'Above target starts at (%)', 3, 99]] as const).map(([key, label, min, max]) =>
-                        <label className="pm-admin-field" key={key}><span>{label}</span><input type="number" required min={min} max={max} step={1} value={rules[key]}
-                            onChange={e => updateRules(key, Number(e.target.value))}/></label>)}
-                    <label className="pm-admin-field"><span>Public sample question ID (optional)</span><input type="number" min={1} value={rules.sample_question_id ?? ''}
-                        placeholder="Use built-in sample" onChange={e => updateRules('sample_question_id', e.target.value ? Number(e.target.value) : null)}/></label>
+                <div className="pm-pmp-settings-options">
+                    <label className="pm-pmp-bank-checkbox"><input type="checkbox" checked={rules.enabled} onChange={e => updateRules('enabled', e.target.checked)}/> Allow members to start new PMP exams</label>
+                    <label className="pm-pmp-bank-checkbox"><input type="checkbox" checked={rules.shuffle_questions} onChange={e => updateRules('shuffle_questions', e.target.checked)}/> Rotate and shuffle questions for new attempts</label>
                 </div>
-                <label className="pm-pmp-bank-checkbox"><input type="checkbox" checked={rules.shuffle_questions} onChange={e => updateRules('shuffle_questions', e.target.checked)}/> Rotate and shuffle questions for new attempts</label>
-                <p className="pm-pmp-bank-description">If fewer active full-mock questions exist than requested, the full exam uses the available count and a proportionally shorter duration (minimum 10 minutes). Readiness thresholds must increase in order; these are educational labels, not official PMP results.</p>
-                <button type="submit" className="pm-admin-button pm-admin-button-primary" disabled={busy}><Save size={17}/>{busy ? 'Saving…' : 'Save exam settings'}</button>
+                <div className="pm-pmp-rule-sections">
+                    <fieldset className="pm-pmp-rule-section"><legend>Full mock exam</legend>
+                        <p>Exact question count and duration for every new full mock.</p>
+                        <div className="pm-admin-field-grid">
+                            <label className="pm-admin-field"><span>Questions per exam</span><input type="number" required min={1} max={180} step={1} value={rules.full_question_count}
+                                onChange={e => updateRules('full_question_count', Number(e.target.value))}/></label>
+                            <label className="pm-admin-field"><span>Duration (minutes)</span><input type="number" required min={1} max={480} step={1} value={rules.full_duration_minutes}
+                                onChange={e => updateRules('full_duration_minutes', Number(e.target.value))}/></label>
+                        </div>
+                        {stats.active < rules.full_question_count && <p className="pm-pmp-bank-availability" role="status">
+                            <AlertCircle size={17} aria-hidden="true"/> {stats.active} active questions are available. New full mocks need {rules.full_question_count}; activate more questions or lower this count.
+                        </p>}
+                    </fieldset>
+                    <fieldset className="pm-pmp-rule-section"><legend>Focused practice</legend>
+                        <p>Each focused session uses the configured number from its selected domain.</p>
+                        <div className="pm-admin-field-grid">
+                            <label className="pm-admin-field"><span>Questions per practice</span><input type="number" required min={1} max={100} step={1} value={rules.focused_question_count}
+                                onChange={e => updateRules('focused_question_count', Number(e.target.value))}/></label>
+                            <label className="pm-admin-field"><span>Duration (minutes)</span><input type="number" required min={1} max={240} step={1} value={rules.focused_duration_minutes}
+                                onChange={e => updateRules('focused_duration_minutes', Number(e.target.value))}/></label>
+                        </div>
+                    </fieldset>
+                    <fieldset className="pm-pmp-rule-section pm-pmp-rule-section-sample"><legend>Sample question &amp; performance</legend>
+                        <div className="pm-admin-field-grid">
+                            {([['sample_duration_seconds', 'Public sample duration (seconds)', 30, 900],
+                                ['needs_improvement_below', 'Needs improvement below (%)', 1, 97],
+                                ['target_below', 'Practice target starts at (%)', 2, 98],
+                                ['above_target_from', 'Above target starts at (%)', 3, 99]] as const).map(([key, label, min, max]) =>
+                                <label className="pm-admin-field" key={key}><span>{label}</span><input type="number" required min={min} max={max} step={1} value={rules[key]}
+                                    onChange={e => updateRules(key, Number(e.target.value))}/></label>)}
+                            <label className="pm-admin-field"><span>Public sample question ID (optional)</span><input type="number" min={1} value={rules.sample_question_id ?? ''}
+                                placeholder="Use built-in sample" onChange={e => updateRules('sample_question_id', e.target.value ? Number(e.target.value) : null)}/></label>
+                        </div>
+                    </fieldset>
+                </div>
+                <div className="pm-pmp-settings-footer">
+                    <p className="pm-pmp-bank-description">No automatic reduction of questions or exam time. Performance thresholds must increase in order; they are educational labels, not official PMP results.</p>
+                    <button type="submit" className="pm-admin-button pm-admin-button-primary" disabled={busy}><Save size={17}/>{busy ? 'Saving…' : 'Save exam settings'}</button>
+                </div>
             </form>
         </section> : <>
             <section className="pm-admin-panel pm-pmp-bank-panel">
-                <div className="pm-pmp-bank-heading"><div><h2>Import questions</h2><p>Download the exact supplied workbook with all 100 editorial drafts, 30 columns, Coverage formulas, and Field Guide. Imports are atomic; existing Question IDs are not overwritten.</p></div>
+                <div className="pm-pmp-bank-heading"><div><h2>Import questions</h2><p>Import up to 1,000 questions using the original 30-column template.</p></div>
                     <a className="pm-admin-button pm-admin-button-quiet" href="/admin/exam-simulator/pmp/questions/template"><Download size={17}/> Download Excel template</a></div>
                 <form onSubmit={importQuestions} className="pm-pmp-bank-import" noValidate>
                     <span className="pm-pmp-import-label" id="pmp-import-label">Question file (Excel .xlsx or CSV .csv)</span>
@@ -176,18 +223,30 @@ export default function PmpQuestionBank({ settings, questions, stats, filters }:
                             <span>Choose file</span>
                         </label>
                         <input id="pmp-import-file" ref={fileInput} className="pm-pmp-import-input" type="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                            aria-labelledby="pmp-import-label" aria-describedby="pmp-import-guidance pmp-import-error" required
+                            aria-labelledby="pmp-import-label" aria-describedby={fileMessage || errors.file ? 'pmp-import-error' : undefined} disabled={busy} required
                             onChange={e => chooseImportFile(e.target.files?.[0] ?? null)}/>
                         <span className={`pm-pmp-import-filename${file ? ' is-selected' : ''}`} title={file?.name ?? ''}>{file?.name ?? 'No file selected'}</span>
-                        {file && <button type="button" className="pm-pmp-import-remove" aria-label="Remove selected file" onClick={() => { setFile(null); if (fileInput.current) fileInput.current.value = ''; }}><X size={17}/></button>}
+                        {file && <button type="button" className="pm-pmp-import-remove" disabled={busy} aria-label="Remove selected file" onClick={() => { chooseImportFile(null); if (fileInput.current) fileInput.current.value = ''; }}><X size={17}/></button>}
                     </div>
                     <button type="submit" className="pm-admin-button pm-admin-button-primary" disabled={!file || busy}>
                         <Upload size={17} aria-hidden="true"/>{busy ? 'Importing…' : 'Import questions'}
                     </button>
-                    <span id="pmp-import-guidance" className="pm-pmp-import-hint">Maximum 5 MB · 30 original columns in order · Original workbook contains 100 drafts · Use new Question IDs for additional imports.</span>
+                    <label className="pm-pmp-bank-checkbox pm-pmp-import-activation">
+                        <input type="checkbox" checked={activateAll} disabled={busy}
+                            onChange={event => setActivateAll(event.target.checked)}/>
+                        <span><strong>Activate all imported questions immediately</strong></span>
+                    </label>
+                    {(importStage !== 'idle') && <div className="pm-pmp-import-progress" role="status" aria-live="polite">
+                        <span>{importStage === 'uploading' ? `Uploading file: ${uploadPercent}%`
+                            : importStage === 'processing' ? 'Upload complete. Validating and saving questions…'
+                            : importStage === 'complete' ? 'Import completed successfully.'
+                            : 'Import failed. No new questions were saved.'}</span>
+                        {importStage === 'processing' ? <progress aria-label="Validating and saving questions" max={100}/>
+                            : <progress aria-label="Question file upload progress" max={100}
+                                value={importStage === 'complete' ? 100 : uploadPercent}/>}
+                    </div>}
                     {(fileMessage || errors.file) && <span id="pmp-import-error" className="pm-pmp-import-error" role="alert">{fileMessage || errors.file}</span>}
                 </form>
-                <p className="pm-pmp-bank-description"><ShieldCheck size={16} aria-hidden="true"/> Upload only Excel (.xlsx) or CSV (.csv). Preserve all 30 original headers, including Correct Answer. The other two workbook sheets are retained in the download and ignored by the question importer. Approved rows become active; editorial drafts remain inactive. Existing Question IDs are never overwritten.</p>
             </section>
             <section className="pm-admin-panel pm-pmp-bank-panel">
                 <div className="pm-pmp-bank-heading"><div><h2>Question bank</h2><p>Review imported answers and explanations before making a question active.</p></div>

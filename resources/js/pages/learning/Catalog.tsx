@@ -18,8 +18,6 @@ type CatalogTab = 'courses' | 'paths' | 'practice' | 'exams';
 type DisplayMode = 'grid' | 'list';
 type FilterKey = 'categories' | 'levels' | 'durations';
 
-const categories = ['Project Management', 'Agile & Scrum', 'PMP Certification', 'Planning & Scheduling', 'Stakeholder & Communication', 'Risk & Change', 'Leadership & Strategy'];
-const levels = ['Beginner', 'Intermediate', 'Advanced'];
 const durations = ['Up to 2 hours', '2–10 hours', '10+ hours'];
 const perPage = 12;
 
@@ -71,7 +69,7 @@ export default function Catalog({ shell, paths, courses, practiceModules, isMemb
     const courseItems = useMemo<CatalogCard[]>(() => courses.map(course => ({
         id: `course-${course.slug}`, slug: course.slug, title: course.title, description: course.summary,
         category: course.category, level: course.level, minutes: course.minutes,
-        thumbnail: course.thumbnail, accessTier: course.accessTier, progress: 0,
+        thumbnail: course.thumbnail, coverUrl: course.coverUrl, accessTier: course.accessTier, progress: 0,
         enrolled: course.enrolled, saveType: 'course',
         href: memberView ? `${catalogRoot}/courses/${encodeURIComponent(course.slug)}` : demoCourseHref(course.slug), action: course.enrolled && (course.accessTier === 'free' || memberTier !== 'free') ? 'Continue course' : course.enrolled ? 'Upgrade to continue' : 'View course',
     })), [courses, memberTier, memberView, catalogRoot]);
@@ -95,6 +93,8 @@ export default function Catalog({ shell, paths, courses, practiceModules, isMemb
     ] as CatalogCard[]), []);
 
     const allItems = tab === 'paths' ? pathItems : tab === 'practice' ? practiceItems : tab === 'exams' ? examItems : courseItems;
+    const availableCategories = [...new Set(allItems.map(item => item.category))];
+    const availableLevels = [...new Set(allItems.map(item => item.level))];
     const filtered = useMemo(() => {
         const text = search.trim().toLowerCase();
         return allItems.filter(item =>
@@ -160,10 +160,10 @@ export default function Catalog({ shell, paths, courses, practiceModules, isMemb
                 <aside className="pm-catalog-sidebar" aria-label="Filter learning content">
                     <div className="pm-catalog-sidebar-heading"><h2>Filter {tab === 'paths' ? 'Paths' : tab === 'exams' ? 'Simulators' : 'Courses'}</h2><button type="button" onClick={clear}>Clear All</button></div>
                     <FilterSection title="Category" expanded={expanded.categories} onToggle={() => setExpanded(prev => ({ ...prev, categories: !prev.categories }))}>
-                        {renderOptions('categories', categories)}
+                        {renderOptions('categories', availableCategories)}
                     </FilterSection>
                     <FilterSection title="Level" expanded={expanded.levels} onToggle={() => setExpanded(prev => ({ ...prev, levels: !prev.levels }))}>
-                        {renderOptions('levels', levels)}
+                        {renderOptions('levels', availableLevels)}
                     </FilterSection>
                     <FilterSection title="Duration" expanded={expanded.durations} onToggle={() => setExpanded(prev => ({ ...prev, durations: !prev.durations }))}>
                         {renderOptions('durations', durations)}

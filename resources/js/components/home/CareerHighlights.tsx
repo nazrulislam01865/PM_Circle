@@ -1,23 +1,17 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, BriefcaseBusiness, ChevronRight, FileText, MessagesSquare, Sparkles, Users } from 'lucide-react';
+import { BriefcaseBusiness, ChevronRight, FileText, Sparkles, Users } from 'lucide-react';
 import { Avatar } from '@/components/pm/Avatar';
 import { SectionHead } from '@/components/pm/SectionHead';
 import type { HomeContent, HomePerson, HomeCareerJob } from '@/types/home';
 import { HomeContentIcon, type HomepageIconAssets } from '@/components/home/HomeContentIcon';
-
-const featureIcons = {
-    learn: BookOpen,
-    discuss: MessagesSquare,
-    jobs: BriefcaseBusiness,
-    resume: FileText,
-};
+import { homepageDefaultIcon } from '@/components/home/HomeDefaultIcons';
 
 export function CareerHighlights({ content, people, iconAssets, jobs, showFeatures = true, showRest = true }: { content?: HomeContent['careers']; people: HomePerson[]; demo: boolean; jobs: HomeCareerJob[]; iconAssets?: HomepageIconAssets; showFeatures?: boolean; showRest?: boolean }) {
     if (!content || (!showFeatures && !showRest)) return null;
     return <section className="pm-feature-section"><div className="pm-container">
         {showFeatures && <><h2>{content.heading}</h2>
         <div className="pm-features">{content.features.map(feature => {
-            const Icon = featureIcons[feature.icon as keyof typeof featureIcons] ?? BookOpen;
+            const Icon = homepageDefaultIcon('careers_feature_icon', feature.icon);
             const destination = feature.url;
             return <Link href={destination} className="pm-panel pm-feature" key={feature.title}><HomeContentIcon category="careers_feature_icon" icon={feature.icon} image={feature.icon_image} assets={iconAssets} fallback={Icon} size={36}/><div><strong>{feature.title}</strong><p>{feature.description}</p></div></Link>;
         })}</div></>}

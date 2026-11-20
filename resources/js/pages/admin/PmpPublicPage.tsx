@@ -244,16 +244,8 @@ export default function PmpPublicPage({ content, version, selectedSection = 'her
                     {field('testimonials.heading', 'Heading')}
                     {repeater('testimonials.items', 'Learner testimonials', [{ key: 'name', label: 'Name' }, { key: 'role', label: 'Job title' }, { key: 'quote', label: 'Approved quote', kind: 'textarea' }, { key: 'image', label: 'Portrait', kind: 'image' }], 8)}
                 </>)}
-                {selected === 'footer' && frame('Footer', 'Edit the footer without changing the shared branding and payment display.', <>
-                    {field('footer.description', 'Brand description', true)}
-                    <div className="pm-admin-field-grid">{field('footer.explore_heading', 'Explore heading')}{field('footer.support_heading', 'Support heading')}{field('footer.newsletter_heading', 'Newsletter heading')}</div>
-                    {listEdit('footer.explore_links', 'Explore links', [{ key: 'label', label: 'Link text' }, { key: 'href', label: 'Internal path' }])}
-                    {listEdit('footer.support_links', 'Support links', [{ key: 'label', label: 'Link text' }, { key: 'href', label: 'Internal path' }])}
-                    <div className="pm-pmp-admin-cards"><h3>Social links and icons</h3>{(['linkedin', 'facebook', 'instagram', 'youtube'] as const).map(network =>
-                        <div className="pm-admin-field-grid" key={network}>{field(`footer.social.${network}`, `${network} HTTPS URL`)}{image(`footer.social_icons.${network}`, `${network} uploaded icon`)}</div>)}</div>
-                    <div className="pm-admin-field-grid">{field('footer.newsletter_placeholder', 'Newsletter placeholder')}{field('footer.newsletter_button', 'Newsletter button text')}{field('footer.payment_usd', 'USD payment label')}{field('footer.payment_bdt', 'BDT payment label')}</div>
-                    {field('footer.legal_notice', 'Legal notice', true)}{field('footer.disclaimer', 'Footer disclaimer', true)}
-                    <div className="pm-admin-notice">Newsletter submission and payment badges remain unchanged because no checkout or newsletter endpoint has been approved.</div>
+                {selected === 'footer' && frame('Shared public footer', 'Manage the one footer used across public pages.', <>
+                    <Link href="/admin/footer" className="pm-admin-button pm-admin-button-primary">Open footer editor <ExternalLink size={16}/></Link>
                 </>)}
             </section>
         </div>

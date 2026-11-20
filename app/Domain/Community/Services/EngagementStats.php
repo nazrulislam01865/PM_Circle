@@ -2,6 +2,7 @@
 
 namespace App\Domain\Community\Services;
 
+use App\Support\Community\ReactionIconCatalog;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -45,10 +46,12 @@ final class EngagementStats
             $increments['reactions_count'] = -1;
         }
         if ($before !== null) {
-            $increments[$before.'_count'] = -1;
+            $column = in_array($before, self::TYPES, true) ? $before.'_count' : 'other_reactions_count';
+            $increments[$column] = ($increments[$column] ?? 0) - 1;
         }
         if ($after !== null) {
-            $increments[$after.'_count'] = 1;
+            $column = in_array($after, self::TYPES, true) ? $after.'_count' : 'other_reactions_count';
+            $increments[$column] = ($increments[$column] ?? 0) + 1;
         }
 
         self::updateCounters($postId, $increments);
@@ -66,6 +69,9 @@ final class EngagementStats
     {
         $updates = ['updated_at' => now()];
         foreach ($changes as $name => $delta) {
+            if ($delta === 0) {
+                continue;
+            }
             // Column names come exclusively from the server-owned reaction vocabulary.
             $updates[$name] = DB::raw($name.($delta > 0 ? ' + ' : ' - ').abs((int) $delta));
         }

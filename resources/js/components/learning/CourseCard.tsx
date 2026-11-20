@@ -7,9 +7,10 @@ export type CatalogCard = {
     title: string;
     description: string;
     category: string;
-    level: 'Beginner' | 'Intermediate' | 'Advanced' | 'All levels';
+    level: string;
     minutes: number;
     thumbnail: number;
+    coverUrl?: string | null;
     accessTier: string;
     progress: number;
     href: string;
@@ -40,7 +41,7 @@ export function CourseCard({ course, saved, listView = false, saving = false, on
 
     return <article className={`pm-catalog-course${listView ? ' is-list' : ''}`}>
         <Link href={course.href} className="pm-catalog-course-cover" aria-label={`View ${course.title}`}>
-            <img src={`/images/learning/course-${course.thumbnail}.webp`} alt="" loading="lazy" decoding="async" />
+            <img src={course.coverUrl || `/images/learning/course-${course.thumbnail}.webp`} alt="" loading="lazy" decoding="async" />
             <span className={`pm-catalog-course-badge${free ? ' is-free' : ''}`}>
                 {!free && <LockKeyhole size={12} aria-hidden="true" />}{available ? (free ? 'Free' : course.accessTier === 'paid' ? 'Paid' : course.accessTier.toUpperCase()) : 'Coming soon'}
             </span>

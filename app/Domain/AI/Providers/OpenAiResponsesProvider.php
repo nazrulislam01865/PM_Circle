@@ -42,13 +42,24 @@ final class OpenAiResponsesProvider implements AiProvider
         }
         $client = Http::withToken($key)->acceptJson()
             ->timeout((int) config('pm-ai.timeout_seconds'));
+        // Daily Challenge generation and scoring keep their own Responses key.
+        // Only their mandatory input/output safety checks reuse the Post Check Omni key.
+        $moderationClient = $client;
+        if ($daily && $useExternalModeration) {
+            $postCheckKey = config('pm-ai.post_check_api_key');
+            if (! is_string($postCheckKey) || trim($postCheckKey) === '') {
+                throw new AiFailure('MODERATION_UNAVAILABLE', 503);
+            }
+            $moderationClient = Http::withToken($postCheckKey)->acceptJson()
+                ->timeout((int) config('pm-ai.timeout_seconds'));
+        }
         $message = json_encode($context, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
         if (! $useExternalModeration && mb_strlen($message) > 60000) {
             throw new AiFailure('MESSAGE_TOO_LONG', 422);
         }
         if ($useExternalModeration) {
             try {
-                $moderation = $client->post(config('pm-ai.endpoint').'/moderations', [
+                $moderation = $moderationClient->post(config('pm-ai.endpoint').'/moderations', [
                     'model' => 'omni-moderation-latest', 'input' => $message,
                 ]);
             } catch (ConnectionException) {
@@ -57,7 +68,11 @@ final class OpenAiResponsesProvider implements AiProvider
             if (! $moderation->successful()) {
                 throw new AiFailure('MODERATION_UNAVAILABLE', 503);
             }
-            if (data_get($moderation->json(), 'results.0.flagged', false)) {
+            $flagged = $moderation->json('results.0.flagged');
+            if (! is_bool($flagged)) {
+                throw new AiFailure('MODERATION_UNAVAILABLE', 503);
+            }
+            if ($flagged) {
                 throw new AiFailure('CONTENT_REJECTED', 422);
             }
         }
@@ -117,7 +132,7 @@ final class OpenAiResponsesProvider implements AiProvider
         // Responses-only key, with bounded educational context and server validation.
         if ($useExternalModeration) {
             try {
-                $outputModeration = $client->post(config('pm-ai.endpoint').'/moderations', [
+                $outputModeration = $moderationClient->post(config('pm-ai.endpoint').'/moderations', [
                     'model' => 'omni-moderation-latest', 'input' => $answer,
                 ]);
             } catch (ConnectionException) {
@@ -126,7 +141,11 @@ final class OpenAiResponsesProvider implements AiProvider
             if (! $outputModeration->successful()) {
                 throw new AiFailure('MODERATION_UNAVAILABLE', 503);
             }
-            if (data_get($outputModeration->json(), 'results.0.flagged', false)) {
+            $flagged = $outputModeration->json('results.0.flagged');
+            if (! is_bool($flagged)) {
+                throw new AiFailure('MODERATION_UNAVAILABLE', 503);
+            }
+            if ($flagged) {
                 throw new AiFailure('CONTENT_REJECTED', 422);
             }
         }

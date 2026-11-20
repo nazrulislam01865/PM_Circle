@@ -1,0 +1,163 @@
+/* PM Circle mobile layouts. All type, colors, radii and spacing reference
+   the approved central design tokens. Desktop prototypes remain unchanged. */
+/* Tablet feed cards may share a row with Read discussion and squeeze the
+   reaction controls into a second flex line. Keep the footer actions together. */
+@media (max-width: 53rem) {
+    .pm-unified-post-card .pm-card-action-bar,
+    .pm-unified-post-card .pm-card-action-bar:has(.pm-inline-comments) {
+        display: block;
+    }
+    .pm-unified-post-card .pm-card-action-bar .pm-engagement-shell {
+        width: 100%;
+    }
+    .pm-unified-post-card .pm-card-action-bar .pm-engagement-actions {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.28fr) minmax(0, 1fr) minmax(0, 1fr);
+        align-items: stretch;
+        gap: var(--s1);
+    }
+    .pm-unified-post-card .pm-engagement-actions > .pm-post-reaction-summary {
+        grid-column: 1 / -1;
+        grid-row: 1;
+        justify-self: end;
+        margin: 0;
+    }
+    .pm-unified-post-card .pm-engagement-actions > .pm-post-save-action {
+        margin: 0;
+    }
+    .pm-unified-post-card .pm-card-action-bar .pm-read-discussion-link {
+        display: block;
+        width: fit-content;
+        margin: var(--s2) 0 0 auto;
+        text-align: end;
+    }
+}
+@media (max-width: 42rem) {
+    /* The site and member shells fill the device viewport. Avoid using
+       overflow-x:hidden on the body: that clips menus and reaction pickers. */
+    .pm-app.pm-page-shell,
+    .pm-member-shell,
+    .pm-dashboard,
+    .pm-admin {
+        min-width: 0;
+        max-width: 100%;
+    }
+    .pm-app.pm-page-shell > main,
+    .pm-member-shell .pm-dash-workspace,
+    .pm-dashboard .pm-dash-body,
+    .pm-admin-body,
+    .pm-admin-content {
+        min-width: 0;
+        max-width: 100%;
+    }
+    .pm-app:not(.pm-auth-shell) .pm-container {
+        width: calc(100% - 2 * var(--s4));
+        max-width: 100%;
+    }
+    .pm-app .pm-two-column,
+    .pm-dashboard .pm-member-public-content .pm-two-column {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .pm-two-column > *,
+    .pm-feed-main-col,
+    .pm-community-panel,
+    .pm-home-community-posts {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    /* Public Community: the old two-column hero placed a 220px SVG outside
+       a ~320px viewport. On phones, the decorative image is unnecessary. */
+    .pm-app .pm-feed-hero,
+    .pm-dashboard .pm-member-public-content .pm-feed-hero {
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--s3);
+        padding: var(--s4);
+    }
+    .pm-feed-hero-content { min-width: 0; }
+    .pm-app .pm-feed-hero-content h1,
+    .pm-dashboard .pm-member-public-content .pm-feed-hero-content h1 {
+        font-size: var(--text-h1);
+        line-height: var(--line-h1);
+        overflow-wrap: anywhere;
+    }
+    .pm-feed-hero-content p { overflow-wrap: anywhere; }
+    .pm-app .pm-feed-hero-illustration,
+    .pm-dashboard .pm-member-public-content .pm-feed-hero-illustration { display: none; }
+    .pm-badge-public { max-width: 100%; white-space: normal; }
+    .pm-badge-public > svg { flex: 0 0 auto; }
+
+    /* Search, filter and join controls stay usable at 320px and at 200% zoom. */
+    .pm-app .pm-feed-toolbar,
+    .pm-dashboard .pm-member-public-content .pm-feed-toolbar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: var(--s2);
+    }
+    .pm-feed-search-wrap, .pm-feed-search-input { min-width: 0; }
+    .pm-sort-dropdown { min-width: 0; min-height: var(--control-touch); }
+    .pm-app .pm-guest-banner-card {
+        flex-wrap: wrap;
+        align-items: stretch;
+        padding: var(--s4);
+        gap: var(--s3);
+    }
+    .pm-guest-banner-left { min-width: 0; flex: 1 1 100%; gap: var(--s3); }
+    .pm-guest-banner-text { min-width: 0; overflow-wrap: anywhere; }
+    .pm-app .pm-guest-banner-card > .pm-button { width: 100%; min-height: var(--control-touch); }
+
+    /* Shared Community/Home/Dashboard cards: balanced four-action bar.
+       Reaction counts are independent of Save and never alter its height. */
+    .pm-unified-post-card .pm-card-action-bar .pm-engagement-actions {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.28fr) minmax(0, 1fr) minmax(0, 1fr);
+        gap: var(--s1);
+    }
+    .pm-unified-post-card .pm-card-action-bar .pm-home-action:not(.pm-home-reaction-choice) {
+        font-size: var(--text-sm);
+        line-height: var(--line-sm);
+    }
+    /* Never split the word "comments" into broken syllables. */
+    .pm-unified-post-card .pm-card-action-bar .pm-engagement-actions > button.pm-home-action {
+        overflow-wrap: normal;
+        word-break: normal;
+    }
+    .pm-home .pm-home-community-card .pm-section-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: var(--s2);
+    }
+    .pm-home .pm-home-community-card .pm-section-head h2 { min-width: 0; }
+    .pm-home .pm-home-community-card .pm-section-head a { margin-left: auto; }
+    .pm-home .pm-home-community-posts .pm-unified-post-card { padding: var(--s3); }
+
+    /* Guest navigation retains both links but shortens the primary CTA only
+       on narrow phones; the accessible name remains the original joinLabel. */
+    .pm-member-home-header .pm-member-home-header-inner { min-width: 0; }
+    .pm-member-home-header .pm-member-home-brand,
+    .pm-member-home-header .pm-member-home-header-actions { min-width: 0; }
+    .pm-member-home-guest-join .pm-guest-join-compact { display: none; }
+
+    /* Exam start formerly required 360px and leaked on 320px devices. */
+    .pm-exam-start { min-width: 0; max-width: 100%; width: 100%; }
+}
+@media (max-width: 30rem) {
+    .pm-member-home-guest-join .pm-guest-join-full { display: none; }
+    .pm-member-home-guest-join .pm-guest-join-compact { display: inline; }
+    .pm-member-home-guest-join.pm-button { min-width: var(--control-touch); }
+}
+@media (max-width: 23.5rem) {
+    .pm-member-home-header .pm-member-home-header-inner { gap: var(--s1); }
+    .pm-member-home-guest-actions { gap: var(--s2); }
+    .pm-app .pm-feed-toolbar,
+    .pm-dashboard .pm-member-public-content .pm-feed-toolbar { grid-template-columns: minmax(0, 1fr); }
+    .pm-sort-dropdown { justify-self: start; }
+    .pm-feed-search-input { min-height: var(--control-touch); }
+}
+/* On the smallest phones each of the four actions retains a readable label.
+   Two balanced rows are preferable to splitting "Share" or "Save" mid-word. */
+@media (max-width: 22rem) {
+    .pm-unified-post-card .pm-card-action-bar .pm-engagement-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}

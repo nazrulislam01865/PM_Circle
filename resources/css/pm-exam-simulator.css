@@ -340,8 +340,8 @@
 @media (max-width: 42rem) {
     .pm-exam-page.pm-exam-result-page { padding-bottom: var(--s6); }
     .pm-exam-result-page .pm-exam-report-heading h1 {
-        font-size: 1.5rem;
-        line-height: 2rem;
+        font-size: var(--text-h1);
+        line-height: var(--line-h1);
     }
     .pm-exam-result-page .pm-exam-report-heading { align-items: flex-start; }
     .pm-exam-result-page .pm-exam-report-label { white-space: nowrap; }
@@ -353,3 +353,41 @@
     .pm-exam-result-page .pm-exam-report-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .pm-exam-result-page .pm-exam-report-summary-stat:nth-of-type(3) { border-left: 0; }
 }
+
+/* Timed exam layout, scoped to the member take screen only. The time countdown,
+   answer autosave, question navigation and review behavior are unchanged. */
+.pm-exam-taking .pm-exam-take-body { width: min(1280px, calc(100% - 2rem)); padding: var(--s4) 0 var(--s8); }
+.pm-exam-taking .pm-exam-progress { height: var(--bar-height, .5rem); margin-bottom: var(--s4); background: var(--track); }
+.pm-exam-taking .pm-exam-take-grid { grid-template-columns: minmax(0, 1fr) minmax(16rem, 19rem); gap: var(--s4); align-items: start; }
+.pm-exam-taking .pm-exam-question-card { min-height: 0; }
+.pm-exam-taking .pm-exam-question-card > header { gap: var(--s2); padding: var(--s5) var(--s5) 0; }
+.pm-exam-taking .pm-exam-question-card > header > span:first-child { padding: var(--s2) var(--s3); }
+.pm-exam-taking .pm-exam-domain { padding: var(--s2) var(--s3); }
+.pm-exam-taking .pm-exam-question-main { flex: initial; padding: var(--s5); }
+.pm-exam-taking .pm-exam-question-prompt { font: var(--semibold) var(--text-body)/var(--line-body) var(--font-ui); max-width: 80ch; margin-bottom: var(--s5); }
+.pm-exam-taking .pm-exam-options { gap: var(--s2); }
+.pm-exam-taking .pm-exam-choice { min-height: var(--control-touch); }
+.pm-exam-taking .pm-exam-choice-label { padding: var(--s2) var(--s3); }
+.pm-exam-taking .pm-exam-question-card > footer { gap: var(--s3); padding: var(--s3) var(--s4); }
+.pm-exam-taking .pm-exam-tools { gap: var(--s2); }
+.pm-exam-taking .pm-exam-tools button { padding: var(--s2); min-height: var(--control-height); font-size: var(--text-sm); }
+.pm-exam-taking .pm-exam-nextprev .btn { min-height: var(--control-height); }
+.pm-exam-taking .pm-exam-navigator { padding: var(--s5); position: sticky; top: calc(var(--header-height, 3.5rem) + var(--s3)); }
+.pm-exam-taking .pm-exam-navigator h2 { margin: 0 0 var(--s4); padding: 0 0 var(--s3); font-size: var(--text-h4); line-height: var(--line-h4); }
+.pm-exam-taking .pm-exam-navigator-grid { gap: var(--s2); }
+.pm-exam-taking .pm-exam-navigator-grid button { min-height: var(--control-touch); }
+.pm-exam-taking .pm-exam-nav-pages { margin-top: var(--s3); }
+.pm-exam-taking .pm-exam-nav-pages button { min-height: var(--control-compact); gap: var(--s1); cursor: pointer; }
+.pm-exam-taking .pm-exam-nav-pages button:disabled { opacity: .45; cursor: not-allowed; }
+.pm-exam-nav-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s2); margin-top: var(--s4); padding-top: var(--s4); border-top: 1px solid var(--border); }
+.pm-exam-nav-summary > div { display: grid; justify-items: center; gap: var(--s1); min-width: 0; padding: var(--s2) var(--s1); background: var(--canvas); border-radius: var(--radius-control); }
+.pm-exam-nav-summary strong { font: var(--bold) var(--text-h4)/var(--line-h4) var(--font-ui); font-variant-numeric: tabular-nums; }
+.pm-exam-nav-summary span { font: var(--regular) var(--text-xs)/var(--line-xs) var(--font-ui); color: var(--muted); }
+.pm-exam-nav-key { display: flex; flex-wrap: wrap; gap: var(--s3); align-items: center; margin: var(--s3) 0 0; color: var(--muted); font: var(--regular) var(--text-xs)/var(--line-xs) var(--font-ui); }
+.pm-exam-nav-key span { display: inline-flex; align-items: center; gap: var(--s1); }
+.pm-exam-nav-key i { width: var(--s3); height: var(--s3); border: 1px solid var(--border); border-radius: var(--s1); }
+.pm-exam-nav-key i.is-answered { background: var(--green-soft); border-color: var(--green); }
+.pm-exam-nav-key i.is-current { background: var(--blue); border-color: var(--blue); }
+.pm-exam-nav-key svg { color: var(--warning); }
+@media (max-width: 64rem) { .pm-exam-taking .pm-exam-take-grid { grid-template-columns: minmax(0, 1fr); } .pm-exam-taking .pm-exam-navigator { position: static; } .pm-exam-taking .pm-exam-navigator-grid { grid-template-columns: repeat(10, minmax(0, 1fr)); } }
+@media (max-width: 42rem) { .pm-exam-taking .pm-exam-take-body { width: calc(100% - 2rem); } .pm-exam-taking .pm-exam-question-card > header, .pm-exam-taking .pm-exam-question-main { padding: var(--s4); } .pm-exam-taking .pm-exam-question-card > footer { padding: var(--s3); } .pm-exam-taking .pm-exam-navigator-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } .pm-exam-taking .pm-exam-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; } .pm-exam-taking .pm-exam-tools button { justify-content: center; } }

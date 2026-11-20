@@ -10,6 +10,7 @@ use App\Models\Post;
 use App\Models\Scenario;
 use App\Models\User;
 use App\Support\Admin\HomepageMasterData;
+use App\Support\Home\HomeAiFeaturesContent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -34,9 +35,9 @@ final class HomepageController extends Controller
                     ? User::query()->whereKey($homepage->updated_by)->value('name')
                     : null,
                 'visibleSections' => $homepage ? count(array_filter(
-                    array_replace(array_fill_keys(['hero', 'pathway', 'scenario', 'community', 'members', 'skills', 'career_features', 'careers'], true), $sections),
+                    array_replace(array_fill_keys(['hero', 'pathway', 'ai_features', 'scenario', 'community', 'members', 'skills', 'career_features', 'careers'], true), $sections),
                     fn ($enabled) => $enabled === true,
-                )) : 0,
+                )) + 1 : 0, // The shared footer is always visible on the public homepage.
             ],
             'stats' => [
                 'publishedScenarios' => Scenario::query()->where('status', 'published')->count(),
@@ -47,10 +48,14 @@ final class HomepageController extends Controller
         ]);
     }
 
-    public function edit(): Response
+    public function edit(): Response|RedirectResponse
     {
         $requested = request()->query('section', 'hero');
-        $selectedSection = in_array($requested, ['hero', 'pathway', 'scenario', 'community', 'members', 'skills', 'career_features', 'careers'], true) ? $requested : 'hero';
+        // Preserve old homepage footer bookmarks without retaining a duplicate editor entry.
+        if ($requested === 'footer') {
+            return to_route('admin.footer.edit');
+        }
+        $selectedSection = in_array($requested, ['hero', 'pathway', 'ai_features', 'scenario', 'community', 'members', 'skills', 'career_features', 'careers'], true) ? $requested : 'hero';
         $homepage = HomePageContent::query()->where('key', 'home')->first();
 
         if (! $homepage) {
@@ -65,11 +70,12 @@ final class HomepageController extends Controller
         }
 
         $content = $homepage->content ?? [];
+        $content['ai_features'] = HomeAiFeaturesContent::withDefaults($content['ai_features'] ?? []);
         // Preserve a legacy hidden careers section when introducing its separate cards editor.
         $savedSections = $content['sections'] ?? [];
         $savedSections['career_features'] ??= ($savedSections['careers'] ?? true);
         $content['sections'] = array_replace(array_fill_keys(
-            ['hero', 'pathway', 'scenario', 'community', 'members', 'skills', 'career_features', 'careers'], true,
+            ['hero', 'pathway', 'ai_features', 'scenario', 'community', 'members', 'skills', 'career_features', 'careers'], true,
         ), $savedSections);
         $content['scenario']['featured_id'] ??= null;
         // Legacy manual pins are ignored and cleared from the editor payload.
@@ -87,6 +93,15 @@ final class HomepageController extends Controller
         $content['community']['view_all_url'] ??= '/community';
         $content['community']['button_url'] ??= '';
         $content['careers']['jobs_url'] ??= '/careers';
+        $content['members']['button_url'] ??= '/members';
+        $content['pathway']['exams']['compare_url'] ??= '/pricing';
+        $content['pathway']['banner']['button_url'] ??= '/learning';
+        $content['pathway']['banner']['icon_image'] ??= '';
+        foreach ($content['pathway']['exams']['items'] ?? [] as &$item) {
+            $item['button_url'] ??= '/learning';
+            $item['plans_url'] ??= '/pricing';
+        }
+        unset($item);
         $content['careers']['resume']['button_url'] ??= '/careers';
         $content['careers']['join']['button_url'] ??= '/register';
         $content['scenario']['empty_message'] ??= 'Practical scenarios are being prepared for the community.';
@@ -144,7 +159,7 @@ final class HomepageController extends Controller
         });
 
         $section = $request->query('section');
-        $parameters = in_array($section, ['hero', 'pathway', 'scenario', 'community', 'members', 'skills', 'career_features', 'careers'], true)
+        $parameters = in_array($section, ['hero', 'pathway', 'ai_features', 'scenario', 'community', 'members', 'skills', 'career_features', 'careers'], true)
             ? ['section' => $section] : [];
 
         return to_route('admin.homepage.edit', $parameters)->with('status', 'Homepage changes saved successfully.');

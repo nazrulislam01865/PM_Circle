@@ -1,33 +1,18 @@
 import { Link } from '@inertiajs/react';
 import { useRef, useState } from 'react';
-import {
-    ArrowRight, BookOpen, ChartNoAxesColumnIncreasing, ChevronLeft, ChevronRight,
-    ClipboardCheck, Compass, Layers3, MessageCircle, Users,
-    type LucideIcon,
-} from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
 import type { HomePathwayContent } from '@/types/home';
 import type { RewardPromotionData } from '@/types/reward';
 import { ProfileRewardPromotion } from '@/components/rewards/ProfileCompletionReward';
 import { HomeContentIcon, type HomepageIconAssets } from '@/components/home/HomeContentIcon';
-
-/** Known icon keys are mapped to the existing icon library; content is supplied by Laravel. */
-const icons: Record<string, LucideIcon> = {
-    direction: Compass,
-    learn: BookOpen,
-    exams: ClipboardCheck,
-    skills: ChartNoAxesColumnIncreasing,
-    community: Users,
-    pmp: ClipboardCheck,
-    scrum: Layers3,
-    simulation: Layers3,
-};
+import { homepageDefaultIcon } from '@/components/home/HomeDefaultIcons';
 
 function CareerSteps({ content, iconAssets }: { content: HomePathwayContent['steps']; iconAssets?: HomepageIconAssets }) {
     return <section className="pm-pathway-steps" aria-labelledby="pm-pathway-title">
         <h2 id="pm-pathway-title">{content.heading}</h2>
         <div className="pm-pathway-steps-grid">
             {content.items.map((item, index) => {
-                const Icon = icons[item.icon] ?? Compass;
+                const Icon = homepageDefaultIcon('pathway_step_icon', item.icon);
                 return <div className="pm-pathway-step" key={`${item.title}-${index}`}>
                     <HomeContentIcon category="pathway_step_icon" icon={item.icon} image={item.icon_image} assets={iconAssets} fallback={Icon} size={36} strokeWidth={1.8}/>
                     <h3>{item.title}</h3>
@@ -69,7 +54,7 @@ function ExamCarousel({ content, iconAssets, promotion, isMember }: { content: H
                 <h2 id="pm-pathway-exams-title">{content.heading}</h2>
                 <p>{content.description}</p>
             </div>
-            <Link href="/pricing" className="pm-pathway-compare">{content.compare_label} <ArrowRight aria-hidden="true" size={19}/></Link>
+            <Link href={content.compare_url || "/pricing"} className="pm-pathway-compare">{content.compare_label} <ArrowRight aria-hidden="true" size={19}/></Link>
         </div>
         <ProfileRewardPromotion promotion={promotion} isMember={isMember} />
         {items.length > 0 && <>
@@ -79,7 +64,7 @@ function ExamCarousel({ content, iconAssets, promotion, isMember }: { content: H
                 </button>
                 <div className="pm-pathway-carousel-track" ref={scroller} onScroll={onScroll} aria-label="Exam simulators" role="region" tabIndex={0}>
                     {items.map((item, index) => {
-                        const Icon = icons[item.icon] ?? Layers3;
+                        const Icon = homepageDefaultIcon('pathway_exam_icon', item.icon);
                         return <article className="pm-pathway-exam-card" key={`${item.title}-${index}`}>
                             <div className="pm-pathway-exam-intro">
                                 <HomeContentIcon category="pathway_exam_icon" icon={item.icon} image={item.icon_image} assets={iconAssets} fallback={Icon} size={36} strokeWidth={1.85}/>
@@ -89,8 +74,8 @@ function ExamCarousel({ content, iconAssets, promotion, isMember }: { content: H
                                 {item.features.map(feature => <span key={feature}>{feature}</span>)}
                             </div>
                             <div className="pm-pathway-exam-actions">
-                                <Link href="/learning" className="pm-button pm-button-sm">{item.button_label}<ArrowRight aria-hidden="true" size={18}/></Link>
-                                <Link href="/pricing" className="pm-pathway-plan-link">{item.plans_label}</Link>
+                                <Link href={item.button_url || "/learning"} className="pm-button pm-button-sm">{item.button_label}<ArrowRight aria-hidden="true" size={18}/></Link>
+                                <Link href={item.plans_url || "/pricing"} className="pm-pathway-plan-link">{item.plans_label}</Link>
                             </div>
                         </article>;
                     })}
@@ -114,12 +99,12 @@ function ExamCarousel({ content, iconAssets, promotion, isMember }: { content: H
 
 function ProfessionalSkillsBanner({ content }: { content: HomePathwayContent['banner'] }) {
     return <section className="pm-pathway-banner" aria-label="Professional skills">
-        <MessageCircle aria-hidden="true" className="pm-pathway-banner-icon" size={36} strokeWidth={1.8}/>
+        {content.icon_image ? <img src={content.icon_image} className="pm-home-custom-icon pm-pathway-banner-icon" width={36} height={36} alt="" aria-hidden="true"/> : <MessageCircle aria-hidden="true" className="pm-pathway-banner-icon" size={36} strokeWidth={1.8}/>} 
         <div className="pm-pathway-banner-copy">
             <h2>{content.heading}</h2>
             <p>{content.description}</p>
         </div>
-        <Link href="/learning" className="pm-button pm-button-outline pm-pathway-banner-button">
+        <Link href={content.button_url || "/learning"} className="pm-button pm-button-outline pm-pathway-banner-button">
             {content.button_label}<ArrowRight size={18} aria-hidden="true" />
         </Link>
     </section>;

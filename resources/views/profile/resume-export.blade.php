@@ -4,8 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Professional resume — {{ $member->name }}</title>
+    <link rel="stylesheet" href="/fonts/rajdhani/rajdhani.css">
     <style>
-        body { font-family: Arial, sans-serif; color: #172b4d; margin: 38px auto; padding: 0 28px; max-width: 850px; line-height: 1.5; }
+        body { font-family: var(--font-ui, "Rajdhani", system-ui, sans-serif); color: #172b4d; margin: 38px auto; padding: 0 28px; max-width: 850px; line-height: 1.5; }
         h1 { margin-bottom: 4px; } h2 { border-bottom: 1px solid #dce3ec; padding-bottom: 5px; margin-top: 24px; font-size: 18px; }
         .subtitle { color: #52657d; margin-top: 0; } .record { margin: 0 0 14px; } .record strong { display: block; }
         button { background: #0a66c2; color: white; border: 0; border-radius: 8px; padding: 12px 18px; cursor: pointer; }

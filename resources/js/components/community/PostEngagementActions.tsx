@@ -91,13 +91,11 @@ export function PostEngagementActions({ postId, initial, total, breakdown = EMPT
             <MessageCircle size={19} aria-hidden="true"/> {commentCount} {commentCount === 1 ? 'comment' : 'comments'}
         </button> : <HomeCommentAction label={commentCount === 1 ? 'comment' : 'comments'} count={commentCount} href={`${url}#post-comments`} canInteract={canInteract} onJoin={onJoin} />}
         <HomeShareAction href={url} canInteract={canInteract} onJoin={onJoin} />
-        <span className="pm-post-engagement-trailing">
-            <PostReactionSummary postId={postId} total={summaryTotal} counts={summaryCounts}
-                onRefresh={(count, counts) => { setSummaryTotal(count); setSummaryCounts(counts); }} />
-            {showSave && <button type="button" className="pm-home-action pm-post-save-action" aria-pressed={saved} onClick={() => { void toggleSave(); }} disabled={saveBusy}>
-                <Bookmark size={19} fill={saved ? 'currentColor' : 'none'} aria-hidden="true" /> {saved ? 'Saved' : 'Save'}
-            </button>}
-        </span>
+        <PostReactionSummary postId={postId} total={summaryTotal} counts={summaryCounts}
+            onRefresh={(count, counts) => { setSummaryTotal(count); setSummaryCounts(counts); }} />
+        {showSave && <button type="button" className="pm-home-action pm-post-save-action" aria-pressed={saved} onClick={() => { void toggleSave(); }} disabled={saveBusy}>
+            <Bookmark size={19} fill={saved ? 'currentColor' : 'none'} aria-hidden="true" /> {saved ? 'Saved' : 'Save'}
+        </button>}
         {saveError && <span className="pm-home-reaction-error" role="alert">{saveError}</span>}
     </EngagementActionBar>
         {inlineComments && expanded && <InlinePostComments postId={postId} canInteract={canInteract} onJoin={onJoin}

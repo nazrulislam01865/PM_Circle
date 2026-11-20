@@ -29,7 +29,7 @@ final class HomepageMasterData
     /** Signup choices share the existing admin master-data editor, not the homepage editor. */
     public static function editableDropdownGroups(): array
     {
-        return self::DROPDOWN_GROUPS + SignupMasterData::GROUPS;
+        return self::DROPDOWN_GROUPS + SignupMasterData::GROUPS + CourseMasterData::GROUPS;
     }
 
     // Icons are implemented in the existing frontend and require a code release to add a new kind.
@@ -48,7 +48,7 @@ final class HomepageMasterData
         return collect($groups)->map(fn (string $label, string $value) => [
             'value' => $value,
             'label' => $label,
-            'can_add' => true,
+            'can_add' => ! in_array($value, ['course_access', 'course_question_kind', 'course_question_difficulty', 'course_resource_kind'], true),
             'is_icon' => false,
         ])->values()->all();
     }
@@ -76,7 +76,7 @@ final class HomepageMasterData
 
     public static function isAllowedNewValue(string $category, string $value): bool
     {
-        if (! array_key_exists($category, self::GROUPS) && ! array_key_exists($category, SignupMasterData::GROUPS)) {
+        if (! array_key_exists($category, self::GROUPS) && ! array_key_exists($category, SignupMasterData::GROUPS) && ! array_key_exists($category, CourseMasterData::GROUPS)) {
             return false;
         }
         if (isset(self::ICON_VALUES[$category])) {
@@ -88,6 +88,21 @@ final class HomepageMasterData
         if (in_array($category, ['signup_role', 'signup_certification'], true)) {
             return $value === trim($value)
                 && mb_strlen($value) <= ($category === 'signup_role' ? 80 : 100)
+                && preg_match('/^[^\p{C}<>]*[\p{L}\p{N}][^\p{C}<>]*$/uD', $value) === 1;
+        }
+        // Fixed choices represent application behaviors; admins may relabel/reorder/hide,
+        // but cannot introduce unsupported access tiers, resource handlers or answer types.
+        $fixed = [
+            'course_access' => ['free', 'paid'],
+            'course_question_kind' => ['question', 'scenario'],
+            'course_question_difficulty' => ['Easy', 'Moderate', 'Hard'],
+            'course_resource_kind' => ['file', 'link'],
+        ];
+        if (isset($fixed[$category])) {
+            return in_array($value, $fixed[$category], true);
+        }
+        if (in_array($category, ['course_category', 'course_level'], true)) {
+            return mb_strlen($value) <= ($category === 'course_level' ? 20 : 100)
                 && preg_match('/^[^\p{C}<>]*[\p{L}\p{N}][^\p{C}<>]*$/uD', $value) === 1;
         }
         if (in_array($category, ['careers_location', 'careers_type'], true)) {

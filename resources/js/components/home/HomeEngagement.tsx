@@ -1,20 +1,54 @@
-import { Link, router } from '@inertiajs/react';
-import { Angry, CircleAlert, Frown, HandHeart, Heart, Laugh, MessageCircle, Share2, ThumbsUp } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { Angry, CircleAlert, Frown, HandHeart, Heart, Laugh, MessageCircle, Share2, Smile, ThumbsUp } from 'lucide-react';
 import { useEffect, useRef, useState, type ComponentType } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-export type ReactionType = 'like' | 'love' | 'care' | 'haha' | 'wow' | 'sad' | 'angry';
+export type ReactionType = 'like' | 'love' | 'care' | 'haha' | 'wow' | 'sad' | 'angry' | (string & {});
 export type RequestToJoin = (action: string) => void;
 
-export const reactionOptions: { type: ReactionType; label: string; Icon: ComponentType<{ size?: number; 'aria-hidden'?: boolean }> }[] = [
-    { type: 'like', label: 'Like', Icon: ThumbsUp },
-    { type: 'love', label: 'Love', Icon: Heart },
-    { type: 'care', label: 'Care', Icon: HandHeart },
-    { type: 'haha', label: 'Haha', Icon: Laugh },
-    { type: 'wow', label: 'Wow', Icon: CircleAlert },
-    { type: 'sad', label: 'Sad', Icon: Frown },
-    { type: 'angry', label: 'Angry', Icon: Angry },
+export type ReactionOption = { type: ReactionType; label: string; Icon: ComponentType<{ size?: number; 'aria-hidden'?: boolean }>; active: boolean };
+
+export const reactionOptions: ReactionOption[] = [
+    { type: 'like', active: true, label: 'Like', Icon: ThumbsUp },
+    { type: 'love', active: true, label: 'Love', Icon: Heart },
+    { type: 'care', active: true, label: 'Care', Icon: HandHeart },
+    { type: 'haha', active: true, label: 'Haha', Icon: Laugh },
+    { type: 'wow', active: true, label: 'Wow', Icon: CircleAlert },
+    { type: 'sad', active: true, label: 'Sad', Icon: Frown },
+    { type: 'angry', active: true, label: 'Angry', Icon: Angry },
 ];
+
+export type ReactionDefinition = { type: ReactionType; label: string; builtin: boolean; active: boolean; url: string | null };
+
+/** One cached server catalog drives every post, comment, and scenario picker. */
+export function useReactionOptions(includeInactive = false): ReactionOption[] {
+    const page = usePage();
+    const definitions = page.props.reactionDefinitions as ReactionDefinition[] | undefined;
+    if (!definitions?.length) return reactionOptions;
+    return definitions.filter(item => includeInactive || item.active).map(item => ({
+        type: item.type, label: item.label, active: item.active,
+        Icon: reactionOptions.find(defaultOption => defaultOption.type === item.type)?.Icon ?? Smile,
+    }));
+}
+
+/** Admin-uploaded image when available; original Lucide icon is the permanent fallback. */
+export function ReactionGlyph({ type, size = 20, urlOverride }: {
+    type: ReactionType;
+    size?: number;
+    urlOverride?: string | null;
+}) {
+    const page = usePage();
+    const icons = page.props.reactionIcons as Partial<Record<ReactionType, string>> | undefined;
+    const url = urlOverride === undefined ? icons?.[type] : urlOverride;
+    const [failedUrl, setFailedUrl] = useState<string | null>(null);
+    const option = reactionOptions.find(item => item.type === type);
+    const Icon = option?.Icon ?? Smile;
+
+    return url && failedUrl !== url
+        ? <img src={url} width={size} height={size} className="pm-reaction-image" alt="" draggable={false}
+            decoding="async" onError={() => setFailedUrl(url)} aria-hidden="true" />
+        : <Icon size={size} aria-hidden={true}/>;
+}
 
 export function JoinCommunityDialog({ action, onClose, hasAccount }: {
     action: string | null; onClose: () => void; hasAccount: boolean;
@@ -49,6 +83,8 @@ export function ReactionPicker({ endpoint, initial, total, canInteract, onJoin, 
     const [open, setOpen] = useState(false);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
+    const options = useReactionOptions();
+    const allOptions = useReactionOptions(true);
     const root = useRef<HTMLDivElement>(null);
     const touch = useRef(false);
 
@@ -96,23 +132,26 @@ export function ReactionPicker({ endpoint, initial, total, canInteract, onJoin, 
             setError(reason instanceof Error ? reason.message : 'Unable to save your reaction.');
         } finally { setBusy(false); }
     };
-    const chosen = reactionOptions.find(reaction => reaction.type === active);
-    const MainIcon = chosen?.Icon ?? ThumbsUp;
+    const chosen = allOptions.find(reaction => reaction.type === active);
+    const selectedType = active ?? 'like';
+    const archivedSelection = active !== null && !options.some(option => option.type === active);
     return <div className="pm-home-reaction-root" ref={root} data-open={open ? 'true' : 'false'}>
         <button type="button" className={`pm-home-action pm-home-reaction-main${active ? ` is-${active}` : ''}`}
             disabled={busy} aria-label={chosen ? `${chosen.label} reaction. Select to remove or choose a different reaction` : `Like this ${label}`}
             aria-pressed={Boolean(active)} aria-haspopup="true" aria-expanded={open}
             onPointerDown={event => { touch.current = event.pointerType === 'touch'; }}
             onClick={() => { if (touch.current) { setOpen(value => !value); touch.current = false; } else void react(active ?? 'like'); }}>
-            <MainIcon size={19} aria-hidden={true}/>
+            <ReactionGlyph type={selectedType} size={19}/>
             <span>{chosen?.label ?? 'Like'}</span>
             {showCount && count > 0 && <span className="pm-home-reaction-count">{count}</span>}
         </button>
-        <div className="pm-home-reaction-options" role="group" aria-label={`Choose reaction to ${label}`}>
-            {reactionOptions.map(({ type, label: name, Icon }) => <button key={type} type="button"
+        <div className="pm-home-reaction-options" data-many={options.length > 7 || archivedSelection ? 'true' : undefined} role="group" aria-label={`Choose reaction to ${label}`}>
+            {options.map(({ type, label: name }) => <button key={type} type="button"
                 title={name} className={`pm-home-reaction-choice is-${type}`} disabled={busy}
                 aria-label={`${name} reaction`} aria-pressed={active === type}
-                onClick={() => { void react(type); }}><Icon size={23} aria-hidden={true}/></button>)}
+                onClick={() => { void react(type); }}><ReactionGlyph type={type} size={23}/></button>)}
+            {archivedSelection && <button type="button" className="pm-home-reaction-remove-archived" disabled={busy}
+                onClick={() => { if (active) void react(active); }}>Remove previous reaction</button>}
         </div>
         {error && <span className="pm-home-reaction-error" role="alert">{error}</span>}
     </div>;

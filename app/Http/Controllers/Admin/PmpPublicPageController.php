@@ -16,11 +16,14 @@ final class PmpPublicPageController extends Controller
 {
     private const SECTION_KEYS = ['hero', 'benefits', 'sample', 'ai', 'plans', 'faq', 'video', 'testimonials', 'footer'];
 
-    public function edit(): Response
+    public function edit(): Response|RedirectResponse
     {
-        $record = HomePageContent::query()->where('key', PmpPublicContent::KEY)->first(['content', 'revision']);
-
         $section = request()->query('section', 'hero');
+        if ($section === 'footer') {
+            return to_route('admin.footer.edit');
+        }
+
+        $record = HomePageContent::query()->where('key', PmpPublicContent::KEY)->first(['content', 'revision']);
         $selectedSection = is_string($section) && in_array($section, self::SECTION_KEYS, true) ? $section : 'hero';
 
         return Inertia::render('admin/PmpPublicPage', [

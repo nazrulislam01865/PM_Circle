@@ -11,4 +11,10 @@ export const dropdownGroups = [
     { key: 'signup_role', label: 'Signup roles' },
     { key: 'signup_experience', label: 'Signup experience' },
     { key: 'signup_certification', label: 'Signup certifications' },
+    { key: 'course_category', label: 'Course categories' },
+    { key: 'course_level', label: 'Course levels' },
+    { key: 'course_access', label: 'Course access' },
+    { key: 'course_question_kind', label: 'Course question types' },
+    { key: 'course_question_difficulty', label: 'Course difficulty' },
+    { key: 'course_resource_kind', label: 'Course resource types' },
 ] as const;

@@ -107,10 +107,33 @@
     background: var(--surface);
 }
 
-/* Authenticated primary bar has icon + one-word labels, no nested dropdown. */
+/* Authenticated primary bar has icon + one-word labels, no nested dropdown.
+   Keep its Exams link visually consistent with the public Exam Simulator pill. */
 :is(.pm-member-shell, .pm-member-exam-navigation) .pm-member-home-nav-home .pm-nav-icon { margin-inline: 0; }
-:is(.pm-member-shell, .pm-member-exam-navigation) .pm-member-home-nav-link.pm-member-primary-exams { color: var(--ink); }
-:is(.pm-member-shell, .pm-member-exam-navigation) .pm-member-home-nav-link.pm-member-primary-exams.is-active { color: var(--blue); }
+:is(.pm-member-shell, .pm-member-exam-navigation) .pm-member-home-nav-link.pm-member-primary-exams {
+    align-self: center;
+    min-height: var(--control-height);
+    padding-inline: var(--s4);
+    border-radius: var(--radius-pill);
+    background: var(--exam-nav-soft);
+    color: var(--exam-nav-ink);
+}
+:is(.pm-member-shell, .pm-member-exam-navigation) .pm-member-home-nav-link.pm-member-primary-exams:is(:hover, :focus-visible, .is-active) {
+    background: var(--exam-nav-hover);
+    color: var(--exam-nav-ink);
+}
+:is(.pm-member-shell, .pm-member-exam-navigation) .pm-member-home-nav-link.pm-member-primary-exams.is-active::after {
+    display: none;
+}
+@media (max-width: 960px) {
+    :is(.pm-member-shell, .pm-member-exam-navigation) .pm-member-home-nav-link.pm-member-primary-exams {
+        align-self: stretch;
+        width: 100%;
+        min-height: var(--control-touch);
+        padding: var(--s2) var(--s3);
+        border-radius: var(--radius-control);
+    }
+}
 @media (max-width: 880px) {
     :is(.pm-member-shell, .pm-member-exam-navigation) .pm-member-secondary-inner { width: calc(100% - var(--s4)); gap: var(--s1); }
     :is(.pm-member-shell, .pm-member-exam-navigation) .pm-member-secondary-item { padding-inline: var(--s3); }

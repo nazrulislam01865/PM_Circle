@@ -11,6 +11,7 @@ use App\Http\Requests\Community\StorePostRequest;
 use App\Models\Post;
 use App\Models\Scenario;
 use App\Domain\Community\Services\PostCheckPolicy;
+use App\Domain\Community\Media\CommunityImageVariants;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -188,38 +189,17 @@ class PostController extends Controller
             && $post->visibility === 'members'
             && $post->image_path === '/posts/'.$post->id.'/media/'.$filename
             && preg_match('/\A[A-Za-z0-9_-]+\.(?:jpg|jpeg|png|webp)\z/iD', $filename), 404);
-        $path = 'post-images-private/'.$filename;
-        $disk = Storage::disk('local');
-        abort_unless($disk->exists($path), 404);
-        return response()->file($disk->path($path), [
-            'Content-Type' => match (strtolower(pathinfo($filename, PATHINFO_EXTENSION))) {
-                'png' => 'image/png', 'webp' => 'image/webp', default => 'image/jpeg',
-            },
-            'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff',
-        ]);
+        return app(CommunityImageVariants::class)->response(
+            'local', 'post-images-private/'.$filename, $request->integer('size'), false,
+        );
     }
 
-    public function media(string $filename): BinaryFileResponse
+    public function media(Request $request, string $filename): BinaryFileResponse
     {
         abort_unless(preg_match('/\A[a-zA-Z0-9_-]+\.(?:jpg|jpeg|png|webp)\z/iD', $filename), 404);
-        $path = 'post-images/'.$filename;
-        $disk = Storage::disk('public');
-        abort_unless($disk->exists($path), 404);
-
-        // Use the same binary-file response as the working profile-image endpoint.
-        // This preserves the exact image bytes and avoids a streamed response being modified.
-        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-
-        return response()->file($disk->path($path), [
-            'Content-Type' => match ($extension) {
-                'png' => 'image/png',
-                'webp' => 'image/webp',
-                default => 'image/jpeg',
-            },
-            'Content-Disposition' => 'inline',
-            'Cache-Control' => 'public, max-age=3600',
-            'X-Content-Type-Options' => 'nosniff',
-        ]);
+        return app(CommunityImageVariants::class)->response(
+            'public', 'post-images/'.$filename, $request->integer('size'), true,
+        );
     }
 
     public function store(StorePostRequest $request, PublishPost $action): RedirectResponse

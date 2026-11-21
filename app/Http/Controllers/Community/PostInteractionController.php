@@ -8,6 +8,7 @@ use App\Domain\Community\Actions\ReactToComment;
 use App\Domain\Community\Services\EngagementStats;
 use App\Support\Community\ReactionIconCatalog;
 use App\Domain\Community\Services\PostCheckPolicy;
+use App\Domain\Community\Media\CommunityImageVariants;
 use App\Domain\AI\Jobs\CheckCommunityComment;
 use App\Support\ProfileMediaUrl;
 use Illuminate\Support\Facades\DB;
@@ -99,17 +100,9 @@ class PostInteractionController extends Controller
             && $comment->isVisible()
             && preg_match('/\A[a-zA-Z0-9_-]+\.(?:jpg|jpeg|png|webp|gif)\z/iD', $filename)
             && $comment->media_path === 'comment-media/'.$filename, 404);
-        $disk = Storage::disk('local');
-        abort_unless($disk->exists($comment->media_path), 404);
-
-        return response()->file($disk->path($comment->media_path), [
-            'Content-Type' => match (strtolower(pathinfo($filename, PATHINFO_EXTENSION))) {
-                'png' => 'image/png', 'webp' => 'image/webp', 'gif' => 'image/gif', default => 'image/jpeg',
-            },
-            'Content-Disposition' => 'inline',
-            'Cache-Control' => 'private, no-store',
-            'X-Content-Type-Options' => 'nosniff',
-        ]);
+        return app(CommunityImageVariants::class)->response(
+            'local', $comment->media_path, $request->integer('size'), false,
+        );
     }
 
     public function comment(Request $request, Post $post): RedirectResponse|JsonResponse
@@ -161,6 +154,9 @@ class PostInteractionController extends Controller
         } catch (\Throwable $exception) {
             if ($path) Storage::disk('local')->delete($path);
             throw $exception;
+        }
+        if (! $checking && $path) {
+            app(CommunityImageVariants::class)->queue('local', $path);
         }
         if ($request->expectsJson()) {
             return response()->json(['comment' => $this->commentResult($comment, $request),

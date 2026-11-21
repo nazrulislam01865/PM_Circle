@@ -9,11 +9,13 @@ use App\Http\Requests\Admin\UpdatePmpExamSettingsRequest;
 use App\Services\Exam\PmpExamSettings;
 use App\Services\Exam\PmpQuestionImporter;
 use App\Services\Exam\PmpQuestionContent;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -69,14 +71,65 @@ final class PmpExamBankController extends Controller
             ->selectRaw("SUM(CASE WHEN review_status = 'Approved' AND NOT is_active THEN 1 ELSE 0 END) AS ready")
             ->first();
 
+        $currentSettings = $settings->get();
+        $sampleIds = $currentSettings['sample_question_ids'];
+        $sampleRows = empty($sampleIds) ? collect()
+            : DB::table('pmp_exam_questions')->whereIn('id', $sampleIds)
+                ->get(['id', 'code', 'domain', 'prompt', 'is_active'])->keyBy('id');
+        $selectedSamples = collect($sampleIds)->map(function ($id) use ($sampleRows) {
+            $item = $sampleRows->get($id);
+            return $item ? [
+                'id' => (int) $item->id,
+                'code' => $item->code,
+                'domain' => $item->domain,
+                'prompt' => Str::limit($item->prompt, 160),
+                'is_active' => (bool) $item->is_active,
+            ] : null;
+        })->filter()->values()->all();
+
         return Inertia::render('admin/PmpQuestionBank', [
-            'settings' => $settings->get(),
+            'settings' => $currentSettings,
+            'selectedSampleQuestions' => $selectedSamples,
+            'selectedSampleQuestion' => $selectedSamples[0] ?? null,
             'stats' => ['total' => (int) ($stats->total ?? 0), 'active' => (int) ($stats->active ?? 0),
                 'ready' => (int) ($stats->ready ?? 0)],
             'questions' => $questions,
             'filters' => ['search' => $filters['search'] ?? '', 'domain' => $filters['domain'] ?? '', 'status' => $filters['status'] ?? 'all',
                 'review_status' => $filters['review_status'] ?? ''],
         ]);
+    }
+
+    /** Search public-sample candidates without loading the entire question bank into the editor. */
+    public function sampleOptions(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'domain' => ['nullable', Rule::in(['People', 'Process', 'Business Environment'])],
+        ]);
+        $search = trim($validated['search'] ?? '');
+        $query = DB::table('pmp_exam_questions')->where('is_active', true);
+        if (! empty($validated['domain'])) {
+            $query->where('domain', $validated['domain']);
+        }
+        if ($search !== '') {
+            $term = '%'.strtolower(addcslashes($search, '%_\\')).'%';
+            $query->where(function ($q) use ($term, $search): void {
+                $q->whereRaw("LOWER(code) LIKE ? ESCAPE '\\'", [$term])
+                    ->orWhereRaw("LOWER(prompt) LIKE ? ESCAPE '\\'", [$term]);
+                if (ctype_digit($search)) {
+                    $q->orWhere('id', (int) $search);
+                }
+            });
+        }
+
+        return response()->json(['questions' => $query->orderByDesc('id')->limit(20)
+            ->get(['id', 'code', 'domain', 'prompt'])->map(fn ($row) => [
+                'id' => (int) $row->id,
+                'code' => $row->code,
+                'domain' => $row->domain,
+                'prompt' => Str::limit($row->prompt, 160),
+                'is_active' => true,
+            ])->all()]);
     }
 
     public function updateSettings(UpdatePmpExamSettingsRequest $request, PmpExamSettings $settings): RedirectResponse

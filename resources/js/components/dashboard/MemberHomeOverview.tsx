@@ -21,7 +21,7 @@ export function MemberHomeOverview({ dashboard }: { dashboard: DashboardData }) 
             <div className="pm-member-overview-completion-label"><span>Profile completion</span><strong>{member.completion}%{member.completion === 100 && <Check size={13} aria-label="Complete" />}</strong></div>
             <div className="pm-member-overview-progress" role="progressbar" aria-label="Profile completion" aria-valuemin={0} aria-valuemax={100} aria-valuenow={member.completion}><span style={{ width: `${Math.min(100, Math.max(0, member.completion))}%` }} /></div>
             <div className="pm-member-overview-profile-links">
-                <Link href="/dashboard/features/public-profile"><Eye size={17} aria-hidden="true" />View public profile</Link>
+                <Link href="/settings/profile"><Eye size={17} aria-hidden="true" />View profile</Link>
                 <Link href="/settings/profile?tab=privacy"><LockKeyhole size={16} aria-hidden="true" />Manage privacy</Link>
             </div>
         </section>

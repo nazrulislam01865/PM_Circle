@@ -12,7 +12,7 @@ const socialNetworks = [
     { key: 'youtube', label: 'YouTube', Icon: Youtube },
 ] as const;
 
-function FooterBrand({ content, compact = false }: { content: FooterContent; compact?: boolean }) {
+export function FooterBrand({ content, compact = false }: { content: FooterContent; compact?: boolean }) {
     return <Link href="/" className="pm-brand pm-unified-footer-brand" aria-label={`${content.brand_name} home`}>
         {content.brand_logo
             ? <img src={content.brand_logo} className="pm-unified-footer-brand-image" alt="" />
@@ -23,8 +23,11 @@ function FooterBrand({ content, compact = false }: { content: FooterContent; com
     </Link>;
 }
 
-function FooterSocial({ content, compact = false }: { content: FooterContent; compact?: boolean }) {
-    const active = socialNetworks.filter(({ key }) => Boolean(content.social[key]));
+const prototypeSocialNetworks = [socialNetworks[1], socialNetworks[2], socialNetworks[3], socialNetworks[0]] as const;
+
+export function FooterSocial({ content, compact = false, prototypeOrder = false }: { content: FooterContent; compact?: boolean; prototypeOrder?: boolean }) {
+    const networks = prototypeOrder ? prototypeSocialNetworks : socialNetworks;
+    const active = networks.filter(({ key }) => Boolean(content.social[key]));
     if (!active.length) return null;
     return <nav className="pm-unified-footer-social" aria-label="Social media">
         {active.map(({ key, label, Icon }) =>

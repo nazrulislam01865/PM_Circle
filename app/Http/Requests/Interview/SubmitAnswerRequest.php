@@ -15,7 +15,7 @@ final class SubmitAnswerRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'position' => ['required', 'integer', 'min:0', 'max:9'],
+            'position' => ['required', 'integer', 'min:0', 'max:49'],
             'answer' => ['required', 'string', 'min:20', 'max:6000'],
             'mode' => ['required', Rule::in(['type', 'speak'])],
         ];

@@ -61,6 +61,8 @@ export function DashboardFeed({ dashboard, submittingPost = null }: { dashboard:
         // Poll only while a review is outstanding; never poll every community card.
     }, [hasPending, postChecks.posts]);
     const restricted = dashboard.feedTab === 'restricted';
+    const blocked = Boolean(postChecks.blocked_until && new Date(postChecks.blocked_until).getTime() > Date.now());
+    const restrictionPolicy = postChecks.restriction_policy;
     const ownPending = postChecks.posts.filter(post => restricted ? post.status === 'restricted'
         : (dashboard.feedTab === 'all' || dashboard.feedTab === 'mine') && post.status !== 'restricted');
     const visibleChecking = submittingPost && !restricted ? [submittingPost, ...ownPending] : ownPending;
@@ -69,9 +71,15 @@ export function DashboardFeed({ dashboard, submittingPost = null }: { dashboard:
         <div className="pm-dash-feed-heading"><h2>Community feed</h2></div>
         <div className="pm-dash-feed-tabs"><FeedScopeTabs active={dashboard.feedTab} counts={visibleCounts} showRestricted hrefFor={urlFor}/></div>
         </div>
-        {restricted && <div className="pm-post-check-policy" role="status"><AlertCircle size={22}/><div><strong>Posting restriction policy</strong><p>5 confirmed violations in 30 days trigger a 10-day posting restriction.</p><small>Posting, commenting and replying are paused during the restriction.</small>{postChecks.blocked_until && <small> Restriction ends {new Date(postChecks.blocked_until).toLocaleString()}.</small>}</div></div>}
+        {(restricted || blocked) && <div className="pm-post-check-policy" role="status"><AlertCircle size={22}/><div>
+            <strong>{blocked ? 'Your community posting is temporarily restricted' : 'Posting restriction policy'}</strong>
+            <p>{restrictionPolicy.threshold} confirmed violations within {restrictionPolicy.window_days} days trigger a {restrictionPolicy.duration_days}-day posting restriction.</p>
+            <small>Confirmed violations in the last {restrictionPolicy.window_days} days: {postChecks.violation_count}.</small>
+            <small>Posting, commenting and replying are paused while a restriction is active.</small>
+            {blocked && <small className="pm-post-check-expiry">Restriction ends {new Date(postChecks.blocked_until!).toLocaleString()}.</small>}
+        </div></div>}
         {visibleChecking.length > 0 && <div className="pm-dash-posts">{visibleChecking.map(post => <PostCheckCard key={post.id} post={post}
-            owner={dashboard.member} onRefresh={() => { void refreshCheckFeed(); }} />)}</div>}
+            owner={dashboard.member} blockedUntil={postChecks.blocked_until} onRefresh={() => { void refreshCheckFeed(); }} />)}</div>}
         {!restricted && feed.items.length ? <VirtualizedFeed items={feed.items} className="pm-dash-posts"
             estimateHeight={280} onNearEnd={feed.loadMore} enabled={dashboard.virtualFeedEnabled}
             renderItem={post => <FeedItem post={post} demo={dashboard.isDemo}

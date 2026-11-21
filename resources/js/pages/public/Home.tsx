@@ -1,62 +1,47 @@
-import { Head, Link, usePage } from '@inertiajs/react';
-import { PublicLayout } from '@/layouts/pm/PublicLayout';
-import { CommunityOrbit } from '@/components/home/CommunityOrbit';
-import { ScenarioPreview, type ScenarioResponsePreview, type ScenarioSummary } from '@/components/home/ScenarioPreview';
-import { HomeMembers, SkillSidebar } from '@/components/home/HomeSidebar';
-import { type HomePost } from '@/components/home/HomePostPreview';
-import { HomeCommunitySection } from '@/components/home/HomeCommunitySection';
-import { CareerHighlights } from '@/components/home/CareerHighlights';
-import { HomePathway } from '@/components/home/HomePathway';
-import { HomeAiFeatures } from '@/components/home/HomeAiFeatures';
-import type { HomeContent, HomeMember, HomeCareerJob } from '@/types/home';
-import type { RewardPromotionData } from '@/types/reward';
-import type { HomepageIconAssets } from '@/components/home/HomeContentIcon';
-import { JoinCommunityDialog } from '@/components/home/HomeEngagement';
+import { Head, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import { PublicLayout } from '@/layouts/pm/PublicLayout';
+import { JoinCommunityDialog } from '@/components/home/HomeEngagement';
+import { HomeHero } from '@/components/home/v2/HomeHero';
+import { HomeCertification, HomeCourses } from '@/components/home/v2/HomeLearning';
+import { HomeCommunity } from '@/components/home/v2/HomeCommunity';
+import { HomeAiPractice, HomeResume } from '@/components/home/v2/HomeAiResume';
+import { HomeEvents } from '@/components/home/v2/HomeEvents';
+import type { ScenarioSummary } from '@/components/home/ScenarioPreview';
+import type { HomePost } from '@/components/home/HomePostPreview';
+import type { HomeContent, HomeMember } from '@/types/home';
+import type { HomeCourseCard } from '@/components/home/v2/reference';
+import type { RewardPromotionData } from '@/types/reward';
 
 type Props = {
-    content: HomeContent;
-    rewardPromotion: RewardPromotionData | null;
-    iconAssets?: HomepageIconAssets;
-    isDemo: boolean;
-    scenario: ScenarioSummary | null;
-    scenarioResponses: ScenarioResponsePreview[];
-    posts: HomePost[];
-    members: HomeMember[];
-    jobs: HomeCareerJob[];
+    content: HomeContent; rewardPromotion: RewardPromotionData | null;
+    scenario: ScenarioSummary | null; posts: HomePost[]; members: HomeMember[];
+    courses?: HomeCourseCard[];
 };
 
-export default function Home({ content, iconAssets, isDemo, scenario, scenarioResponses, posts, members, jobs, rewardPromotion }: Props) {
-    const { auth, emailVerificationRequired } = usePage<{ auth: { user: { onboarding_step: number; email_verified_at: string | null; is_admin?: boolean } | null }; emailVerificationRequired?: boolean }>().props;
-    const [joinAction, setJoinAction] = useState<string | null>(null);
-    const canInteract = Boolean(auth?.user && !auth.user.is_admin && auth.user.onboarding_step >= 3 && (!emailVerificationRequired || auth.user.email_verified_at));
-    const hero = content.hero;
-    const people = hero?.people ?? [];
-    const visible = (section: keyof NonNullable<HomeContent['sections']>) => content.sections?.[section] !== false;
+type User = { onboarding_step: number; email_verified_at: string | null; is_admin?: boolean };
 
-    return <PublicLayout siteLayout><Head title="Learn together. Practise daily. Grow your career"/>
-        <div className="pm-home">
-            {visible('hero') && <section className="pm-hero"><div className="pm-container pm-hero-inner"><div className="pm-hero-copy">
-                <p className="pm-kicker">{hero?.eyebrow}</p><h1>{hero?.title}</h1>
-                <p>{hero?.description}</p>
-                <div className="pm-hero-actions"><Link href={auth?.user && (!hero?.primary_url || hero.primary_url === '/register') ? (auth.user.is_admin ? '/admin' : '/dashboard') : (hero?.primary_url || '/register')} className="pm-button">{hero?.primary_label}</Link>
-                    <Link href={hero?.secondary_url || '/community'} className="pm-button pm-button-outline">{hero?.secondary_label}</Link></div>
-            </div><CommunityOrbit people={people} content={hero}/></div></section>}
-            {visible('pathway') && <HomePathway content={content.pathway} iconAssets={iconAssets} promotion={rewardPromotion} isMember={Boolean(auth?.user && !auth.user.is_admin)}/>}
-            {visible('ai_features') && content.ai_features && <HomeAiFeatures content={content.ai_features}/>}
-            {(visible('scenario') || visible('community') || visible('members') || visible('skills')) && <div className={`pm-container pm-home-showcases ${!(visible('scenario') || visible('community')) || !(visible('members') || visible('skills')) ? 'pm-home-showcases-single' : ''}`}>
-                <div className="pm-home-main">
-                    {visible('scenario') && <ScenarioPreview scenario={scenario} responses={scenarioResponses ?? []} content={content.scenario} canInteract={canInteract} onJoin={setJoinAction}/>}
-                    {visible('community') && <HomeCommunitySection posts={posts} content={content.community} joinHref={auth?.user?.is_admin ? '/admin' : (auth?.user ? '/community' : '/register')} canInteract={canInteract} onJoin={setJoinAction}/>}
-                </div>
-                <aside className="pm-home-sidebar" aria-label="More from PM Circle">
-                    {visible('members') && <HomeMembers members={members} content={content.members}/>}
-                    {visible('skills') && <SkillSidebar content={content.skills} iconAssets={iconAssets}/>}
-                </aside>
-            </div>}
-            {(visible('careers') || (content.sections?.career_features ?? content.sections?.careers) !== false) && <CareerHighlights content={content.careers} people={people} demo={isDemo} iconAssets={iconAssets} jobs={jobs ?? []}
-                showFeatures={(content.sections?.career_features ?? content.sections?.careers) !== false} showRest={visible('careers')}/>}
-            <JoinCommunityDialog action={joinAction} onClose={() => setJoinAction(null)} hasAccount={Boolean(auth?.user && !auth.user.is_admin)}/>
+/** Homepage V2 only. Admin sections, public data, auth checks and shared footer remain centralized. */
+export default function Home({ content, scenario, posts, members, rewardPromotion, courses = [] }: Props) {
+    const { auth, emailVerificationRequired } = usePage<{ auth: { user: User | null }; emailVerificationRequired?: boolean }>().props;
+    const [joinAction, setJoinAction] = useState<string | null>(null);
+    const user = auth?.user;
+    const canInteract = Boolean(user && !user.is_admin && user.onboarding_step >= 3 && (!emailVerificationRequired || user.email_verified_at));
+    const visible = (section: keyof NonNullable<HomeContent['sections']>) => content.sections?.[section] !== false;
+    const showCommunity = ['scenario', 'community', 'members', 'skills'].some(section => visible(section as keyof NonNullable<HomeContent['sections']>));
+
+    return <PublicLayout siteLayout homePrototype homeEventsVisible={visible('careers')} homeAiVisible={visible('ai_features')} homeOfferLabel={rewardPromotion?.discountLabel}>
+        <Head title="Learn, practise and connect | PM Circle"/>
+        <div className="pm-home-v2">
+            {visible('hero') && <HomeHero hero={content.hero} eventsVisible={visible('careers')}/>}
+            {visible('pathway') && <><HomeCertification content={content.pathway?.exams} promotion={rewardPromotion}/>
+                <HomeCourses courses={courses}/></>}
+            {showCommunity && <HomeCommunity scenario={scenario} posts={posts} members={members} content={content}
+                canInteract={canInteract} onJoin={setJoinAction}
+                visibility={{ scenario: visible('scenario'), community: visible('community'), members: visible('members'), skills: visible('skills') }}/>}
+            {visible('ai_features') && <HomeAiPractice content={content.ai_features}/>}
+            {visible('careers') && <><HomeResume content={content.careers}/><HomeEvents join={content.careers?.join}/></>}
+            <JoinCommunityDialog action={joinAction} onClose={() => setJoinAction(null)} hasAccount={Boolean(user && !user.is_admin)}/>
         </div>
     </PublicLayout>;
 }

@@ -391,3 +391,13 @@
 .pm-exam-nav-key svg { color: var(--warning); }
 @media (max-width: 64rem) { .pm-exam-taking .pm-exam-take-grid { grid-template-columns: minmax(0, 1fr); } .pm-exam-taking .pm-exam-navigator { position: static; } .pm-exam-taking .pm-exam-navigator-grid { grid-template-columns: repeat(10, minmax(0, 1fr)); } }
 @media (max-width: 42rem) { .pm-exam-taking .pm-exam-take-body { width: calc(100% - 2rem); } .pm-exam-taking .pm-exam-question-card > header, .pm-exam-taking .pm-exam-question-main { padding: var(--s4); } .pm-exam-taking .pm-exam-question-card > footer { padding: var(--s3); } .pm-exam-taking .pm-exam-navigator-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } .pm-exam-taking .pm-exam-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; } .pm-exam-taking .pm-exam-tools button { justify-content: center; } }
+
+/* Public sample exam: compact multi-question completion, paid exam layout unchanged. */
+.pm-pmp-public-sample-review { margin-bottom: var(--s4); }
+.pm-pmp-sample-exam-summary { display: grid; justify-items: start; gap: var(--s3); margin-bottom: var(--s4); }
+.pm-pmp-sample-exam-summary > p { margin: 0; color: var(--muted); font: var(--regular) var(--text-ui)/var(--line-ui) var(--font-ui); }
+.pm-pmp-sample-exam-summary > p strong { color: var(--ink); }
+.pm-pmp-sample-exam-summary > .pm-exam-summary { width: min(100%, 28rem); }
+.pm-pmp-sample-exam-summary > .pm-exam-action { margin-bottom: var(--s2); }
+.pm-pmp-public-sample-confirm { width: min(92vw, 30rem); }
+.pm-pmp-public-sample-confirm-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s4); }

@@ -22,6 +22,7 @@ export type PostCheckFeedData = {
     restricted_count: number;
     violation_count: number;
     blocked_until: string | null;
+    restriction_policy: { threshold: number; window_days: number; duration_days: number };
 };
 
 type Owner = { name: string; avatar_path?: string | null };
@@ -110,11 +111,12 @@ function RestrictedPostDialog({ post, open, onClose, onSubmitted }: { post: Post
     </Dialog>;
 }
 
-export function PostCheckCard({ post, owner, onRefresh }: { post: PostCheckPreview; owner: Owner; onRefresh: () => void }) {
+export function PostCheckCard({ post, owner, onRefresh, blockedUntil = null }: { post: PostCheckPreview; owner: Owner; onRefresh: () => void; blockedUntil?: string | null }) {
     const [editOpen, setEditOpen] = useState(false);
     const [retrying, setRetrying] = useState(false);
     const [error, setError] = useState('');
     const restricted = post.status === 'restricted';
+    const contributionBlocked = Boolean(blockedUntil && new Date(blockedUntil).getTime() > Date.now());
     const checking = post.status === 'pending_check';
     const displayName = post.is_anonymous ? 'Anonymous member' : owner.name;
     const retry = async () => {
@@ -145,10 +147,10 @@ export function PostCheckCard({ post, owner, onRefresh }: { post: PostCheckPrevi
             {checking && <div className="pm-post-check-progress" role="status" aria-live="polite"><strong>Checking your post...</strong><p>Your post will appear in the feed once it passes the check.</p><div className="pm-post-check-track"><div/></div></div>}
             {restricted && <div className="pm-post-check-reason"><strong>Why it was restricted</strong><p>{post.check_reason || 'This post did not meet the community posting policy.'}</p></div>}
             {post.status === 'pending_review' && <div className="pm-post-check-progress" role="status"><strong>Waiting for admin review</strong><p>Your post is awaiting an administrator review before publication.</p></div>}
-            {post.status === 'check_error' && <div className="pm-post-check-error" role="alert"><AlertCircle size={18}/><span>We couldn't check your post. It remains private.</span><button type="button" disabled={retrying} onClick={() => void retry()}><RefreshCw size={15}/>{retrying ? 'Retrying…' : 'Retry'}</button></div>}
+            {post.status === 'check_error' && <div className="pm-post-check-error" role="alert"><AlertCircle size={18}/><span>We couldn't check your post. It remains private.</span><button type="button" disabled={retrying || contributionBlocked} onClick={() => void retry()}><RefreshCw size={15}/>{retrying ? 'Retrying…' : 'Retry'}</button></div>}
             {error && <p className="pm-post-action-error" role="alert">{error}</p>}
         </div>
-        {restricted ? <div className="pm-post-check-restricted-actions"><button type="button" className="pm-button pm-button-outline" onClick={() => setEditOpen(true)}><Pencil size={16}/> Edit post</button><button type="button" className="pm-button pm-post-check-post-again" disabled>Post again</button><small>Edit before reposting</small></div>
+        {restricted ? <div className="pm-post-check-restricted-actions"><button type="button" className="pm-button pm-button-outline" disabled={contributionBlocked} onClick={() => setEditOpen(true)}><Pencil size={16}/> Edit post</button><button type="button" className="pm-button pm-post-check-post-again" disabled>Post again</button><small>{contributionBlocked ? 'Reposting is available when your restriction ends.' : 'Edit before reposting'}</small></div>
             : <footer className="pm-post-check-quiet-actions" aria-label="Engagement is available after publication"><span><ReactionGlyph type="love" size={18}/> Love</span><span><MessageCircle size={18}/> Comments</span><span><Share2 size={18}/> Share</span><span><Bookmark size={18}/> Save</span></footer>}
         {editOpen && <RestrictedPostDialog post={post} open={editOpen} onClose={() => setEditOpen(false)} onSubmitted={onRefresh}/>}
     </article>;

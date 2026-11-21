@@ -52,3 +52,18 @@ test('malformed metadata displays safely instead of crashing or creating fictiti
         { approach: '', industry: '' });
     assert.equal(conceptsContent(null).items.length, 0);
 });
+
+test('review filters distinguish an incorrect answer from an unanswered question', async () => {
+    const { matchesReviewFilter } = await import('../../resources/js/components/exam/pmpReviewContent.ts');
+    const question = { id: 42, domain: 'People', difficulty: 'Moderate', prompt: 'Example', options: { A: 'One', B: 'Two', C: 'Three', D: 'Four' }, correct: 'D' };
+    const wrong = { choice: 'B', marked: false };
+    const right = { choice: 'D', marked: false };
+    const blank = { choice: null, marked: false };
+    assert.equal(matchesReviewFilter(question, wrong, 'missed'), true);
+    assert.equal(matchesReviewFilter(question, right, 'missed'), false);
+    assert.equal(matchesReviewFilter(question, blank, 'missed'), false);
+    assert.equal(matchesReviewFilter(question, blank, 'unanswered'), true);
+    assert.equal(matchesReviewFilter(question, right, 'unanswered'), false);
+    assert.equal(matchesReviewFilter(question, { choice: 'D', marked: true }, 'flagged'), true);
+    assert.equal(matchesReviewFilter(question, blank, 'all'), true);
+});

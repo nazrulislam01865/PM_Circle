@@ -1,4 +1,4 @@
-import type { ExamQuestion } from './ExamShared';
+import type { ExamQuestion, ExamResponse } from './ExamShared';
 
 /** Rich text-column schemas, with a backward-compatible plain-text fallback. */
 type ContentRecord = Record<string, unknown>;
@@ -74,6 +74,16 @@ export function referenceContent(raw: string | null | undefined): { sources: Ref
         }];
     }) : [];
     return { sources, performanceDomain: text(data.performanceDomain), knowledgeArea: text(data.knowledgeArea) };
+}
+
+
+/** Filter completed-attempt answers without merging incorrect and unanswered. */
+export type ReviewFilter = 'all' | 'missed' | 'unanswered' | 'flagged';
+export function matchesReviewFilter(question: ExamQuestion, response: ExamResponse | undefined, filter: ReviewFilter): boolean {
+    if (filter === 'missed') return Boolean(response?.choice) && response?.choice !== question.correct;
+    if (filter === 'unanswered') return !response?.choice;
+    if (filter === 'flagged') return Boolean(response?.marked);
+    return true;
 }
 
 /** Metadata is shown only when the question author actually supplied it. */

@@ -2,7 +2,10 @@
 
 namespace App\Domain\Interview;
 
-/** Versioned, curated interview prompts: no AI call on the page or session start. */
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+
+/** Starter catalog and database-backed interview question selection; no AI call at session start. */
 final class QuestionCatalog
 {
     public const INDUSTRIES = [
@@ -80,40 +83,100 @@ final class QuestionCatalog
         ],
     ];
 
-    public function select(string $industry, string $role, string $experience, array $types, int $count): array
+    /** Starter bank is copied into the database once by the catalog migration. */
+    public static function starterQuestions(): array
     {
-        $rows = collect(self::BANK)->only($types)->flatMap(function (array $questions, string $type) use ($industry, $role, $experience) {
-            return collect($questions)->map(function (string $text, int $index) use ($industry, $role, $experience, $type) {
-                $prompt = strtr($text, [
-                    '{industry}' => self::INDUSTRIES[$industry], '{role}' => $role,
-                    '{scenario}' => self::SCENARIOS[$industry],
+        $questions = [];
+        foreach (self::BANK as $type => $items) {
+            foreach ($items as $position => $text) {
+                $questions[] = ['type' => $type, 'text' => $text, 'sort_order' => $position + 1];
+            }
+        }
+
+        return $questions;
+    }
+
+    /** Six option groups in one query; no per-control database lookups. */
+    public function choices(): array
+    {
+        $rows = DB::table('master_data_options')->whereIn('category', array_keys(\App\Support\Admin\InterviewMasterData::GROUPS))->where('is_active', true)
+            ->orderBy('sort_order')->orderBy('id')->get(['category', 'value', 'label']);
+        $choices = ['industry' => [], 'role' => [], 'experience' => [], 'type' => [], 'count' => [], 'mode' => []];
+        foreach ($rows as $row) {
+            $choices[substr($row->category, strlen('interview_'))][$row->value] = $row->label;
+        }
+
+        return $choices;
+    }
+
+    public function publishedSets(): array
+    {
+        return DB::table('interview_question_sets')->where('is_active', true)
+            ->orderBy('sort_order')->orderBy('id')->get(['id', 'title', 'industry', 'role', 'experience'])->all();
+    }
+
+    public function minutesPerQuestion(): int
+    {
+        return (int) (DB::table('interview_configuration')->where('id', 1)->value('minutes_per_question')
+            ?? config('pm-interview.minutes_per_question', 2));
+    }
+
+    public function select(string $industry, string $role, string $experience, array $types, int $count, ?int $setId = null): array
+    {
+        $query = DB::table('interview_questions as q')
+            ->join('interview_question_sets as s', 's.id', '=', 'q.set_id')
+            ->where('q.is_active', true)->where('s.is_active', true)
+            ->whereIn('q.type', $types)
+            ->where(fn ($q) => $q->whereNull('s.industry')->orWhere('s.industry', $industry))
+            ->where(fn ($q) => $q->whereNull('s.role')->orWhere('s.role', $role))
+            ->where(fn ($q) => $q->whereNull('s.experience')->orWhere('s.experience', $experience));
+        if ($setId !== null) {
+            $query->where('s.id', $setId);
+        }
+        // Rank per question type in SQL. Only the requested number from each type
+        // is fetched into PHP, even if the admin bank grows to thousands of entries.
+        $ranked = $query->select(['q.id', 'q.type', 'q.text'])
+            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY q.type ORDER BY
+                CASE WHEN s.industry IS NOT NULL THEN 0 ELSE 1 END,
+                CASE WHEN s.role IS NOT NULL THEN 0 ELSE 1 END,
+                CASE WHEN s.experience IS NOT NULL THEN 0 ELSE 1 END,
+                s.sort_order, q.sort_order, q.id) as question_rank');
+        $rows = DB::query()->fromSub($ranked, 'eligible')
+            ->where('question_rank', '<=', $count)->orderBy('question_rank')
+            ->get(['id', 'type', 'text']);
+
+        $industryLabel = DB::table('master_data_options')->where('category', 'interview_industry')->where('value', $industry)->value('label') ?? $industry;
+        $groups = $rows->groupBy('type');
+        $selected = [];
+        $used = [];
+        for ($index = 0; count($selected) < $count; $index++) {
+            $added = false;
+            foreach ($types as $type) {
+                $question = $groups->get($type, collect())->get($index);
+                if (! $question) continue;
+                $added = true;
+                // Persist an immutable copy: subsequent admin edits never modify a live session.
+                $prompt = strtr($question->text, [
+                    '{industry}' => $industryLabel,
+                    '{role}' => $role,
+                    '{scenario}' => self::SCENARIOS[$industry] ?? ('a '.strtolower($industryLabel).' project'),
                 ]);
-                // Calibrate expectations while keeping the first general introduction natural.
                 if ($type !== 'General' && in_array($experience, ['senior', 'leadership'], true)) {
                     $prompt .= ' Include leadership decisions and key trade-offs.';
                 } elseif ($type === 'Situational' && in_array($experience, ['entry', 'junior'], true)) {
                     $prompt .= ' Explain your initial steps.';
                 }
-
-                return ['id' => "$type-".($index + 1), 'type' => $type, 'text' => $prompt];
-            });
-        })->values();
-
-        // Mix categories in a stable order, with no repeat or query per question.
-        $groups = $rows->groupBy('type');
-        $selected = collect();
-        for ($index = 0; $selected->count() < $count; $index++) {
-            $added = false;
-            foreach ($types as $type) {
-                if ($question = $groups->get($type, collect())->get($index)) {
-                    $selected->push($question);
-                    $added = true;
-                    if ($selected->count() === $count) break;
-                }
+                if (isset($used[$question->id])) continue;
+                $used[$question->id] = true;
+                $selected[] = ['id' => 'bank-'.$question->id, 'type' => $type, 'text' => $prompt];
+                if (count($selected) === $count) break;
             }
             if (! $added) break;
         }
+        if (count($selected) < $count) {
+            throw ValidationException::withMessages(['count' => 'This question selection has only '.count($selected).' available questions. Choose fewer questions, more types, or another set.']);
+        }
 
-        return $selected->values()->all();
+        return $selected;
     }
 }

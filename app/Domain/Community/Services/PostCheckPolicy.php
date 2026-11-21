@@ -2,17 +2,33 @@
 
 namespace App\Domain\Community\Services;
 
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-/** Enforces author restrictions for posts, comments and replies server-side. */
+/** Shared, server-side restriction policy for community contributions. */
 final class PostCheckPolicy
 {
+    /** The numbers are configurable without changing the moderation or UI code. */
+    public function settings(): array
+    {
+        return [
+            'threshold' => max(1, (int) config('community.post_restriction_threshold', 5)),
+            'window_days' => max(1, (int) config('community.post_restriction_window_days', 30)),
+            'duration_days' => max(1, (int) config('community.post_restriction_duration_days', 10)),
+        ];
+    }
+
     public function restrictionUntil(int $userId): ?string
     {
         $until = DB::table('post_check_restrictions')->where('user_id', $userId)->value('blocked_until');
+        if (! $until) {
+            return null;
+        }
 
-        return $until && \Illuminate\Support\Carbon::parse($until)->isFuture() ? (string) $until : null;
+        $date = Carbon::parse($until);
+
+        return $date->isFuture() ? $date->toIso8601String() : null;
     }
 
     public function assertOperational(): void
@@ -39,43 +55,78 @@ final class PostCheckPolicy
         }
     }
 
-    /** Called while holding a post lock after a confirmed AI restriction. */
+    /** The post version makes a retried queue job idempotent. */
     public function recordViolation(int $postId, int $version, int $userId, string $category): void
     {
-        $inserted = DB::table('post_check_violations')->insertOrIgnore([
-            'post_id' => $postId, 'check_version' => $version,
-            'user_id' => $userId, 'category' => $category, 'created_at' => now(),
-        ]);
-        if ($inserted) $this->applyRestrictionIfDue($userId);
+        DB::transaction(function () use ($postId, $version, $userId, $category): void {
+            $this->lockMember($userId);
+            $inserted = DB::table('post_check_violations')->insertOrIgnore([
+                'post_id' => $postId,
+                'check_version' => $version,
+                'user_id' => $userId,
+                'category' => $category,
+                'created_at' => now(),
+            ]);
+            if ($inserted) {
+                $this->applyRestrictionIfDue($userId);
+            }
+        }, 3);
     }
 
-    /** Called while holding a comment lock; duplicate queue executions cannot add strikes. */
+    /** A comment/reply can receive only one confirmed strike, even on retries. */
     public function recordCommentViolation(int $commentId, int $userId, string $category): void
     {
-        $inserted = DB::table('comment_check_violations')->insertOrIgnore([
-            'comment_id' => $commentId, 'user_id' => $userId,
-            'category' => $category, 'created_at' => now(),
-        ]);
-        if ($inserted) $this->applyRestrictionIfDue($userId);
+        DB::transaction(function () use ($commentId, $userId, $category): void {
+            $this->lockMember($userId);
+            $inserted = DB::table('comment_check_violations')->insertOrIgnore([
+                'comment_id' => $commentId,
+                'user_id' => $userId,
+                'category' => $category,
+                'created_at' => now(),
+            ]);
+            if ($inserted) {
+                $this->applyRestrictionIfDue($userId);
+            }
+        }, 3);
+    }
+
+    /** Serializes strikes belonging to the same member, across posts and comments. */
+    private function lockMember(int $userId): void
+    {
+        DB::table('users')->where('id', $userId)->lockForUpdate()->first(['id']);
     }
 
     private function applyRestrictionIfDue(int $userId): void
     {
-        $start = now()->subDays(30);
-        $count = DB::table('post_check_violations')->where('user_id', $userId)
-            ->where('created_at', '>=', $start)->count()
-            + DB::table('comment_check_violations')->where('user_id', $userId)
-                ->where('created_at', '>=', $start)->count();
-        if ($count < 5) return;
+        $settings = $this->settings();
+        $existing = DB::table('post_check_restrictions')
+            ->where('user_id', $userId)->first(['blocked_until', 'updated_at']);
 
-        // Never shorten an existing restriction when another violation is recorded.
-        $existing = DB::table('post_check_restrictions')->where('user_id', $userId)->value('blocked_until');
-        $until = now()->addDays(10);
-        if ($existing && \Illuminate\Support\Carbon::parse($existing)->greaterThan($until)) {
-            $until = \Illuminate\Support\Carbon::parse($existing);
+        // Additional queued violations must not keep moving an active ten-day deadline.
+        if ($existing && Carbon::parse($existing->blocked_until)->isFuture()) {
+            return;
         }
-        DB::table('post_check_restrictions')->upsert([
-            ['user_id' => $userId, 'blocked_until' => $until, 'created_at' => now(), 'updated_at' => now()],
-        ], ['user_id'], ['blocked_until', 'updated_at']);
+
+        $start = now()->subDays($settings['window_days']);
+        if ($existing && Carbon::parse($existing->updated_at)->greaterThan($start)) {
+            // Require a *new* set of confirmed strikes after a previous restriction.
+            $start = Carbon::parse($existing->updated_at);
+        }
+
+        $posts = DB::table('post_check_violations')->where('user_id', $userId)
+            ->where('created_at', '>', $start)->count();
+        $comments = DB::table('comment_check_violations')->where('user_id', $userId)
+            ->where('created_at', '>', $start)->count();
+
+        if ($posts + $comments < $settings['threshold']) {
+            return;
+        }
+
+        DB::table('post_check_restrictions')->upsert([[
+            'user_id' => $userId,
+            'blocked_until' => now()->addDays($settings['duration_days']),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]], ['user_id'], ['blocked_until', 'updated_at']);
     }
 }

@@ -23,8 +23,6 @@ const secondary: Record<MemberSection, MemberSecondaryLink[]> = {
     community: [
         { id: 'feed', label: 'Feed', href: '/dashboard?view=community' },
         { id: 'members', label: 'Members', href: '/members' },
-        { id: 'topics', label: 'Topics', href: '/community?topic=All' },
-        { id: 'saved', label: 'Saved posts', href: '/saved-posts' },
     ],
     learn: [
         { id: 'courses', label: 'Course library', href: '/dashboard/learning?tab=courses' },

@@ -6,7 +6,7 @@
     /* Canonical values from PM_Circle_UI_Style_Guide (2).html.
        Edit these variables rather than authoring page-specific color or type scales. */
     color-scheme: light;
-    --font-ui: "Rajdhani", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-ui: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --text-xs: .75rem;
     --text-donut-label: .6875rem; /* Compact review circle label; keeps the text within the ring. */
     --line-xs: 1rem;
@@ -48,6 +48,9 @@
     --header-height: 5rem;
     --sidebar-width: 14rem;
     --content-width: 70rem;
+    /* Shared public-page content rail (same dimensions as the existing .pm-container). */
+    --pm-public-layout-max-width: 92.5rem;
+    --pm-public-layout-gutter: 2rem;
     --control-height: 2.5rem;
     --control-compact: 2rem;
     --control-touch: 2.75rem;
@@ -79,6 +82,65 @@
     --reward-border: #f2dfbb;
     --reward-icon-bg: #f8ce65;
     --reward-icon-ink: #a56800;
+
+    /* Public homepage prototype V2: one shared palette/type source. */
+    /* Restore the previous homepage-only centered rail, without changing other public pages. */
+    --pm-v2-width: 90rem;
+    --pm-v2-container-width: min(70.2vw, var(--pm-v2-width));
+    /* Measured at a common screenshot scale: 28px section titles, 16px controls, 15px body. */
+    --pm-v2-font-caption: .8125rem;
+    --pm-v2-font-body: .9375rem;
+    /* Public homepage navigation matches the prototype at 14px; other body copy remains 15px. */
+    --pm-v2-font-header-nav: var(--text-ui);
+    --pm-v2-font-header-nav-compact: var(--text-xs);
+    --pm-v2-search-title-font: var(--text-h3);
+    --pm-v2-search-width: 27.5rem;
+    --pm-v2-search-max-height: 28rem;
+    --pm-v2-font-ui: 1rem;
+    --pm-v2-font-card-heading: 1.0625rem;
+    --pm-v2-font-section-heading: clamp(1.5rem, 1.7vw, 1.75rem);
+    --pm-v2-font-footer: .875rem;
+    --pm-v2-font-brand-title: 1.25rem;
+    --pm-v2-font-resume-title: 1.5rem;
+    --pm-v2-font-resume-subtitle: 1.25rem;
+    --pm-v2-font-event-date: 1.5rem;
+    /* Mobile typography is also declared centrally, then referenced by the homepage breakpoint. */
+    --pm-v2-font-body-mobile: .875rem;
+    --pm-v2-font-ui-mobile: .9375rem;
+    --pm-v2-font-card-heading-mobile: 1rem;
+    --pm-v2-button-height-mobile: 2.75rem;
+    --pm-v2-brand-size: 2.375rem;
+    --pm-v2-footer-brand-size: 2.5rem;
+    --pm-v2-font-section-line: 1.3;
+    --pm-v2-font-hero: clamp(2.125rem, 2.45vw, 3.125rem);
+    --pm-v2-font-hero-mobile: 2rem;
+    --pm-v2-button-height: 2.875rem;
+    --pm-v2-card-border-radius: 1rem;
+    /* V2 post title/body starts under the author name, like the canonical community cards. */
+    --pm-v2-post-avatar-size: 2.625rem;
+    --pm-v2-post-content-indent: calc(var(--pm-v2-post-avatar-size) + var(--s2));
+    /* Sampled from the supplied desktop reference screenshot. Keep these homepage-only. */
+    --pm-v2-navy: #071a33;
+    --pm-v2-offer: #0d3566;
+    --pm-v2-tabs-bg: #0c2747;
+    --pm-v2-footer-bg: #0d2340;
+    --pm-v2-panel: #f3f8fd;
+    --pm-v2-tab-active: #214b78;
+    --pm-v2-tab-border: #60a5fa;
+    --pm-v2-reward-border: #bd9138;
+    --pm-v2-reward-ink: #83590f;
+    --pm-v2-compose-avatar: #d5e9fb;
+    --pm-v2-purple-soft: #eee6fc;
+    --pm-v2-purple: #7044a7;
+    --pm-v2-cta: #0d3566;
+    --pm-v2-footer-lower: #0c223e;
+    --pm-v2-footer-border: rgb(255 255 255 / 24%);
+    --pm-v2-shadow: rgb(14 41 82 / 15%);
+    /* Homepage dimensions are deliberately independent of other page font sizes. */
+    --pm-v2-section-heading-font: var(--pm-v2-font-section-heading);
+    --pm-v2-section-heading-line: var(--pm-v2-font-section-line);
+    --pm-v2-hero-font: var(--pm-v2-font-hero);
+    --pm-v2-hero-font-mobile: var(--pm-v2-font-hero-mobile);
 
     --primary: var(--blue);
     --primary-hover: var(--blue-hover);

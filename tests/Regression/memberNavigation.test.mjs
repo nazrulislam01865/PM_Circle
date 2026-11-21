@@ -9,9 +9,9 @@ test('community secondary navigation follows the approved order and uses existin
     const nav = state('/dashboard?view=community');
     assert.equal(nav.section, 'community');
     assert.equal(nav.active, 'feed');
-    assert.deepEqual(nav.secondary.map((link) => link.label), ['Feed', 'Members', 'Topics', 'Saved posts']);
+    assert.deepEqual(nav.secondary.map((link) => link.label), ['Feed', 'Members']);
     assert.deepEqual(nav.secondary.map((link) => link.href), [
-        '/dashboard?view=community', '/members', '/community?topic=All', '/saved-posts',
+        '/dashboard?view=community', '/members',
     ]);
 });
 

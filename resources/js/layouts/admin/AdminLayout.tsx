@@ -1,6 +1,6 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { useEffect, useState, type ReactNode } from 'react';
-import { ChevronDown, ChevronRight, Database, ExternalLink, Flag, House, LayoutDashboard, LogOut, Menu, PanelTop, ClipboardCheck, Gift, Route, Gauge, CalendarDays, X, BookOpen, Heart } from 'lucide-react';
+import { ChevronDown, ChevronRight, Database, ExternalLink, Flag, House, LayoutDashboard, LogOut, Menu, PanelTop, ClipboardCheck, Gift, Route, Gauge, CalendarDays, X, BookOpen, Heart, MessageSquareMore, Search, Bell } from 'lucide-react';
 import { Brand } from '@/components/pm/Brand';
 import { homepageSections, type HomepageSection, type HomepageSectionVisibility } from '@/components/admin/homepage-sections';
 import { pmpPublicSections } from '@/components/admin/pmp-public-sections';
@@ -19,9 +19,25 @@ type Props = {
     selectedPmpSection?: PmpPublicSection;
     onSelectPmpSection?: (section: PmpPublicSection) => void;
     pmpVisibility?: Record<PmpPublicSection, boolean>;
+    headingAction?: ReactNode;
+    dashboardHeader?: { pendingReviews: number };
 };
 
-export function AdminLayout({ title, subtitle, children, active, selectedHomeSection, onSelectHomeSection, homepageVisibility, selectedCatalogCategory, selectedPmpSection, onSelectPmpSection, pmpVisibility }: Props) {
+export function AdminLayout({ title, subtitle, children, active, selectedHomeSection, onSelectHomeSection, homepageVisibility, selectedCatalogCategory, selectedPmpSection, onSelectPmpSection, pmpVisibility, headingAction, dashboardHeader }: Props) {
+    const { auth } = usePage<{ auth?: { user?: { name?: string } | null } }>().props;
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [searchValue, setSearchValue] = useState('');
+    const [profileOpen, setProfileOpen] = useState(false);
+    const quickLinks = [
+        { title: 'Community moderation', href: '/admin/post-reports' },
+        { title: 'Interview preparation', href: '/admin/interview-preparation' },
+        { title: 'Course library', href: '/admin/learning/courses' },
+        { title: 'Manage rewards', href: '/admin/profile-rewards' },
+        { title: 'Daily Challenge AI', href: '/admin/ai/daily-challenge' },
+        { title: 'Homepage control', href: '/admin/homepage' },
+        { title: 'PMP questions', href: '/admin/exam-simulator/pmp/questions' },
+        { title: 'Master data', href: '/admin/master-data' },
+    ];
     const isHomepage = active === '/admin/homepage';
     const isMaster = active === '/admin/master-data';
     const isNavigation = active === '/admin/navigation' || active === '/admin/footer';
@@ -155,6 +171,10 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
                     className={`pm-admin-nav-link ${isPmpBank ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
                     <ClipboardCheck size={18} aria-hidden="true"/><span>PMP questions &amp; settings</span>
                 </Link>
+                <Link href="/admin/interview-preparation" aria-current={active === '/admin/interview-preparation' ? 'page' : undefined}
+                    className={`pm-admin-nav-link ${active === '/admin/interview-preparation' ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
+                    <MessageSquareMore size={18} aria-hidden="true"/><span>Interview preparation</span>
+                </Link>
                 <Link href="/admin/learning/courses" aria-current={isLearning ? 'page' : undefined}
                     className={`pm-admin-nav-link ${isLearning ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
                     <BookOpen size={18} aria-hidden="true"/><span>Course library</span>
@@ -171,10 +191,32 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
                 <div className="pm-admin-breadcrumb"><span>PM Circle</span><span aria-hidden="true">/</span><span>Administration</span><span aria-hidden="true">/</span><strong>{title}</strong>
                     {(sectionLabel || catalogLabel || pmpLabel) && <><span aria-hidden="true">/</span><span>{sectionLabel || catalogLabel || pmpLabel}</span></>}
                 </div>
-                <Link href="/" className="pm-admin-view-site">View website <ExternalLink size={16} aria-hidden="true"/></Link>
+                {dashboardHeader ? <div className="pm-admin-overview-top-actions">
+                    <div className="pm-admin-overview-top-popover">
+                        <button className="pm-admin-overview-header-button" aria-label="Search admin pages" aria-expanded={searchOpen} type="button" onClick={() => { setSearchOpen(!searchOpen); setProfileOpen(false); }}><Search size={20}/></button>
+                        {searchOpen && <div className="pm-admin-overview-popover pm-admin-overview-search">
+                            <label htmlFor="pm-admin-quick-search">Find an admin page</label>
+                            <input id="pm-admin-quick-search" type="search" autoFocus value={searchValue} placeholder="Search admin pages" onChange={event => setSearchValue(event.target.value)}/>
+                            <div className="pm-admin-overview-search-results">
+                                {quickLinks.filter(item => item.title.toLowerCase().includes(searchValue.trim().toLowerCase())).map(item => <Link href={item.href} key={item.href} onClick={() => setSearchOpen(false)}>{item.title}</Link>)}
+                                {!quickLinks.some(item => item.title.toLowerCase().includes(searchValue.trim().toLowerCase())) && <span>No matching admin pages</span>}
+                            </div>
+                        </div>}
+                    </div>
+                    <Link href="/admin/post-reports" className="pm-admin-overview-header-button" aria-label={`${dashboardHeader.pendingReviews} pending moderation items`} title="Pending moderation"><Bell size={20}/>{dashboardHeader.pendingReviews > 0 && <span className="pm-admin-overview-header-count">{dashboardHeader.pendingReviews > 99 ? '99+' : dashboardHeader.pendingReviews}</span>}</Link>
+                    <div className="pm-admin-overview-top-popover pm-admin-overview-user">
+                        <button type="button" className="pm-admin-overview-account" aria-expanded={profileOpen} onClick={() => { setProfileOpen(!profileOpen); setSearchOpen(false); }}>
+                            <span>{auth?.user?.name?.trim().split(/\s+/).slice(0, 2).map(word => word[0]).join('').toUpperCase() || 'AD'}</span><strong>{auth?.user?.name || 'Admin'}</strong><ChevronDown size={16}/>
+                        </button>
+                        {profileOpen && <div className="pm-admin-overview-popover pm-admin-overview-profile-menu">
+                            <Link href="/" onClick={() => setProfileOpen(false)}>View website <ExternalLink size={14}/></Link>
+                            <Link href="/admin/logout" method="post" as="button" onClick={() => setProfileOpen(false)}>Sign out <LogOut size={14}/></Link>
+                        </div>}
+                    </div>
+                </div> : <Link href="/" className="pm-admin-view-site">View website <ExternalLink size={16} aria-hidden="true"/></Link>}
             </header>
             <main className="pm-admin-content" id="admin-main">
-                <div className="pm-admin-page-heading"><div><h1>{title}</h1>{subtitle && <p>{subtitle}</p>}</div></div>
+                <div className="pm-admin-page-heading"><div><h1>{title}</h1>{subtitle && <p>{subtitle}</p>}</div>{headingAction}</div>
                 {children}
             </main>
         </div>

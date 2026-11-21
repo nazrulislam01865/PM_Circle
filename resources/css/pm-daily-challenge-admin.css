@@ -21,3 +21,30 @@
 .pm-ai-daily-expiry-form{display:flex;align-items:end;gap:10px;flex-wrap:wrap}.pm-ai-daily-expiry-form .pm-admin-field{min-width:190px;flex:1}
 .pm-ai-review-status{display:flex;align-items:center;gap:8px;padding:10px 12px;margin:6px 0 12px;background:var(--surface-subtle,#f8fafc);border-radius:8px;font-size:var(--text-sm);line-height:var(--line-sm);color:var(--text-secondary,#475569)}.pm-ai-review-status.is-failed{background:var(--surface-subtle,#f8fafc)}
 @media(max-width:640px){.pm-ai-daily-section{padding:16px}.pm-ai-daily-checks{grid-template-columns:1fr}.pm-ai-daily-generate>*{width:100%}.pm-ai-daily-expiry-form>*{width:100%}}
+
+/* Admin-selected generation brief: shared PM Circle typography and control tokens. */
+.pm-ai-daily-guidance{margin:var(--s5) 0;padding:var(--s5);border:1px solid var(--border);border-radius:var(--radius-card);background:var(--canvas)}
+.pm-ai-daily-guidance-head{display:flex;justify-content:space-between;align-items:start;gap:var(--s3);margin-bottom:var(--s4)}
+.pm-ai-daily-guidance-head h3{margin:0 0 var(--s1);font:var(--bold) var(--text-h3)/var(--line-h3) var(--font-ui);color:var(--ink)}
+.pm-ai-daily-guidance-head p{margin:0;max-width:45rem;color:var(--muted);font:var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui)}
+.pm-ai-daily-guidance-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s4)}
+.pm-ai-daily-guidance .pm-admin-field{min-width:0;align-content:start}
+.pm-ai-daily-guidance .pm-admin-field textarea{width:100%;min-height:6rem;resize:vertical}
+.pm-ai-daily-guidance-note{font:var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui);color:var(--muted);margin:var(--s4) 0 0}
+.pm-admin-multi-choice{min-width:0}
+.pm-admin-multi-choice .pm-admin-choice-trigger>span:first-child{min-width:0;flex:1}
+.pm-admin-multi-content{z-index:320;min-width:var(--radix-dropdown-menu-trigger-width);max-width:min(28rem,calc(100vw - 2rem));padding:var(--s2);background:var(--surface)}
+.pm-admin-multi-menu-caption{margin:0;padding:var(--s2);font:var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui);color:var(--muted)}
+.pm-admin-multi-options{max-height:15rem;overflow-y:auto}
+.pm-admin-multi-item{display:flex;align-items:center;gap:var(--s2);padding:var(--s2);min-height:var(--control-height);border-radius:var(--radius-control);font:var(--regular) var(--text-ui)/var(--line-ui) var(--font-ui);color:var(--ink);outline:none;cursor:pointer}
+.pm-admin-multi-item[data-highlighted]{background:var(--blue-soft);color:var(--blue)}
+.pm-admin-multi-item[data-disabled]{opacity:.5;cursor:not-allowed}
+.pm-admin-multi-check{display:grid;place-items:center;flex:none;width:1.25rem;height:1.25rem;border:1px solid var(--control-border);border-radius:.25rem;color:var(--blue)}
+.pm-admin-multi-item[data-state="checked"] .pm-admin-multi-check{border-color:var(--blue);background:var(--blue-soft)}
+.pm-admin-multi-menu-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding:var(--s2);font:var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui);color:var(--muted)}
+.pm-admin-multi-done{padding:var(--s2) var(--s3);border-radius:var(--radius-control);background:var(--blue);color:white;outline:none;cursor:pointer;font-weight:var(--semibold)}
+.pm-admin-multi-tags{display:flex;gap:var(--s1);flex-wrap:wrap;margin-top:var(--s1)}
+.pm-admin-multi-tag{display:inline-flex;align-items:center;gap:var(--s1);max-width:100%;padding:var(--s1) var(--s2);border-radius:var(--radius-pill);background:var(--blue-soft);color:var(--blue);font:var(--medium) var(--text-sm)/var(--line-sm) var(--font-ui);overflow-wrap:anywhere}
+.pm-admin-multi-tag button{font:inherit;color:inherit;cursor:pointer;border:0;background:transparent;min-width:1.25rem;min-height:1.25rem}
+.pm-ai-daily-generate>.pm-admin-field{flex:1 1 16rem}
+@media(max-width:42rem){.pm-ai-daily-guidance{padding:var(--s4)}.pm-ai-daily-guidance-grid{grid-template-columns:minmax(0,1fr)}.pm-ai-daily-guidance-head{flex-wrap:wrap}.pm-ai-daily-guidance-head>a{width:100%;justify-content:center}}

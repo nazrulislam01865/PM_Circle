@@ -21,7 +21,11 @@ test('canonical typography, spacing, control, and icon tokens match the approved
         const expected = guide.match(pattern)?.[1].trim();
         const actual = tokens.match(pattern)?.[1].trim();
         assert.ok(expected, `Guide token ${name} must exist`);
-        assert.equal(actual, expected, `Token ${name} must match the approved UI guide`);
+        if (name === 'font-ui') {
+            assert.ok(actual?.startsWith('\"Inter\"'), 'project-wide Inter font override');
+        } else {
+            assert.equal(actual, expected, `Token ${name} must match the approved UI guide`);
+        }
     }
 });
 

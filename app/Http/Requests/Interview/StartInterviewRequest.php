@@ -15,14 +15,16 @@ final class StartInterviewRequest extends FormRequest
 
     public function rules(): array
     {
+        $choices = app(QuestionCatalog::class)->choices();
         return [
-            'industry' => ['required', Rule::in(array_keys(QuestionCatalog::INDUSTRIES))],
-            'role' => ['required', Rule::in(QuestionCatalog::ROLES)],
-            'experience' => ['required', Rule::in(array_keys(QuestionCatalog::EXPERIENCE))],
-            'types' => ['required', 'array', 'min:1', 'max:4'],
-            'types.*' => ['required', 'distinct', Rule::in(['General', 'Behavioral', 'Technical', 'Situational'])],
-            'count' => ['required', 'integer', Rule::in([5, 10])],
-            'mode' => ['required', Rule::in(['type', 'speak', 'both'])],
+            'industry' => ['required', Rule::in(array_keys($choices['industry']))],
+            'role' => ['required', Rule::in(array_keys($choices['role']))],
+            'experience' => ['required', Rule::in(array_keys($choices['experience']))],
+            'types' => ['required', 'array', 'min:1', 'max:20'],
+            'types.*' => ['required', 'string', 'distinct', Rule::in(array_keys($choices['type']))],
+            'count' => ['required', 'integer', Rule::in(array_map('intval', array_keys($choices['count'])))],
+            'mode' => ['required', Rule::in(array_keys($choices['mode']))],
+            'question_set' => ['nullable', 'integer', Rule::exists('interview_question_sets', 'id')->where('is_active', true)],
         ];
     }
 }

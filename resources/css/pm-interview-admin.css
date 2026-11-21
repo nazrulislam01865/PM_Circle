@@ -1,0 +1,95 @@
+/* Interview administrator UI: existing shared tokens and centralized typeface typography only. */
+.pm-interview-admin-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s3);margin-bottom:var(--s4)}
+.pm-interview-admin-stats>.pm-admin-panel{display:flex;align-items:center;gap:var(--s3);padding:var(--s4)}
+.pm-interview-admin-stats svg{color:var(--blue);flex:none}
+.pm-interview-admin-stats span{font-size:var(--text-ui);color:var(--muted)}
+.pm-interview-admin-stats strong{margin-left:auto;font-size:var(--text-h2);font-variant-numeric:tabular-nums}
+.pm-interview-admin-tabs{display:flex;gap:var(--s2);overflow-x:auto;border-bottom:1px solid var(--border);margin-bottom:var(--s4)}
+.pm-interview-admin-tabs button{flex:none;border:0;border-bottom:2px solid transparent;background:transparent;padding:var(--s3);cursor:pointer;color:var(--muted);font:var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui)}
+.pm-interview-admin-tabs button[aria-selected=true]{color:var(--blue);border-color:var(--blue)}
+.pm-interview-admin-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s4)}
+.pm-interview-admin-groups>.pm-admin-panel,.pm-interview-admin-settings{min-width:0;padding:var(--s4)}
+.pm-interview-admin-title{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s4)}
+.pm-interview-admin-title h2{font-size:var(--text-h3);line-height:var(--line-h3)}
+.pm-interview-admin-title p,.pm-interview-admin-record p{color:var(--muted);font-size:var(--text-sm);line-height:var(--line-sm)}
+.pm-interview-admin-title .pm-admin-button{flex:none}
+.pm-interview-admin-option-list,.pm-interview-admin-record-list{display:grid;gap:0}
+.pm-interview-admin-option,.pm-interview-admin-record{display:flex;align-items:center;gap:var(--s3);min-width:0;padding:var(--s3) 0;border-bottom:1px solid var(--border)}
+.pm-interview-admin-option:last-child,.pm-interview-admin-record:last-child{border-bottom:0}
+.pm-interview-admin-option>div,.pm-interview-admin-record-text{display:grid;gap:var(--s1);min-width:0;flex:1}
+.pm-interview-admin-option strong,.pm-interview-admin-record h3{font:var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui);overflow-wrap:anywhere}
+.pm-interview-admin-option small,.pm-interview-admin-record small{color:var(--muted);font-size:var(--text-xs)}
+.pm-interview-admin-status{display:inline-flex;align-items:center;border-radius:var(--radius-pill);background:var(--track);color:var(--muted);padding:var(--s1) var(--s2);white-space:nowrap;font:var(--semibold) var(--text-xs)/var(--line-xs) var(--font-ui)}
+.pm-interview-admin-status.is-active{background:var(--green-soft);color:var(--green)}
+.pm-interview-admin-muted{color:var(--muted);font-size:var(--text-sm);padding:var(--s3) 0}
+.pm-interview-admin-filters{display:grid;grid-template-columns:minmax(0,2fr) minmax(9rem,1fr) auto;gap:var(--s3);align-items:end;margin-bottom:var(--s4)}
+.pm-interview-admin-filters>.pm-admin-button{min-height:var(--control-height)}
+.pm-interview-admin-pagination{display:flex;align-items:center;justify-content:space-between;gap:var(--s2);color:var(--muted);font-size:var(--text-sm);padding-top:var(--s4);border-top:1px solid var(--border)}
+.pm-interview-admin-pagination>div{display:flex;gap:var(--s2)}
+.pm-interview-admin-settings{max-width:45rem}
+.pm-interview-admin-settings form{display:flex;align-items:flex-end;gap:var(--s3);flex-wrap:wrap}
+.pm-interview-admin-settings .pm-admin-field{max-width:14rem}
+.pm-interview-admin-modal-overlay{position:fixed;inset:0;z-index:1000;background:color-mix(in srgb,var(--ink) 54%,transparent);display:grid;place-items:center;padding:var(--s4)}
+.pm-interview-admin-modal{width:min(100%,42rem);max-height:min(92dvh,52rem);overflow:auto;background:var(--surface);border-radius:var(--radius-card);border:1px solid var(--border);box-shadow:0 20px 70px #0a1b3340;padding:var(--s5);color:var(--ink)}
+.pm-interview-admin-modal>header{display:flex;justify-content:space-between;gap:var(--s3);margin-bottom:var(--s4)}
+.pm-interview-admin-modal h2{font-size:var(--text-h2)}
+.pm-interview-admin-modal header p{color:var(--muted);font-size:var(--text-sm)}
+.pm-interview-admin-modal header button{align-self:flex-start;background:transparent;border:0;cursor:pointer;color:var(--ink);padding:var(--s2)}
+.pm-interview-admin-modal form{display:grid;gap:var(--s3)}
+.pm-interview-admin-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s3)}
+.pm-interview-admin-checkbox{display:flex;align-items:center;gap:var(--s2);padding-top:var(--s5);font-size:var(--text-ui)}
+.pm-interview-admin-checkbox input{width:1.1rem;height:1.1rem;accent-color:var(--blue)}
+.pm-interview-admin-modal footer{display:flex;justify-content:flex-end;gap:var(--s2);padding-top:var(--s4);border-top:1px solid var(--border)}
+.pm-interview-admin-error{color:var(--red);font-size:var(--text-sm);line-height:var(--line-sm)}
+.pm-interview-admin-modal .pm-admin-field>small{color:var(--muted);font-size:var(--text-xs)}
+@media(max-width:52rem){.pm-interview-admin-groups{grid-template-columns:minmax(0,1fr)}.pm-interview-admin-filters{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+@media(max-width:38rem){.pm-interview-admin-stats{grid-template-columns:minmax(0,1fr)}.pm-interview-admin-filters,.pm-interview-admin-grid{grid-template-columns:minmax(0,1fr)}.pm-interview-admin-record,.pm-interview-admin-option{flex-wrap:wrap}.pm-interview-admin-record .pm-interview-admin-status,.pm-interview-admin-option .pm-interview-admin-status{margin-left:auto}.pm-interview-admin-title{flex-wrap:wrap}.pm-interview-admin-modal{padding:var(--s4)}.pm-interview-admin-option .pm-admin-button,.pm-interview-admin-record .pm-admin-button{min-height:var(--control-touch)}}
+
+/* Interview admin actions reuse central tokens and centralized typeface; never native OS dropdown styling. */
+.pm-interview-admin-header-actions{display:flex;flex-wrap:wrap;gap:var(--s2)}
+.pm-interview-admin-delete{color:var(--red);border-color:var(--border)}
+.pm-interview-admin-delete:hover{background:var(--red-soft);color:var(--red)}
+.pm-interview-admin-delete-confirm{background:var(--red-soft);border-color:var(--red);color:var(--red)}
+.pm-interview-admin-delete-confirm:hover{background:var(--red);color:var(--surface)}
+.pm-interview-admin-delete-label{overflow-wrap:anywhere;font:var(--semibold) var(--text-body)/var(--line-body) var(--font-ui)}
+.pm-interview-admin-confirm{max-width:32rem}
+.pm-interview-admin-confirm>footer{display:flex;justify-content:flex-end;gap:var(--s2);padding-top:var(--s4);border-top:1px solid var(--border);margin-top:var(--s4)}
+.pm-interview-admin-template{width:max-content;max-width:100%;text-decoration:none}
+.pm-interview-admin-modal .pm-admin-choice-field{min-width:0}
+.pm-interview-admin-modal .pm-admin-choice-trigger,.pm-interview-admin-filters .pm-admin-choice-trigger{width:100%}
+.pm-interview-admin-modal .pm-admin-field input[type=file]{max-width:100%;height:auto;padding:var(--s3)}
+@media(max-width:38rem){.pm-interview-admin-header-actions{width:100%}.pm-interview-admin-header-actions .pm-admin-button{flex:1}.pm-interview-admin-delete{min-height:var(--control-touch)}}
+
+.pm-interview-admin-master-note{font:var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui);color:var(--muted);margin-bottom:var(--s3)}
+
+/* Radix renders dropdown content in a body-level portal. Interview dialogs use
+   z-index:1000; keep only their own dropdowns above the dialog backdrop. */
+.pm-admin-choice-content.pm-interview-admin-choice-content{z-index:1010}
+
+/* Compact interview import workflow. centralized typeface and shared design tokens are inherited. */
+.pm-interview-import-modal{width:min(100%,39rem)}
+.pm-interview-admin-modal .pm-interview-import-form{gap:var(--s4)}
+.pm-interview-import-section{display:grid;gap:var(--s2);min-width:0}
+.pm-interview-import-heading{display:flex;align-items:center;gap:var(--s2);font:var(--semibold) var(--text-body)/var(--line-body) var(--font-ui)}
+.pm-interview-import-step{width:1.6rem;height:1.6rem;display:grid;place-items:center;flex:none;background:var(--blue-soft);color:var(--blue);border-radius:50%;font:var(--bold) var(--text-sm)/var(--line-sm) var(--font-ui)}
+.pm-interview-import-section .pm-admin-choice-field{gap:var(--s1)}
+.pm-interview-import-input{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.pm-interview-import-dropzone{display:flex;min-width:0;align-items:center;justify-content:center;flex-direction:column;gap:var(--s1);padding:var(--s5) var(--s3);border:1px dashed var(--control-border);border-radius:var(--radius-card);background:var(--canvas);text-align:center;color:var(--muted);cursor:pointer;font:var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui);transition:background-color .12s,border-color .12s}
+.pm-interview-import-dropzone svg{color:var(--blue);flex:none}
+.pm-interview-import-dropzone strong{color:var(--ink);font:var(--semibold) var(--text-body)/var(--line-body) var(--font-ui)}
+.pm-interview-import-dropzone:hover,.pm-interview-import-dropzone.is-dragging{border-color:var(--blue);background:var(--blue-soft)}
+.pm-interview-import-dropzone.has-file{border-style:solid;border-color:var(--green);background:var(--green-soft)}
+.pm-interview-import-dropzone.has-file svg{color:var(--green)}
+.pm-interview-import-file-name{color:var(--ink);font:var(--semibold) var(--text-body)/var(--line-body) var(--font-ui);overflow-wrap:anywhere;max-width:100%}
+.pm-interview-import-file-subtitle{color:var(--muted)}
+.pm-interview-import-input:focus-visible+.pm-interview-import-dropzone{outline:3px solid var(--focus);outline-offset:2px}
+.pm-interview-import-input:disabled+.pm-interview-import-dropzone{opacity:.6;cursor:wait}
+.pm-interview-import-remove{width:max-content;display:inline-flex;align-items:center;gap:var(--s1);padding:var(--s1);border:0;background:transparent;color:var(--red);cursor:pointer;font:var(--semibold) var(--text-sm)/var(--line-sm) var(--font-ui)}
+.pm-interview-import-remove:disabled{cursor:wait;opacity:.55}
+.pm-interview-import-hint{color:var(--muted);font:var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui)}
+.pm-interview-import-template-row{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);padding:var(--s3);border:1px solid var(--border);border-radius:var(--radius-card);background:var(--canvas)}
+.pm-interview-import-template-row>div{min-width:0}
+.pm-interview-import-template-row strong{font:var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui)}
+.pm-interview-import-template-row p{margin-top:var(--s1);color:var(--muted);font:var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui)}
+.pm-interview-import-template-row .pm-admin-button{flex:none}
+@media(max-width:38rem){.pm-interview-import-dropzone{padding:var(--s4) var(--s2)}.pm-interview-import-template-row{align-items:stretch;flex-direction:column}.pm-interview-import-template-row .pm-admin-button{width:100%}.pm-interview-import-modal footer{flex-wrap:wrap}.pm-interview-import-modal footer .pm-admin-button{flex:1}}

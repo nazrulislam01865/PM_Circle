@@ -1,6 +1,6 @@
 /* Public/member prototype alignment. Authentication/onboarding geometry is untouched. */
 .pm-app:not(.pm-auth-shell) .pm-container {
-    width: min(1480px, calc(100% - 64px));
+    width: min(var(--pm-public-layout-max-width), calc(100% - var(--pm-public-layout-gutter) - var(--pm-public-layout-gutter)));
 }
 .pm-app:not(.pm-auth-shell) .pm-two-column {
     grid-template-columns: minmax(0, 2.21fr) minmax(300px, 1fr);

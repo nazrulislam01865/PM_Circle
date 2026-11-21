@@ -16,6 +16,8 @@ final class PostCheckFeed
             ->latest('id')->limit(30)
             ->get(['id', 'body', 'image_path', 'topic', 'status', 'is_anonymous', 'check_reason',
                 'check_target', 'check_category', 'created_at', 'restricted_at']);
+        $restrictionPolicy = app(PostCheckPolicy::class)->settings();
+
         return [
             'posts' => $posts->map(fn (Post $post) => [
                 'id' => $post->id, 'body' => $post->body,
@@ -27,10 +29,11 @@ final class PostCheckFeed
             ])->all(),
             'restricted_count' => Post::query()->where('author_id', $userId)->where('status', 'restricted')->count(),
             'blocked_until' => app(PostCheckPolicy::class)->restrictionUntil($userId),
+            'restriction_policy' => $restrictionPolicy,
             'violation_count' => DB::table('post_check_violations')->where('user_id', $userId)
-                ->where('created_at', '>=', now()->subDays(30))->count()
+                ->where('created_at', '>=', now()->subDays($restrictionPolicy['window_days']))->count()
                 + DB::table('comment_check_violations')->where('user_id', $userId)
-                    ->where('created_at', '>=', now()->subDays(30))->count(),
+                    ->where('created_at', '>=', now()->subDays($restrictionPolicy['window_days']))->count(),
         ];
     }
 }

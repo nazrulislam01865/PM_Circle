@@ -1,3 +1,4 @@
+import { CommunityResponsiveImage } from './CommunityResponsiveImage';
 import { router } from '@inertiajs/react';
 import { ChevronDown } from 'lucide-react';
 import { CommentEngagementActions } from './CommentEngagementActions';
@@ -81,7 +82,7 @@ export function CommunityComment({ comment, postId, postAuthor, canInteract, lik
         <div className="pm-thread-body">
             <div className="pm-thread-author"><strong>{comment.author.name}</strong>{comment.author.name === postAuthor && <span className="pm-author-chip">Author</span>}<span>· {relativeTime(comment.created_at)}</span></div>
             {comment.body && <p>{comment.body}</p>}
-            {comment.media_url && <img className="pm-comment-attachment" src={comment.media_url} alt="Comment attachment" loading="lazy"/>}
+            {comment.media_url && <CommunityResponsiveImage className="pm-comment-attachment" src={comment.media_url} alt="Comment attachment" sizes="(max-width: 640px) 85vw, 480px"/>}
             <div className="pm-thread-actions"><CommentEngagementActions postId={postId} commentId={comment.id}
                 initial={viewerReaction} total={comment.likes_count} canInteract={canInteract} onJoin={() => router.visit('/login')}
                 onReply={() => canInteract ? setReplying(previous => !previous) : router.visit('/login')}

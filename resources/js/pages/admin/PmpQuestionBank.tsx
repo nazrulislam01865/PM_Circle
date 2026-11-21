@@ -2,11 +2,12 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { AlertCircle, BookOpen, CheckCircle2, Download, FileSpreadsheet, Plus, Save, Search, ShieldCheck, Upload, X } from 'lucide-react';
 import { AdminLayout } from '@/layouts/admin/AdminLayout';
+import { PmpSampleQuestionSelect, type SampleQuestionOption } from '@/components/admin/PmpSampleQuestionSelect';
 
 type Settings = {
     enabled: boolean; full_question_count: number; full_duration_minutes: number;
     focused_question_count: number; focused_duration_minutes: number; shuffle_questions: boolean;
-    sample_duration_seconds: number; sample_question_id: number | null;
+    sample_duration_seconds: number; sample_question_id: number | null; sample_question_ids: number[];
     needs_improvement_below: number; target_below: number; above_target_from: number;
 };
 type OptionKey = 'A' | 'B' | 'C' | 'D';
@@ -25,6 +26,7 @@ type Question = {
 };
 type Props = {
     settings: Settings;
+    selectedSampleQuestions: SampleQuestionOption[];
     questions: { data: Question[]; links: { url: string | null; label: string; active: boolean }[]; total: number };
     stats: { total: number; active: number; ready: number };
     filters: { search: string; domain: string; status: string; review_status: string };
@@ -49,7 +51,7 @@ const editableQuestion = (item: Question): Question => ({
     option_rationales: { ...emptyRationales(), ...(item.option_rationales ?? {}) },
 });
 
-export default function PmpQuestionBank({ settings, questions, stats, filters }: Props) {
+export default function PmpQuestionBank({ settings, selectedSampleQuestions, questions, stats, filters }: Props) {
     const [tab, setTab] = useState<'bank' | 'settings'>('bank');
     const [rules, setRules] = useState(settings);
     const [question, setQuestion] = useState<Question | null>(null);
@@ -85,6 +87,7 @@ export default function PmpQuestionBank({ settings, questions, stats, filters }:
     }, [question?.id]);
     const { flash } = usePage<{ flash?: { status?: string } }>().props;
     const otherErrors = Object.entries(errors).filter(([key]) => key !== 'file').map(([, message]) => message);
+    const sampleError = Object.entries(errors).find(([key]) => key === 'sample_question_ids' || key.startsWith('sample_question_ids.'))?.[1] ?? errors.sample_question_id;
     const saveSettings = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault(); if (busy) return;
         setBusy(true); setErrors({});
@@ -201,8 +204,11 @@ export default function PmpQuestionBank({ settings, questions, stats, filters }:
                                 ['above_target_from', 'Above target starts at (%)', 3, 99]] as const).map(([key, label, min, max]) =>
                                 <label className="pm-admin-field" key={key}><span>{label}</span><input type="number" required min={min} max={max} step={1} value={rules[key]}
                                     onChange={e => updateRules(key, Number(e.target.value))}/></label>)}
-                            <label className="pm-admin-field"><span>Public sample question ID (optional)</span><input type="number" min={1} value={rules.sample_question_id ?? ''}
-                                placeholder="Use built-in sample" onChange={e => updateRules('sample_question_id', e.target.value ? Number(e.target.value) : null)}/></label>
+                            <div className="pm-admin-field pm-pmp-sample-field"><span>Public sample exam questions (optional)</span>
+                                <PmpSampleQuestionSelect value={rules.sample_question_ids} initialOptions={selectedSampleQuestions}
+                                    disabled={busy} onChange={ids => setRules(current => ({ ...current, sample_question_ids: ids, sample_question_id: ids[0] ?? null }))}/>
+                                {sampleError && <small role="alert" className="pm-pmp-sample-error">{sampleError}</small>}
+                            </div>
                         </div>
                     </fieldset>
                 </div>

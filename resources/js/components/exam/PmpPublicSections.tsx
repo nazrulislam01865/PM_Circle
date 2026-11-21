@@ -45,13 +45,13 @@ export function PmpPublicBenefits({ content }: { content: PmpPublicContent['bene
     </section>;
 }
 
-export function PmpPublicSampleStudy({ sample, ai, sampleQuestion, sampleDurationSeconds }: { sample: PmpPublicContent['sample'] | null; ai: PmpPublicContent['ai'] | null; sampleQuestion: ExamQuestion | null; sampleDurationSeconds: number }) {
+export function PmpPublicSampleStudy({ sample, ai, sampleQuestion, sampleQuestions, sampleDurationSeconds }: { sample: PmpPublicContent['sample'] | null; ai: PmpPublicContent['ai'] | null; sampleQuestion: ExamQuestion | null; sampleQuestions: ExamQuestion[]; sampleDurationSeconds: number }) {
     return <>
         {sample && <SectionCard id="sample-question" className="pm-pmp-public-study-card">
             <div className="pm-pmp-public-study-column">
                 <h2>{sample.icon_image ? <img className="pm-pmp-public-icon-image" width="32" height="32" src={sample.icon_image} alt="" aria-hidden="true"/> : <ClipboardCheck aria-hidden="true"/>}{sample.heading}</h2>
                 <p className="pm-pmp-public-section-note">{sample.description}</p>
-                <PmpPublicSampleExam sampleQuestion={sampleQuestion} sampleDurationSeconds={sampleDurationSeconds}/>
+                <PmpPublicSampleExam sampleQuestion={sampleQuestion} sampleQuestions={sampleQuestions} sampleDurationSeconds={sampleDurationSeconds}/>
             </div>
         </SectionCard>}
         {ai && <SectionCard id="ai-study-help" className="pm-pmp-public-study-card pm-pmp-public-ai-cards">

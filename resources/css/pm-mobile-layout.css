@@ -54,6 +54,14 @@
         width: calc(100% - 2 * var(--s4));
         max-width: 100%;
     }
+    /* The member shell already owns both page gutters. Its nested content
+       container must fill that space rather than subtract another gutter.
+       This keeps Activity Log, Achievements, Community and Saved Posts even
+       on both sides without changing guest layouts or the shared header. */
+    .pm-app.pm-member-shell .pm-member-public-content > .pm-container {
+        width: 100%;
+        min-width: 0;
+    }
     .pm-app .pm-two-column,
     .pm-dashboard .pm-member-public-content .pm-two-column {
         grid-template-columns: minmax(0, 1fr);

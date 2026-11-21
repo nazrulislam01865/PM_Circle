@@ -21,11 +21,13 @@ use App\Http\Controllers\Settings\ProfileController as SettingsProfileController
 use App\Http\Controllers\PublicSite\HomeController;
 use App\Http\Controllers\PublicSite\ContactController;
 use App\Http\Controllers\Admin\HomepageController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\SiteFooterController;
 use App\Http\Controllers\Admin\ReactionIconController;
 use App\Http\Controllers\Admin\ProfileRewardSettingsController;
 use App\Http\Controllers\Admin\PmpPublicPageController as AdminPmpPublicPageController;
 use App\Http\Controllers\Admin\PmpExamBankController;
+use App\Http\Controllers\Admin\InterviewCatalogController;
 use App\Http\Controllers\Admin\LearningCourseController;
 use App\Http\Controllers\Admin\LearningCourseContentController;
 use App\Http\Controllers\Learning\CoursePracticeController;
@@ -51,7 +53,7 @@ Route::post('/admin/logout', [AuthenticatedSessionController::class, 'destroy'])
 
 // Administration is isolated from public/member areas and authorized on every request.
 Route::middleware(['auth', 'pm.admin', 'verified'])->prefix('admin')->name('admin.')->group(function (): void {
-    Route::get('/', [HomepageController::class, 'dashboard'])->name('dashboard');
+    Route::get('/', AdminDashboardController::class)->name('dashboard');
     Route::get('/post-reports', [PostModerationController::class, 'index'])->name('post-reports.index');
     Route::get('/reaction-icons', [ReactionIconController::class, 'index'])->name('reaction-icons.index');
     Route::post('/reaction-icons', [ReactionIconController::class, 'create'])->middleware('throttle:10,1')->name('reaction-icons.create');
@@ -68,6 +70,19 @@ Route::middleware(['auth', 'pm.admin', 'verified'])->prefix('admin')->name('admi
     Route::get('/homepage', [HomepageController::class, 'edit'])->name('homepage.edit');
     Route::get('/footer', [SiteFooterController::class, 'edit'])->name('footer.edit');
     Route::put('/footer', [SiteFooterController::class, 'update'])->middleware('throttle:20,1')->name('footer.update');
+    Route::get('/interview-preparation', [InterviewCatalogController::class, 'index'])->name('interview-catalog.index');
+    Route::post('/interview-preparation/options', [InterviewCatalogController::class, 'createOption'])->middleware('throttle:20,1')->name('interview-catalog.options.store');
+    Route::patch('/interview-preparation/options/{option}', [InterviewCatalogController::class, 'updateOption'])->middleware('throttle:30,1')->whereNumber('option')->name('interview-catalog.options.update');
+    Route::post('/interview-preparation/sets', [InterviewCatalogController::class, 'createSet'])->middleware('throttle:20,1')->name('interview-catalog.sets.store');
+    Route::patch('/interview-preparation/sets/{set}', [InterviewCatalogController::class, 'updateSet'])->middleware('throttle:30,1')->whereNumber('set')->name('interview-catalog.sets.update');
+    Route::post('/interview-preparation/questions', [InterviewCatalogController::class, 'createQuestion'])->middleware('throttle:30,1')->name('interview-catalog.questions.store');
+    Route::patch('/interview-preparation/questions/{question}', [InterviewCatalogController::class, 'updateQuestion'])->middleware('throttle:30,1')->whereNumber('question')->name('interview-catalog.questions.update');
+    Route::delete('/interview-preparation/options/{option}', [InterviewCatalogController::class, 'deleteOption'])->middleware('throttle:15,1')->whereNumber('option')->name('interview-catalog.options.destroy');
+    Route::delete('/interview-preparation/sets/{set}', [InterviewCatalogController::class, 'deleteSet'])->middleware('throttle:15,1')->whereNumber('set')->name('interview-catalog.sets.destroy');
+    Route::delete('/interview-preparation/questions/{question}', [InterviewCatalogController::class, 'deleteQuestion'])->middleware('throttle:15,1')->whereNumber('question')->name('interview-catalog.questions.destroy');
+    Route::post('/interview-preparation/questions/import', [InterviewCatalogController::class, 'import'])->middleware('throttle:5,1')->name('interview-catalog.questions.import');
+    Route::get('/interview-preparation/questions/template', [InterviewCatalogController::class, 'template'])->name('interview-catalog.questions.template');
+    Route::put('/interview-preparation/settings', [InterviewCatalogController::class, 'updateSettings'])->middleware('throttle:20,1')->name('interview-catalog.settings.update');
     Route::get('/learning/courses', [LearningCourseController::class, 'index'])->name('learning-courses.index');
     Route::get('/learning/courses/create', [LearningCourseController::class, 'create'])->name('learning-courses.create');
     Route::post('/learning/courses', [LearningCourseController::class, 'store'])->middleware('throttle:15,1')->name('learning-courses.store');
@@ -85,6 +100,7 @@ Route::middleware(['auth', 'pm.admin', 'verified'])->prefix('admin')->name('admi
     Route::put('/learning/courses/{course}/resources/{resource}', [LearningCourseContentController::class, 'updateResource'])->middleware('throttle:20,1')->whereNumber(['course', 'resource'])->name('learning-courses.resources.update');
     Route::patch('/learning/courses/{course}/resources/{resource}/status', [LearningCourseContentController::class, 'resourceStatus'])->middleware('throttle:20,1')->whereNumber(['course', 'resource'])->name('learning-courses.resources.status');
     Route::get('/exam-simulator/pmp/questions', [PmpExamBankController::class, 'index'])->name('pmp-questions.index');
+    Route::get('/exam-simulator/pmp/questions/sample-options', [PmpExamBankController::class, 'sampleOptions'])->middleware('throttle:60,1')->name('pmp-questions.sample-options');
     Route::put('/exam-simulator/pmp/settings', [PmpExamBankController::class, 'updateSettings'])->middleware('throttle:20,1')->name('pmp-questions.settings');
     Route::post('/exam-simulator/pmp/questions', [PmpExamBankController::class, 'store'])->middleware('throttle:30,1')->name('pmp-questions.store');
     Route::put('/exam-simulator/pmp/questions/{question}', [PmpExamBankController::class, 'update'])->middleware('throttle:30,1')->whereNumber('question')->name('pmp-questions.update');

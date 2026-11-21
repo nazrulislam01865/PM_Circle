@@ -1,0 +1,213 @@
+/* Compact small-screen layouts for four member-facing content pages.
+   All dimensions, type and colors come from the central PM Circle design tokens.
+   The member header, shared footer, post action logic and desktop pages are unchanged. */
+
+/* Decorative empty icons appear only in the compact mobile presentation. */
+.pm-achievements-page .pm-feature-empty-icon,
+.pm-saved-posts-page .pm-feature-empty-icon { display: none; }
+
+/* Clear, discoverable submit action in place of the unused "Latest" control. */
+.pm-community-discussions-page .pm-feed-search-wrap { min-width: 0; }
+.pm-community-discussions-page .pm-feed-search-input {
+    padding-inline: var(--s4) calc(var(--control-touch) + var(--s3));
+}
+.pm-community-discussions-page .pm-community-search-submit {
+    position: absolute;
+    inset-inline-end: var(--s1);
+    top: 50%;
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    width: var(--control-touch);
+    height: var(--control-touch);
+    border: 0;
+    border-radius: var(--radius-control);
+    color: var(--blue);
+    background: transparent;
+    cursor: pointer;
+}
+.pm-community-discussions-page .pm-community-search-submit:hover,
+.pm-community-discussions-page .pm-community-search-submit:focus-visible {
+    background: var(--blue-soft);
+}
+
+@media (max-width: 42rem) {
+    /* Activity: readable heading and a smaller secondary destructive action. */
+    .pm-activity-page { min-width: 0; }
+    .pm-activity-page .pm-activity-heading {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: var(--s2);
+        margin-bottom: var(--s3);
+    }
+    .pm-activity-page .pm-activity-heading > div { min-width: 0; flex: 1 1 100%; }
+    .pm-activity-page .pm-activity-heading h1 { font-size: var(--text-h1); line-height: var(--line-h1); }
+    .pm-activity-page .pm-activity-heading p { margin-top: var(--s1); font-size: var(--text-sm); line-height: var(--line-sm); }
+    .pm-activity-page .pm-activity-breadcrumb { margin-bottom: var(--s2); }
+    .pm-activity-page .pm-activity-clear {
+        margin-top: 0;
+        min-height: var(--control-touch);
+        padding: var(--s2) var(--s3);
+        font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui);
+    }
+    .pm-activity-page .pm-activity-card { padding: var(--s3); }
+    /* Type on one row, date and sorting side-by-side; avoid three tall rows. */
+    .pm-activity-page .pm-activity-toolbar {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: stretch;
+        gap: var(--s2);
+        margin-bottom: var(--s3);
+    }
+    .pm-activity-page .pm-activity-filter-group { display: contents; }
+    .pm-activity-page .pm-activity-filter-group .pm-activity-select:first-child { grid-column: 1 / -1; }
+    .pm-activity-page .pm-activity-select select {
+        min-height: var(--control-touch);
+        font-size: var(--text-sm);
+        line-height: var(--line-sm);
+    }
+    .pm-activity-page .pm-activity-day-heading {
+        min-height: var(--control-height);
+        font: var(--bold) var(--text-h3)/var(--line-h3) var(--font-ui);
+        padding: var(--s1) var(--s2);
+    }
+    .pm-activity-page .pm-activity-day + .pm-activity-day { margin-top: var(--s3); }
+    .pm-activity-page .pm-activity-row {
+        grid-template-columns: var(--control-height) minmax(0, 1fr) auto;
+        gap: var(--s1) var(--s2);
+        padding: var(--s2) 0;
+    }
+    .pm-activity-page .pm-activity-row-copy { overflow: visible; }
+    .pm-activity-page .pm-activity-title { font-size: var(--text-ui); line-height: var(--line-ui); }
+    .pm-activity-page .pm-activity-row-copy p { margin-top: var(--s1); font-size: var(--text-sm); line-height: var(--line-sm); }
+    .pm-activity-page .pm-activity-time { font-size: var(--text-xs); line-height: var(--line-xs); }
+    .pm-activity-page .pm-activity-score { grid-row: 2; grid-column: 2 / -1; justify-self: start; }
+    .pm-activity-page .pm-activity-privacy-note { padding: var(--s3); gap: var(--s2); }
+
+    /* Achievements: short empty states and neat, tappable path cards. */
+    .pm-achievements-page .pm-feature-heading,
+    .pm-saved-posts-page .pm-feature-heading { margin-bottom: var(--s3); }
+    .pm-achievements-page .pm-feature-heading h1,
+    .pm-saved-posts-page .pm-feature-heading h1 { font-size: var(--text-h1); line-height: var(--line-h1); letter-spacing: -.025em; }
+    .pm-achievements-page .pm-feature-heading p,
+    .pm-saved-posts-page .pm-feature-heading p { font-size: var(--text-sm); line-height: var(--line-sm); }
+    .pm-achievements-page .pm-feature-section { padding: var(--s4); margin-top: var(--s3); }
+    .pm-achievements-page .pm-feature-section h2 { display: flex; align-items: center; gap: var(--s2); margin-bottom: var(--s2); font-size: var(--text-h3); line-height: var(--line-h3); }
+    .pm-achievements-page .pm-feature-section > p { font-size: var(--text-sm); line-height: var(--line-sm); }
+    .pm-achievements-page .pm-member-overview-badges { gap: var(--s2); margin-top: var(--s3); }
+    .pm-achievements-page .pm-member-overview-badge { gap: var(--s1); font-size: var(--text-sm); line-height: var(--line-sm); }
+    .pm-achievements-page .pm-feature-progress-grid { gap: var(--s2); margin-top: var(--s3); }
+    .pm-achievements-page .pm-feature-progress-card { padding: var(--s3); }
+    .pm-achievements-page .pm-feature-privacy { margin-top: var(--s3); font-size: var(--text-xs); line-height: var(--line-sm); }
+
+    /* Saved posts: minimal, useful empty state, no oversized panel or whitespace. */
+    .pm-saved-posts-page { min-height: 0; }
+    .pm-saved-posts-page .pm-pager { flex-wrap: wrap; gap: var(--s2); }
+    .pm-saved-posts-page .pm-pager a { display: inline-flex; align-items: center; min-height: var(--control-touch); }
+    .pm-saved-posts-page .pm-feature-privacy { margin-top: var(--s3); font-size: var(--text-sm); line-height: var(--line-sm); }
+    .pm-saved-posts-page .pm-feature-privacy svg { flex: none; }
+
+    /* Shared empty panel polish, scoped only to these two pages. */
+    :is(.pm-achievements-page, .pm-saved-posts-page) .pm-feature-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: var(--s2);
+        padding: var(--s4);
+    }
+    .pm-achievements-page .pm-feature-section .pm-feature-empty {
+        margin-top: var(--s3);
+        border: 0;
+        background: var(--canvas);
+        box-shadow: none;
+    }
+    :is(.pm-achievements-page, .pm-saved-posts-page) .pm-feature-empty-icon {
+        display: grid;
+        place-items: center;
+        width: var(--control-touch);
+        height: var(--control-touch);
+        background: var(--blue-soft);
+        color: var(--blue);
+        border-radius: var(--radius-pill);
+    }
+    :is(.pm-achievements-page, .pm-saved-posts-page) .pm-feature-empty-icon svg { width: var(--icon); height: var(--icon); }
+    :is(.pm-achievements-page, .pm-saved-posts-page) .pm-feature-empty strong { font-size: var(--text-h3); line-height: var(--line-h3); }
+    :is(.pm-achievements-page, .pm-saved-posts-page) .pm-feature-empty p { margin: 0; max-width: 35ch; font-size: var(--text-sm); line-height: var(--line-body); }
+    :is(.pm-achievements-page, .pm-saved-posts-page) .pm-feature-empty .pm-button { min-height: var(--control-touch); margin-top: var(--s1); }
+
+    /* Discussion list: full-width search and a compact intro/reading rhythm. */
+    .pm-app .pm-community-discussions-page .pm-feed-toolbar,
+    .pm-dashboard .pm-member-public-content .pm-community-discussions-page .pm-feed-toolbar {
+        display: block;
+        margin-bottom: var(--s2);
+    }
+    .pm-community-discussions-page .pm-feed-search-input { min-height: var(--control-touch); }
+    .pm-app .pm-community-discussions-page .pm-feed-hero,
+    .pm-dashboard .pm-member-public-content .pm-community-discussions-page .pm-feed-hero {
+        padding: var(--s4);
+        margin-bottom: var(--s3);
+    }
+    .pm-app .pm-community-discussions-page .pm-feed-hero-content h1,
+    .pm-dashboard .pm-member-public-content .pm-community-discussions-page .pm-feed-hero-content h1 {
+        font-size: var(--text-h2);
+        line-height: var(--line-h2);
+        letter-spacing: -.015em;
+        margin-bottom: var(--s2);
+    }
+    .pm-community-discussions-page .pm-feed-hero-content p { font-size: var(--text-sm); line-height: var(--line-body); margin-bottom: var(--s2); }
+    .pm-community-discussions-page .pm-badge-public { padding: var(--s1) var(--s3); font-size: var(--text-xs); line-height: var(--line-ui); }
+    .pm-community-discussions-page .pm-community-feed-tabs { margin-bottom: var(--s3); }
+    .pm-community-discussions-page .pm-feed-scope-tabs { flex-wrap: nowrap; overflow-x: auto; gap: var(--s1); }
+    .pm-community-discussions-page .pm-feed-scope-tab { flex: none; min-height: var(--control-touch); padding: var(--s2) var(--s3); font-size: var(--text-ui); line-height: var(--line-ui); }
+    .pm-community-discussions-page .pm-unified-post-card { padding: var(--s3); margin-bottom: var(--s3); }
+    .pm-community-discussions-page .pm-unified-post-card .pm-card-author-header { margin-bottom: var(--s2); }
+    .pm-community-discussions-page .pm-unified-post-card .pm-card-action-bar { margin-top: var(--s2); }
+    .pm-community-discussions-page .pm-unified-post-card .pm-engagement-actions .pm-home-action { gap: var(--s1); padding: var(--s1); }
+    .pm-community-discussions-page .pm-unified-post-card .pm-engagement-actions .pm-home-action svg { width: var(--icon); height: var(--icon); }
+}
+
+@media (max-width: 23.5rem) {
+    .pm-activity-page .pm-activity-toolbar { grid-template-columns: minmax(0, 1fr); }
+    .pm-activity-page .pm-activity-filter-group .pm-activity-select:first-child { grid-column: auto; }
+    .pm-activity-page .pm-activity-row { grid-template-columns: var(--control-height) minmax(0, 1fr); }
+    .pm-activity-page .pm-activity-time { grid-column: 2; grid-row: 2; justify-self: start; }
+    .pm-activity-page .pm-activity-score { grid-row: 3; grid-column: 2; }
+}
+/* The authenticated shell's own compact screen rules have higher specificity.
+   Repeat only the scoped values that must win inside that shell. */
+@media (max-width: 42rem) {
+    .pm-dashboard .pm-member-public-content :is(.pm-achievements-page, .pm-saved-posts-page) .pm-feature-heading h1 {
+        font-size: var(--text-h1);
+        line-height: var(--line-h1);
+    }
+    .pm-dashboard .pm-member-public-content :is(.pm-achievements-page, .pm-saved-posts-page) .pm-feature-heading p {
+        font-size: var(--text-sm);
+        line-height: var(--line-sm);
+    }
+    .pm-dashboard .pm-member-public-content .pm-achievements-page .pm-feature-section {
+        padding: var(--s4);
+        margin-top: var(--s3);
+    }
+    .pm-dashboard .pm-member-public-content .pm-achievements-page .pm-feature-section > p {
+        font-size: var(--text-sm);
+        line-height: var(--line-sm);
+    }
+    .pm-dashboard .pm-member-public-content .pm-achievements-page .pm-feature-section h2 {
+        font-size: var(--text-h3);
+        line-height: var(--line-h3);
+    }
+    .pm-dashboard .pm-member-public-content :is(.pm-achievements-page, .pm-saved-posts-page) .pm-feature-empty {
+        padding: var(--s4);
+    }
+    .pm-dashboard .pm-member-public-content :is(.pm-achievements-page, .pm-saved-posts-page) .pm-feature-empty strong {
+        font-size: var(--text-h3);
+        line-height: var(--line-h3);
+    }
+    .pm-dashboard .pm-member-public-content :is(.pm-achievements-page, .pm-saved-posts-page) .pm-feature-empty p {
+        margin: 0;
+        font-size: var(--text-sm);
+        line-height: var(--line-body);
+    }
+}

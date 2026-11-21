@@ -9,7 +9,7 @@ use App\Support\Home\HomeAiFeaturesContent;
 use App\Domain\Community\Services\EngagementStats;
 use App\Domain\Identity\Services\ProfileFieldPrivacy;
 use App\Domain\Community\Queries\PostReactionSummary;
-use App\Models\CareerJob;
+use App\Models\LearningCourse;
 use App\Models\Post;
 use App\Models\Scenario;
 use App\Support\Community\ReactionIconCatalog;
@@ -61,26 +61,7 @@ class HomeController extends Controller
                     ->limit(1),
             ]))->latest('published_at')->first() : null;
 
-        // Bounded homepage previews: each relationship is eager-loaded once,
-        // with no queries executed by the React cards or response loop.
-        $responses = $scenario ? $scenario->responses()
-            ->whereNull('parent_id')
-            ->when($demo, fn ($query) => $query->whereHas('user', fn ($users) => $users
-                ->whereIn('email', data_get($content, 'scenario.demo_response_emails', []))))
-            ->with([
-                'user:id,name',
-                'user.profile' => fn ($query) => $query->where('visibility', 'public')
-                    ->select('id', 'user_id', 'role', 'avatar_path'),
-            ])
-            ->select(['id', 'scenario_id', 'user_id', 'body', 'created_at'])
-            ->withCount('reactions')
-            ->when($viewerId, fn ($query) => $query->addSelect([
-                'viewer_reaction' => DB::table('scenario_response_reactions')->select('type')
-                    ->whereColumn('scenario_response_id', 'scenario_responses.id')
-                    ->where('user_id', $viewerId)->limit(1),
-            ]))
-            ->latest('created_at')->limit(2)->get() : collect();
-
+        // The reference homepage shows the scenario summary; response previews are no longer queried here.
         $posts = $visible('community') ? Post::query()->where('status', 'published')->where('visibility', 'public')
             ->when($viewerId, fn ($query) => $query->whereNotExists(fn ($hidden) => $hidden->selectRaw('1')
                 ->from('post_hides')->whereColumn('post_hides.post_id', 'posts.id')
@@ -129,22 +110,18 @@ class HomeController extends Controller
             $members = $members->sortBy(fn (User $member) => $order[$member->email] ?? PHP_INT_MAX)->values();
         }
 
-        // Same freshness and ordering as the Careers listing, limited to the homepage's three cards.
-        $jobs = $visible('careers') ? CareerJob::query()->current()
-            ->orderByDesc('posted_at')->orderByDesc('id')
-            ->limit(3)->get(['slug', 'title', 'company', 'location', 'job_type'])
-            ->map(fn (CareerJob $job) => [
-                'slug' => $job->slug, 'title' => $job->title, 'company' => $job->company,
-                'location' => $job->location ?: 'Not specified',
-                'type' => $job->job_type ?: 'Not specified',
-            ])->values() : collect();
+        // The prototype uses a resume panel rather than a jobs list. Avoid an unused jobs query.
+        // Published catalog previews only; one bounded query and no restricted lesson data.
+        $courses = $visible('pathway') ? LearningCourse::query()->where('is_published', true)
+            ->orderBy('sort_order')->orderBy('id')->limit(8)
+            ->get(['slug', 'title', 'summary', 'category', 'level', 'minutes', 'thumbnail', 'cover_path', 'access_tier'])
+            ->map(fn (LearningCourse $course) => $course->catalogData())->values() : collect();
 
         return Inertia::render('public/Home', [
+            'courses' => $courses,
             'content' => $content,
-            'jobs' => $jobs,
             'isDemo' => $demo,
             'scenario' => $scenario,
-            'scenarioResponses' => $responses,
             'posts' => $posts,
             'members' => $members->map(fn (User $member) => [
                 'id' => $member->id,

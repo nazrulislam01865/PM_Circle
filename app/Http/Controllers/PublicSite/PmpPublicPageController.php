@@ -24,25 +24,29 @@ final class PmpPublicPageController extends Controller
         }
 
         $settings = $examSettings->get();
-        $sample = null;
-        if ($settings['sample_question_id'] !== null) {
-            $question = DB::table('pmp_exam_questions')->where('id', $settings['sample_question_id'])
-                ->where('is_active', true)->first();
-            if ($question) {
-                // Only an explicitly approved public sample exposes its answer and explanation.
-                $sample = [
-                    'id' => $question->id, 'domain' => $question->domain,
-                    'difficulty' => $question->difficulty, 'prompt' => $question->prompt,
-                    'options' => json_decode($question->options, true, 512, JSON_THROW_ON_ERROR),
-                    'correct' => $question->correct_option, 'explanation' => $question->explanation,
-                    'otherOptions' => $question->other_options, 'takeaway' => $question->takeaway,
-                    'concepts' => $question->concepts, 'references' => $question->references,
-                ];
+        $sampleIds = $settings['sample_question_ids'];
+        $questions = empty($sampleIds) ? collect() : DB::table('pmp_exam_questions')
+            ->whereIn('id', $sampleIds)->where('is_active', true)->get()->keyBy('id');
+        // Preserve the administrator's order. Inactive/deleted entries are never exposed publicly.
+        $samples = collect($sampleIds)->map(function ($id) use ($questions) {
+            $question = $questions->get($id);
+            if (! $question) {
+                return null;
             }
-        }
+            return [
+                'id' => (int) $question->id, 'domain' => $question->domain,
+                'difficulty' => $question->difficulty, 'prompt' => $question->prompt,
+                'options' => json_decode($question->options, true, 512, JSON_THROW_ON_ERROR),
+                'correct' => $question->correct_option, 'explanation' => $question->explanation,
+                'otherOptions' => $question->other_options, 'takeaway' => $question->takeaway,
+                'concepts' => $question->concepts, 'references' => $question->references,
+            ];
+        })->filter()->values()->all();
+        $sample = $samples[0] ?? null;
         return Inertia::render('exam/Public', [
             'content' => PmpPublicContent::load(),
             'sampleQuestion' => $sample,
+            'sampleQuestions' => $samples,
             'sampleDurationSeconds' => $settings['sample_duration_seconds'],
         ]);
     }

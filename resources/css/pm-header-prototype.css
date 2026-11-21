@@ -383,7 +383,7 @@
     }
 }
 .pm-member-home-nav-home { min-width: var(--control-height); }
-.pm-member-home-nav-home .pm-nav-icon { margin-inline: auto; }
+.pm-member-home-nav-home .pm-nav-icon { margin-inline: 0; }
 @media (max-width: 880px) {
     .pm-app .pm-member-home-header.pm-site-header {
         min-height: var(--header-height);

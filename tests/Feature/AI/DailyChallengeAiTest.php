@@ -86,6 +86,29 @@ final class DailyChallengeAiTest extends TestCase
         $this->assertNull(DB::table('scenario_rubric_versions')->where('scenario_id', $scenarioId)->value('approved_by'));
     }
 
+    public function test_scheduled_draft_waits_until_due_and_publishes_without_staff_review(): void
+    {
+        $this->enable();
+        $date = now('Asia/Dhaka')->toDateString();
+        $id = $this->draft($date);
+        DB::table('ai_editorial_drafts')->where('id', $id)->update([
+            'status' => 'scheduled', 'publication_at' => now()->addHour(),
+        ]);
+
+        $this->artisan('daily-challenge:publish')->assertExitCode(0);
+        $this->assertSame(0, DB::table('scenarios')->where('daily_slot', $date)->count());
+
+        DB::table('ai_editorial_drafts')->where('id', $id)
+            ->update(['publication_at' => now()->subMinute()]);
+        $this->artisan('daily-challenge:publish')->assertExitCode(0);
+        $this->assertDatabaseHas('ai_editorial_drafts', ['id' => $id, 'status' => 'published']);
+        $this->assertSame(1, DB::table('scenarios')->where('daily_slot', $date)->count());
+        $this->assertNull(DB::table('ai_editorial_drafts')->where('id', $id)->value('reviewed_by'));
+
+        $this->artisan('daily-challenge:publish')->assertExitCode(0);
+        $this->assertSame(1, DB::table('scenarios')->where('daily_slot', $date)->count());
+    }
+
     public function test_expiry_closes_daily_challenge_not_ordinary_scenario(): void
     {
         $this->enable();
@@ -164,7 +187,7 @@ final class DailyChallengeAiTest extends TestCase
             $this->assertSame($case['moderate'], $fake->seenModeration[$index]);
             $this->assertSame('completed', DB::table('ai_requests')
                 ->where('id', $requestId)->value('status'));
-            $this->assertSame('pending_review', DB::table('ai_editorial_drafts')
+            $this->assertSame('scheduled', DB::table('ai_editorial_drafts')
                 ->where('id', $draftId)->value('status'));
 
             if ($index === 0) {

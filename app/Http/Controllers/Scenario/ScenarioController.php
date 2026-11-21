@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Scenario;
 use App\Http\Controllers\Controller;
 use App\Domain\DailyChallenge\Jobs\QueueDailyChallengeReview;
 use App\Domain\DailyChallenge\Services\DailyChallengeSettings;
+use App\Domain\Community\Services\PostCheckPolicy;
 use Throwable;
 use App\Models\Scenario;
 use App\Support\Community\ReactionIconCatalog;
@@ -167,6 +168,7 @@ class ScenarioController extends Controller
 
     public function respond(Request $request, Scenario $scenario): RedirectResponse|JsonResponse
     {
+        app(PostCheckPolicy::class)->assertCanContribute($request->user()->id);
         abort_unless($scenario->status === 'published' && $scenario->published_at?->lte(now()), 404);
         if ($scenario->expires_at && $scenario->expires_at->lte(now())) {
             return back()->withErrors(['body' => 'This challenge has expired. You can still read existing responses.']);

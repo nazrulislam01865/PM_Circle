@@ -25,12 +25,15 @@ function cssVariables(source) {
         .map(([, name, value]) => [name, value.trim()]));
 }
 
-test('section order remains between skills pathway and Today\'s scenario', () => {
-    const pathway = home.indexOf('<HomePathway ');
-    const ai = home.indexOf('<HomeAiFeatures content={content.ai_features}/>');
-    const scenario = home.indexOf('<ScenarioPreview ');
-    assert.ok(pathway !== -1 && ai > pathway && scenario > ai);
-    assert.equal(home.split('<HomeAiFeatures content={content.ai_features}/>').length - 1, 1);
+test('public homepage V2 follows approved prototype section order', () => {
+    const exams = home.indexOf('<HomeCertification ');
+    const courses = home.indexOf('<HomeCourses ');
+    const community = home.indexOf('<HomeCommunity ');
+    const ai = home.indexOf('<HomeAiPractice ');
+    const resume = home.indexOf('<HomeResume ');
+    const events = home.indexOf('<HomeEvents ');
+    assert.ok(exams >= 0 && courses > exams && community > courses && ai > community && resume > ai && events > resume);
+    assert.equal(home.split('<HomeAiPractice ').length - 1, 1);
 });
 
 test('four cards retain the approved prototype defaults and are admin editable', () => {
@@ -104,6 +107,9 @@ test('relevant canonical global tokens match the uploaded authoritative UI style
         '--s8', '--s10', '--radius-control', '--radius-card', '--control-height',
         '--control-touch', '--icon', '--ink', '--surface', '--border', '--blue',
         '--blue-hover', '--focus',
-    ]) assert.equal(actual.get(token), approved.get(token), token);
+    ]) {
+        if (token === '--font-ui') assert.ok(actual.get(token)?.startsWith('\"Inter\"'), 'sitewide Inter font');
+        else assert.equal(actual.get(token), approved.get(token), token);
+    }
     // The existing homepage/header layout intentionally retains its approved dimensions.
 });

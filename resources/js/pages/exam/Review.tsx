@@ -4,10 +4,10 @@ import { useMemo, useState } from 'react';
 import { ExamOptionList, ExamPage, ExamStatus, type ExamQuestion, type ExamResponses } from '@/components/exam/ExamShared';
 import { PmpReviewExplanation } from '@/components/exam/PmpReviewExplanation';
 import { PmpQuestionAiChat } from '@/components/exam/PmpQuestionAiChat';
-import { reviewQuestionMetadata } from '@/components/exam/pmpReviewContent';
+import { matchesReviewFilter, reviewQuestionMetadata, type ReviewFilter } from '@/components/exam/pmpReviewContent';
 import type { DashboardShellData } from '@/types/dashboard';
 
-type Filter = 'all' | 'missed' | 'unanswered' | 'flagged';
+type Filter = ReviewFilter;
 const filters: { value: Filter; label: string }[] = [
     { value: 'all', label: 'All Questions' }, { value: 'missed', label: 'Missed' },
     { value: 'unanswered', label: 'Unanswered' }, { value: 'flagged', label: 'Flagged' },
@@ -26,13 +26,9 @@ export default function Review({ shell, attempt, questions, responses }: {
     const [filter, setFilter] = useState<Filter>(initial);
     const [position, setPosition] = useState(0);
     const answered = useMemo(() => questions.filter(q => Boolean(responses[q.id]?.choice)).length, [questions, responses]);
-    const filtered = useMemo(() => questions.filter(question => {
-        const response = responses[question.id];
-        if (filter === 'missed') return !response?.choice || response.choice !== question.correct;
-        if (filter === 'unanswered') return !response?.choice;
-        if (filter === 'flagged') return Boolean(response?.marked);
-        return true;
-    }), [questions, responses, filter]);
+    const filtered = useMemo(() => questions.filter(question =>
+        matchesReviewFilter(question, responses[question.id], filter)
+    ), [questions, responses, filter]);
     const question = filtered[position] ?? null;
     const metadata = question ? reviewQuestionMetadata(question) : null;
 
@@ -58,7 +54,7 @@ export default function Review({ shell, attempt, questions, responses }: {
                 <p className="pm-review-filter-count" aria-live="polite">{filtered.length} question{filtered.length === 1 ? '' : 's'} match this filter.</p>
             </section>
         </aside>
-        {question ? <section className="pm-exam-panel pm-exam-review-question" aria-label="Question review">
+        {question ? <section key={question.id} className="pm-exam-panel pm-exam-review-question" aria-label="Question review">
             <header className="pm-review-question-header"><div className="pm-exam-review-prevnext">
                 <button type="button" aria-label="Previous filtered question" disabled={position === 0}
                     onClick={() => setPosition(i => i - 1)}><ChevronLeft size={17}/></button>

@@ -64,7 +64,7 @@ Artisan::command('ai:prepare-scenarios', function (): void {
     for ($offset = 0; $offset <= 7; $offset++) {
         $service->queueScenarioSlot(now('Asia/Dhaka')->addDays($offset)->toDateString());
     }
-})->purpose('Create only unique future daily challenge drafts for human review');
+})->purpose('Prepare unique Daily Challenge drafts for scheduled automatic publication');
 
 Artisan::command('ai:publish-approved', function (): void {
     if (! config('pm-ai.editorial_enabled')) {
@@ -88,7 +88,7 @@ Artisan::command('daily-challenge:publish', function (): void {
     if (! $policy->get()->enabled || ! $policy->get()->auto_publish || ! $policy->isReady()) return;
     $editorial = app(\App\Domain\AI\Services\AiEditorialService::class);
     $ids = \Illuminate\Support\Facades\DB::table('ai_editorial_drafts')
-        ->where('feature', 'scenario_generate')->where('status', 'pending_review')
+        ->where('feature', 'scenario_generate')->whereIn('status', ['scheduled', 'pending_review'])
         ->where('publication_at', '<=', now())->orderBy('publication_at')->limit(20)->pluck('id');
     foreach ($ids as $id) {
         try {

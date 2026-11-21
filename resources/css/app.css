@@ -40,6 +40,8 @@
 @import './pm-interview.css';
 @import './pm-discover.css';
 @import './pm-admin.css';
+@import './pm-admin-overview.css';
+@import './pm-interview-admin.css';
 @import './pm-admin-ai-usage.css';
 @import './pm-member-home.css';
 @import './pm-member-directory.css';
@@ -57,6 +59,11 @@
 @import './pm-member-navigation.css';
 @import './pm-activity-log.css';
 @import './pm-notifications.css';
+
+/* Public homepage styles must load after legacy site styles to prevent cascade overrides. */
+@import './pm-home-v2-layout.css';
+@import './pm-home-v2-sections.css';
+@import './pm-home-v2-responsive.css';
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -175,3 +182,4 @@
 
 /* Shared small-screen constraints, after feature CSS to avoid specificity regressions. */
 @import './pm-mobile-layout.css';
+@import './pm-mobile-content-polish.css';

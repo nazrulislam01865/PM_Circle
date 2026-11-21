@@ -373,3 +373,7 @@
     .pm-interview-results-category .pm-interview-card-body { padding: var(--s3); }
     .pm-interview-trend-graph { padding-top: var(--s2); }
 }
+
+/* Admin-configured question-set selector; shares all member form tokens. */
+.pm-interview-set-field { display: grid; gap: var(--s2); font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui); }
+.pm-interview-set-field .pm-input { width: 100%; min-height: var(--control-height); padding: var(--s2) var(--s3); border: 1px solid var(--control-border); border-radius: var(--radius-control); background: var(--surface); color: var(--ink); font: inherit; }

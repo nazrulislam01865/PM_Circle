@@ -5,25 +5,30 @@ import { InterviewCard, InterviewHeading, InterviewPage } from '@/components/int
 import { dateLabel, interviewBase, practiceUrl, type InterviewHistory, type InterviewShell, type QuestionType } from '@/components/interview/types';
 
 type Props = {
-    shell: InterviewShell; industries: Record<string, string>; roles: string[]; experience: Record<string, string>;
+    shell: InterviewShell; industries: Record<string, string>; roles: Record<string, string>; experience: Record<string, string>;
+    types: Record<string, string>; counts: Record<string, string>; modes: Record<string, string>;
+    questionSets: { id: number; title: string; industry: string | null; role: string | null; experience: string | null }[];
     recent: InterviewHistory[]; stats: { sessions: number; answered: number; last: string | null }; minutesPerQuestion: number;
 };
 const industryIcons = [Laptop, HardHat, Layers3, Factory, Landmark, HeartPulse, MoreHorizontal];
-const typeNames: QuestionType[] = ['General', 'Behavioral', 'Technical', 'Situational'];
 
-export default function Index({ shell, industries, roles, experience, recent, stats, minutesPerQuestion }: Props) {
-    const [industry, setIndustry] = useState('software');
-    const [role, setRole] = useState('Project Manager');
-    const [level, setLevel] = useState('mid');
-    const [types, setTypes] = useState<QuestionType[]>(['General', 'Behavioral', 'Technical']);
-    const [count, setCount] = useState(10);
-    const [mode, setMode] = useState<'type' | 'speak' | 'both'>('both');
+export default function Index({ shell, industries, roles, experience, types: availableTypes, counts, modes, questionSets, recent, stats, minutesPerQuestion }: Props) {
+    const [industry, setIndustry] = useState(Object.keys(industries)[0] ?? '');
+    const [role, setRole] = useState(Object.keys(roles).includes('Project Manager') ? 'Project Manager' : (Object.keys(roles)[0] ?? ''));
+    const [level, setLevel] = useState(Object.keys(experience).includes('mid') ? 'mid' : (Object.keys(experience)[0] ?? ''));
+    const typeNames = Object.keys(availableTypes);
+    const [types, setTypes] = useState<QuestionType[]>(typeNames.slice(0, 3));
+    const countOptions = Object.keys(counts).map(Number);
+    const [count, setCount] = useState(countOptions.includes(10) ? 10 : (countOptions[0] ?? 0));
+    const [mode, setMode] = useState<'type' | 'speak' | 'both'>(('both' in modes ? 'both' : (Object.keys(modes)[0] ?? 'type')) as 'type' | 'speak' | 'both');
+    const [setId, setSetId] = useState<number | null>(null);
+    const eligibleSets = questionSets.filter(item => (!item.industry || item.industry === industry) && (!item.role || item.role === role) && (!item.experience || item.experience === level));
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
     const toggle = (type: QuestionType) => setTypes(previous => previous.includes(type) ? previous.length > 1 ? previous.filter(item => item !== type) : previous : [...previous, type]);
     const start = (event: FormEvent) => {
         event.preventDefault(); setError(''); setSubmitting(true);
-        router.post(`${interviewBase}/start`, { industry, role, experience: level, types, count, mode }, {
+        router.post(`${interviewBase}/start`, { industry, role, experience: level, types, count, mode, question_set: eligibleSets.some(item => item.id === setId) ? setId : null }, {
             preserveScroll: true,
             onError: errors => { setError(Object.values(errors)[0] ?? 'Please review your selections.'); setSubmitting(false); },
             onFinish: () => setSubmitting(false),
@@ -35,22 +40,24 @@ export default function Index({ shell, industries, roles, experience, recent, st
             <InterviewCard title="Start Your Interview Practice" icon={<CirclePlay size={23} fill="currentColor"/>} className="pm-interview-setup">
                 <form onSubmit={start}>
                     <fieldset className="pm-interview-fieldset"><legend><span className="pm-interview-step">1</span><Layers3 size={18}/>Select Industry <b>*</b></legend>
-                        <div className="pm-interview-industry-grid">{Object.entries(industries).map(([key, label], i) => { const Icon = industryIcons[i]; return <button type="button" key={key} className={`pm-interview-choice ${industry === key ? 'is-selected' : ''}`} aria-pressed={industry === key} onClick={() => setIndustry(key)}>{industry === key && <Check className="pm-interview-selected-mark" size={14}/>}<Icon size={22}/><span>{label}</span></button>; })}</div>
+                        <div className="pm-interview-industry-grid">{Object.entries(industries).map(([key, label], i) => { const Icon = industryIcons[i] ?? MoreHorizontal; return <button type="button" key={key} className={`pm-interview-choice ${industry === key ? 'is-selected' : ''}`} aria-pressed={industry === key} onClick={() => setIndustry(key)}>{industry === key && <Check className="pm-interview-selected-mark" size={14}/>}<Icon size={22}/><span>{label}</span></button>; })}</div>
                     </fieldset>
                     <fieldset className="pm-interview-fieldset"><legend><span className="pm-interview-step">2</span><UsersRound size={18}/>Select PM Role <b>*</b></legend>
-                        <div className="pm-interview-role-grid">{roles.map(item => <button key={item} type="button" className={`pm-interview-choice ${role === item ? 'is-selected' : ''}`} aria-pressed={role === item} onClick={() => setRole(item)}>{role === item && <Check size={15}/>}<span>{item}</span></button>)}</div>
+                        <div className="pm-interview-role-grid">{Object.entries(roles).map(([key, label]) => <button key={key} type="button" className={`pm-interview-choice ${role === key ? 'is-selected' : ''}`} aria-pressed={role === key} onClick={() => setRole(key)}>{role === key && <Check size={15}/>}<span>{label}</span></button>)}</div>
                     </fieldset>
                     <div className="pm-interview-options-grid"><fieldset className="pm-interview-fieldset"><legend><span className="pm-interview-step">3</span><BarChart3 size={18}/>Experience Level <b>*</b></legend>
-                        <div className="pm-interview-experience-grid">{Object.entries(experience).map(([key, value]) => <button type="button" key={key} className={`pm-interview-choice ${level === key ? 'is-selected' : ''}`} aria-pressed={level === key} onClick={() => setLevel(key)}>{level === key && <Check size={14}/>}<span>{value.split(' (')[0]}<small>({value.split(' (')[1]}</small></span></button>)}</div>
+                        <div className="pm-interview-experience-grid">{Object.entries(experience).map(([key, value]) => <button type="button" key={key} className={`pm-interview-choice ${level === key ? 'is-selected' : ''}`} aria-pressed={level === key} onClick={() => setLevel(key)}>{level === key && <Check size={14}/>}<span>{value}</span></button>)}</div>
                     </fieldset><fieldset className="pm-interview-fieldset"><legend><span className="pm-interview-step">4</span><Layers3 size={18}/>Interview Type <b>*</b></legend>
-                        <div className="pm-interview-types-grid">{typeNames.map(item => <label className={`pm-interview-type ${types.includes(item) ? 'is-selected' : ''}`} key={item}><input type="checkbox" checked={types.includes(item)} onChange={() => toggle(item)}/><span>{item}</span></label>)}</div>
+                        <div className="pm-interview-types-grid">{typeNames.map(item => <label className={`pm-interview-type ${types.includes(item) ? 'is-selected' : ''}`} key={item}><input type="checkbox" checked={types.includes(item)} onChange={() => toggle(item)}/><span>{availableTypes[item]}</span></label>)}</div>
                     </fieldset></div>
-                    <div className="pm-interview-setup-footer"><div><label htmlFor="pm-interview-count"><BookOpen size={18}/>Number of Questions</label><div className="pm-interview-select-wrap"><select id="pm-interview-count" className="pm-input" value={count} onChange={e => setCount(Number(e.target.value))}><option value={5}>5 Questions</option><option value={10}>10 Questions</option></select><ChevronDown size={16}/></div></div>
+                    <div className="pm-interview-setup-footer"><div><label htmlFor="pm-interview-count"><BookOpen size={18}/>Number of Questions</label><div className="pm-interview-select-wrap"><select id="pm-interview-count" className="pm-input" value={count} onChange={e => setCount(Number(e.target.value))}>{countOptions.map(value => <option key={value} value={value}>{counts[String(value)]}</option>)}</select><ChevronDown size={16}/></div></div>
                         <div><span className="pm-interview-label"><Clock3 size={18}/>Estimated Duration</span><p className="pm-interview-duration">≈ {count * minutesPerQuestion} minutes</p></div>
-                        <div><span className="pm-interview-label"><Mic2 size={18}/>Answer Mode</span><div className="pm-interview-radio-row">{([['type', 'Type Answer'], ['speak', 'Speak Answer'], ['both', 'Both']] as const).map(([value, text]) => <label key={value}><input type="radio" name="answer-mode" value={value} checked={mode === value} onChange={() => setMode(value)}/>{text}</label>)}</div></div>
+                        <div><span className="pm-interview-label"><Mic2 size={18}/>Answer Mode</span><div className="pm-interview-radio-row">{Object.entries(modes).map(([value, text]) => <label key={value}><input type="radio" name="answer-mode" value={value} checked={mode === value} onChange={() => setMode(value as 'type' | 'speak' | 'both')}/>{text}</label>)}</div></div>
                     </div>
+                    {eligibleSets.length > 0 && <label className="pm-interview-set-field" htmlFor="pm-interview-set"><span>Question set</span><select id="pm-interview-set" className="pm-input" value={eligibleSets.some(item => item.id === setId) ? (setId ?? '') : ''} onChange={e => setSetId(e.target.value ? Number(e.target.value) : null)}><option value="">Recommended mix (all eligible sets)</option>{eligibleSets.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>}
                     {error && <p role="alert" className="pm-interview-error">{error}</p>}
-                    <button className="pm-button pm-interview-start" disabled={submitting} type="submit"><Play size={18} fill="currentColor"/>{submitting ? 'Starting interview…' : 'Start Interview Practice'}</button>
+                    {(!Object.keys(roles).length || !typeNames.length || !countOptions.length || !eligibleSets.length) && <p role="alert" className="pm-interview-error">Interview practice is not available yet. Please contact the administrator.</p>}
+                    <button className="pm-button pm-interview-start" disabled={submitting || !Object.keys(roles).length || !typeNames.length || !countOptions.length || !eligibleSets.length} type="submit"><Play size={18} fill="currentColor"/>{submitting ? 'Starting interview…' : 'Start Interview Practice'}</button>
                 </form>
             </InterviewCard>
         </div><aside className="pm-interview-home-side">

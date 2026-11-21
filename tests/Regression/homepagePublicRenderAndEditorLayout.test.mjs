@@ -10,7 +10,8 @@ test('the homepage opportunities card imports the icon it renders', () => {
     const career = read('resources/js/components/home/CareerHighlights.tsx');
     assert.match(career, /import\s*\{[^}]*\bFileText\b[^}]*\}\s*from\s*['"]lucide-react['"]/s);
     assert.match(career, /<FileText\s+size=\{50\}/);
-    assert.match(read('resources/js/pages/public/Home.tsx'), /<CareerHighlights\b/);
+    assert.match(read('resources/js/pages/public/Home.tsx'), /<HomeResume\b/);
+    assert.match(read('resources/js/components/home/v2/HomeAiResume.tsx'), /<FileText\b/);
 });
 
 test('homepage editor fields are stacked in a scoped layout without changing other admin forms', () => {

@@ -64,6 +64,122 @@ final class PmpExamAdminManagementTest extends TestCase
         $this->actingAs($this->admin())->get('/admin/exam-simulator/pmp/questions')->assertOk();
     }
 
+    public function test_admin_can_search_active_questions_and_select_the_public_sample(): void
+    {
+        $admin = $this->admin();
+        $member = $this->member();
+        $url = '/admin/exam-simulator/pmp/questions/sample-options';
+
+        $this->getJson($url)->assertStatus(401);
+        $this->actingAs($member)->getJson($url)->assertForbidden();
+
+        $this->actingAs($admin);
+        $this->post('/admin/exam-simulator/pmp/questions', $this->question('pmp-sample-active'))
+            ->assertSessionHasNoErrors()->assertRedirect();
+        $this->post('/admin/exam-simulator/pmp/questions', $this->question('pmp-sample-inactive'))
+            ->assertSessionHasNoErrors()->assertRedirect();
+        $activeId = (int) DB::table('pmp_exam_questions')->where('code', 'pmp-sample-active')->value('id');
+        $inactiveId = (int) DB::table('pmp_exam_questions')->where('code', 'pmp-sample-inactive')->value('id');
+        $this->patch("/admin/exam-simulator/pmp/questions/{$inactiveId}/status", ['is_active' => false])
+            ->assertSessionHasNoErrors()->assertRedirect();
+
+        $results = $this->getJson($url.'?search=sample')->assertOk()->json('questions');
+        $this->assertCount(1, $results);
+        $this->assertSame($activeId, $results[0]['id']);
+        $this->assertSame('pmp-sample-active', $results[0]['code']);
+        $this->assertSame($activeId, $this->getJson($url.'?search='.$activeId)->assertOk()->json('questions.0.id'));
+        $this->assertArrayNotHasKey('correct_option', $results[0]);
+        $this->getJson($url.'?search='.str_repeat('x', 101))->assertUnprocessable();
+
+        $this->put('/admin/exam-simulator/pmp/settings', $this->settings(['sample_question_id' => $inactiveId]))
+            ->assertSessionHasErrors('sample_question_id');
+        $this->put('/admin/exam-simulator/pmp/settings', $this->settings(['sample_question_id' => $activeId]))
+            ->assertSessionHasNoErrors()->assertRedirect();
+        $this->assertDatabaseHas('pmp_exam_settings', ['id' => 1, 'sample_question_id' => $activeId]);
+
+        $this->get('/admin/exam-simulator/pmp/questions')->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('admin/PmpQuestionBank')
+            ->where('selectedSampleQuestion.id', $activeId)
+            ->etc());
+        $this->app['auth']->guard()->logout();
+        $this->get('/exam-simulator/pmp')->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('exam/Public')
+            ->where('sampleQuestion.id', $activeId)
+            ->where('sampleQuestion.correct', 'B')
+            ->etc());
+
+        $this->actingAs($admin)->put('/admin/exam-simulator/pmp/settings', $this->settings(['sample_question_id' => null]))
+            ->assertSessionHasNoErrors()->assertRedirect();
+        $this->assertDatabaseHas('pmp_exam_settings', ['id' => 1, 'sample_question_id' => null]);
+    }
+
+    public function test_admin_can_save_ordered_public_sample_questions_and_guests_receive_the_same_order(): void
+    {
+        $admin = $this->admin();
+        $this->actingAs($admin);
+        foreach (['sample-one', 'sample-two', 'sample-three'] as $code) {
+            $this->post('/admin/exam-simulator/pmp/questions', $this->question($code))
+                ->assertSessionHasNoErrors();
+        }
+        $ids = DB::table('pmp_exam_questions')->whereIn('code', ['sample-one', 'sample-two', 'sample-three'])
+            ->pluck('id', 'code');
+        $this->assertCount(3, $this->getJson('/admin/exam-simulator/pmp/questions/sample-options?domain=Process')->assertOk()->json('questions'));
+        $this->assertCount(0, $this->getJson('/admin/exam-simulator/pmp/questions/sample-options?domain=People')->assertOk()->json('questions'));
+        $first = (int) $ids['sample-one'];
+        $second = (int) $ids['sample-two'];
+        $third = (int) $ids['sample-three'];
+
+        $this->put('/admin/exam-simulator/pmp/settings', $this->settings([
+            'sample_question_ids' => [$second, $first], 'sample_question_id' => $second,
+        ]))->assertSessionHasNoErrors();
+        $record = DB::table('pmp_exam_settings')->where('id', 1)->first();
+        $this->assertSame([$second, $first], json_decode($record->sample_question_ids, true));
+        $this->assertSame($second, (int) $record->sample_question_id);
+
+        $this->get('/admin/exam-simulator/pmp/questions')->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('admin/PmpQuestionBank')
+            ->where('selectedSampleQuestions.0.id', $second)
+            ->where('selectedSampleQuestions.1.id', $first)
+            ->etc());
+
+        $this->app['auth']->guard()->logout();
+        $this->get('/exam-simulator/pmp')->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('exam/Public')
+            ->has('sampleQuestions', 2)
+            ->where('sampleQuestions.0.id', $second)
+            ->where('sampleQuestions.1.id', $first)
+            ->where('sampleQuestion.id', $second)
+            ->etc());
+
+        // Deactivating a selected question must not expose it to guests.
+        $this->actingAs($admin)->patch("/admin/exam-simulator/pmp/questions/{$second}/status", ['is_active' => false])
+            ->assertSessionHasNoErrors();
+        $this->app['auth']->guard()->logout();
+        $this->get('/exam-simulator/pmp')->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->has('sampleQuestions', 1)
+            ->where('sampleQuestions.0.id', $first)
+            ->etc());
+
+        $this->actingAs($admin)->put('/admin/exam-simulator/pmp/settings', $this->settings([
+            'sample_question_ids' => [$first, $second], 'sample_question_id' => $first,
+        ]))->assertSessionHasErrors('sample_question_ids');
+        $this->put('/admin/exam-simulator/pmp/settings', $this->settings([
+            'sample_question_ids' => [$first, $first], 'sample_question_id' => $first,
+        ]))->assertSessionHasErrors();
+        $this->put('/admin/exam-simulator/pmp/settings', $this->settings([
+            'sample_question_ids' => [$first, $third], 'sample_question_id' => $first,
+        ]))->assertSessionHasNoErrors();
+        $this->put('/admin/exam-simulator/pmp/settings', $this->settings([
+            'sample_question_ids' => [], 'sample_question_id' => null,
+        ]))->assertSessionHasNoErrors();
+        $this->assertSame([], json_decode(DB::table('pmp_exam_settings')->value('sample_question_ids'), true));
+        $this->app['auth']->guard()->logout();
+        $this->get('/exam-simulator/pmp')->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->has('sampleQuestions', 0)
+            ->where('sampleQuestion', null)
+            ->etc());
+    }
+
     public function test_admin_settings_drive_new_exam_length_and_deadline(): void
     {
         $admin = $this->admin();

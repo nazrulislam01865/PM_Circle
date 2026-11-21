@@ -42,24 +42,46 @@
     margin: 0 0 var(--s2); padding: 0; border: 0;
     font-size: var(--text-h3); line-height: var(--line-h3); font-weight: var(--bold);
 }
+/* Review Summary: centred three-segment ring and three-column breakdown. */
 .pm-exam-review-page .pm-exam-summary-content {
-    display: flex; flex-direction: row; align-items: center; gap: var(--s3); padding: 0;
+    display: grid; grid-template-columns: minmax(0,1fr); justify-items: stretch;
+    gap: var(--s4); padding: 0;
 }
-.pm-exam-review-page .pm-exam-donut { width: 80px; height: 80px; margin: 0; }
+.pm-exam-review-page .pm-exam-donut {
+    width: 148px; height: 148px; margin: var(--s3) auto var(--s1);
+}
 .pm-exam-review-page .pm-exam-donut>span {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    width: 60px; height: 60px; min-width: 0; overflow: hidden;
-    font-size: var(--text-xs); line-height: var(--line-xs);
+    width: 116px; height: 116px; min-width: 0; overflow: hidden;
+    font-size: var(--text-sm); line-height: var(--line-sm);
 }
-.pm-exam-review-page .pm-exam-donut>span strong { font-size: var(--text-h2); line-height: var(--line-h2); }
+.pm-exam-review-page .pm-exam-donut>span strong {
+    font-size: var(--text-stat); line-height: var(--line-stat);
+    font-variant-numeric: tabular-nums;
+}
 .pm-exam-review-page .pm-exam-donut-label {
     display: block; max-width: 100%; white-space: nowrap; text-align: center;
-    font-size: var(--text-donut-label); line-height: var(--line-xs);
+    font-size: var(--text-sm); line-height: var(--line-sm); color: var(--muted);
 }
-.pm-exam-review-page .pm-exam-summary-items { min-width: 0; gap: var(--s1); font-size: var(--text-xs); }
-.pm-exam-review-page .pm-exam-summary-items>span { gap: var(--s1); white-space: nowrap; }
-.pm-exam-review-page .pm-exam-summary-items i { width: 8px; height: 8px; border-radius: 50%; }
-.pm-exam-review-page .pm-exam-summary-items strong { display: none; }
+.pm-exam-review-page .pm-exam-summary-items {
+    display: grid; gap: 0; min-width: 0;
+    font-size: var(--text-sm); line-height: var(--line-sm);
+}
+.pm-exam-review-page .pm-exam-summary-row {
+    display: grid; grid-template-columns: minmax(0,1fr) minmax(1.25rem,auto) minmax(2.8rem,auto);
+    align-items: center; gap: var(--s2); min-width: 0;
+    padding: var(--s3) 0; border-top: 1px solid var(--border);
+    font-variant-numeric: tabular-nums;
+}
+.pm-exam-review-page .pm-exam-summary-row>span:first-child {
+    display: inline-flex; align-items: center; min-width: 0; gap: var(--s2);
+    font-weight: var(--semibold);
+}
+.pm-exam-review-page .pm-exam-summary-row>span:nth-child(2) { text-align: right; color: var(--muted); }
+.pm-exam-review-page .pm-exam-summary-row strong { display: block; text-align: right; font-weight: var(--bold); }
+.pm-exam-review-page .pm-exam-summary-items i {
+    display: inline-block; flex: none; width: 11px; height: 11px; border-radius: var(--radius-control);
+}
 .pm-exam-review-page .pm-exam-review-filter { padding: var(--s4); }
 .pm-exam-review-page .pm-pmp-review-filter-actions { display: grid; gap: var(--s1); padding: 0; }
 .pm-exam-review-page .pm-pmp-review-filter-actions button {

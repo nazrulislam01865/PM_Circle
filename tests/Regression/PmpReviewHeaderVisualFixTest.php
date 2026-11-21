@@ -22,9 +22,9 @@ $navCss = $read('resources/css/pm-member-home.css');
 $check(str_contains($shared, '<span className="pm-exam-donut-label">Questions</span>')
     && str_contains($reviewCss, '.pm-exam-review-page .pm-exam-donut-label')
     && str_contains($reviewCss, 'display: flex; flex-direction: column; align-items: center; justify-content: center;')
-    && str_contains($reviewCss, 'font-size: var(--text-donut-label)')
+    && str_contains($reviewCss, 'font-size: var(--text-sm)')
     && str_contains($tokens, '--text-donut-label:'),
-    'The donut number and label are centered and use a compact shared font token');
+    'The screenshot-style donut number and label remain centered with shared typography tokens');
 
 $check(str_contains($badgeCss, 'background: linear-gradient(105deg, var(--reward-surface-bright), var(--reward-surface))')
     && str_contains($badgeCss, 'background: linear-gradient(105deg, var(--reward-surface), var(--reward-surface-bright))')

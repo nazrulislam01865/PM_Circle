@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Post;
 use App\Models\Comment;
 use App\Domain\Community\Services\PostCheckMedia;
+use App\Domain\Community\Media\CommunityImageVariants;
+use App\Domain\Community\Services\PostCheckPolicy;
 use App\Domain\Community\Services\EngagementStats;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -64,6 +66,14 @@ final class PostModerationController extends Controller
                 'status' => $data['decision'] === 'approve' ? 'published' : 'rejected',
                 'published_at' => $data['decision'] === 'approve' ? now() : null,
             ])->save();
+            // A human-confirmed rejection of flagged content is a confirmed violation.
+            // Older non-AI review items without a check version are not penalized.
+            if ($data['decision'] === 'reject' && $locked->check_version > 0) {
+                app(PostCheckPolicy::class)->recordViolation(
+                    $locked->id, $locked->check_version, $locked->author_id,
+                    $locked->check_category ?: 'manual_review',
+                );
+            }
         }, 3);
         if ($data['decision'] === 'approve') $media->cleanupApproved($post, $oldPath);
         return back()->with('status', 'Post review recorded.');
@@ -98,8 +108,15 @@ final class PostModerationController extends Controller
                     ->forComment($locked));
             }
             $locked->save();
-            // Administrator rejection is a moderation action, not an AI-confirmed strike.
+            if ($data['decision'] === 'reject') {
+                app(PostCheckPolicy::class)->recordCommentViolation(
+                    $locked->id, $locked->author_id, 'manual_review',
+                );
+            }
         }, 3);
+        if ($data['decision'] === 'approve') {
+            app(CommunityImageVariants::class)->queue('local', $comment->media_path);
+        }
         return back()->with('status', 'Comment review recorded.');
     }
 

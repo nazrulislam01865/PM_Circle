@@ -40,18 +40,25 @@ export function ExamBreadcrumb({ parts = [] }: { parts?: ExamBreadcrumbPart[] })
 }
 
 export function ExamStatus({ total, correct, answered }: { total: number; correct: number; answered: number }) {
-    const wrong = answered - correct;
-    const missed = total - answered;
-    const percentage = total ? Math.round(correct / total * 100) : 0;
+    const wrong = Math.max(0, answered - correct);
+    const missed = Math.max(0, total - answered);
+    const percent = (count: number) => total ? Number((count / total * 100).toFixed(1)) : 0;
+    const correctPercent = percent(correct);
+    const wrongPercent = percent(wrong);
+    const missedPercent = percent(missed);
     return <section className="pm-exam-panel pm-exam-summary" aria-label="Review summary">
         <h2>Review Summary</h2>
         <div className="pm-exam-summary-content">
-            <div className="pm-exam-donut" style={{ '--exam-score': `${percentage}%`, '--exam-answered': `${total ? answered / total * 100 : 0}%` } as CSSProperties}>
-                <span><strong>{total}</strong><span className="pm-exam-donut-label">Questions</span></span>
+            <div className="pm-exam-donut" role="img"
+                aria-label={`${total} questions: ${correct} correct, ${wrong} incorrect, ${missed} unanswered`}
+                style={{ '--exam-score': `${total ? correct / total * 100 : 0}%`, '--exam-answered': `${total ? answered / total * 100 : 0}%` } as CSSProperties}>
+                <span aria-hidden="true"><strong>{total}</strong><span className="pm-exam-donut-label">Questions</span></span>
             </div>
-            <div className="pm-exam-summary-items"><span><i className="good"/>Correct ({correct})<strong>{percentage}%</strong></span>
-                <span><i className="bad"/>Incorrect ({wrong})<strong>{total ? Math.round(wrong / total * 100) : 0}%</strong></span>
-                <span><i className="empty"/>Not Answered ({missed})<strong>{total ? Math.round(missed / total * 100) : 0}%</strong></span></div>
+            <div className="pm-exam-summary-items" aria-label="Answer breakdown">
+                <div className="pm-exam-summary-row"><span><i className="good"/>Correct</span><span>{correct}</span><strong>{correctPercent}%</strong></div>
+                <div className="pm-exam-summary-row"><span><i className="bad"/>Incorrect</span><span>{wrong}</span><strong>{wrongPercent}%</strong></div>
+                <div className="pm-exam-summary-row"><span><i className="empty"/>Unanswered</span><span>{missed}</span><strong>{missedPercent}%</strong></div>
+            </div>
         </div>
     </section>;
 }

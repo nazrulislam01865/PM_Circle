@@ -4,6 +4,7 @@ namespace App\Domain\Community\Actions;
 
 use App\Models\Post;
 use App\Domain\Community\Services\PostCheckQueue;
+use App\Domain\Community\Media\CommunityImageVariants;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -108,6 +109,10 @@ class PublishPost
                             'post_id' => $post->id, 'label' => trim($label), 'position' => $position,
                         ]);
                     }
+                }
+                if ($storedPath) {
+                    $disk = $post->visibility === 'members' ? 'local' : 'public';
+                    DB::afterCommit(static fn () => app(CommunityImageVariants::class)->queue($disk, $storedPath));
                 }
                 return $post;
             });

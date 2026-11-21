@@ -32,17 +32,18 @@ export function useReactionOptions(includeInactive = false): ReactionOption[] {
 }
 
 /** Admin-uploaded image when available; original Lucide icon is the permanent fallback. */
-export function ReactionGlyph({ type, size = 20, urlOverride }: {
+export function ReactionGlyph({ type, size = 20, urlOverride, prototypeLikeIcon = false }: {
     type: ReactionType;
     size?: number;
     urlOverride?: string | null;
+    prototypeLikeIcon?: boolean;
 }) {
     const page = usePage();
     const icons = page.props.reactionIcons as Partial<Record<ReactionType, string>> | undefined;
     const url = urlOverride === undefined ? icons?.[type] : urlOverride;
     const [failedUrl, setFailedUrl] = useState<string | null>(null);
     const option = reactionOptions.find(item => item.type === type);
-    const Icon = option?.Icon ?? Smile;
+    const Icon = prototypeLikeIcon && type === 'like' ? Heart : option?.Icon ?? Smile;
 
     return url && failedUrl !== url
         ? <img src={url} width={size} height={size} className="pm-reaction-image" alt="" draggable={false}
@@ -72,11 +73,11 @@ export function JoinCommunityDialog({ action, onClose, hasAccount }: {
     </Dialog>;
 }
 
-export function ReactionPicker({ endpoint, initial, total, canInteract, onJoin, label = 'post', onChanged, showCount = true }: {
+export function ReactionPicker({ endpoint, initial, total, canInteract, onJoin, label = 'post', onChanged, showCount = true, buttonLabel, prototypeIcon = false }: {
     endpoint: string; initial?: ReactionType | null; total?: number;
     canInteract: boolean; onJoin: RequestToJoin; label?: string;
     onChanged?: (reaction: ReactionType | null, count: number) => void;
-    showCount?: boolean;
+    showCount?: boolean; buttonLabel?: string; prototypeIcon?: boolean;
 }) {
     const [active, setActive] = useState<ReactionType | null>(initial ?? null);
     const [count, setCount] = useState(total ?? 0);
@@ -141,8 +142,8 @@ export function ReactionPicker({ endpoint, initial, total, canInteract, onJoin, 
             aria-pressed={Boolean(active)} aria-haspopup="true" aria-expanded={open}
             onPointerDown={event => { touch.current = event.pointerType === 'touch'; }}
             onClick={() => { if (touch.current) { setOpen(value => !value); touch.current = false; } else void react(active ?? 'like'); }}>
-            <ReactionGlyph type={selectedType} size={19}/>
-            <span>{chosen?.label ?? 'Like'}</span>
+            <ReactionGlyph type={selectedType} size={19} prototypeLikeIcon={prototypeIcon && !active}/>
+            <span>{chosen?.label ?? buttonLabel ?? 'Like'}</span>
             {showCount && count > 0 && <span className="pm-home-reaction-count">{count}</span>}
         </button>
         <div className="pm-home-reaction-options" data-many={options.length > 7 || archivedSelection ? 'true' : undefined} role="group" aria-label={`Choose reaction to ${label}`}>

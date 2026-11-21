@@ -4,6 +4,7 @@ namespace App\Domain\AI\Services;
 
 use App\Domain\AI\Contracts\AiProvider;
 use App\Domain\AI\Support\AiFailure;
+use App\Domain\DailyChallenge\Services\DailyChallengeSettings;
 use App\Models\User;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -116,6 +117,26 @@ final class AiExecutionService
                 $useExternalModeration);
             $rubric = $context['rubric'] ?? null;
             $validated = $this->catalog->validate($request->feature_code, $result['result'], $rubric);
+            if ($request->feature_code === 'scenario_generate') {
+                $brief = $context['context']['editorial_brief'] ?? [];
+                if (is_array($brief)) {
+                    // A manually supplied exact headline must survive model variation.
+                    if (is_string($brief['admin_exact_title'] ?? null)
+                        && trim($brief['admin_exact_title']) !== '') {
+                        $validated['title'] = $brief['admin_exact_title'];
+                    }
+                    if (is_string($brief['difficulty'] ?? null)
+                        && trim($brief['difficulty']) !== '') {
+                        $validated['difficulty'] = mb_substr($brief['difficulty'], 0, 32);
+                    }
+                    if (is_string($brief['primary_topic'] ?? null)
+                        && trim($brief['primary_topic']) !== '') {
+                        $validated['topics'] = array_slice(array_values(array_unique([
+                            $brief['primary_topic'], ...$validated['topics'],
+                        ])), 0, 5);
+                    }
+                }
+            }
             $cost = $this->cost($result, json_decode($request->model_price_snapshot, true));
             DB::transaction(function () use ($id, $request, $payload, $validated, $result, $cost, $context): void {
                 $row = DB::table('ai_requests')->where('id', $id)->lockForUpdate()->first();
@@ -160,10 +181,17 @@ final class AiExecutionService
                     $this->tokens->finish($id, (int) $result['input_tokens'] + (int) $result['output_tokens']);
                     $this->credits->finish($row->user_id, $id, (int) $row->estimated_hold);
                 } elseif ($row->subject_type === 'editorial_draft') {
+                    $status = 'pending_review';
+                    if ($row->feature_code === 'scenario_generate') {
+                        $policy = app(DailyChallengeSettings::class)->get();
+                        if ($policy->enabled && $policy->auto_publish) {
+                            $status = 'scheduled';
+                        }
+                    }
                     DB::table('ai_editorial_drafts')->where('id', $row->subject_id)
                         ->where('status', 'queued')->update([
                             'payload_encrypted' => Crypt::encryptString(json_encode($validated, JSON_THROW_ON_ERROR)),
-                            'status' => 'pending_review', 'updated_at' => now(),
+                            'status' => $status, 'updated_at' => now(),
                         ]);
                 }
                 DB::table('ai_requests')->where('id', $id)->update([

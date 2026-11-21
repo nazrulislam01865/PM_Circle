@@ -29,7 +29,7 @@ final class HomepageMasterData
     /** Signup choices share the existing admin master-data editor, not the homepage editor. */
     public static function editableDropdownGroups(): array
     {
-        return self::DROPDOWN_GROUPS + SignupMasterData::GROUPS + CourseMasterData::GROUPS;
+        return self::DROPDOWN_GROUPS + SignupMasterData::GROUPS + CourseMasterData::GROUPS + InterviewMasterData::GROUPS + DailyChallengeMasterData::GROUPS;
     }
 
     // Icons are implemented in the existing frontend and require a code release to add a new kind.
@@ -48,7 +48,7 @@ final class HomepageMasterData
         return collect($groups)->map(fn (string $label, string $value) => [
             'value' => $value,
             'label' => $label,
-            'can_add' => ! in_array($value, ['course_access', 'course_question_kind', 'course_question_difficulty', 'course_resource_kind'], true),
+            'can_add' => ! in_array($value, ['course_access', 'course_question_kind', 'course_question_difficulty', 'course_resource_kind', 'interview_mode'], true),
             'is_icon' => false,
         ])->values()->all();
     }
@@ -76,11 +76,17 @@ final class HomepageMasterData
 
     public static function isAllowedNewValue(string $category, string $value): bool
     {
-        if (! array_key_exists($category, self::GROUPS) && ! array_key_exists($category, SignupMasterData::GROUPS) && ! array_key_exists($category, CourseMasterData::GROUPS)) {
+        if (! array_key_exists($category, self::GROUPS) && ! array_key_exists($category, SignupMasterData::GROUPS) && ! array_key_exists($category, CourseMasterData::GROUPS) && ! array_key_exists($category, InterviewMasterData::GROUPS) && ! array_key_exists($category, DailyChallengeMasterData::GROUPS)) {
             return false;
         }
         if (isset(self::ICON_VALUES[$category])) {
             return in_array($value, self::ICON_VALUES[$category], true);
+        }
+        if (isset(InterviewMasterData::GROUPS[$category])) {
+            return InterviewMasterData::isAllowedValue($category, $value);
+        }
+        if (isset(DailyChallengeMasterData::GROUPS[$category])) {
+            return DailyChallengeMasterData::isAllowedValue($category, $value);
         }
         if ($category === 'signup_experience') {
             return ctype_digit($value) && (string) (int) $value === $value && (int) $value <= 60;

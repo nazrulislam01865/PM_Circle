@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+const read = path => readFileSync(path, 'utf8');
+const variants = read('app/Domain/Community/Media/CommunityImageVariants.php');
+const worker = read('app/Domain/Community/Jobs/OptimizeCommunityImage.php');
+const postController = read('app/Http/Controllers/Community/PostController.php');
+const commentController = read('app/Http/Controllers/Community/PostInteractionController.php');
+const postView = read('resources/js/components/community/PostContent.tsx');
+const comments = read('resources/js/components/community/CommunityComment.tsx');
+const commentPreview = read('resources/js/components/community/InlinePostComments.tsx');
+const postApproval = read('app/Domain/Community/Services/PostCheckMedia.php');
+
+assert.match(variants, /320, 640, 1200/);
+assert.match(worker, /imagecopyresampled/);
+assert.match(worker, /imagewebp/);
+assert.match(worker, /rename\(\$temporary, \$source\)/);
+assert.match(worker, /community\.media_max_dimension/);
+assert.match(worker, /optimizationMarkerPath/);
+assert.match(variants, /optimizationMarkerPath/);
+assert.doesNotMatch(worker, /unlink\(\$source\)|delete\(\$this->path\)/);
+assert.match(postController, /CommunityImageVariants::class/);
+assert.match(commentController, /CommunityImageVariants::class/);
+assert.match(postApproval, /CommunityImageVariants::class/);
+for (const source of [postView, comments, commentPreview]) assert.match(source, /CommunityResponsiveImage/);
+console.log('PASS: community media variant source contracts');

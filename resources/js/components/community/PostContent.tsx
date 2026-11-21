@@ -1,4 +1,5 @@
 import { Fragment, type ReactNode } from 'react';
+import { CommunityResponsiveImage } from './CommunityResponsiveImage';
 
 /** Render the small post-formatting subset as React text nodes, never raw HTML. */
 function inline(text: string): ReactNode[] {
@@ -46,6 +47,6 @@ export function PostContent({ body, image, className = '' }: { body: string; ima
     }
     return <div className={`pm-post-content ${className}`}>
         {blocks}
-        {imageUrl && <img className="pm-post-content-image" src={imageUrl} alt="Image attached to post" loading="lazy" decoding="async" />}
+        {imageUrl && <CommunityResponsiveImage className="pm-post-content-image" src={imageUrl} alt="Image attached to post" />}
     </div>;
 }

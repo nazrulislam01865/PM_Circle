@@ -12,7 +12,7 @@ const EMPTY_REACTION_COUNTS: ReactionCounts = {};
 const openCommentPosts = new Set<number>();
 
 /** A single interaction contract for homepage, dashboard and public community posts. */
-export function PostEngagementActions({ postId, initial, total, breakdown = EMPTY_REACTION_COUNTS, comments, canInteract, onJoin, showSave = false, saved = false, inlineComments = true, onReactionChange, onCommentAdded, onSavedChange }: {
+export function PostEngagementActions({ postId, initial, total, breakdown = EMPTY_REACTION_COUNTS, comments, canInteract, onJoin, showSave = false, saved = false, inlineComments = true, onReactionChange, onCommentAdded, onSavedChange, buttonLabel, prototypeIcon = false }: {
     postId: number;
     initial?: ReactionType | null;
     total: number;
@@ -26,6 +26,8 @@ export function PostEngagementActions({ postId, initial, total, breakdown = EMPT
     onReactionChange?: (reaction: ReactionType | null, count: number) => void;
     onCommentAdded?: () => void;
     onSavedChange?: (saved: boolean) => void;
+    buttonLabel?: string;
+    prototypeIcon?: boolean;
 }) {
     const [summaryTotal, setSummaryTotal] = useState(total);
     const [summaryCounts, setSummaryCounts] = useState<ReactionCounts>(breakdown);
@@ -85,7 +87,7 @@ export function PostEngagementActions({ postId, initial, total, breakdown = EMPT
         } finally { setSaveBusy(false); }
     };
     return <div className="pm-engagement-shell"><EngagementActionBar>
-        <ReactionPicker endpoint={`${url}/reactions`} initial={initial} total={total} canInteract={canInteract} onJoin={onJoin} onChanged={handleReactionChange} showCount={false} />
+        <ReactionPicker endpoint={`${url}/reactions`} initial={initial} total={total} canInteract={canInteract} onJoin={onJoin} onChanged={handleReactionChange} showCount={Boolean(buttonLabel)} buttonLabel={buttonLabel} prototypeIcon={prototypeIcon} />
         {inlineComments ? <button type="button" className="pm-home-action" aria-expanded={expanded} aria-controls={`inline-comments-${postId}`}
             onClick={() => { if (!canInteract) onJoin('comment on a discussion'); else toggleExpanded(); }}>
             <MessageCircle size={19} aria-hidden="true"/> {commentCount} {commentCount === 1 ? 'comment' : 'comments'}

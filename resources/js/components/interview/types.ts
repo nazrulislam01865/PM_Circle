@@ -1,5 +1,5 @@
 export type InterviewShell = import('@/types/dashboard').DashboardShellData;
-export type QuestionType = 'General' | 'Behavioral' | 'Technical' | 'Situational';
+export type QuestionType = string;
 export type InterviewQuestion = { id: string; type: QuestionType; text: string };
 export type InterviewSession = { id: number; industry: string; role: string; experience: string; count: number; mode: 'type' | 'speak' | 'both'; status: string; createdAt: string; serverNow: string; deadlineAt: string; durationSeconds: number; remainingSeconds: number };
 export type Evaluation = { score: number; summary: string; relevance: number; pm_knowledge: number; clarity: number; communication: number; leadership: number; problem_solving: number; strengths: string[]; improvements: string[]; suggestions: string[]; suggested_answer: string };

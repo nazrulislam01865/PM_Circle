@@ -22,13 +22,13 @@ $check(str_contains($page, '<ExamPage shell={shell} className="pm-exam-review-pa
     && str_contains($page, '<ExamStatus total={attempt.total} correct={attempt.correct} answered={answered}/>')
     && str_contains($page, '<PmpReviewExplanation key={question.id} question={question}/>'),
     'Review reuses authenticated member layout, scoring, and modular explanation panel');
-$check(str_contains($page, "filter === 'missed'")
-    && str_contains($page, "filter === 'unanswered'")
-    && str_contains($page, "filter === 'flagged'")
+$check(str_contains($source('resources/js/components/exam/pmpReviewContent.ts'), "filter === 'missed'")
+    && str_contains($source('resources/js/components/exam/pmpReviewContent.ts'), "filter === 'unanswered'")
+    && str_contains($source('resources/js/components/exam/pmpReviewContent.ts'), "filter === 'flagged'")
     && str_contains($page, 'setPosition(0)'),
     'Question filtering covers missed/blank/flagged and resets navigation');
 $check(str_contains($page, '<ExamOptionList question={question} chosen={responses[question.id]?.choice} readonly reveal/>')
-    && str_contains($page, 'Ask AI About This Answer')
+    && str_contains($source('resources/js/components/exam/PmpQuestionAiChat.tsx'), 'Ask AI About This Answer')
     && str_contains($page, "'Single Select'")
     && str_contains($controller, "'code' => \$row->code"),
     'Correct/incorrect styling, AI request, and question code use real saved question data');

@@ -7,6 +7,7 @@ use App\Http\Requests\Community\UpdatePostRequest;
 use App\Domain\Community\Services\PostCheckPolicy;
 use App\Domain\Community\Services\PostCheckQueue;
 use App\Domain\Community\Services\PostCheckMedia;
+use App\Domain\Community\Media\CommunityImageVariants;
 use App\Domain\Community\Queries\PostCheckFeed;
 use App\Models\Post;
 use Illuminate\Http\JsonResponse;
@@ -115,10 +116,10 @@ private function updateLegacy(UpdatePostRequest $request, Post $post): RedirectR
         }
 
         if ($oldImage && ($newImage || $request->boolean('remove_image'))) {
-            $file = basename(parse_url($oldImage, PHP_URL_PATH) ?: '');
-            if (preg_match('/\A[A-Za-z0-9_-]+\.(?:jpg|jpeg|png|webp)\z/iD', $file)) {
-                Storage::disk($post->visibility === 'members' ? 'local' : 'public')->delete(($post->visibility === 'members' ? 'post-images-private/' : 'post-images/').$file);
-            }
+            app(PostCheckMedia::class)->delete($oldImage, $post->id);
+        }
+        if ($newImage) {
+            app(CommunityImageVariants::class)->queue($post->visibility === 'members' ? 'local' : 'public', $newImage);
         }
 
         return $request->expectsJson()

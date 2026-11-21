@@ -37,7 +37,7 @@
 .pm-post-check-policy > svg {flex:none;margin-top:3px}
 .pm-post-check-policy strong {font:var(--bold) var(--text-ui)/var(--line-ui) var(--font-ui)}
 .pm-post-check-policy p {margin:3px 0 0;color:var(--ink);font:var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui)}
-.pm-post-check-policy small {color:var(--muted);font:var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui)}
+.pm-post-check-policy small {display:block;margin-top:var(--s1);color:var(--muted);font:var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui)}
 .pm-post-check-dialog[data-slot='dialog-content'] {width:min(94vw,660px);max-width:660px;max-height:90dvh;overflow:auto;padding:0;gap:0;border:1px solid var(--border);border-radius:var(--radius-card);background:var(--surface);font-family:var(--font-ui)}
 .pm-post-check-dialog > [data-slot='dialog-title'] {padding:var(--s5);font:var(--bold) var(--text-h2)/var(--line-h2) var(--font-ui);color:var(--ink)}
 .pm-post-check-dialog [data-slot='dialog-close'] {top:var(--s4);right:var(--s4)}
@@ -62,3 +62,6 @@
 .pm-inline-comment-info {display:flex;align-items:center;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s2);color:var(--pm-primary);font:var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui)}
 .pm-inline-comment-info .pm-button {min-height:30px}
 .pm-admin-review-image {display:block;max-width:min(100%,240px);max-height:160px;object-fit:contain;margin-top:var(--s2);border:1px solid var(--border);border-radius:var(--radius-control)}
+
+.pm-post-check-expiry {font-weight:var(--semibold)!important;color:var(--red)!important}
+.pm-post-composer-card button:disabled {cursor:not-allowed;opacity:.6}

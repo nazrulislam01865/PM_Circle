@@ -6,6 +6,7 @@ use App\Domain\AI\Services\CommunitySafetySignals;
 use App\Domain\AI\Services\PostCheckBudget;
 use App\Domain\AI\Services\PostContentCheckService;
 use App\Domain\Community\Services\EngagementStats;
+use App\Domain\Community\Media\CommunityImageVariants;
 use App\Domain\Community\Services\PostCheckPolicy;
 use App\Models\Comment;
 use Illuminate\Bus\Queueable;
@@ -77,8 +78,10 @@ final class CheckCommunityComment implements ShouldQueue
                     $locked->check_status = 'approved';
                     $locked->check_reason = null;
                     EngagementStats::applyComment($locked->post_id, 1);
-                    DB::afterCommit(static fn () => app(\App\Domain\Notifications\ActivityNotifier::class)
-                        ->forComment($locked));
+                    DB::afterCommit(static function () use ($locked): void {
+                        app(\App\Domain\Notifications\ActivityNotifier::class)->forComment($locked);
+                        app(CommunityImageVariants::class)->queue('local', $locked->media_path);
+                    });
                 }
                 $locked->checked_at = now();
                 $locked->save();

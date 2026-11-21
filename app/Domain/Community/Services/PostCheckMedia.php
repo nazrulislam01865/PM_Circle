@@ -3,6 +3,7 @@
 namespace App\Domain\Community\Services;
 
 use App\Models\Post;
+use App\Domain\Community\Media\CommunityImageVariants;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 
@@ -65,6 +66,11 @@ final class PostCheckMedia
     {
         if ($oldUrl && str_starts_with($oldUrl, '/posts/'.$post->id.'/check-media/')) {
             Storage::disk('local')->delete('post-check-images/'.basename($oldUrl));
+            // Callers invoke cleanup only after the approved record has committed.
+            // The passed Post instance may still have its pre-approval status.
+            $disk = $post->visibility === 'members' ? 'local' : 'public';
+            $folder = $post->visibility === 'members' ? 'post-images-private/' : 'post-images/';
+            app(CommunityImageVariants::class)->queue($disk, $folder.basename($oldUrl));
         }
     }
 
@@ -76,9 +82,14 @@ final class PostCheckMedia
         if (str_starts_with($url, '/posts/'.$postId.'/check-media/')) {
             Storage::disk('local')->delete('post-check-images/'.$name);
         } elseif (str_starts_with($url, '/posts/'.$postId.'/media/')) {
-            Storage::disk('local')->delete('post-images-private/'.$name);
-        } elseif (str_starts_with($url, '/post-media/')) {
-            Storage::disk('public')->delete('post-images/'.$name);
+            $path = 'post-images-private/'.$name;
+            Storage::disk('local')->delete($path);
+            app(CommunityImageVariants::class)->deleteVariants('local', $path);
+        } elseif (str_starts_with($url, '/post-media/')
+            || preg_match('~\A/?(?:storage/)?post-images/[A-Za-z0-9_-]+\.(?:jpe?g|png|webp)\z~iD', $url)) {
+            $path = 'post-images/'.$name;
+            Storage::disk('public')->delete($path);
+            app(CommunityImageVariants::class)->deleteVariants('public', $path);
         }
     }
 }

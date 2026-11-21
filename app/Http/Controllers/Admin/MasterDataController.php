@@ -7,6 +7,9 @@ use App\Http\Requests\Admin\StoreMasterDataOptionRequest;
 use App\Http\Requests\Admin\UpdateMasterDataOptionRequest;
 use App\Models\MasterDataOption;
 use App\Support\Admin\HomepageMasterData;
+use App\Support\Admin\InterviewMasterData;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -60,7 +63,18 @@ final class MasterDataController extends Controller
         $groups = $request->routeIs('admin.navigation.update') ? HomepageMasterData::NAVIGATION_GROUPS : HomepageMasterData::editableDropdownGroups();
         abort_unless(array_key_exists($masterDataOption->category, $groups), 404);
         $values = $request->validated();
-        $masterDataOption->update($values);
+        if (isset(InterviewMasterData::GROUPS[$masterDataOption->category]) && ! $values['is_active']) {
+            DB::transaction(function () use ($masterDataOption, $values): void {
+                $records = DB::table('master_data_options')->where('category', $masterDataOption->category)
+                    ->orderBy('id')->lockForUpdate()->get(['id', 'is_active']);
+                if (! $records->contains(fn ($row) => $row->id !== $masterDataOption->id && $row->is_active)) {
+                    throw ValidationException::withMessages(['is_active' => 'Keep at least one active interview option in this group.']);
+                }
+                $masterDataOption->update($values);
+            });
+        } else {
+            $masterDataOption->update($values);
+        }
         if ($request->routeIs('admin.navigation.update')) {
             \App\Support\Admin\SiteNavigation::clearCache();
         }

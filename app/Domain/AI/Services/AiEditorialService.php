@@ -5,6 +5,7 @@ namespace App\Domain\AI\Services;
 use App\Domain\AI\Support\AiFailure;
 use App\Models\User;
 use App\Domain\DailyChallenge\Services\DailyChallengeSettings;
+use App\Domain\DailyChallenge\Services\DailyChallengeGenerationBrief;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -38,9 +39,9 @@ final class AiEditorialService
             ->where('slot_key', $slot)->first();
     }
 
-    public function queueScenarioSlot(string $date): array
+    public function queueScenarioSlot(string $date, ?string $exactTitle = null): array
     {
-        return DB::transaction(function () use ($date): array {
+        return DB::transaction(function () use ($date, $exactTitle): array {
             $draft = $this->createScenarioSlot($date);
             $draft = DB::table('ai_editorial_drafts')->where('id', $draft->id)->lockForUpdate()->first();
             if ($draft->request_id !== null && $draft->status !== 'failed') {
@@ -58,9 +59,11 @@ final class AiEditorialService
             DB::table('ai_editorial_drafts')->where('id', $draft->id)->increment('generation_attempts');
             $recent = DB::table('scenarios')->where('published_at', '>=', now()->subDays(30))
                 ->orderByDesc('published_at')->limit(25)->pluck('title')->all();
+            $brief = app(DailyChallengeGenerationBrief::class)->forDate($date, $exactTitle);
             $response = $this->gateway->submitEditorial('scenario_generate', $draft->id, [
                 'local_publication_date' => $date, 'recent_titles_to_avoid' => $recent,
                 'topic' => 'Project management challenges; realistic and educational',
+                'editorial_brief' => $brief,
             ]);
             return ['draft_id' => $draft->id, 'request' => $response];
         });
@@ -103,7 +106,7 @@ final class AiEditorialService
         $this->access->authorize($actor, 'ai.manage_editorial');
         DB::transaction(function () use ($actor, $id, $content, $reason): void {
             $draft = DB::table('ai_editorial_drafts')->where('id', $id)->lockForUpdate()->first();
-            if (! $draft || ! in_array($draft->status, ['pending_review', 'approved'], true)) {
+            if (! $draft || ! in_array($draft->status, ['pending_review', 'scheduled', 'approved'], true)) {
                 throw new AiFailure('DRAFT_NOT_REVIEWABLE', 409);
             }
             $validated = app(AiFeatureCatalog::class)->validate($draft->feature, $content);
@@ -136,7 +139,7 @@ final class AiEditorialService
         $this->access->authorize($actor, 'ai.manage_editorial');
         DB::transaction(function () use ($actor, $id, $reason): void {
             $draft = DB::table('ai_editorial_drafts')->where('id', $id)->lockForUpdate()->first();
-            if (! $draft || $draft->status !== 'pending_review' || ! $draft->payload_encrypted) {
+            if (! $draft || ! in_array($draft->status, ['pending_review', 'scheduled'], true) || ! $draft->payload_encrypted) {
                 throw new AiFailure('DRAFT_NOT_REVIEWABLE', 409);
             }
             $data = json_decode(Crypt::decryptString($draft->payload_encrypted), true);
@@ -220,7 +223,7 @@ final class AiEditorialService
         return DB::transaction(function () use ($id, $policy): ?int {
             $draft = DB::table('ai_editorial_drafts')->where('id', $id)->lockForUpdate()->first();
             if (! $draft || $draft->feature !== 'scenario_generate'
-                || $draft->status !== 'pending_review' || ! $draft->payload_encrypted
+                || ! in_array($draft->status, ['pending_review', 'scheduled'], true) || ! $draft->payload_encrypted
                 || ! str_starts_with($draft->slot_key, 'daily-scenario:')
                 || ! $draft->publication_at || Carbon::parse($draft->publication_at)->isFuture()) {
                 return null;

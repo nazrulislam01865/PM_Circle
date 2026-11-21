@@ -115,11 +115,11 @@ export function MemberHomeHeader({ dashboard, active, actions, brandHref, joinLa
                         <ClipboardCheck className="pm-nav-icon" aria-hidden="true"/>Exams
                     </Link>
                 </> : <>
-                <Link href={isMember ? '/dashboard' : '/'} className={`${navClass(isHome)} pm-member-home-nav-home`} aria-label="Home" title="Home" aria-current={isHome ? 'page' : undefined} onClick={close}>
-                    <Home className="pm-nav-icon" aria-hidden="true"/>
+                <Link href={isMember ? '/dashboard' : '/'} className={`${navClass(isHome)} pm-member-home-nav-home`} aria-current={isHome ? 'page' : undefined} onClick={close}>
+                    <Home className="pm-nav-icon" aria-hidden="true"/>Home
                 </Link>
                 {daily && <Link className={navClass(isDaily)} aria-current={isDaily ? 'page' : undefined} href={isMember ? memberPath(daily.href) : daily.href} onClick={close}>
-                    <CalendarCheck2 className="pm-nav-icon" aria-hidden="true"/>{daily.label}
+                    <CalendarCheck2 className="pm-nav-icon" aria-hidden="true"/>Challenge
                 </Link>}
                 {(community || members) && <details className="pm-member-home-nav-group" onKeyDown={closeOnEscape} onMouseLeave={closeDropdownOnMouseLeave}>
                     <summary className={isCommunity || isMembers ? 'is-current' : undefined} aria-label="Community menu" aria-current={isCommunity || isMembers ? 'page' : undefined}>
@@ -132,7 +132,7 @@ export function MemberHomeHeader({ dashboard, active, actions, brandHref, joinLa
                 </details>}
                 {learning && <details className="pm-member-home-nav-group" onKeyDown={closeOnEscape} onMouseLeave={closeDropdownOnMouseLeave}>
                     <summary className={isLearning ? 'is-current' : undefined} aria-current={isLearning ? 'page' : undefined}>
-                        <BookOpen className="pm-nav-icon" aria-hidden="true"/>{learning.label}<ChevronDown className="pm-nav-chevron" size={15} aria-hidden="true"/>
+                        <BookOpen className="pm-nav-icon" aria-hidden="true"/>Learn<ChevronDown className="pm-nav-chevron" size={15} aria-hidden="true"/>
                     </summary>
                     <div className="pm-member-home-submenu">
                         <Link href={isMember ? '/dashboard/learning' : '/learning'} onClick={closeDropdown}><BookOpen aria-hidden="true"/>Course Library</Link>
@@ -142,7 +142,7 @@ export function MemberHomeHeader({ dashboard, active, actions, brandHref, joinLa
                 </details>}
                 <details className="pm-member-home-nav-group pm-member-home-exam-group" onKeyDown={closeOnEscape} onMouseLeave={closeDropdownOnMouseLeave}>
                     <summary className={isExam ? 'is-current' : undefined} aria-current={isExam ? 'page' : undefined}>
-                        <ClipboardCheck className="pm-nav-icon" aria-hidden="true"/>Exam Simulator<ChevronDown className="pm-nav-chevron" size={15} aria-hidden="true"/>
+                        <ClipboardCheck className="pm-nav-icon" aria-hidden="true"/>Exams<ChevronDown className="pm-nav-chevron" size={15} aria-hidden="true"/>
                     </summary>
                     <div className="pm-member-home-submenu pm-member-home-exam-submenu">
                         <Link href={user && !user.is_admin ? '/exams/pmp/enter' : '/exam-simulator/pmp'} onClick={closeDropdown}><Monitor aria-hidden="true"/>PMP Exam Simulator</Link>

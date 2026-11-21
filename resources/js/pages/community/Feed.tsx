@@ -1,7 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
-    ArrowUpDown,
     Briefcase,
     ChevronDown,
     ChevronRight,
@@ -91,7 +90,7 @@ export default function Feed({ posts, activeTopic, feedTab, feedScopeCounts, sea
         <PublicLayout siteLayout={isGuest} active="/community" joinLabel="Join free">
             <Head title="Discussions · PM Circle" />
 
-            <div className="pm-container pm-page">
+            <div className="pm-container pm-page pm-community-discussions-page">
                 {/* Breadcrumbs */}
                 <nav className="pm-crumbs" aria-label="Breadcrumb">
                     <Link href="/">Home</Link> &nbsp;/&nbsp; <span>Discussions</span>
@@ -136,20 +135,20 @@ export default function Feed({ posts, activeTopic, feedTab, feedScopeCounts, sea
                     <div className="pm-feed-main-col">
                         {/* Search & Sort Bar */}
                         <div className="pm-feed-toolbar">
-                            <form className="pm-feed-search-wrap" onSubmit={handleSearchSubmit}>
-                                <Search size={18} className="pm-feed-search-icon" />
+                            <form className="pm-feed-search-wrap" role="search" onSubmit={handleSearchSubmit}>
+                                <label className="sr-only" htmlFor="pm-community-search">Search discussions or topics</label>
                                 <input
-                                    type="text"
+                                    id="pm-community-search"
+                                    type="search"
                                     className="pm-feed-search-input"
                                     placeholder="Search discussions or topics..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
+                                <button className="pm-community-search-submit" type="submit" aria-label="Search discussions" title="Search discussions">
+                                    <Search size={18} aria-hidden="true" />
+                                </button>
                             </form>
-
-                            <button type="button" className="pm-sort-dropdown">
-                                <ArrowUpDown size={15} /> Latest <ChevronDown size={14} />
-                            </button>
                         </div>
 
                         <div className="pm-community-feed-tabs">

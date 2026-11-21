@@ -1,3 +1,4 @@
+import { CommunityResponsiveImage } from './CommunityResponsiveImage';
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronDown } from 'lucide-react';
 import { CommentEngagementActions } from './CommentEngagementActions';
@@ -56,7 +57,7 @@ function CommentEntry({ comment, postId, rootId, nested = false, canInteract, on
         <div className="pm-inline-comment-content">
             <div className="pm-inline-comment-author"><strong>{comment.author.name}</strong><span>{elapsedLabel(comment.created_at)}</span></div>
             {comment.body && <p className="pm-inline-comment-text">{comment.body}</p>}
-            {comment.media_url && <img className="pm-comment-attachment" src={comment.media_url} alt="Comment attachment" loading="lazy"/>}
+            {comment.media_url && <CommunityResponsiveImage className="pm-comment-attachment" src={comment.media_url} alt="Comment attachment" sizes="(max-width: 640px) 85vw, 480px"/>}
             <div className="pm-inline-comment-actions">
                 <CommentEngagementActions postId={postId} commentId={comment.id} initial={comment.viewer_reaction ?? (comment.viewer_liked ? 'like' : null)}
                     total={comment.likes_count} canInteract={canInteract} onJoin={onJoin}

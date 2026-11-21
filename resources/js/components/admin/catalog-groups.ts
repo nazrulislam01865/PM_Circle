@@ -17,4 +17,10 @@ export const dropdownGroups = [
     { key: 'course_question_kind', label: 'Course question types' },
     { key: 'course_question_difficulty', label: 'Course difficulty' },
     { key: 'course_resource_kind', label: 'Course resource types' },
+    { key: 'interview_industry', label: 'Interview industries' },
+    { key: 'interview_role', label: 'Interview PM roles' },
+    { key: 'interview_experience', label: 'Interview experience levels' },
+    { key: 'interview_type', label: 'Interview question types' },
+    { key: 'interview_count', label: 'Interview question counts' },
+    { key: 'interview_mode', label: 'Interview answer modes' },
 ] as const;

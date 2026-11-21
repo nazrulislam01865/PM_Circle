@@ -32,11 +32,15 @@ final class InterviewController extends Controller
         $stats = DB::table('interview_sessions')->where('user_id', $userId)->where('status', 'completed')
             ->selectRaw('COUNT(*) as sessions, COALESCE(SUM(question_count), 0) as answered, MAX(completed_at) as last_completed')->first();
 
+        $catalog = app(QuestionCatalog::class);
+        $choices = $catalog->choices();
         return Inertia::render('interview/Index', [
             'shell' => $shell->forMember($request->user()),
-            'industries' => QuestionCatalog::INDUSTRIES, 'roles' => QuestionCatalog::ROLES,
-            'experience' => QuestionCatalog::EXPERIENCE, 'recent' => $recent,
-            'minutesPerQuestion' => (int) config('pm-interview.minutes_per_question', 2),
+            'industries' => $choices['industry'], 'roles' => $choices['role'],
+            'experience' => $choices['experience'], 'types' => $choices['type'],
+            'counts' => $choices['count'], 'modes' => $choices['mode'], 'questionSets' => $catalog->publishedSets(),
+            'recent' => $recent,
+            'minutesPerQuestion' => $catalog->minutesPerQuestion(),
             'stats' => ['sessions' => (int) $stats->sessions, 'answered' => (int) $stats->answered, 'last' => $stats->last_completed],
         ]);
     }
@@ -44,12 +48,14 @@ final class InterviewController extends Controller
     public function start(StartInterviewRequest $request, QuestionCatalog $catalog): RedirectResponse
     {
         $data = $request->validated();
-        $id = DB::table('interview_sessions')->insertGetId([
+        $questions = $catalog->select($data['industry'], $data['role'], $data['experience'], $data['types'], $data['count'], $data['question_set'] ?? null);
+        $minutes = $catalog->minutesPerQuestion();
+        $id = DB::table('interview_sessions')->insertGetId(['minutes_per_question' => $minutes,
             'user_id' => $request->user()->id, 'industry' => $data['industry'],
             'role' => $data['role'], 'experience' => $data['experience'],
             'question_types' => json_encode($data['types'], JSON_THROW_ON_ERROR),
             'answer_mode' => $data['mode'],
-            'questions' => json_encode($catalog->select($data['industry'], $data['role'], $data['experience'], $data['types'], $data['count']), JSON_THROW_ON_ERROR),
+            'questions' => json_encode($questions, JSON_THROW_ON_ERROR),
             'question_count' => $data['count'], 'created_at' => now(), 'updated_at' => now(),
         ]);
         return to_route('interview.practice', ['session' => $id]);
@@ -199,7 +205,7 @@ final class InterviewController extends Controller
         $serverNow = now()->toImmutable();
         // Question count determines the INITIAL allowance, never the time remaining.
         // The deadline is fixed for the whole session, regardless of answer submissions.
-        $durationSeconds = $record->question_count * (int) config('pm-interview.minutes_per_question', 2) * 60;
+        $durationSeconds = $record->question_count * (int) ($record->minutes_per_question ?? config('pm-interview.minutes_per_question', 2)) * 60;
         $deadlineAt = $startedAt->addSeconds($durationSeconds);
         $remainingSeconds = max(0, $serverNow->diffInSeconds($deadlineAt, false));
 

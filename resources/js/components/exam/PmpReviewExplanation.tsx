@@ -86,7 +86,7 @@ export function PmpReviewExplanation({ question }: { question: ExamQuestion }) {
         }
     };
 
-    return <section className="pm-review-explanation" aria-label="Detailed explanation">
+    return <section className="pm-review-explanation" data-pm-review-single-panel="2026-11-22" aria-label="Detailed explanation">
         <div className="pm-review-tabs" role="tablist" aria-label="Explanation sections">
             {tabs.map((label, index) => <button key={label} id={`${uid}-${index}`} type="button" role="tab"
                 aria-selected={tab === label} aria-controls={`${uid}-panel`} tabIndex={tab === label ? 0 : -1}

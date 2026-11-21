@@ -141,6 +141,11 @@
 }
 .pm-exam-review-page .pm-exam-choice-result svg { display: none; }
 .pm-exam-review-page .pm-exam-review-unanswered { margin: 0 0 var(--s2); }
+/* Compatibility guard for previously deployed bundles that stacked legacy panels.
+   A newly built Review page renders just one panel; this rule is a no-op there. */
+.pm-exam-review-page .pm-exam-review-main > .pm-review-explanation ~ .pm-review-explanation {
+    display: none;
+}
 .pm-exam-review-page .pm-review-explanation {
     min-height: 264px; border: 1px solid var(--border); border-radius: var(--radius-control);
     overflow: hidden; background: var(--surface);

@@ -6,12 +6,13 @@ import {
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
 import type { ExamQuestion } from '@/components/exam/ExamShared';
 import type { PmpPublicContent } from '@/types/pmp-public';
+import type { RewardPromotionData } from '@/types/reward';
 
 export default function PublicPmpExam({ content, sampleQuestion, sampleQuestions, sampleDurationSeconds }: { content: PmpPublicContent; sampleQuestion: ExamQuestion | null; sampleQuestions: ExamQuestion[]; sampleDurationSeconds: number }) {
-    const { auth } = usePage<{ auth?: { user?: { is_admin?: boolean } | null } }>().props;
+    const { auth, rewardPromotion } = usePage<{ auth?: { user?: { is_admin?: boolean } | null }; rewardPromotion?: RewardPromotionData | null }>().props;
     const destination = auth?.user?.is_admin ? '/admin' : auth?.user ? '/membership' : '/register';
 
-    return <PublicLayout siteLayout active="/exam-simulator/pmp" footerVariant={content.sections.footer ? "pmp" : undefined} pmpFooterContent={content.sections.footer ? content.footer : undefined} hideFooter={!content.sections.footer}>
+    return <PublicLayout siteLayout homePrototype guideLayout active="/exam-simulator/pmp" homeOfferLabel={rewardPromotion?.discountLabel} pmpFooterContent={content.sections.footer ? content.footer : undefined} hideFooter={!content.sections.footer}>
         <Head title="PMP Exam Simulator | PM Circle">
             <meta name="description" content="Explore PMP-style practice, a free sample question, simulator plan comparisons and study resources from PM Circle."/>
         </Head>

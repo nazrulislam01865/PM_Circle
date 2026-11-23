@@ -28,8 +28,12 @@ test('admin controls and member dialog display exact settings and low-bank state
 test('timed exam remains fully interactive while using compact navigation and design tokens', () => {
     const take = source('resources/js/pages/exam/Take.tsx');
     const css = source('resources/css/pm-exam-simulator.css');
-    for (const term of ['pm-exam-nav-summary', 'ExamTimeProgress', 'Question Navigator', 'Review Marked Questions', 'persist(id']) {
+    const navigator = source('resources/js/components/exam/PmpExamNavigator.tsx');
+    for (const term of ['ExamTimeProgress', 'PmpExamNavigator', 'persist(id']) {
         assert.ok(take.includes(term), `Missing existing or new exam UI behavior: ${term}`);
+    }
+    for (const term of ['pm-exam-nav-summary', 'Question Navigator', 'Review Marked Questions']) {
+        assert.ok(navigator.includes(term), `Missing shared real-exam navigator behavior: ${term}`);
     }
     assert.match(css, /\.pm-exam-taking \.pm-exam-question-card \{ min-height: 0/);
     assert.match(css, /--radius-control/);

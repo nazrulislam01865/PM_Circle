@@ -19,6 +19,7 @@ use App\Http\Controllers\Community\PostInteractionController;
 use App\Http\Controllers\Onboarding\OnboardingController;
 use App\Http\Controllers\Settings\ProfileController as SettingsProfileController;
 use App\Http\Controllers\PublicSite\HomeController;
+use App\Http\Controllers\PublicSite\EventPreviewController;
 use App\Http\Controllers\PublicSite\ContactController;
 use App\Http\Controllers\Admin\HomepageController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
@@ -167,6 +168,11 @@ Route::get('/contact/confirm/{token}', [ContactController::class, 'confirm'])
     ->middleware(['signed', 'throttle:10,1'])->where('token', '[A-Za-z0-9]{64}')->name('contact.confirm');
 Route::inertia('/refund-policy', 'public/PolicyNotice')->name('refund-policy');
 
+// Public prototype event catalog. No booking endpoint or event database queries.
+Route::get('/events', [EventPreviewController::class, 'index'])->name('events.index');
+Route::get('/events/{slug}', [EventPreviewController::class, 'show'])
+    ->where('slug', '[a-z0-9-]+')->name('events.show');
+
 // Public career listings use the stored, auto-published JobSpy imports only.
 Route::get('/careers', [CareerJobsController::class, 'index'])->name('careers.index');
 Route::get('/careers/{job}', [CareerJobsController::class, 'show'])
@@ -174,11 +180,23 @@ Route::get('/careers/{job}', [CareerJobsController::class, 'show'])
 Route::get('/members', [MemberDirectoryController::class, 'index'])->name('members.index');
 Route::get('/members/{member}', [MemberDirectoryController::class, 'show'])->whereNumber('member')->name('members.show');
 
-// Guest-only PMP landing; signed-in visitors are redirected to their authorized flow.
-Route::get('/exam-simulator/pmp', PmpPublicPageController::class)->name('exams.pmp.public');
+// The approved catalog is the public exam simulator page, including the existing PMP URL.
+// Browsing needs no question-bank query or entitlement check.
+Route::inertia('/simulators', 'exam/Browse')->name('simulators.browse');
+Route::redirect('/exam-simulator', '/exam-simulator/pmp')->name('simulators.catalog');
+Route::inertia('/exam-simulator/pmp', 'exam/Browse')->name('exams.pmp.catalog');
+
+// Keep the administrator-configured PMP samples and legacy exam landing accessible
+// from the catalog's PMP detail actions. Signed-in members continue to be redirected
+// to their authorized exam flow from this dedicated details page.
+Route::get('/exam-simulator/pmp/details', PmpPublicPageController::class)->name('exams.pmp.public');
 // Public status pages only; actual simulator APIs remain member/entitlement protected.
 Route::inertia('/simulators/project', 'public/ComingSoon', ['title' => 'Project Simulator'])->name('simulators.project.public');
 Route::inertia('/simulators/scrum', 'public/ComingSoon', ['title' => 'Scrum / CSM Simulator'])->name('simulators.scrum.public');
+// Preview cards have accurate destinations without creating additional data queries.
+Route::inertia('/simulators/business-analysis', 'public/ComingSoon', ['title' => 'Business Analysis Exam Simulator'])->name('simulators.business-analysis.public');
+Route::inertia('/simulators/capm', 'public/ComingSoon', ['title' => 'CAPM Exam Simulator'])->name('simulators.capm.public');
+Route::inertia('/simulators/pmi-acp', 'public/ComingSoon', ['title' => 'PMI-ACP Exam Simulator'])->name('simulators.pmi-acp.public');
 
 Route::middleware(['auth', 'pm.member', 'verified'])->group(function () {
     Route::get('/join/step/3', [OnboardingController::class, 'plan'])->name('join.plan');

@@ -11,6 +11,8 @@ $request = $read('app/Http/Requests/Admin/UpdatePmpExamSettingsRequest.php');
 $public = $read('app/Http/Controllers/PublicSite/PmpPublicPageController.php');
 $sample = $read('resources/js/components/exam/PmpPublicSampleExam.tsx');
 $picker = $read('resources/js/components/admin/PmpSampleQuestionSelect.tsx');
+$review = $read('resources/js/components/exam/PmpSampleReview.tsx');
+$navigator = $read('resources/js/components/exam/PmpExamNavigator.tsx');
 $assert(str_contains($settings, 'sample_question_ids') && str_contains($settings, 'sample_question_id')
     && str_contains($settings, 'json_encode($ids'), 'Settings retain legacy single-sample compatibility while storing ordered selections');
 $assert(str_contains($request, "'max:20'") && str_contains($request, "'distinct:strict'")
@@ -19,6 +21,8 @@ $assert(str_contains($public, "->where('is_active', true)") && str_contains($pub
     && str_contains($public, "->keyBy('id')"), 'Public sample uses the administrator order and does not expose inactive questions');
 $assert(str_contains($picker, 'Dialog.Content') && str_contains($picker, 'type="checkbox"')
     && str_contains($picker, 'Move up') && str_contains($picker, 'Choose questions'), 'Admin selector uses searchable, ordered checkbox selection');
-$assert(str_contains($sample, 'questions.map(') && str_contains($sample, 'Finish & Review')
-    && str_contains($sample, 'ExamStatus total={total} correct={correct} answered={answered}')
-    && str_contains($sample, 'answers[question.id]'), 'Sample exam navigates multiple questions and scores all answers');
+$assert(str_contains($sample, '<PmpExamNavigator') && str_contains($sample, 'Finish & Review')
+    && str_contains($sample, '<PmpSampleReview') && str_contains($sample, 'answers[question.id]')
+    && str_contains($navigator, 'questions.slice(pageStart, pageStart + 20)')
+    && str_contains($review, 'ExamStatus total={questions.length} correct={correct} answered={answered}'),
+    'Sample exam navigates multiple questions and scores all answers using the real exam components');

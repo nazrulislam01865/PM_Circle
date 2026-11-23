@@ -54,3 +54,57 @@
 .pm-dashboard :is(.pm-field input, .pm-field select, .pm-input, .pm-select, .pm-textarea):focus {
     border-color: var(--focus);
 }
+
+/* Reusable components for pages explicitly using the approved HTML design guideline.
+   Opt-in classes avoid changing existing exam, member, admin or homepage controls. */
+.pm-guide-public-shell .pm-guide-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    min-height: var(--pm-guide-button-height);
+    padding: var(--pm-guide-s2) var(--pm-guide-button-pad-inline);
+    border: 1px solid transparent;
+    border-radius: var(--pm-guide-radius-sm);
+    background: var(--pm-guide-blue);
+    color: var(--pm-guide-white);
+    text-align: center;
+    text-decoration: none;
+    font: var(--pm-guide-weight-control) var(--pm-guide-text-control)/var(--pm-guide-line-control) var(--pm-guide-font);
+    cursor: pointer;
+}
+.pm-guide-public-shell .pm-guide-button:hover { background: var(--pm-guide-blue-hover); color: var(--pm-guide-white); }
+.pm-guide-public-shell .pm-guide-button.is-outline {
+    color: var(--pm-guide-blue);
+    border-color: var(--pm-guide-blue);
+    background: var(--pm-guide-white);
+}
+.pm-guide-public-shell .pm-guide-button.is-outline:hover { background: var(--pm-guide-pale); color: var(--pm-guide-blue); }
+.pm-guide-public-shell .pm-guide-button:disabled {
+    color: var(--pm-guide-muted);
+    border-color: var(--pm-guide-line);
+    background: var(--pm-guide-control-disabled);
+    cursor: default;
+}
+.pm-guide-public-shell .pm-guide-field-label {
+    color: var(--pm-guide-ink);
+    font: var(--pm-guide-weight-control) var(--pm-guide-text-control)/var(--pm-guide-line-control) var(--pm-guide-font);
+}
+.pm-guide-public-shell .pm-guide-control {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: var(--pm-guide-button-height);
+    padding: var(--pm-guide-s2) var(--pm-guide-field-pad-inline);
+    border: 1px solid var(--pm-guide-control-line);
+    border-radius: var(--pm-guide-radius-sm);
+    background: var(--pm-guide-white);
+    color: var(--pm-guide-body-color);
+    font: var(--regular) var(--pm-guide-text-control)/var(--pm-guide-line-body) var(--pm-guide-font);
+}
+.pm-guide-public-shell .pm-guide-control::placeholder { color: var(--pm-guide-muted); opacity: 1; }
+.pm-guide-public-shell .pm-guide-control[aria-invalid="true"] { border-color: var(--pm-guide-error); }
+.pm-guide-public-shell :is(.pm-guide-button, .pm-guide-control):focus-visible {
+    outline: 3px solid var(--pm-guide-focus);
+    outline-offset: 3px;
+}

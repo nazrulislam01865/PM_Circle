@@ -171,7 +171,7 @@ export default function PmpPublicPage({ content, version, selectedSection = 'her
         <div className="pm-admin-panel pm-admin-editor-toolbar">
             <div><span className="pm-admin-kicker">PUBLIC EXAM SIMULATOR</span><strong>Page content</strong><small>{dirty ? 'Unsaved changes' : 'All changes saved'}</small></div>
             <div className="pm-admin-editor-actions">
-                <Link href="/exam-simulator/pmp" target="_blank" className="pm-admin-button pm-admin-button-quiet">Preview page <ExternalLink size={16}/></Link>
+                <Link href="/exam-simulator/pmp/details" target="_blank" className="pm-admin-button pm-admin-button-quiet">Preview page <ExternalLink size={16}/></Link>
                 <button type="button" className="pm-admin-button pm-admin-button-primary" disabled={!dirty || busy} onClick={save}><Save size={17}/>{busy ? 'Saving…' : 'Save changes'}</button>
             </div>
         </div>

@@ -1,0 +1,214 @@
+/* Public exam catalog. All design values resolve to approved centralized
+   --pm-guide-* tokens in pm-design-tokens.css; homepage shell is reused intact. */
+.pm-simulators-page {
+    background: var(--pm-guide-white);
+    color: var(--pm-guide-body-color);
+    font-family: var(--pm-guide-font);
+    font-size: var(--pm-guide-text-body);
+    font-weight: var(--regular);
+    line-height: var(--pm-guide-line-body);
+}
+.pm-simulators-page *, .pm-simulators-page *::before, .pm-simulators-page *::after { box-sizing: border-box; }
+.pm-simulators-page :is(h1, h2, h3, p) { margin: 0; }
+.pm-simulators-page :is(h1, h2, h3) { color: var(--pm-guide-ink); overflow-wrap: anywhere; }
+.pm-simulators-page :is(a, button, input, select) { font-family: inherit; }
+.pm-simulators-page :is(a, button, input, select):focus-visible { outline: 3px solid var(--pm-guide-focus); outline-offset: 3px; }
+.pm-simulators-page a { text-underline-offset: .18em; }
+
+/* The banner and the catalog use the same guide container and responsive gutters. */
+.pm-sim-banner {
+    background: radial-gradient(ellipse at 92% 0%, var(--pm-guide-banner-glow), transparent 65%), var(--pm-guide-banner-surface);
+    border-bottom: 1px solid var(--pm-guide-banner-border);
+    padding: var(--pm-guide-banner-pad-top) 0 var(--pm-guide-banner-pad-bottom);
+}
+.pm-sim-banner > .pm-v2-container, .pm-sim-main {
+    width: min(var(--pm-guide-container), calc(100% - 2 * var(--pm-guide-gutter)));
+    margin-inline: auto;
+}
+.pm-sim-breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: var(--pm-guide-s2); color: var(--pm-guide-muted); font-size: var(--pm-guide-text-meta); }
+.pm-sim-breadcrumb a { color: var(--pm-guide-blue); text-decoration: underline; }
+.pm-sim-banner h1 {
+    margin-top: var(--pm-guide-s3);
+    font-size: var(--pm-guide-text-h1);
+    font-weight: var(--pm-guide-static-h1-weight);
+    line-height: var(--pm-guide-line-h1);
+    letter-spacing: -.04em;
+}
+.pm-sim-banner p { margin-top: var(--pm-guide-s2); max-width: 65ch; font-size: var(--pm-guide-text-lead); line-height: var(--pm-guide-line-body); color: var(--pm-guide-muted); }
+.pm-sim-main { padding: var(--pm-guide-s8) 0 var(--pm-guide-s12); }
+
+.pm-sim-reward {
+    display: flex; align-items: center; gap: var(--pm-guide-s3);
+    margin-bottom: var(--pm-guide-s6); padding: var(--pm-guide-s4);
+    background: var(--reward-surface); border: 1px solid var(--reward-border);
+    border-radius: var(--pm-guide-radius-card);
+}
+.pm-sim-reward-icon {
+    display: grid; place-items: center; flex: none;
+    width: var(--pm-guide-s12); height: var(--pm-guide-s12);
+    border-radius: var(--pm-guide-radius-sm);
+    background: var(--reward-icon-bg); color: var(--reward-icon-ink);
+}
+.pm-sim-reward > div { min-width: 0; flex: 1; }
+.pm-sim-reward strong { display: block; color: var(--pm-guide-ink); font-size: var(--pm-guide-text-body); font-weight: var(--pm-guide-weight-h2); line-height: var(--pm-guide-line-h3); }
+.pm-sim-reward p { color: var(--pm-guide-muted); font-size: var(--pm-guide-text-body); line-height: var(--pm-guide-line-body); }
+
+/* One reusable action style for card, feature, offer, no-results and review controls. */
+.pm-simulators-page .pm-sim-action {
+    display: inline-flex; align-items: center; justify-content: center; align-self: start;
+    flex: none; min-height: var(--pm-guide-button-height);
+    padding: var(--pm-guide-s2) var(--pm-guide-button-pad-inline);
+    border: 1px solid var(--pm-guide-blue); border-radius: var(--pm-guide-radius-sm);
+    background: var(--pm-guide-white); color: var(--pm-guide-blue);
+    font-size: var(--pm-guide-text-control); font-weight: var(--pm-guide-weight-control);
+    line-height: var(--pm-guide-line-control); text-align: center; text-decoration: none; cursor: pointer;
+}
+.pm-simulators-page .pm-sim-action:hover { background: var(--pm-guide-pale); }
+.pm-simulators-page .pm-sim-action.is-primary { background: var(--pm-guide-blue); color: var(--pm-guide-white); }
+.pm-simulators-page .pm-sim-action.is-primary:hover { background: var(--pm-guide-blue-hover); }
+.pm-sim-reward .pm-sim-action { color: var(--pm-v2-reward-ink); border-color: var(--pm-v2-reward-border); }
+.pm-sim-reward .pm-sim-action:hover { background: var(--reward-surface-bright); }
+
+.pm-sim-section-row { display: flex; align-items: center; justify-content: space-between; gap: var(--pm-guide-s4); }
+.pm-sim-section-row h2 { font-size: var(--pm-guide-text-h2); font-weight: var(--pm-guide-weight-h2); line-height: var(--pm-guide-line-h2); }
+.pm-sim-catalog-heading { margin-bottom: var(--pm-guide-s3); }
+.pm-sim-catalog-heading > a { color: var(--pm-guide-blue); font-size: var(--pm-guide-text-meta); text-decoration: underline; white-space: nowrap; }
+.pm-sim-filters {
+    display: grid; grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr));
+    gap: var(--pm-guide-s3); padding: var(--pm-guide-s4);
+    background: var(--pm-guide-soft); border: 1px solid var(--pm-guide-line);
+    border-radius: var(--pm-guide-radius-card);
+}
+.pm-sim-filters label {
+    display: grid; min-width: 0; gap: var(--pm-guide-s1);
+    color: var(--pm-guide-ink); font-size: var(--pm-guide-text-control);
+    font-weight: var(--pm-guide-weight-control); line-height: var(--pm-guide-line-control);
+}
+.pm-sim-filters :is(input, select) {
+    width: 100%; min-width: 0; min-height: var(--pm-guide-button-height);
+    padding: var(--pm-guide-s2) var(--pm-guide-field-pad-inline);
+    border: 1px solid var(--pm-guide-control-line); border-radius: var(--pm-guide-radius-sm);
+    background: var(--pm-guide-white); color: var(--pm-guide-ink);
+    font-size: var(--pm-guide-text-control); font-weight: var(--regular); line-height: var(--pm-guide-line-control);
+}
+.pm-sim-filters input::placeholder { color: var(--pm-guide-muted); opacity: 1; }
+.pm-sim-count-row { display: flex; align-items: center; justify-content: space-between; gap: var(--pm-guide-s3); margin: var(--pm-guide-s2) 0; color: var(--pm-guide-muted); font-size: var(--pm-guide-text-meta); }
+.pm-sim-count-row button { padding: 0; border: 0; background: transparent; color: var(--pm-guide-blue); font-size: var(--pm-guide-text-meta); text-decoration: underline; cursor: pointer; }
+.pm-sim-sample-note { margin-bottom: var(--pm-guide-s3) !important; color: var(--pm-guide-muted); font-size: var(--pm-guide-text-meta); line-height: var(--pm-guide-line-body); }
+
+.pm-sim-card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--pm-guide-s4); }
+.pm-sim-card {
+    display: flex; flex-direction: column; min-width: 0; padding: var(--pm-guide-s4);
+    background: var(--pm-guide-white); border: 1px solid var(--pm-guide-line);
+    border-radius: var(--pm-guide-radius-card);
+}
+.pm-sim-card:hover, .pm-sim-card:focus-within { border-color: var(--pm-guide-hover-border); box-shadow: var(--pm-guide-shadow); }
+.pm-sim-card-photo { position: relative; overflow: hidden; aspect-ratio: var(--pm-guide-catalog-image-ratio); border-radius: var(--pm-guide-radius-sm); background: var(--pm-guide-pale); }
+.pm-sim-card-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pm-sim-photo-label {
+    position: absolute; left: var(--pm-guide-s2); bottom: var(--pm-guide-s2);
+    display: inline-flex; align-items: center; padding: var(--pm-guide-s1) var(--pm-guide-s2);
+    border-radius: var(--pm-guide-radius-pill); background: var(--pm-guide-white);
+    color: var(--pm-guide-ink); font-size: var(--pm-guide-text-control);
+    font-weight: var(--pm-guide-weight-control); line-height: var(--pm-guide-line-control);
+}
+.pm-sim-card-copy { display: flex; flex: 1; flex-direction: column; align-items: flex-start; min-width: 0; padding-top: var(--pm-guide-s3); }
+.pm-sim-card-tags { display: flex; flex-wrap: wrap; gap: var(--pm-guide-s1); margin-bottom: var(--pm-guide-s2); }
+.pm-sim-chip {
+    display: inline-flex; align-items: center; padding: var(--pm-guide-s1) var(--pm-guide-s2);
+    border-radius: var(--pm-guide-radius-pill); background: var(--pm-guide-pale);
+    color: var(--pm-guide-area-ink); font-size: var(--pm-guide-text-control);
+    font-weight: var(--pm-guide-weight-control); line-height: var(--pm-guide-line-control);
+}
+.pm-sim-chip.is-available, .pm-sim-chip.is-free { background: var(--pm-guide-green-bg); color: var(--pm-guide-green); }
+.pm-sim-chip.is-preview { background: var(--pm-guide-amber-bg); color: var(--pm-guide-amber); }
+.pm-sim-chip.is-paid { background: var(--pm-guide-purple-bg); color: var(--pm-guide-purple); }
+.pm-sim-card h3 { margin-bottom: var(--pm-guide-s2); font-size: var(--pm-guide-text-h3); font-weight: var(--pm-guide-weight-h2); line-height: var(--pm-guide-line-h3); }
+.pm-sim-card-copy > p { color: var(--pm-guide-body-color); font-size: var(--pm-guide-text-body); line-height: var(--pm-guide-line-body); }
+.pm-sim-card-copy > .pm-sim-topics { margin-top: var(--pm-guide-s2); color: var(--pm-guide-blue); font-size: var(--pm-guide-text-meta); }
+.pm-sim-card-copy > .pm-sim-rating { display: flex; align-items: center; flex-wrap: wrap; gap: var(--pm-guide-s1); margin: var(--pm-guide-s2) 0 var(--pm-guide-s3); color: var(--pm-guide-body-color); font-size: var(--pm-guide-text-meta); }
+.pm-sim-rating svg { color: var(--pm-guide-star); }
+.pm-sim-rating strong { color: var(--pm-guide-ink); }
+.pm-sim-rating span { margin-left: var(--pm-guide-s2); }
+.pm-sim-card-copy .pm-sim-action { margin-top: auto; }
+
+.pm-sim-spotlight {
+    display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 7fr);
+    overflow: hidden; margin: var(--pm-guide-s4) 0;
+    border: 1px solid var(--pm-guide-line); border-radius: var(--pm-guide-radius-feature);
+    background: var(--pm-guide-pale);
+}
+.pm-sim-spotlight-photo { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pm-sim-spotlight-copy { min-width: 0; padding: var(--pm-guide-feature-pad); }
+.pm-sim-spotlight-copy > h2 { margin-bottom: var(--pm-guide-s4); font-size: var(--pm-guide-text-h2); font-weight: var(--pm-guide-weight-h2); line-height: var(--pm-guide-line-h2); }
+.pm-sim-spotlight-benefits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--pm-guide-s3); margin-bottom: var(--pm-guide-s4); }
+.pm-sim-spotlight-benefit { min-width: 0; padding-left: var(--pm-guide-s3); border-left: 2px solid var(--pm-guide-hover-border); }
+.pm-sim-spotlight-benefit h3 { margin-bottom: var(--pm-guide-s1); font-size: var(--pm-guide-text-h4); font-weight: var(--pm-guide-weight-control); line-height: var(--pm-guide-line-h3); }
+.pm-sim-spotlight-benefit p { color: var(--pm-guide-body-color); font-size: var(--pm-guide-text-body); line-height: var(--pm-guide-line-body); }
+.pm-sim-last-row { margin-top: var(--pm-guide-s4); }
+.pm-sim-no-results { padding: var(--pm-guide-s8) var(--pm-guide-s4); border: 1px solid var(--pm-guide-line); border-radius: var(--pm-guide-radius-card); text-align: center; }
+.pm-sim-no-results h3 { font-size: var(--pm-guide-text-h3); }
+.pm-sim-no-results p { margin: var(--pm-guide-s2) 0 var(--pm-guide-s4); color: var(--pm-guide-muted); }
+
+.pm-sim-reviews {
+    margin-top: var(--pm-guide-s8); padding: var(--pm-guide-s6);
+    border: 1px solid var(--pm-guide-line); border-radius: var(--pm-guide-radius-card);
+    background: var(--pm-guide-soft);
+}
+.pm-sim-reviews .pm-sim-section-row { align-items: flex-start; margin-bottom: var(--pm-guide-s4); }
+.pm-sim-reviews .pm-sim-section-row p { margin-top: var(--pm-guide-s1); font-size: var(--pm-guide-text-meta); color: var(--pm-guide-muted); }
+.pm-sim-review-notice { padding: var(--pm-guide-s2) var(--pm-guide-s3); margin-bottom: var(--pm-guide-s3) !important; background: var(--pm-guide-pale); color: var(--pm-guide-ink); border-radius: var(--pm-guide-radius-sm); font-size: var(--pm-guide-text-meta); }
+.pm-sim-review-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--pm-guide-s3); }
+.pm-sim-review-card { display: flex; flex-direction: column; min-width: 0; padding: var(--pm-guide-s4); background: var(--pm-guide-white); border: 1px solid var(--pm-guide-line); border-radius: var(--pm-guide-radius-card); }
+.pm-sim-quote { color: var(--pm-guide-blue); font-size: var(--pm-guide-s12); font-weight: var(--pm-guide-weight-h2); line-height: 1; }
+.pm-sim-review-card > p { flex: 1; padding: var(--pm-guide-s2) 0 var(--pm-guide-s6); font-size: var(--pm-guide-text-body); line-height: var(--pm-guide-line-body); }
+.pm-sim-review-author { display: flex; align-items: center; gap: var(--pm-guide-s2); }
+.pm-sim-review-avatar { display: grid; place-items: center; flex: none; width: var(--pm-guide-s10); height: var(--pm-guide-s10); border-radius: 50%; background: var(--pm-guide-pale); color: var(--pm-guide-blue); font-size: var(--pm-guide-text-meta); font-weight: var(--pm-guide-weight-control); }
+.pm-sim-review-card:nth-child(2) .pm-sim-review-avatar { background: var(--pm-guide-green-bg); color: var(--pm-guide-green); }
+.pm-sim-review-card:nth-child(3) .pm-sim-review-avatar { background: var(--pm-guide-purple-bg); color: var(--pm-guide-purple); }
+.pm-sim-review-author > div { display: grid; gap: var(--pm-guide-s1); min-width: 0; }
+.pm-sim-review-author strong { color: var(--pm-guide-ink); font-size: var(--pm-guide-text-control); }
+.pm-sim-review-author > div > span { color: var(--pm-guide-muted); font-size: var(--pm-guide-text-meta); }
+.pm-sim-pagination { display: flex; align-items: center; justify-content: center; gap: var(--pm-guide-s3); margin-top: var(--pm-guide-s3); color: var(--pm-guide-muted); font-size: var(--pm-guide-text-meta); }
+.pm-sim-pagination button {
+    display: grid; place-items: center; width: var(--pm-guide-s12); height: var(--pm-guide-s12);
+    padding: 0; border: 1px solid var(--pm-guide-line); border-radius: var(--pm-guide-radius-sm);
+    background: var(--pm-guide-white); color: var(--pm-guide-blue); cursor: pointer;
+}
+.pm-sim-pagination button:disabled { opacity: .45; cursor: not-allowed; }
+.pm-sim-pagination button:not(:disabled):hover { background: var(--pm-guide-pale); }
+
+@media (max-width: 850px) {
+    .pm-sim-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .pm-sim-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .pm-sim-filters label:first-child { grid-column: 1 / -1; }
+    .pm-sim-review-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 650px) {
+    .pm-sim-spotlight { grid-template-columns: minmax(0, 1fr); }
+    .pm-sim-spotlight-photo { max-height: 12rem; }
+    .pm-sim-reward { flex-wrap: wrap; }
+    .pm-sim-reward .pm-sim-action { margin-left: 0; }
+}
+@media (max-width: 540px) {
+    .pm-sim-banner > .pm-v2-container, .pm-sim-main { width: calc(100% - 2 * var(--pm-guide-gutter-mobile)); }
+    .pm-sim-filters, .pm-sim-card-grid, .pm-sim-spotlight-benefits, .pm-sim-review-grid { grid-template-columns: minmax(0, 1fr); }
+    .pm-sim-filters label:first-child { grid-column: auto; }
+    .pm-sim-reward .pm-sim-action { width: 100%; }
+    .pm-sim-reviews { padding: var(--pm-guide-s4); }
+    .pm-sim-reviews .pm-sim-section-row { flex-wrap: wrap; }
+    .pm-sim-spotlight-copy { padding: var(--pm-guide-s4); }
+}
+@media (prefers-reduced-motion: reduce) { .pm-simulators-page { scroll-behavior: auto; } }
+
+/* Catalog and PMP details share the exact guide rail with the existing
+   homepage header and footer. Other homepage routes retain their own width. */
+.pm-home-v2-shell.pm-guide-public-shell {
+    --pm-v2-container-width: min(var(--pm-guide-container), calc(100% - 2 * var(--pm-guide-gutter)));
+    --pm-v2-footer-bg: var(--pm-guide-footer);
+}
+@media (max-width: 540px) {
+    .pm-home-v2-shell.pm-guide-public-shell {
+        --pm-v2-container-width: calc(100% - 2 * var(--pm-guide-gutter-mobile));
+    }
+}

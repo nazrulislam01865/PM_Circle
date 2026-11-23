@@ -51,7 +51,7 @@ test('footer groups, social icons and event link share existing admin data and v
     assert.match(footer, /show_payments !== false/);
     assert.match(footer, /show_legal !== false/);
     assert.match(footer, /FooterSocial content=\{content\} compact prototypeOrder/);
-    assert.match(footer, /href: '\/#pm-v2-events-title'/);
-    assert.doesNotMatch(footer, /href: '\/events'/);
+    assert.match(footer, /href: '\/events'/);
+    assert.doesNotMatch(footer, /href: '\/#pm-v2-events-title'/);
     assert.match(read('resources/js/components/pm/SiteFooter.tsx'), /eventsVisible=\{homeEventsVisible\}/);
 });

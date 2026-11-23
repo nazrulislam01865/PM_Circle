@@ -23,7 +23,7 @@ function FeatureCards({ cards }: { cards: PmpFeature[] }) {
 
 export function PmpPublicHero({ content }: { content: PmpPublicContent['hero'] }) {
     return <>
-        <nav className="pm-pmp-public-breadcrumb" aria-label="Breadcrumb"><Link href="/">Home</Link><span>/</span><span>Exam Simulator</span><span>/</span><span aria-current="page">PMP</span></nav>
+        <nav className="pm-pmp-public-breadcrumb" aria-label="Breadcrumb"><Link href="/">Home</Link><span aria-hidden="true">/</span><Link href="/exam-simulator/pmp">Exam Simulator</Link><span aria-hidden="true">/</span><span aria-current="page">PMP</span></nav>
         <section className="pm-pmp-public-hero" aria-labelledby="pm-pmp-public-title">
             {content.image && <img className="pm-pmp-public-hero-image" src={content.image} width="947" height="432" alt="A learner preparing for an exam and a professional celebrating a result" decoding="async" fetchPriority="high"/>}
             <div className="pm-pmp-public-hero-copy">

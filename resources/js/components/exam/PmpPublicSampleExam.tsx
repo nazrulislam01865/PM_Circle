@@ -1,17 +1,23 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import { Calculator, ChevronLeft, ChevronRight, Clock3, Flag, Highlighter, Strikethrough, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import { ExamExplanation, ExamOptionList, ExamStatus, Highlighted, type ExamQuestion } from './ExamShared';
+import { ArrowLeft, ArrowRight, Clock3, Flag, Info, X } from 'lucide-react';
+import { useEffect, useRef, useState, type MouseEvent } from 'react';
+import { ExamOptionList, Highlighted, type ExamQuestion, type ExamResponses } from './ExamShared';
 import { ExamTimeProgress } from './ExamTimeProgress';
+import { ExamToolGuide } from './ExamToolGuide';
+import { PmpExamNavigator } from './PmpExamNavigator';
+import { PmpExamQuestionHeading, PmpExamQuestionTools } from './PmpExamQuestionChrome';
+import { PmpSampleReview } from './PmpSampleReview';
+import { PmpSubmitReviewSummary } from './PmpSubmitReviewSummary';
 import { pmpPublicSampleDurationSeconds, pmpPublicSampleQuestion } from './pmpPublicSampleQuestion';
 
-/** Public-only practice, reusing exam question components and never creating a paid exam attempt. */
+/** A local-only sample attempt using the real timed-exam and review presentation components.
+ * No attempt is created, and no paid exam endpoint, answers API, or AI credit is called. */
 export function PmpPublicSampleExam({ sampleQuestion = null, sampleQuestions = [], sampleDurationSeconds = pmpPublicSampleDurationSeconds }: {
     sampleQuestion?: ExamQuestion | null; sampleQuestions?: ExamQuestion[]; sampleDurationSeconds?: number;
 }) {
     const questions = sampleQuestions.length ? sampleQuestions : sampleQuestion ? [sampleQuestion] : [pmpPublicSampleQuestion];
     const total = questions.length;
-    const duration = Math.max(30, Math.min(900, sampleDurationSeconds));
+    const duration = Number.isFinite(sampleDurationSeconds) ? Math.max(30, Math.min(900, sampleDurationSeconds)) : pmpPublicSampleDurationSeconds;
     const previewRef = useRef<HTMLDivElement>(null);
     const [started, setStarted] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -22,17 +28,21 @@ export function PmpPublicSampleExam({ sampleQuestion = null, sampleQuestions = [
     const [highlightMode, setHighlightMode] = useState(false);
     const [highlights, setHighlights] = useState<Record<number, string[]>>({});
     const [reviewed, setReviewed] = useState(false);
-    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [finishOpen, setFinishOpen] = useState(false);
+    const [confirmSubmit, setConfirmSubmit] = useState(false);
+    const [guideOpen, setGuideOpen] = useState(false);
+    const [navStart, setNavStart] = useState(0);
     const [error, setError] = useState('');
     const [deadline, setDeadline] = useState(() => Date.now() + duration * 1000);
     const [seconds, setSeconds] = useState(duration);
     const [calcOpen, setCalcOpen] = useState(false);
     const [calculator, setCalculator] = useState({ a: '', b: '', op: '+' });
 
+    // As on the previous public sample, time starts when the sample scrolls into view.
     useEffect(() => {
         const element = previewRef.current;
         if (!element) return;
-        const start = () => { setDeadline(Date.now() + duration * 1000); setStarted(true); };
+        const start = () => { setDeadline(Date.now() + duration * 1000); setSeconds(duration); setStarted(true); };
         if (!('IntersectionObserver' in window)) { start(); return; }
         const observer = new IntersectionObserver(entries => {
             if (entries.some(entry => entry.isIntersecting)) { observer.disconnect(); start(); }
@@ -43,11 +53,13 @@ export function PmpPublicSampleExam({ sampleQuestion = null, sampleQuestions = [
 
     useEffect(() => {
         if (!started || reviewed) return;
-        const timer = window.setInterval(() => {
+        const tick = () => {
             const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
             setSeconds(remaining);
-            if (remaining === 0) window.clearInterval(timer);
-        }, 1000);
+            if (remaining === 0) { setFinishOpen(false); setConfirmSubmit(false); }
+        };
+        tick();
+        const timer = window.setInterval(tick, 1000);
         return () => window.clearInterval(timer);
     }, [deadline, reviewed, started]);
 
@@ -56,13 +68,17 @@ export function PmpPublicSampleExam({ sampleQuestion = null, sampleQuestions = [
     const marked = marks.includes(question.id);
     const questionStrikes = strikes[question.id] ?? [];
     const questionHighlights = highlights[question.id] ?? [];
-    const answered = questions.filter(item => answers[item.id]).length;
-    const correct = questions.filter(item => answers[item.id] === item.correct).length;
+    const responses: ExamResponses = Object.fromEntries(questions.map(item => [String(item.id), {
+        choice: answers[item.id] ?? null, marked: marks.includes(item.id),
+    }]));
+    const answered = questions.filter(item => Boolean(answers[item.id])).length;
+    const markedIndexes = questions.flatMap((item, index) => marks.includes(item.id) ? [index] : []);
+    const unansweredIndexes = questions.flatMap((item, index) => answers[item.id] ? [] : [index]);
     const finished = reviewed || seconds === 0;
     const clock = (value: number) => String(value).padStart(2, '0');
     const time = `${clock(Math.floor(seconds / 3600))}:${clock(Math.floor((seconds % 3600) / 60))}:${clock(seconds % 60)}`;
 
-    const goTo = (index: number) => { setCurrentIndex(index); setError(''); };
+    const goTo = (index: number) => { setCurrentIndex(index); setError(''); setGuideOpen(false); };
     const toggleMark = () => {
         if (finished) return;
         setMarks(previous => previous.includes(question.id) ? previous.filter(id => id !== question.id) : [...previous, question.id]);
@@ -74,24 +90,33 @@ export function PmpPublicSampleExam({ sampleQuestion = null, sampleQuestions = [
         if (willStrike && choice === key) setAnswers(previous => ({ ...previous, [question.id]: null }));
         setError('');
     };
-    const captureHighlight = () => {
+    const captureHighlight = (event: MouseEvent<HTMLParagraphElement>) => {
         if (!highlightMode || finished) return;
         const selection = window.getSelection();
-        const text = selection?.toString().trim() ?? '';
+        if (!selection || selection.isCollapsed || !event.currentTarget.contains(selection.anchorNode) || !event.currentTarget.contains(selection.focusNode)) return;
+        const text = selection.toString().trim();
         if (text && text.length <= 280 && question.prompt.includes(text) && !questionHighlights.includes(text)) {
             setHighlights(previous => ({ ...previous, [question.id]: [...questionHighlights, text] }));
-            selection?.removeAllRanges();
+            selection.removeAllRanges();
         }
     };
+    const complete = () => {
+        setReviewed(true); setFinishOpen(false); setConfirmSubmit(false); setGuideOpen(false);
+    };
     const finish = () => {
-        if (total === 1 && !choice) { setError('Select an answer before checking.'); return; }
-        if (total > 1 && answered < total) { setConfirmOpen(true); return; }
-        setReviewed(true);
+        if (total === 1) {
+            if (!choice) { setError('Select an answer before checking.'); return; }
+            complete(); // Preserve the sample's one-question Check answer control.
+            return;
+        }
+        setGuideOpen(false);
+        setFinishOpen(true); // Multi-question sample follows the real pre-submit review flow.
     };
     const tryAgain = () => {
         setCurrentIndex(0); setAnswers({}); setMarks([]); setStrikes({}); setHighlights({});
-        setStrikeMode(false); setHighlightMode(false); setReviewed(false); setConfirmOpen(false);
-        setError(''); setSeconds(duration); setDeadline(Date.now() + duration * 1000); setStarted(true);
+        setStrikeMode(false); setHighlightMode(false); setReviewed(false); setFinishOpen(false);
+        setConfirmSubmit(false); setGuideOpen(false); setNavStart(0); setError('');
+        setSeconds(duration); setDeadline(Date.now() + duration * 1000); setStarted(true);
     };
 
     const a = Number(calculator.a);
@@ -99,73 +124,71 @@ export function PmpPublicSampleExam({ sampleQuestion = null, sampleQuestions = [
     const valid = calculator.a.trim() !== '' && calculator.b.trim() !== '' && Number.isFinite(a) && Number.isFinite(b) && !(calculator.op === '/' && b === 0);
     const value = calculator.op === '+' ? a + b : calculator.op === '-' ? a - b : calculator.op === '×' ? a * b : a / b;
 
-    return <div ref={previewRef} className="pm-exam pm-pmp-public-exam-preview">
-        <div className="pm-exam-examhead">
-            <div className="pm-exam-examhead-title"><strong>PMP® Exam Simulator</strong></div>
-            <div className="pm-exam-examhead-right">
-                <span><Clock3 size={20} aria-hidden="true"/>Time Remaining: <b className={seconds < 60 ? 'is-urgent' : ''} role="timer" aria-label="Time remaining">{time}</b></span>
-                <span>Question {currentIndex + 1} of {total}</span>
-                <button type="button" aria-label="Mark current question for review" aria-pressed={marked} disabled={finished} onClick={toggleMark}>
-                    <Flag fill={marked ? 'currentColor' : 'none'}/>
-                </button>
+    return <div ref={previewRef} className="pm-exam pm-exam-taking pm-pmp-public-exam-preview">
+        {finished ? <PmpSampleReview questions={questions} responses={responses} onTryAgain={tryAgain} timedOut={seconds === 0}/> : <>
+            <div className="pm-exam-examhead">
+                <div className="pm-exam-examhead-title"><strong>PMP® Exam Simulator</strong></div>
+                <div className="pm-exam-examhead-right">{guideOpen ? <button className="btn secondary pm-exam-action" type="button" onClick={() => setGuideOpen(false)}><X size={18}/>Close</button> : <>
+                    <span><Clock3 size={20} aria-hidden="true"/>Time Remaining: <b className={seconds < 60 ? 'is-urgent' : ''} role="timer" aria-label="Time remaining">{time}</b></span>
+                    <span>Question {currentIndex + 1} of {total}</span>
+                    <button type="button" aria-label="Mark current question for review" aria-pressed={marked} onClick={toggleMark}><Flag fill={marked ? 'currentColor' : 'none'}/></button>
+                    <button type="button" className="pm-exam-guide-open" onClick={() => setGuideOpen(true)}><Info size={18}/>Exam Tools Guide</button>
+                    <button type="button" className="btn secondary pm-exam-action" onClick={finish}>Finish Sample</button>
+                </>}</div>
             </div>
-        </div>
-        <div className="pm-exam-take-body">
-            <ExamTimeProgress secondsRemaining={seconds} durationSeconds={duration} label="Sample exam time remaining"/>
-            {finished && <div className="pm-pmp-sample-exam-summary" role="status">
-                <p><strong>{seconds === 0 ? 'Time is up.' : 'Sample exam complete.'}</strong> Review your answers and explanations below.</p>
-                <ExamStatus total={total} correct={correct} answered={answered}/>
-                <button className="btn secondary pm-exam-action" type="button" onClick={tryAgain}>Try again</button>
-            </div>}
-            <div className="pm-exam-take-grid">
-                <section className="pm-exam-panel pm-exam-question-card" aria-label="Public sample exam question">
-                    {marked && !finished && <div className="pm-exam-marked-banner"><Flag size={15} fill="currentColor"/><strong>Marked for review</strong><span>· You can return to this question before finishing.</span></div>}
-                    <header><span>Question {currentIndex + 1} of {total}</span><span className="pm-exam-domain">Domain: {question.domain}</span></header>
-                    <div className="pm-exam-question-main">
-                        <p className="pm-exam-question-prompt" onMouseUp={captureHighlight}>
-                            <Highlighted content={question.prompt} active={questionHighlights} onRemove={text => setHighlights(previous => ({ ...previous, [question.id]: questionHighlights.filter(item => item !== text) }))}/>
-                        </p>
-                        <ExamOptionList question={question} chosen={choice} struck={questionStrikes} readonly={finished} reveal={finished}
-                            strikeMode={strikeMode} onStrike={toggleStrike} onChoose={key => { setAnswers(previous => ({ ...previous, [question.id]: key })); setError(''); }}/>
-                        {error && <p className="pm-pmp-public-choice-error" role="alert">{error}</p>}
-                        {finished && <div className="pm-pmp-public-exam-feedback">
-                            <strong>{!choice ? 'Unanswered question' : choice === question.correct ? 'Correct answer!' : 'Review your answer.'}</strong>
-                            <ExamExplanation key={question.id} question={question}/>
-                        </div>}
+            <div className="pm-exam-take-body">
+                {guideOpen ? <ExamToolGuide/> : <>
+                    <ExamTimeProgress secondsRemaining={seconds} durationSeconds={duration} label="Sample exam time remaining"/>
+                    <div className="pm-exam-take-grid">
+                        <section className="pm-exam-panel pm-exam-question-card" aria-label="Public sample exam question">
+                            {marked && <div className="pm-exam-marked-banner"><Flag size={15} fill="currentColor"/><strong>Marked for review</strong><span>· You can review this question before submitting.</span></div>}
+                            <PmpExamQuestionHeading index={currentIndex} total={total} domain={question.domain}/>
+                            <div className="pm-exam-question-main">
+                                <p className="pm-exam-question-prompt" onMouseUp={captureHighlight}>
+                                    <Highlighted content={question.prompt} active={questionHighlights}
+                                        onRemove={text => setHighlights(previous => ({ ...previous, [question.id]: questionHighlights.filter(item => item !== text) }))}/>
+                                </p>
+                                <ExamOptionList question={question} chosen={choice} struck={questionStrikes} strikeMode={strikeMode}
+                                    onStrike={toggleStrike} onChoose={key => { setAnswers(previous => ({ ...previous, [question.id]: key })); setError(''); }}/>
+                                {error && <p className="pm-pmp-public-choice-error" role="alert">{error}</p>}
+                            </div>
+                            <footer>
+                                <PmpExamQuestionTools marked={marked} strikeMode={strikeMode} highlightMode={highlightMode}
+                                    onToggleMark={toggleMark} onToggleStrike={() => setStrikeMode(previous => !previous)}
+                                    onToggleHighlight={() => setHighlightMode(previous => !previous)} onCalculator={() => setCalcOpen(true)}/>
+                                <div className="pm-exam-nextprev">
+                                    <button type="button" className="btn secondary pm-exam-action" disabled={currentIndex === 0} onClick={() => goTo(currentIndex - 1)}><ArrowLeft size={17}/>Previous</button>
+                                    {currentIndex < total - 1 ? <button type="button" className="btn pm-exam-action" onClick={() => goTo(currentIndex + 1)}>Next<ArrowRight size={17}/></button>
+                                        : <button type="button" className="btn pm-exam-action" onClick={finish}>{total === 1 ? 'Check answer' : 'Finish & Review'}<ArrowRight size={17}/></button>}
+                                </div>
+                            </footer>
+                        </section>
+                        <PmpExamNavigator questions={questions} responses={responses} currentIndex={currentIndex} pageStart={navStart}
+                            onPageStartChange={setNavStart} ariaLabel="Sample question navigator"
+                            onNavigate={(target) => goTo(target)}
+                            onReviewMarked={marks.length ? () => goTo(markedIndexes[0]) : undefined}
+                            onExamSummary={() => setFinishOpen(true)}/>
                     </div>
-                    <footer>
-                        <div className="pm-exam-tools">
-                            <button type="button" disabled={finished} aria-pressed={marked} className={marked ? 'is-review-remove' : ''} onClick={toggleMark}><Flag size={19}/>{marked ? 'Remove Review Mark' : 'Mark for Review'}</button>
-                            <button type="button" disabled={finished} aria-pressed={strikeMode} className={strikeMode ? 'is-on' : ''} onClick={() => setStrikeMode(previous => !previous)}><Strikethrough size={19}/>Strike Through</button>
-                            <button type="button" disabled={finished} aria-pressed={highlightMode} className={highlightMode ? 'is-on' : ''} onClick={() => setHighlightMode(previous => !previous)}><Highlighter size={19}/>Highlight</button>
-                            <button type="button" onClick={() => setCalcOpen(true)}><Calculator size={19}/>Calculator</button>
-                        </div>
-                        <div className="pm-exam-nextprev">
-                            {total > 1 && <button type="button" className="btn secondary pm-exam-action" disabled={currentIndex === 0} onClick={() => goTo(currentIndex - 1)}><ChevronLeft size={17}/>Previous</button>}
-                            {total > 1 && currentIndex + 1 < total && <button type="button" className="btn secondary pm-exam-action" onClick={() => goTo(currentIndex + 1)}>Next<ChevronRight size={17}/></button>}
-                            {!finished && <button type="button" className="btn pm-exam-action" onClick={finish}>{total === 1 ? 'Check answer' : 'Finish & Review'}</button>}
-                        </div>
-                    </footer>
-                </section>
-                <aside className="pm-exam-panel pm-exam-navigator" aria-label="Sample question navigator">
-                    <h2>Question Navigator</h2>
-                    <div className="pm-exam-navigator-grid">{questions.map((item, index) => <button type="button" key={item.id}
-                        aria-current={index === currentIndex ? 'step' : undefined} aria-label={`Question ${index + 1}${answers[item.id] ? ', answered' : ''}`}
-                        className={`${index === currentIndex ? 'is-current' : ''}${answers[item.id] ? ' is-answered' : ''}`}
-                        onClick={() => goTo(index)}>{index + 1}{marks.includes(item.id) && <Flag size={12} fill="currentColor"/>}</button>)}</div>
-                    <div className="pm-exam-nav-legend"><span><i className="is-answered"/>Answered ({answered})</span><span><i/>Not Answered ({total - answered})</span><span><i className="is-current"/>Current Question ({currentIndex + 1})</span><span><Flag size={18}/>Marked for Review ({marks.length})</span></div>
-                </aside>
+                </>}
             </div>
-        </div>
-        <Dialog.Root open={confirmOpen} onOpenChange={setConfirmOpen}><Dialog.Portal>
-            <Dialog.Overlay className="pm-exam-modal-overlay"/>
-            <Dialog.Content className="pm-exam-modal pm-pmp-public-sample-confirm">
-                <Dialog.Title>Finish sample exam?</Dialog.Title>
-                <Dialog.Description>You answered {answered} of {total} questions. {total - answered} will remain unanswered. You can review every explanation after finishing.</Dialog.Description>
-                <div className="pm-pmp-public-sample-confirm-actions"><button type="button" className="btn secondary" onClick={() => setConfirmOpen(false)}>Continue practice</button>
-                    <button type="button" className="btn" onClick={() => { setReviewed(true); setConfirmOpen(false); }}>Finish & Review</button></div>
-            </Dialog.Content>
-        </Dialog.Portal></Dialog.Root>
+        </>}
+        <Dialog.Root open={finishOpen && !finished} onOpenChange={open => { setFinishOpen(open); if (!open) setConfirmSubmit(false); }}>
+            <Dialog.Portal><Dialog.Overlay className="pm-exam-modal-overlay"/><Dialog.Content className={`pm-exam-modal pm-exam-finish-modal${confirmSubmit ? '' : ' pm-exam-finish-prototype'}`} aria-describedby="pm-exam-finish-description">
+                {confirmSubmit ? <>
+                    <Dialog.Title>Finish sample exam?</Dialog.Title>
+                    <Dialog.Description id="pm-exam-finish-description">You answered {answered} of {total} questions. {total - answered} will remain unanswered. This is a sample only; no paid exam attempt is created.</Dialog.Description>
+                    <div className="pm-exam-confirm-actions">
+                        <button type="button" className="btn secondary pm-exam-action" onClick={() => setConfirmSubmit(false)}>Back to Summary</button>
+                        <button type="button" className="btn pm-exam-action" onClick={complete}>Finish &amp; Review</button>
+                    </div>
+                </> : <PmpSubmitReviewSummary total={total} answeredCount={answered}
+                    markedIndexes={markedIndexes} unansweredIndexes={unansweredIndexes} submitting={false}
+                    canVisit={() => true} onClose={() => setFinishOpen(false)}
+                    onMarked={index => { setFinishOpen(false); goTo(index); }}
+                    onUnanswered={index => { setFinishOpen(false); goTo(index); }}
+                    onSubmit={() => setConfirmSubmit(true)}/>}
+            </Dialog.Content></Dialog.Portal>
+        </Dialog.Root>
         <Dialog.Root open={calcOpen} onOpenChange={setCalcOpen}><Dialog.Portal>
             <Dialog.Overlay className="pm-exam-modal-overlay"/>
             <Dialog.Content className="pm-exam-modal pm-exam-calc" aria-describedby="pm-public-calculator-description">

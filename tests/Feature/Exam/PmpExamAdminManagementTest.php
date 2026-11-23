@@ -102,7 +102,7 @@ final class PmpExamAdminManagementTest extends TestCase
             ->where('selectedSampleQuestion.id', $activeId)
             ->etc());
         $this->app['auth']->guard()->logout();
-        $this->get('/exam-simulator/pmp')->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+        $this->get('/exam-simulator/pmp/details')->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
             ->component('exam/Public')
             ->where('sampleQuestion.id', $activeId)
             ->where('sampleQuestion.correct', 'B')
@@ -143,7 +143,7 @@ final class PmpExamAdminManagementTest extends TestCase
             ->etc());
 
         $this->app['auth']->guard()->logout();
-        $this->get('/exam-simulator/pmp')->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+        $this->get('/exam-simulator/pmp/details')->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
             ->component('exam/Public')
             ->has('sampleQuestions', 2)
             ->where('sampleQuestions.0.id', $second)
@@ -155,7 +155,7 @@ final class PmpExamAdminManagementTest extends TestCase
         $this->actingAs($admin)->patch("/admin/exam-simulator/pmp/questions/{$second}/status", ['is_active' => false])
             ->assertSessionHasNoErrors();
         $this->app['auth']->guard()->logout();
-        $this->get('/exam-simulator/pmp')->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+        $this->get('/exam-simulator/pmp/details')->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
             ->has('sampleQuestions', 1)
             ->where('sampleQuestions.0.id', $first)
             ->etc());
@@ -174,7 +174,7 @@ final class PmpExamAdminManagementTest extends TestCase
         ]))->assertSessionHasNoErrors();
         $this->assertSame([], json_decode(DB::table('pmp_exam_settings')->value('sample_question_ids'), true));
         $this->app['auth']->guard()->logout();
-        $this->get('/exam-simulator/pmp')->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+        $this->get('/exam-simulator/pmp/details')->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
             ->has('sampleQuestions', 0)
             ->where('sampleQuestion', null)
             ->etc());

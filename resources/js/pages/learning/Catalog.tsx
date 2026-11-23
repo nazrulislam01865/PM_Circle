@@ -2,6 +2,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { ChevronDown, ChevronLeft, ChevronRight, GraduationCap, Grid2X2, Layers3, List, Search, SlidersHorizontal, Target, Trophy } from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
 import { CourseCard, type CatalogCard } from '@/components/learning/CourseCard';
+import { PublicCourseCatalog } from '@/components/learning/PublicCourseCatalog';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
 import type { DemoCourseData, LearningCourseCardData, LearningPathCardData, LearningShell } from '@/types/learning';
 import { demoCourseHref, learningActivityHref, learningPathHref } from '@/types/learning';
@@ -46,7 +47,7 @@ function FilterSection({ title, expanded, onToggle, children }: { title: string;
     </section>;
 }
 
-export default function Catalog({ shell, paths, courses, practiceModules, isMember, memberTier }: CatalogProps) {
+function LegacyCatalog({ shell, paths, courses, practiceModules, isMember, memberTier }: CatalogProps) {
     const pageUrl = usePage().url;
     const memberView = pageUrl.split('?')[0] === '/dashboard/learning';
     const catalogRoot = memberView ? '/dashboard/learning' : '/learning';
@@ -189,4 +190,10 @@ export default function Catalog({ shell, paths, courses, practiceModules, isMemb
     return <PublicLayout siteLayout={!memberView} active="/learning">
         <div className="pm-learning-catalog-public pm-learn-content">{pageContent}</div>
     </PublicLayout>;
+}
+
+/** Public listing follows the approved homepage prototype; member workspace remains untouched. */
+export default function Catalog(props: CatalogProps) {
+    const memberView = usePage().url.split('?')[0] === '/dashboard/learning';
+    return memberView ? <LegacyCatalog {...props} /> : <PublicCourseCatalog courses={props.courses} />;
 }

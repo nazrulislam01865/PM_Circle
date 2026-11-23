@@ -64,6 +64,10 @@
 @import './pm-home-v2-layout.css';
 @import './pm-home-v2-sections.css';
 @import './pm-home-v2-responsive.css';
+@import './pm-simulator-catalog.css';
+@import './pm-events.css';
+@import './pm-learning-public.css';
+@import './pm-terms.css';
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';

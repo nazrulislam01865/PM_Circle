@@ -30,7 +30,7 @@ export function HomeEvents({ join }: { join?: NonNullable<HomeContent['careers']
 
     return <section className="pm-v2-section pm-v2-container pm-v2-events-section" id="pm-v2-events-title" aria-labelledby="pm-v2-event-heading">
         <HomeSectionTitle id="pm-v2-event-heading" title="Community events"
-            description="Join study sessions, practical workshops and discussions hosted by members."/>
+            description="Join study sessions, practical workshops and discussions hosted by members." action="View all events" href="/events"/>
         <button className="pm-v2-button pm-v2-create-event" type="button" onClick={() => setCreating(true)}>Create event</button>
         <p className="sr-only">Illustrative event previews. The events shown here are not published or open for booking.</p>
         <div className="pm-v2-events-list">{events.map(item => <article className="pm-v2-event" key={item.id}>

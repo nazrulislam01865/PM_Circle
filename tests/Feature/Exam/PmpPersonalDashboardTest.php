@@ -48,17 +48,29 @@ final class PmpPersonalDashboardTest extends TestCase
     public function test_signed_in_eligible_member_enters_the_dashboard_not_the_public_page(): void
     {
         $this->actingAs($this->member())
-            ->get('/exam-simulator/pmp')->assertRedirect('/exams/pmp/enter');
-        $this->get('/exam-simulator/pmp?preview=1')->assertRedirect('/exams/pmp/enter');
+            ->get('/exam-simulator/pmp/details')->assertRedirect('/exams/pmp/enter');
+        $this->get('/exam-simulator/pmp/details?preview=1')->assertRedirect('/exams/pmp/enter');
         $this->get('/exams/pmp/enter')->assertRedirect('/exams/pmp');
         $free = User::factory()->create(['onboarding_step' => 3]);
-        $this->actingAs($free)->get('/exam-simulator/pmp')->assertRedirect('/exams/pmp/enter');
+        $this->actingAs($free)->get('/exam-simulator/pmp/details')->assertRedirect('/exams/pmp/enter');
         $this->get('/exams/pmp/enter')->assertRedirect('/pricing');
+    }
+
+    public function test_catalog_uses_the_existing_public_exam_url_while_pmp_details_remain_available(): void
+    {
+        $this->get('/exam-simulator/pmp')->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('exam/Browse')
+            ->etc());
+        $this->get('/simulators')->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('exam/Browse')
+            ->etc());
     }
 
     public function test_only_guests_can_view_the_public_pmp_page(): void
     {
-        $this->get('/exam-simulator/pmp')->assertOk();
+        $this->get('/exam-simulator/pmp/details')->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('exam/Public')
+            ->etc());
     }
 
     public function test_every_new_mock_preserves_the_existing_attempt_and_saved_answer(): void

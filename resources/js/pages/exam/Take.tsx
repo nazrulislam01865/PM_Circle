@@ -1,9 +1,11 @@
 import { Head, router } from '@inertiajs/react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { ArrowLeft, ArrowRight, Calculator, ChevronLeft, ChevronRight, Clock3, Flag, Highlighter, Info, Strikethrough, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Clock3, Flag, Info, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ExamToolGuide } from '@/components/exam/ExamToolGuide';
 import { PmpSubmitReviewSummary } from '@/components/exam/PmpSubmitReviewSummary';
+import { PmpExamNavigator } from '@/components/exam/PmpExamNavigator';
+import { PmpExamQuestionHeading, PmpExamQuestionTools } from '@/components/exam/PmpExamQuestionChrome';
 import { ExamTimeProgress } from '@/components/exam/ExamTimeProgress';
 import { examSecondsUntilExpiry, examServerClockOffset } from '@/components/exam/examCountdownMath';
 import { ExamOptionList, Highlighted, examBase, examResult, type ExamQuestion, type ExamResponses, type ExamResponse } from '@/components/exam/ExamShared';
@@ -235,7 +237,6 @@ export default function Take({ attempt, questions, responses: initial }: {
         const initialRemaining = examSecondsUntilExpiry(attempt.expiresAt, Date.now(), serverClockOffset);
         return Number.isFinite(initialRemaining) && initialRemaining > 0 ? initialRemaining : 1;
     }, [attempt.id, attempt.durationSeconds, attempt.expiresAt, serverClockOffset]);
-    const navigator = questions.slice(navStart, navStart + 20);
     const mm = (n: number) => String(Math.floor(n)).padStart(2, '0');
     const time = `${mm(seconds / 3600)}:${mm((seconds % 3600) / 60)}:${mm(seconds % 60)}`;
     const a = Number(calculator.a), b = Number(calculator.b);
@@ -257,7 +258,7 @@ export default function Take({ attempt, questions, responses: initial }: {
                     {reviewingMarked && markedPosition >= 0 ? <><strong>Reviewing marked questions</strong><span>· {markedPosition + 1} of {markedCount} · You can change your answers.</span></>
                         : <><strong>Marked for review</strong><span>· You can review this question before submitting.</span></>}
                 </div>}
-                <header><span>Question {index + 1} of {questions.length}</span><span className="pm-exam-domain">Domain: {question.domain}</span></header>
+                <PmpExamQuestionHeading index={index} total={questions.length} domain={question.domain}/>
                 <div className="pm-exam-question-main"><p className="pm-exam-question-prompt" onMouseUp={event => {
                     const selection = window.getSelection();
                     if (!selection || selection.isCollapsed || !event.currentTarget.contains(selection.anchorNode) || !event.currentTarget.contains(selection.focusNode)) return;
@@ -267,34 +268,20 @@ export default function Take({ attempt, questions, responses: initial }: {
                     <ExamOptionList question={question} chosen={selected.choice}
                         onChoose={chooseOption}
                         onStrike={toggleStrike} strikeMode={strikeMode} struck={tools.strikes[question.id] ?? []}/></div>
-                <footer><div className="pm-exam-tools">
-                    <button type="button" aria-pressed={selected.marked} className={selected.marked ? 'is-review-remove' : ''} onClick={() => selected.marked ? removeReviewMark() : updateResponse(question.id, { marked: true })}><Flag size={19}/>{selected.marked ? 'Remove Review Mark' : 'Mark for Review'}</button>
-                    <button type="button" aria-pressed={strikeMode} className={strikeMode ? 'is-on' : ''} onClick={() => setStrikeMode(v => !v)}><Strikethrough size={19}/>Strike Through</button>
-                    <button type="button" aria-pressed={highlightMode} className={highlightMode ? 'is-on' : ''} onClick={toggleHighlightMode}><Highlighter size={19}/>Highlight</button>
-                    <button type="button" onClick={() => setCalcOpen(true)}><Calculator size={19}/>Calculator</button></div>
+                <footer><PmpExamQuestionTools marked={selected.marked} strikeMode={strikeMode} highlightMode={highlightMode}
+                    onToggleMark={() => selected.marked ? removeReviewMark() : updateResponse(question.id, { marked: true })}
+                    onToggleStrike={() => setStrikeMode(v => !v)} onToggleHighlight={toggleHighlightMode}
+                    onCalculator={() => setCalcOpen(true)}/>
                     {reviewingMarked && markedPosition >= 0 ?
                         <div className="pm-exam-nextprev"><button className="btn secondary pm-exam-action" disabled={markedPosition === 0} onClick={() => goto(markedIndexes[markedPosition - 1], true)}><ArrowLeft size={18}/>Previous Marked</button>
                             <button className="btn pm-exam-action" disabled={markedPosition === markedCount - 1} onClick={() => goto(markedIndexes[markedPosition + 1], true)}>Next Marked <ArrowRight size={18}/></button></div>
                         : <div className="pm-exam-nextprev"><button className="btn secondary pm-exam-action" disabled={index === 0} onClick={() => goto(index - 1)}><ArrowLeft size={18}/>Previous</button>
                             {index === questions.length - 1 ? <button className="btn pm-exam-action" onClick={() => setFinishOpen(true)}>Finish &amp; Review <ArrowRight size={18}/></button>
                                 : <button className="btn pm-exam-action" disabled={!canVisit(index + 1)} title={!canVisit(index + 1) ? 'Answer this and preceding questions to continue' : undefined} onClick={() => goto(index + 1)}>Next <ArrowRight size={18}/></button>}</div>}</footer>
-            </section><aside className="pm-exam-panel pm-exam-navigator"><h2>Question Navigator</h2><div className="pm-exam-navigator-grid">
-                {navigator.map((q, offset) => { const i = navStart + offset; const marked = responses[q.id]?.marked;
-                    return <button type="button" key={q.id} aria-label={`Question ${i + 1}${responses[q.id]?.choice ? ', answered' : ', not answered'}${marked ? ', marked for review' : ''}`} aria-current={i === index ? 'true' : undefined} className={`${i === index ? 'is-current' : ''} ${responses[q.id]?.choice ? 'is-answered' : ''}`}
-                        disabled={!canVisit(i)} onClick={() => marked ? startMarkedReview(i) : goto(i)}>{i + 1}{marked && <Flag size={12} fill="currentColor"/>}</button>;
-                })}</div>
-                {questions.length > 20 && <div className="pm-exam-nav-pages"><button type="button" disabled={navStart === 0} onClick={() => setNavStart(Math.max(0, navStart - 20))}><ChevronLeft/>Prev 20</button>
-                    <button type="button" disabled={navStart + 20 >= questions.length} onClick={() => setNavStart(navStart + 20)}>Next 20<ChevronRight/></button></div>}
-                <div className="pm-exam-nav-summary" aria-label="Exam progress">
-                    <div><strong>{answeredCount}</strong><span>Answered</span></div>
-                    <div><strong>{questions.length - answeredCount}</strong><span>Remaining</span></div>
-                    <div><strong>{markedCount}</strong><span>Marked</span></div>
-                </div>
-                <p className="pm-exam-nav-key"><span><i className="is-answered"/>Answered</span>
-                    <span><i className="is-current"/>Current</span><span><Flag size={14}/>Marked</span></p>
-                {markedCount > 0 && <div className="pm-exam-navigator-actions"><button type="button" className="btn secondary pm-exam-action" onClick={() => startMarkedReview()}>Review Marked Questions</button>
-                    <button type="button" className="btn secondary pm-exam-action" onClick={() => setFinishOpen(true)}>Exam Summary</button></div>}
-            </aside></div>
+            </section><PmpExamNavigator questions={questions} responses={responses} currentIndex={index}
+                pageStart={navStart} onPageStartChange={setNavStart} canVisit={canVisit}
+                onNavigate={(target, marked) => marked ? startMarkedReview(target) : goto(target)}
+                onReviewMarked={() => startMarkedReview()} onExamSummary={() => setFinishOpen(true)}/></div>
             {savingError && <div className="alert error pm-exam-save-error" role="alert">{savingError} <button type="button" onClick={() => { for (const id of failedSaveIds.current) persist(id, responses[id] ?? initialResponse); }}>Retry unsaved answers</button>
                 {savingError.includes('ended') && <a href={examResult(attempt.id)}>View results</a>}</div>}
         </>}</div>

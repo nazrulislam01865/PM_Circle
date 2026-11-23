@@ -10,7 +10,8 @@ type NavigationLink = { href: string; label: string };
 export function HomeHeader({ eventsVisible = true }: { eventsVisible?: boolean }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
-    const { siteNavigation, auth } = usePage<{ siteNavigation?: { header?: NavigationLink[] }; auth?: { user?: { is_admin?: boolean } | null } }>().props;
+    const page = usePage<{ siteNavigation?: { header?: NavigationLink[] }; auth?: { user?: { is_admin?: boolean } | null } }>();
+    const { siteNavigation, auth } = page.props;
     const allowed = (href: string) => !siteNavigation?.header || siteNavigation.header.some(item => item.href === href);
     const close = useCallback(() => { setMenuOpen(false); setSearchOpen(false); }, []);
 
@@ -34,7 +35,7 @@ export function HomeHeader({ eventsVisible = true }: { eventsVisible?: boolean }
                         <Link href="/daily-challenge" onClick={close}>Daily Challenge</Link>
                         <Link href="/members" onClick={close}>Members</Link></div>
                 </details>}
-                {eventsVisible && <a href="#pm-v2-events-title" onClick={close}>Events</a>}
+                {eventsVisible && <Link href="/events" onClick={close}>Events</Link>}
             </nav>
             <div className="pm-v2-header-utilities">
                 <button type="button" className="pm-v2-search-toggle" aria-expanded={searchOpen} aria-controls="pm-v2-header-search" onClick={() => setSearchOpen(value => !value)}>

@@ -64,7 +64,7 @@ export function HomeFooter({ content, eventsVisible = true, aiVisible = true }: 
         prototypeLink(community, '/community', 'Community Feed', ['Community']),
         prototypeLink(community, '/daily-challenge', 'Daily Challenge'),
         ...community,
-        ...(eventsVisible ? [{ href: '/#pm-v2-events-title', label: 'Events' }] : []),
+        ...(eventsVisible ? [{ href: '/events', label: 'Events' }] : []),
     ]);
     const plans = uniqueLinks([
         ...(content.show_membership ? [{ href: '/pricing', label: 'Compare Plans' }] : []),
@@ -94,7 +94,7 @@ export function HomeFooter({ content, eventsVisible = true, aiVisible = true }: 
         {content.show_legal !== false && <div className="pm-v2-footer-legal">
             {content.legal_notice && <p>{content.legal_notice}</p>}
             {content.show_disclaimer && content.disclaimer && <p>{content.disclaimer}</p>}
-            <div className="pm-v2-footer-last"><span>© {new Date().getFullYear()} {content.copyright_label}</span><span>Homepage design mockup · Sample content</span></div>
+            <div className="pm-v2-footer-last"><span>© {new Date().getFullYear()} {content.copyright_label}</span></div>
         </div>}
     </div></footer>;
 }

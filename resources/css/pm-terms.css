@@ -1,0 +1,71 @@
+/* Public Terms & Conditions prototype. Scoped to /terms so other pages are unchanged.
+   Typography, color and spacing use the approved centralized design-guide tokens. */
+.pm-terms-page {
+    background: var(--pm-guide-white);
+    color: var(--pm-guide-body-color);
+    font-family: var(--pm-guide-font);
+    font-size: var(--pm-guide-text-body);
+    font-weight: var(--regular);
+    line-height: var(--pm-guide-line-body);
+}
+.pm-terms-page *, .pm-terms-page *::before, .pm-terms-page *::after { box-sizing: border-box; }
+.pm-terms-page :is(h1,h2,p,ul) { margin: 0; }
+.pm-terms-page a { color: var(--pm-guide-blue); text-underline-offset: .18em; }
+.pm-terms-page a:focus-visible { outline: 3px solid var(--pm-guide-focus); outline-offset: 3px; }
+/* Use the same guide-aware homepage content rail as the Learn & Practice listing. */
+.pm-home-v2-shell.pm-guide-public-shell:has(.pm-terms-page) {
+    --pm-v2-container-width: min(var(--pm-v2-prototype-rail), var(--pm-guide-container), calc(100% - 2 * var(--pm-guide-gutter)));
+}
+.pm-terms-wrap { width: var(--pm-v2-container-width); margin-inline: auto; }
+.pm-terms-banner {
+    padding: var(--pm-guide-banner-pad-top) 0 var(--pm-guide-banner-pad-bottom);
+    background: radial-gradient(ellipse at 92% 0%,var(--pm-guide-banner-glow),transparent 65%),var(--pm-guide-banner-surface);
+    border-bottom: 1px solid var(--pm-guide-banner-border);
+}
+.pm-terms-breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: var(--pm-guide-s2); font-size: var(--pm-guide-text-meta); color: var(--pm-guide-muted); }
+.pm-terms-banner h1 {
+    margin-top: var(--pm-guide-s3);
+    color: var(--pm-guide-ink);
+    font-size: var(--pm-guide-text-h1);
+    font-weight: var(--pm-guide-static-h1-weight);
+    line-height: var(--pm-guide-line-h1);
+    letter-spacing: -.04em;
+    overflow-wrap: anywhere;
+}
+.pm-terms-banner p { margin-top: var(--pm-guide-s2); max-width: 65ch; color: var(--pm-guide-muted); font-size: var(--pm-guide-text-lead); }
+.pm-terms-main { padding-top: var(--pm-guide-s12); padding-bottom: var(--pm-guide-s8); }
+.pm-terms-grid { display: grid; grid-template-columns: var(--pm-guide-terms-sidebar-width) minmax(0,1fr); align-items: start; gap: var(--pm-guide-terms-column-gap); }
+.pm-terms-toc { min-width: 0; padding: var(--pm-guide-s4); border: 1px solid var(--pm-guide-line); border-radius: var(--pm-guide-radius-sm); background: var(--pm-guide-pale); }
+.pm-terms-toc h2 { color: var(--pm-guide-ink); font-size: var(--pm-guide-text-h4); font-weight: var(--pm-guide-weight-control); line-height: var(--pm-guide-line-h4); }
+.pm-terms-toc ul { list-style: none; padding: 0; margin-top: var(--pm-guide-s2); }
+.pm-terms-toc li + li { margin-top: var(--pm-guide-s1); }
+.pm-terms-toc a { display: inline-block; text-decoration: underline; font-size: var(--pm-guide-text-body); line-height: var(--pm-guide-line-h4); overflow-wrap: anywhere; }
+.pm-terms-article { min-width: 0; max-width: var(--pm-guide-reading-width); }
+.pm-terms-article a { text-decoration: underline; }
+.pm-terms-updated { color: var(--pm-guide-muted); font-size: var(--pm-guide-text-meta); margin-bottom: var(--pm-guide-s5) !important; }
+.pm-terms-section { padding: var(--pm-guide-s3) 0 var(--pm-guide-s4); border-bottom: 1px solid var(--pm-guide-line); scroll-margin-top: calc(var(--header-height) + var(--pm-guide-s3)); }
+.pm-terms-section:first-of-type { padding-top: 0; }
+.pm-terms-section h2 { color: var(--pm-guide-ink); font-size: var(--pm-guide-text-legal-section); font-weight: var(--pm-guide-weight-h2); line-height: var(--pm-guide-line-h2); }
+.pm-terms-section p { margin-top: var(--pm-guide-s2); font-size: var(--pm-guide-text-body); line-height: var(--pm-guide-line-body); overflow-wrap: anywhere; }
+@media (max-width: 65rem) {
+    .pm-terms-grid { grid-template-columns: minmax(0,14rem) minmax(0,1fr); gap: var(--pm-guide-s6); }
+}
+@media (max-width: 53.125rem) {
+    .pm-home-v2-shell.pm-guide-public-shell:has(.pm-terms-page) {
+        --pm-v2-container-width: min(90vw, calc(100% - 2 * var(--pm-guide-gutter)));
+    }
+}
+@media (max-width: 40.625rem) {
+    .pm-terms-grid { grid-template-columns: minmax(0,1fr); gap: var(--pm-guide-s5); }
+    .pm-terms-toc ul { columns: 2; column-gap: var(--pm-guide-s4); }
+    .pm-terms-article { max-width: 100%; }
+    .pm-terms-toc li { break-inside: avoid; }
+}
+@media (max-width: 33.75rem) {
+    .pm-home-v2-shell.pm-guide-public-shell:has(.pm-terms-page) {
+        --pm-v2-container-width: calc(100% - 2 * var(--pm-guide-gutter-mobile));
+    }
+    .pm-terms-toc ul { columns: 1; }
+    .pm-terms-banner { padding-bottom: var(--pm-guide-s6); }
+}
+@media (prefers-reduced-motion: reduce) { .pm-terms-page { scroll-behavior: auto; } }

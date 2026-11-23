@@ -1,0 +1,55 @@
+/* Approved public course details: use only the shared guide palette, type and geometry.
+   Member dashboard course styling remains in pm-learning-course-detail.css. */
+.pm-course-public {
+    background: var(--pm-guide-white);
+    color: var(--pm-guide-body-color);
+    font: 400 var(--pm-guide-text-body)/var(--pm-guide-line-body) var(--pm-guide-font);
+    padding: var(--pm-guide-s12) 0;
+}
+.pm-course-public *, .pm-course-public *::before, .pm-course-public *::after { box-sizing: border-box; }
+.pm-course-public :is(h1,h2,h3,h4,p) { margin: 0; }
+.pm-course-public :is(h1,h2,h3,h4) { color: var(--pm-guide-ink); }
+.pm-course-public a { color: var(--pm-guide-blue); text-underline-offset: .18em; }
+.pm-course-public :is(a,button,summary):focus-visible { outline: 3px solid var(--pm-guide-focus); outline-offset: 3px; }
+.pm-course-public-wrap { width: var(--pm-v2-container-width); margin-inline: auto; min-width: 0; }
+.pm-course-public-crumb { display: flex; flex-wrap: wrap; align-items: center; gap: var(--pm-guide-s2); margin-bottom: var(--pm-guide-s5); font-size: var(--pm-guide-text-meta); }
+.pm-course-public-crumb a { text-decoration: none; }
+.pm-course-public-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(17rem, 32%); gap: var(--pm-guide-s8); align-items: start; }
+.pm-course-public-main { min-width: 0; }
+.pm-course-public-heading { padding-bottom: var(--pm-guide-s4); }
+.pm-course-public-eyebrow { display: flex; gap: var(--pm-guide-s1); align-items: center; flex-wrap: wrap; margin-bottom: var(--pm-guide-s2); font-size: var(--pm-guide-text-meta); color: var(--pm-guide-muted); }
+.pm-course-public-access { padding: .1875rem var(--pm-guide-s2); border-radius: var(--pm-guide-radius-pill); font-weight: var(--pm-guide-weight-control); }
+.pm-course-public-access.is-free { color: var(--pm-guide-green); background: var(--pm-guide-green-bg); }
+.pm-course-public-access.is-paid { color: var(--pm-guide-purple); background: var(--pm-guide-purple-bg); }
+.pm-course-public-heading h1 { font-size: var(--pm-guide-text-course-title); font-weight: var(--pm-guide-static-h1-weight); line-height: var(--pm-guide-line-h1); letter-spacing: -.04em; margin-bottom: var(--pm-guide-s3); }
+.pm-course-public-heading > p { font-size: var(--pm-guide-text-lead); margin-bottom: var(--pm-guide-s5); }
+.pm-course-public-anchor-links { display: flex; align-items: center; flex-wrap: wrap; gap: var(--pm-guide-s4); font-size: var(--pm-guide-text-meta); }
+.pm-course-public-anchor-links a { text-decoration: none; }
+.pm-course-public-anchor-links a:hover { text-decoration: underline; }
+.pm-course-public-section { border-top: 1px solid var(--pm-guide-line); padding: var(--pm-guide-s4) 0 var(--pm-guide-s5); scroll-margin-top: var(--pm-guide-s8); }
+.pm-course-public-section h2 { font-size: var(--pm-guide-text-h3); font-weight: var(--pm-guide-weight-h2); line-height: var(--pm-guide-line-h3); margin-bottom: var(--pm-guide-s2); }
+.pm-course-public-goals { margin: var(--pm-guide-s2) 0 0; padding-left: var(--pm-guide-s6); }
+.pm-course-public-goals li { padding-bottom: var(--pm-guide-s1); }
+.pm-course-public-meta { color: var(--pm-guide-muted); font-size: var(--pm-guide-text-meta); }
+.pm-course-public-modules { margin-top: var(--pm-guide-s2); }
+.pm-course-public-modules details { border-bottom: 1px solid var(--pm-guide-line); }
+.pm-course-public-modules summary { display: list-item; padding: var(--pm-guide-s3) var(--pm-guide-s1); font-weight: var(--pm-guide-weight-control); color: var(--pm-guide-ink); cursor: pointer; }
+.pm-course-public-modules summary::marker { color: var(--pm-guide-ink); }
+.pm-course-public-modules ul { margin: 0 0 var(--pm-guide-s3); padding-left: var(--pm-guide-s6); }
+.pm-course-public-study { margin-top: var(--pm-guide-s5); padding-top: var(--pm-guide-s4); border-top: 1px solid var(--pm-guide-line); }
+.pm-course-public-study h3 { font-size: var(--pm-guide-text-h3); margin-bottom: var(--pm-guide-s3); }
+.pm-course-public-study article { margin-bottom: var(--pm-guide-s3); }
+.pm-course-public-study h4 { font-weight: var(--pm-guide-weight-control); }
+.pm-course-public-aside { min-width: 0; padding: var(--pm-guide-s4); border: 1px solid var(--pm-guide-line); border-radius: var(--pm-guide-radius-card); background: var(--pm-guide-white); }
+.pm-course-public-cover { display: block; width: 100%; aspect-ratio: var(--pm-guide-course-cover-ratio); object-fit: cover; border-radius: var(--pm-guide-radius-sm); margin-bottom: var(--pm-guide-s3); }
+.pm-course-public-aside h2 { font-size: var(--pm-guide-text-h3); line-height: var(--pm-guide-line-h3); font-weight: var(--pm-guide-weight-h2); margin-bottom: var(--pm-guide-s2); }
+.pm-course-public-duration { margin-bottom: var(--pm-guide-s3) !important; }
+.pm-course-public-enrollment { display: grid; gap: var(--pm-guide-s2); }
+.pm-course-public-enrollment .pm-guide-button { width: 100%; min-width: 0; }
+.pm-course-public-enrollment p { color: var(--pm-guide-muted); font-size: var(--pm-guide-text-meta); line-height: var(--pm-guide-line-body); }
+.pm-course-public-member-tools { display: grid; gap: var(--pm-guide-s4); padding-top: var(--pm-guide-s4); }
+.pm-course-public-utilities { display: flex; flex-wrap: wrap; gap: var(--pm-guide-s2); }
+.pm-course-public-utilities button { display: inline-flex; gap: var(--pm-guide-s2); }
+@media (max-width: 53.125rem) { .pm-course-public-layout { grid-template-columns: minmax(0, 1fr) minmax(14rem, 34%); gap: var(--pm-guide-s4); } }
+@media (max-width: 40.625rem) { .pm-course-public-layout { grid-template-columns: minmax(0, 1fr); } .pm-course-public-aside { order: -1; } }
+@media (max-width: 33.75rem) { .pm-course-public-wrap { width: calc(100% - 2 * var(--pm-guide-gutter-mobile)); } .pm-course-public { padding: var(--pm-guide-s6) 0; } .pm-course-public-heading h1 { overflow-wrap: anywhere; } }

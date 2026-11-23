@@ -15,7 +15,9 @@ $public = $read('resources/js/layouts/pm/PublicLayout.tsx');
 $member = $read('resources/js/layouts/pm/MemberDashboardLayout.tsx');
 $auth = $read('resources/js/layouts/pm/AuthPageFrame.tsx');
 $siteFooter = $read('resources/js/components/pm/SiteFooter.tsx');
-$footer = $read('resources/js/components/exam/PmpPublicFooter.tsx');
+$footer = $read('resources/js/components/home/v2/HomeFooter.tsx');
+$legacy = $read('resources/js/components/exam/PmpPublicFooter.tsx');
+$footerCss = $read('resources/css/pm-home-v2-sections.css');
 $learning = $read('resources/js/components/learning/LearningShared.tsx');
 $visibility = $read('resources/js/components/pm/siteFooterVisibility.ts');
 $css = $read('resources/css/pm-contact.css');
@@ -35,13 +37,15 @@ $assert(str_contains($learning, '<MemberDashboardLayout') && ! str_contains($lea
     'Learning member pages do not render a second footer');
 $assert(str_contains($read('resources/js/components/discover-pm/DiscoverShell.tsx'), '<SiteFooter />'),
     'Discover PM retains its existing shared footer');
-$assert(str_contains($footer, 'pm-container pm-unified-footer-container')
+$assert(str_contains($footer, 'pm-v2-site-footer')
+    && str_contains($legacy, 'return <HomeFooter content={content}/>')
+    && str_contains($footerCss, '.pm-v2-site-footer .pm-v2-container')
     && ! str_contains($css, '.pm-unified-footer-container { width:min(var(--content-width)'),
-    'Footer columns and legal area reuse the exact public content width');
-$assert(str_contains($memberCss, '.pm-member-shell > .pm-unified-footer')
-    && str_contains($publicCss, '.pm-app.pm-page-shell > main'),
+    'Every footer entry point uses the approved homepage footer and guide rail');
+$assert(str_contains($memberCss, '.pm-member-shell > .pm-v2-site-footer')
+    && str_contains($publicCss, '.pm-app.pm-page-shell>main'),
     'Member and guest shell layout have reserved footer space');
-$assert(str_contains($home, '<PublicLayout siteLayout>') && str_contains($exam, '<PublicLayout siteLayout'),
+$assert(str_contains($home, '<PublicLayout siteLayout homePrototype') && str_contains($exam, '<PublicLayout siteLayout'),
     'Homepage and public PMP keep existing page components and sections');
 $assert(str_contains($read('app/Http/Middleware/HandleInertiaRequests.php'), "'siteFooter' => fn ()"),
     'Footer content uses the pre-existing shared cached data; no new queries added');

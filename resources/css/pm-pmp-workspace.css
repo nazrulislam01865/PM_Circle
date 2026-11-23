@@ -65,7 +65,7 @@
 .pm-pmp-metric-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:var(--s3); }
 .pm-pmp-metric { display:grid; gap:var(--s2); padding:var(--s3); }
 .pm-pmp-metric small { font-size:var(--text-xs); }
-.pm-pmp-metric strong { font-size:var(--text-h1); line-height:var(--line-h1); color:var(--blue); font-weight:var(--bold); white-space:nowrap; }
+.pm-pmp-metric strong { font-size:var(--text-stat); line-height:var(--line-stat); color:var(--blue); font-weight:var(--bold); white-space:nowrap; }
 .pm-pmp-analysis-grid { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,.9fr); gap:var(--s3); }
 .pm-pmp-analysis-grid > .pm-pmp-panel { min-height:220px; }
 .pm-pmp-analysis-grid h2 { margin-bottom:var(--s3); }

@@ -14,7 +14,8 @@ test('public-home prototype composition respects administrator visibility and sh
     }
     assert.match(page, /<PublicLayout siteLayout homePrototype/);
     const layout = read('resources/js/layouts/pm/PublicLayout.tsx');
-    assert.match(layout, /homePrototype \? <HomeHeader eventsVisible=\{homeEventsVisible\}\/> : <SiteHeader/);
+    assert.match(layout, /const showHomeHeader = homePrototype \|\| isGuest/);
+    assert.match(layout, /showHomeHeader \? <HomeHeader eventsVisible=\{homeEventsVisible\}\/> : <SiteHeader/);
     assert.match(layout, /homePrototype \? 'home' : footerVariant/);
 });
 
@@ -69,7 +70,7 @@ test('public-home proportions match the supplied desktop section references', ()
     assert.match(layout, /pm-v2-course-card \.pm-v2-card-content \{ min-height: 290px/);
     assert.match(sections, /\.pm-v2-post-actions \.pm-home-action/);
     assert.match(sections, /pm-v2-scenario-card, \.pm-v2-post-card[^}]*overflow: visible/);
-    assert.match(tokens, /--pm-v2-font-section-heading: clamp/);
+    assert.match(tokens, /--pm-v2-font-section-heading: var\(--pm-guide-text-h2\)/);
 });
 
 test('search control delegates to existing filtered routes without new database search endpoint', () => {

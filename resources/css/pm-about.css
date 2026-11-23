@@ -1,0 +1,104 @@
+/* About Us: approved PM Circle HTML design guidelines, scoped to this page only.
+   The shared homepage header, offer bar, footer, and public rail stay unchanged. */
+.pm-about-page {
+    background: var(--pm-guide-white);
+    color: var(--pm-guide-body-color);
+    font-family: var(--pm-guide-font);
+    font-size: var(--pm-guide-text-body);
+    font-weight: var(--regular);
+    line-height: var(--pm-guide-line-body);
+}
+.pm-about-page *, .pm-about-page *::before, .pm-about-page *::after { box-sizing: border-box; }
+.pm-about-page :is(h1, h2, h3, p) { margin: 0; }
+.pm-about-page a { color: var(--pm-guide-blue); text-decoration: underline; text-underline-offset: .18em; }
+.pm-about-page a:focus-visible { outline: 3px solid var(--pm-guide-focus); outline-offset: 3px; }
+.pm-about-wrap {
+    /* The same centered rail as the public homepage determines text scaling. */
+    container-type: inline-size;
+    width: var(--pm-v2-container-width);
+    max-width: calc(100% - 2 * var(--pm-guide-gutter));
+    margin-inline: auto;
+}
+/* Older browsers keep the guide's vw-based H1/H2 rather than inheriting a
+   small body font when container units are unsupported. */
+@supports (container-type: inline-size) and (width: 1cqw) {
+    .pm-about-wrap {
+        --pm-guide-text-h1: var(--pm-guide-rail-h1);
+        --pm-guide-text-h2: var(--pm-guide-rail-h2);
+    }
+}
+.pm-about-banner {
+    padding: var(--pm-guide-banner-pad-top) 0 var(--pm-guide-banner-pad-bottom);
+    background: radial-gradient(ellipse at 92% 0%, var(--pm-guide-banner-glow), transparent 65%), var(--pm-guide-banner-surface);
+    border-bottom: 1px solid var(--pm-guide-banner-border);
+}
+.pm-about-breadcrumb {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--pm-guide-s2);
+    font-size: var(--pm-guide-text-meta);
+    line-height: var(--pm-guide-line-body);
+    color: var(--pm-guide-muted);
+}
+.pm-about-banner h1 {
+    margin-top: .875rem;
+    color: var(--pm-guide-ink);
+    font-size: var(--pm-guide-text-h1);
+    font-weight: var(--pm-guide-static-h1-weight); /* Guide ships 400/600/700 faces, not an 800 face. */
+    line-height: var(--pm-guide-line-h1);
+    letter-spacing: -.04em;
+    overflow-wrap: anywhere;
+}
+.pm-about-banner p {
+    margin-top: var(--pm-guide-s2);
+    color: var(--pm-guide-muted);
+    font-size: var(--pm-guide-text-lead);
+}
+.pm-about-content { padding-block: var(--pm-guide-s12) var(--pm-guide-s8); }
+.pm-about-content h2 {
+    color: var(--pm-guide-ink);
+    font-size: var(--pm-guide-text-h2);
+    font-weight: var(--pm-guide-weight-h2);
+    line-height: var(--pm-guide-line-h2);
+}
+.pm-about-content h3 {
+    color: var(--pm-guide-ink);
+    font-size: var(--pm-guide-text-h3);
+    font-weight: var(--pm-guide-weight-control);
+    line-height: var(--pm-guide-line-h3);
+}
+.pm-about-content p { max-width: 39rem; margin-top: var(--pm-guide-s2); }
+.pm-about-features { margin-top: var(--pm-guide-s8); }
+.pm-about-cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--pm-guide-s3);
+    margin-top: var(--pm-guide-s2);
+}
+.pm-about-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+    min-height: 8rem;
+    padding: var(--pm-guide-s4);
+    border: 1px solid var(--pm-guide-line);
+    border-radius: var(--pm-guide-radius-card);
+    background: var(--pm-guide-white);
+}
+.pm-about-card p { max-width: none; margin-top: var(--pm-guide-s2); font-size: var(--pm-guide-text-body); }
+.pm-about-card a { margin-top: auto; padding-top: var(--pm-guide-s2); font-size: var(--pm-guide-text-body); }
+.pm-about-itqan { margin-top: var(--pm-guide-s8); }
+.pm-about-itqan > a { display: inline-block; margin-top: var(--pm-guide-s2); }
+@media (max-width: 53.125rem) {
+    .pm-about-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 40.625rem) {
+    .pm-about-cards { grid-template-columns: minmax(0, 1fr); }
+    .pm-about-content { padding-top: var(--pm-guide-s6); }
+    .pm-about-banner { padding-bottom: var(--pm-guide-s6); }
+}
+@media (max-width: 33.75rem) {
+    .pm-about-wrap { max-width: calc(100% - 2 * var(--pm-guide-gutter-mobile)); }
+}

@@ -17,7 +17,8 @@ test('browse and PMP details reuse one homepage header, footer and guide rail', 
     assert.match(browse, /<PublicLayout siteLayout homePrototype guideLayout/);
     assert.match(detail, /<PublicLayout siteLayout homePrototype guideLayout/);
     assert.match(shell, /guideLayout\s*\? ' pm-guide-public-shell'/);
-    assert.match(shell, /homePrototype \? <HomeHeader/);
+    assert.match(shell, /const showHomeHeader = homePrototype \|\| isGuest/);
+    assert.match(shell, /showHomeHeader \? <HomeHeader/);
     assert.match(shell, /variant=\{homePrototype \? 'home' : footerVariant\}/);
     assert.match(catalogCss, /\.pm-home-v2-shell\.pm-guide-public-shell\s*\{/);
     assert.match(catalogCss, /--pm-v2-container-width: min\(var\(--pm-guide-container\)/);

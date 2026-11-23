@@ -151,13 +151,13 @@
     }
     .pm-app .pm-community-discussions-page .pm-feed-hero-content h1,
     .pm-dashboard .pm-member-public-content .pm-community-discussions-page .pm-feed-hero-content h1 {
-        font-size: var(--text-h2);
-        line-height: var(--line-h2);
+        font-size: var(--text-h1);
+        line-height: var(--line-h1);
         letter-spacing: -.015em;
         margin-bottom: var(--s2);
     }
-    .pm-community-discussions-page .pm-feed-hero-content p { font-size: var(--text-sm); line-height: var(--line-body); margin-bottom: var(--s2); }
-    .pm-community-discussions-page .pm-badge-public { padding: var(--s1) var(--s3); font-size: var(--text-xs); line-height: var(--line-ui); }
+    .pm-community-discussions-page .pm-feed-hero-content p { font-size: var(--pm-guide-text-lead); line-height: var(--line-body); margin-bottom: var(--s2); }
+    .pm-community-discussions-page .pm-badge-public { padding: var(--s1) var(--s3); font-size: var(--pm-guide-text-meta); line-height: var(--pm-guide-line-control); }
     .pm-community-discussions-page .pm-community-feed-tabs { margin-bottom: var(--s3); }
     .pm-community-discussions-page .pm-feed-scope-tabs { flex-wrap: nowrap; overflow-x: auto; gap: var(--s1); }
     .pm-community-discussions-page .pm-feed-scope-tab { flex: none; min-height: var(--control-touch); padding: var(--s2) var(--s3); font-size: var(--text-ui); line-height: var(--line-ui); }

@@ -606,7 +606,8 @@
 .pm-footer-admin-toggle-grid .pm-footer-control-choice{border:1px solid var(--border);border-radius:var(--radius-control);padding:var(--s3)}
 .pm-footer-admin-logo-mark{display:block;width:28px;height:28px;border:8px solid var(--blue);border-right-color:var(--blue-soft);border-radius:50%}
 .pm-footer-admin-preview{display:grid;gap:var(--s4);min-width:0}
-.pm-footer-admin-preview>.pm-unified-footer{width:100%;min-width:0;border-radius:var(--radius-card);overflow:hidden}
+.pm-footer-admin-preview>.pm-unified-footer,
+.pm-footer-admin-preview>.pm-v2-site-footer{width:100%;min-width:0;border-radius:var(--radius-card);overflow:hidden}
 @media(max-width:48rem){.pm-footer-admin-toggle-grid{grid-template-columns:minmax(0,1fr)}}
 
 /* Public sample question selector: bounded modal search and ordered selections. */

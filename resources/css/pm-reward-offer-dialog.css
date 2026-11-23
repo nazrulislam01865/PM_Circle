@@ -1,0 +1,161 @@
+/* Discount offer popup. Values are shared guideline tokens in pm-design-tokens.css.
+   Portal is outside the page rail; never inherit its width or typography overrides. */
+.pm-reward-offer-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: var(--pm-guide-dialog-backdrop);
+}
+.pm-reward-offer-dialog {
+    position: fixed;
+    z-index: 1001;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(var(--pm-guide-reward-dialog-width), calc(100% - 2 * var(--pm-guide-s3)));
+    max-height: calc(100dvh - 2 * var(--pm-guide-s3));
+    overflow-y: auto;
+    padding: clamp(var(--pm-guide-s4), 4vw, var(--pm-guide-s8));
+    border: 1px solid var(--pm-guide-line);
+    border-radius: var(--pm-guide-radius-feature);
+    box-shadow: var(--pm-guide-dialog-shadow);
+    background: var(--pm-guide-white);
+    color: var(--pm-guide-body-color);
+    font-family: var(--pm-guide-font);
+    font-size: var(--pm-guide-text-body);
+    line-height: var(--pm-guide-line-body);
+    outline: none;
+}
+.pm-reward-offer-dialog * { box-sizing: border-box; }
+.pm-reward-offer-dialog :where(h2, h3, p) { margin: 0; }
+.pm-reward-offer-dialog :focus-visible {
+    outline: 3px solid var(--pm-guide-focus);
+    outline-offset: 3px;
+}
+.pm-reward-offer-close {
+    position: absolute;
+    top: var(--pm-guide-s4);
+    right: var(--pm-guide-s4);
+    display: grid;
+    place-items: center;
+    width: var(--pm-guide-button-height);
+    height: var(--pm-guide-button-height);
+    padding: 0;
+    border: 0;
+    border-radius: var(--pm-guide-radius-sm);
+    color: var(--pm-guide-ink);
+    background: transparent;
+    cursor: pointer;
+}
+.pm-reward-offer-close:hover { background: var(--pm-guide-pale); }
+.pm-reward-offer-close svg { width: var(--pm-guide-s6); height: var(--pm-guide-s6); }
+.pm-reward-offer-heading {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--pm-guide-s5);
+    padding-right: var(--pm-guide-s6);
+}
+.pm-reward-offer-gift {
+    display: grid;
+    place-items: center;
+    width: var(--pm-guide-reward-icon-size);
+    height: var(--pm-guide-reward-icon-size);
+    flex: none;
+    border-radius: var(--pm-guide-radius-card);
+    color: var(--reward-icon-ink);
+    background: var(--reward-icon-bg);
+}
+.pm-reward-offer-gift svg { width: var(--pm-guide-s8); height: var(--pm-guide-s8); stroke-width: 1.8; }
+.pm-reward-offer-heading-copy { min-width: 0; }
+.pm-reward-offer-heading h2 {
+    color: var(--pm-guide-ink);
+    font-size: var(--pm-guide-reward-title-size);
+    font-weight: var(--pm-guide-weight-h2);
+    line-height: var(--pm-guide-line-h2);
+}
+.pm-reward-offer-heading p {
+    margin-top: var(--pm-guide-s1);
+    color: var(--pm-guide-ink);
+    font-size: var(--pm-guide-text-body);
+    line-height: var(--pm-guide-line-body);
+}
+.pm-reward-offer-steps {
+    display: grid;
+    gap: var(--pm-guide-s6);
+    margin: var(--pm-guide-s8) 0;
+    padding: 0;
+    list-style: none;
+}
+.pm-reward-offer-step {
+    display: grid;
+    grid-template-columns: var(--pm-guide-reward-step-size) minmax(0, 1fr);
+    align-items: start;
+    gap: var(--pm-guide-s5);
+}
+.pm-reward-offer-number {
+    display: grid;
+    place-items: center;
+    width: var(--pm-guide-reward-step-size);
+    height: var(--pm-guide-reward-step-size);
+    border-radius: 50%;
+    background: var(--pm-guide-pale);
+    color: var(--pm-guide-blue);
+    font-size: var(--pm-guide-text-h3);
+    font-weight: var(--pm-guide-weight-h2);
+    line-height: var(--pm-guide-line-icon);
+}
+.pm-reward-offer-step h3 {
+    color: var(--pm-guide-ink);
+    font-size: var(--pm-guide-text-h3);
+    font-weight: var(--pm-guide-weight-h2);
+    line-height: var(--pm-guide-line-h3);
+}
+.pm-reward-offer-step p {
+    color: var(--pm-guide-muted);
+    font-size: var(--pm-guide-text-body);
+    line-height: var(--pm-guide-line-body);
+}
+.pm-reward-offer-actions { display: grid; gap: var(--pm-guide-s3); text-align: center; }
+.pm-reward-offer-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: var(--pm-guide-button-height);
+    padding: var(--pm-guide-s2) var(--pm-guide-button-pad-inline);
+    border: 1px solid transparent;
+    border-radius: var(--pm-guide-radius-sm);
+    background: var(--pm-guide-blue);
+    color: var(--pm-guide-white);
+    font-size: var(--pm-guide-text-control);
+    font-weight: var(--pm-guide-weight-control);
+    line-height: var(--pm-guide-line-control);
+    text-decoration: none;
+}
+.pm-reward-offer-primary:hover { color: var(--pm-guide-white); background: var(--pm-guide-blue-hover); }
+.pm-reward-offer-actions p { color: var(--pm-guide-ink); font-size: var(--pm-guide-text-body); }
+.pm-reward-offer-actions p a { color: var(--pm-guide-blue); text-decoration: underline; text-underline-offset: .18em; font-weight: var(--pm-guide-weight-control); }
+/* Same presentation as the existing promotional-bar link, now a button. */
+.pm-v2-offer-bar .pm-v2-offer-link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--surface);
+    font: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
+.pm-v2-offer-bar .pm-v2-offer-link:focus-visible { outline: 3px solid var(--pm-guide-focus); outline-offset: 3px; }
+@media (max-width: 33.75rem) {
+    .pm-reward-offer-dialog { padding: var(--pm-guide-s4); }
+    .pm-reward-offer-heading { gap: var(--pm-guide-s3); padding-right: var(--pm-guide-s6); }
+    .pm-reward-offer-gift { width: var(--pm-guide-reward-icon-mobile); height: var(--pm-guide-reward-icon-mobile); }
+    .pm-reward-offer-gift svg { width: var(--pm-guide-s6); height: var(--pm-guide-s6); }
+    .pm-reward-offer-steps { gap: var(--pm-guide-s4); margin-block: var(--pm-guide-s6); }
+    .pm-reward-offer-step { gap: var(--pm-guide-s3); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .pm-reward-offer-dialog, .pm-reward-offer-overlay { animation: none; transition: none; }
+}

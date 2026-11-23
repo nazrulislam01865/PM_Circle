@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { AlertCircle, CheckCircle2, ExternalLink, Facebook, Instagram, Linkedin, Save, Youtube } from 'lucide-react';
 import { AdminLayout } from '@/layouts/admin/AdminLayout';
 import { ContentField, HomepageImageUploader, RepeatableItems } from '@/components/admin/HomepageFields';
-import { PmpPublicFooter } from '@/components/exam/PmpPublicFooter';
+import { HomeFooter } from '@/components/home/v2/HomeFooter';
 import type { PmpPublicContent } from '@/types/pmp-public';
 
 type Footer = PmpPublicContent['footer'];
@@ -160,7 +160,7 @@ export default function SiteFooterEditor({ footer, version, routeChoices }: Prop
         </section>
         <section className="pm-footer-admin-preview" aria-label="Footer preview">
             <div className="pm-admin-section-heading"><h2>Preview footer</h2><p>Preview uses your current editor values; save to publish them site-wide.</p></div>
-            <PmpPublicFooter content={data}/>
+            <HomeFooter content={data}/>
         </section>
         <div className="pm-footer-admin-bottom-actions">{saveButton}</div>
     </AdminLayout>;

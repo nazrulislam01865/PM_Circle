@@ -3,31 +3,34 @@
    Historical accent variants intentionally keep their exact values to prevent visual changes.
    Do not define fonts, colors or control metrics in feature stylesheets. */
 :root {
-    /* Canonical values from PM_Circle_UI_Style_Guide (2).html.
-       Edit these variables rather than authoring page-specific color or type scales. */
+    /* PM_Circle_Design_Guidelines (1)(20261123-174005).html is authoritative
+       for all type roles across public, member, admin and auth screens.
+       Legacy feature CSS references these shared aliases rather than local sizes.
+       The 0.75rem micro type and 2rem statistic tokens are reserved for dense
+       charts/metrics, not ordinary body, heading, labels or form controls. */
     color-scheme: light;
     --font-ui: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --text-xs: .75rem;
     --text-donut-label: .6875rem; /* Compact review circle label; keeps the text within the ring. */
     --line-xs: 1rem;
-    --text-sm: .8125rem;
-    --line-sm: 1.25rem;
+    --text-sm: .875rem;
+    --line-sm: 1.35;
     --text-ui: .875rem;
-    --line-ui: 1.25rem;
-    --text-body: .9375rem;
-    --line-body: 1.5rem;
+    --line-ui: 1.35;
+    --text-body: 1rem; /* Approved HTML guide: 400 1rem/1.6 Inter. */
+    --line-body: 1.6; /* Unitless line-height keeps spacing proportional. */
     --text-h6: .875rem;
-    --line-h6: 1.25rem;
-    --text-h5: .9375rem;
-    --line-h5: 1.375rem;
-    --text-h4: 1rem;
-    --line-h4: 1.5rem;
-    --text-h3: 1.125rem;
-    --line-h3: 1.5rem;
-    --text-h2: 1.25rem;
-    --line-h2: 1.75rem;
-    --text-h1: 1.75rem;
-    --line-h1: 2.25rem;
+    --line-h6: 1.35;
+    --text-h5: 1rem;
+    --line-h5: 1.4;
+    --text-h4: var(--pm-guide-text-h4);
+    --line-h4: var(--pm-guide-line-h4);
+    --text-h3: var(--pm-guide-text-h3);
+    --line-h3: var(--pm-guide-line-h3);
+    --text-h2: var(--pm-guide-text-h2);
+    --line-h2: var(--pm-guide-line-h2);
+    --text-h1: var(--pm-guide-text-h1);
+    --line-h1: var(--pm-guide-line-h1);
     --text-stat: 2rem;
     --line-stat: 2.25rem;
     --regular: 400;
@@ -116,6 +119,12 @@
     --pm-guide-shadow: 0 4px 14px #12346112;
     --pm-guide-dialog-shadow: 0 18px 60px #10223d50;
     --pm-guide-dialog-backdrop: #102441a6;
+    /* Shared promotional dialog, matched to the guide's accessible dialog pattern. */
+    --pm-guide-reward-dialog-width: 37.5rem;
+    --pm-guide-reward-title-size: clamp(1.25rem, 4vw, 1.5rem);
+    --pm-guide-reward-icon-size: 3.5rem;
+    --pm-guide-reward-icon-mobile: 3rem;
+    --pm-guide-reward-step-size: var(--control-touch);
     --pm-guide-s1: var(--s1);
     --pm-guide-s2: var(--s2);
     --pm-guide-s3: var(--s3);
@@ -143,6 +152,11 @@
     /* Compact legal-page banner heading from the approved Terms prototype. */
     --pm-guide-text-legal-title: clamp(2rem, 3vw, 2.5rem);
     --pm-guide-text-h2: clamp(1.5rem, 3vw, 2rem);
+    /* About Us prototype uses the guide's responsive type bounds but its section
+       headings are more compact than the generic guide H2.  Container-driven
+       scaling also prevents a wide overlapping browser window inflating headings. */
+    --pm-guide-rail-h1: clamp(2rem, 5cqw, 3.1rem);
+    --pm-guide-rail-h2: clamp(1.5rem, 2.25cqw, 1.625rem);
     --pm-guide-text-h3: 1.125rem;
     --pm-guide-text-h4: 1rem;
     --pm-guide-text-lead: 1.0625rem;
@@ -162,6 +176,7 @@
     --pm-guide-line-h3: 1.35;
     --pm-guide-line-h4: 1.4;
     --pm-guide-line-control: 1.35;
+    --pm-guide-line-icon: 1; /* Graphic-only marks, stars and decorative quotes. */
     --pm-guide-button-height: var(--control-touch);
     --pm-guide-button-pad-inline: .875rem;
     --pm-guide-field-pad-inline: .625rem;
@@ -187,33 +202,34 @@
     --pm-v2-width: 90rem;
     --pm-v2-prototype-rail: min(70.2vw, var(--pm-v2-width));
     --pm-v2-container-width: min(70.2vw, var(--pm-v2-width));
-    /* Measured at a common screenshot scale: 28px section titles, 16px controls, 15px body. */
-    --pm-v2-font-caption: .8125rem;
-    --pm-v2-font-body: .9375rem;
-    /* Public homepage navigation matches the prototype at 14px; other body copy remains 15px. */
+    /* Homepage elements consume the same approved semantic type roles as other pages. */
+    --pm-v2-font-caption: var(--pm-guide-text-meta);
+    --pm-v2-font-body: var(--pm-guide-text-body);
+    /* Navigation is the guide control/meta 14px scale; body copy is 16px everywhere. */
     --pm-v2-font-header-nav: var(--text-ui);
-    --pm-v2-font-header-nav-compact: var(--text-xs);
+    --pm-v2-font-header-nav-compact: var(--pm-guide-text-meta);
     --pm-v2-search-title-font: var(--text-h3);
     --pm-v2-search-width: 27.5rem;
     --pm-v2-search-max-height: 28rem;
-    --pm-v2-font-ui: 1rem;
-    --pm-v2-font-card-heading: 1.0625rem;
-    --pm-v2-font-section-heading: clamp(1.5rem, 1.7vw, 1.75rem);
-    --pm-v2-font-footer: .875rem;
-    --pm-v2-font-brand-title: 1.25rem;
-    --pm-v2-font-resume-title: 1.5rem;
-    --pm-v2-font-resume-subtitle: 1.25rem;
+    --pm-v2-font-ui: var(--pm-guide-text-control);
+    --pm-v2-font-card-heading: var(--pm-guide-text-h3);
+    --pm-v2-font-section-heading: var(--pm-guide-text-h2);
+    --pm-v2-font-footer: 1rem;
+    --pm-v2-font-brand-title: var(--pm-guide-text-h3);
+    --pm-v2-font-resume-title: var(--pm-guide-text-h2);
+    --pm-v2-font-resume-subtitle: var(--pm-guide-text-h3);
     --pm-v2-font-event-date: 1.5rem;
     /* Mobile typography is also declared centrally, then referenced by the homepage breakpoint. */
-    --pm-v2-font-body-mobile: .875rem;
-    --pm-v2-font-ui-mobile: .9375rem;
-    --pm-v2-font-card-heading-mobile: 1rem;
+    --pm-v2-font-body-mobile: var(--pm-guide-text-body);
+    --pm-v2-font-ui-mobile: var(--pm-guide-text-control);
+    --pm-v2-font-card-heading-mobile: var(--pm-guide-text-h3);
     --pm-v2-button-height-mobile: 2.75rem;
     --pm-v2-brand-size: 2.375rem;
     --pm-v2-footer-brand-size: 2.5rem;
-    --pm-v2-font-section-line: 1.3;
-    --pm-v2-font-hero: clamp(2.125rem, 2.45vw, 3.125rem);
-    --pm-v2-font-hero-mobile: 2rem;
+    --pm-v2-nav-dropdown-width: 17rem;
+    --pm-v2-font-section-line: var(--pm-guide-line-h2);
+    --pm-v2-font-hero: var(--pm-guide-text-h1);
+    --pm-v2-font-hero-mobile: var(--pm-guide-text-h1);
     --pm-v2-button-height: 2.875rem;
     --pm-v2-card-border-radius: 1rem;
     /* V2 post title/body starts under the author name, like the canonical community cards. */
@@ -223,7 +239,7 @@
     --pm-v2-navy: #071a33;
     --pm-v2-offer: #0d3566;
     --pm-v2-tabs-bg: #0c2747;
-    --pm-v2-footer-bg: #0d2340;
+    --pm-v2-footer-bg: var(--pm-guide-footer);
     --pm-v2-panel: #f3f8fd;
     --pm-v2-tab-active: #214b78;
     --pm-v2-tab-border: #60a5fa;
@@ -308,10 +324,10 @@
     --pm-home-ai-card-shadow: 0 3px 5px rgb(0 102 204 / 17%);
     --pm-home-shadow-picker: rgb(23 43 77 / 19%);
     --pm-home-status-outline: rgb(0 102 102 / 12%);
-    --type-caption: var(--text-xs);
+    --type-caption: var(--pm-guide-text-meta);
     --type-small: var(--text-sm);
     --type-body: var(--text-body);
-    --type-lead: var(--text-body);
+    --type-lead: var(--pm-guide-text-lead);
     --type-h4: var(--text-h4);
     --type-h3: var(--text-h3);
     --type-h2: var(--text-h2);
@@ -335,7 +351,7 @@
     --type-line-h4: var(--line-h4);
     --type-line-h5: var(--line-h5);
     --type-line-h6: var(--line-h6);
-    --type-line-lead: var(--line-body);
+    --type-line-lead: var(--pm-guide-line-body);
     --type-line-body: var(--line-body);
     --type-line-small: var(--line-sm);
     --type-line-caption: var(--line-xs);
@@ -478,7 +494,7 @@
     --pm-font-size-13px: var(--text-sm);
     --pm-font-size-14p5px: var(--text-ui);
     --pm-font-size-15px: var(--text-body);
-    --pm-font-size-17px: var(--text-h4);
+    --pm-font-size-17px: var(--pm-guide-text-lead);
     --pm-font-size-19px: var(--text-h3);
     --pm-font-size-20px: var(--text-h2);
     --pm-font-size-21px: var(--text-h2);

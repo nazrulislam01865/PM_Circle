@@ -2,6 +2,7 @@ import { Link } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight, Gift, Star } from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
 import type { RewardPromotionData } from '@/types/reward';
+import { useRewardOfferDialog } from '@/components/rewards/RewardOfferDialog';
 
 type Area = 'Project Management' | 'Agile & Scrum' | 'Business Analysis';
 type Availability = 'Available' | 'Preview';
@@ -168,6 +169,7 @@ function LearnerReviews() {
 /** UI-only prototype catalog: filtering is local and never queries restricted exam data. */
 export function SimulatorCatalog({ promotion }: { promotion: RewardPromotionData | null }) {
     const [filters, setFilters] = useState<Filters>(emptyFilters);
+    const openOffer = useRewardOfferDialog();
     const filtered = useMemo(() => prototypeSimulators.filter(simulator => {
         const query = filters.query.trim().toLocaleLowerCase();
         return (!query || [simulator.code, simulator.title, simulator.area, simulator.summary, simulator.topics].join(' ').toLocaleLowerCase().includes(query))
@@ -186,7 +188,7 @@ export function SimulatorCatalog({ promotion }: { promotion: RewardPromotionData
         <div className="pm-sim-main">
             {promotion && <aside className="pm-sim-reward" aria-label="Profile completion offer"><span className="pm-sim-reward-icon"><Gift aria-hidden="true" size={20}/></span>
                 <div><strong>Complete your profile. Get {promotion.discountLabel} off.</strong><p>Reach 100% profile completion to receive a discount code for any PM Circle Exam Simulator.</p></div>
-                <CatalogAction href="/register">See how it works</CatalogAction>
+                <button type="button" className="pm-sim-action" onClick={() => openOffer?.()}>See how it works</button>
             </aside>}
             <div className="pm-sim-section-row pm-sim-catalog-heading"><h2>Exam simulators</h2><Link href="/pricing">Compare plans</Link></div>
             <SimulatorFilters filters={filters} onChange={setFilters}/>

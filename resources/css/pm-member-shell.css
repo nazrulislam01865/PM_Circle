@@ -190,3 +190,4 @@
 /* One shared footer after authenticated content, never inside the scrollable
    main column. Its inner .pm-container matches the member content width. */
 .pm-member-shell > .pm-unified-footer { grid-column: 1 / -1; grid-row: 3; min-width: 0; }
+.pm-member-shell > .pm-v2-site-footer { grid-column: 1 / -1; grid-row: 3; min-width: 0; }

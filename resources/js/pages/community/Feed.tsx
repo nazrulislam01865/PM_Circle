@@ -261,7 +261,7 @@ export default function Feed({ posts, activeTopic, feedTab, feedScopeCounts, sea
                         {/* 2. Find your next conversation */}
                         <section className="pm-sidebar-card">
                             <h3>Find your next conversation</h3>
-                            <p style={{ margin: 0, fontSize: 'var(--pm-font-size-13px)' }}>Explore popular topics from the community.</p>
+                            <p style={{ margin: 0, fontSize: 'var(--text-body)' }}>Explore popular topics from the community.</p>
 
                             <nav className="pm-topics-nav-list" aria-label="Popular topics">
                                 <Link
@@ -313,10 +313,10 @@ export default function Feed({ posts, activeTopic, feedTab, feedScopeCounts, sea
                         {/* 3. Your experience can help someone */}
                         <section className="pm-cta-guest-card">
                             <Users size={32} className="pm-cta-guest-icon" />
-                            <h3 style={{ fontSize: 'var(--type-lead)', fontWeight: 'var(--pm-font-weight-800)', margin: '0 0 8px' }}>
+                            <h3 style={{ fontSize: 'var(--text-h3)', fontWeight: 'var(--bold)', margin: '0 0 8px' }}>
                                 Your experience can help someone.
                             </h3>
-                            <p style={{ fontSize: 'var(--type-small)', color: 'var(--muted)', margin: '0 0 16px' }}>
+                            <p style={{ fontSize: 'var(--text-body)', color: 'var(--muted)', margin: '0 0 16px' }}>
                                 Ask questions. Share lessons. Learn with project professionals.
                             </p>
                             <Link href="/register" className="pm-button pm-btn-full">

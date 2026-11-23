@@ -1,3 +1,14 @@
+/* Public catalog pages using the ordinary site shell follow the same
+   shared rail as the homepage-based public pages, including tablet and mobile. */
+.pm-page-shell:has(.pm-learn-v3) {
+    --pm-v2-container-width: min(var(--pm-v2-prototype-rail), var(--pm-guide-container), calc(100% - 2 * var(--pm-guide-gutter)));
+}
+@media (max-width: 53.125rem) {
+    .pm-page-shell:has(.pm-learn-v3) { --pm-v2-container-width: min(90vw, calc(100% - 2 * var(--pm-guide-gutter))); }
+}
+@media (max-width: 33.75rem) {
+    .pm-page-shell:has(.pm-learn-v3) { --pm-v2-container-width: calc(100% - 2 * var(--pm-guide-gutter-mobile)); }
+}
 /* All Learn & Practice sections share the homepage screenshot rail.
    The prior mismatch came from extra horizontal padding on the main content,
    which shifted the starting card, chips and filters relative to the hero. */

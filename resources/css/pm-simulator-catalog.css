@@ -160,7 +160,7 @@
 .pm-sim-review-notice { padding: var(--pm-guide-s2) var(--pm-guide-s3); margin-bottom: var(--pm-guide-s3) !important; background: var(--pm-guide-pale); color: var(--pm-guide-ink); border-radius: var(--pm-guide-radius-sm); font-size: var(--pm-guide-text-meta); }
 .pm-sim-review-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--pm-guide-s3); }
 .pm-sim-review-card { display: flex; flex-direction: column; min-width: 0; padding: var(--pm-guide-s4); background: var(--pm-guide-white); border: 1px solid var(--pm-guide-line); border-radius: var(--pm-guide-radius-card); }
-.pm-sim-quote { color: var(--pm-guide-blue); font-size: var(--pm-guide-s12); font-weight: var(--pm-guide-weight-h2); line-height: 1; }
+.pm-sim-quote { color: var(--pm-guide-blue); font-size: var(--pm-guide-s12); font-weight: var(--pm-guide-weight-h2); line-height: var(--pm-guide-line-icon); }
 .pm-sim-review-card > p { flex: 1; padding: var(--pm-guide-s2) 0 var(--pm-guide-s6); font-size: var(--pm-guide-text-body); line-height: var(--pm-guide-line-body); }
 .pm-sim-review-author { display: flex; align-items: center; gap: var(--pm-guide-s2); }
 .pm-sim-review-avatar { display: grid; place-items: center; flex: none; width: var(--pm-guide-s10); height: var(--pm-guide-s10); border-radius: 50%; background: var(--pm-guide-pale); color: var(--pm-guide-blue); font-size: var(--pm-guide-text-meta); font-weight: var(--pm-guide-weight-control); }

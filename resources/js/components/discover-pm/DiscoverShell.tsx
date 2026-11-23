@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 import { SiteHeader } from '@/components/pm/SiteHeader';
+import { HomeHeader } from '@/components/home/v2/HomeHeader';
+import { usePage } from '@inertiajs/react';
 import { SiteFooter } from '@/components/pm/SiteFooter';
 
 export type DiscoverStage = 'intro' | 'about' | 'explore' | 'findings' | 'practice' | 'next'
@@ -22,13 +24,14 @@ export function DiscoverShell({ stage, questionIndex, careerIndex = 0, children 
     careerIndex?: number;
     children: ReactNode;
 }) {
+    const isGuest = !usePage<{ auth?: { user?: unknown | null } }>().props.auth?.user;
     const isCareer = ['career', 'sample', 'review', 'platform', 'decision'].includes(stage);
     const active = stage === 'intro' || stage === 'about' ? 0 : stage === 'explore' ? 1 : stage === 'findings' || stage === 'practice' ? 2 : 3;
     const percentage = isCareer ? (stage === 'career' ? 61 + (careerIndex + 1) * 3 : stage === 'sample' ? 91 : stage === 'review' ? 94 : stage === 'platform' ? 97 : 100)
         : stage === 'intro' ? 0 : stage === 'about' ? 5 : stage === 'explore' ? 11 + questionIndex * 7 : stage === 'practice' ? 45 : stage === 'findings' ? 54 : 60;
 
-    return <div className="pm-app pm-discover-page">
-        <SiteHeader />
+    return <div className={`pm-app pm-discover-page${isGuest ? ' pm-home-v2-shell' : ''}`}>
+        {isGuest ? <HomeHeader /> : <SiteHeader />}
         <div className="pm-discover">
             <main className="pm-discover-main" id="main">
                 <nav className="pm-discover-steps" aria-label="Discover PM progress">

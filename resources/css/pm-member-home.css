@@ -197,7 +197,7 @@
 .pm-member-home-stat > svg { flex: 0 0 var(--icon); color: var(--ink); }
 .pm-member-home-stat strong { display: block; font: var(--bold) var(--text-ui)/var(--line-ui) var(--font-ui); }
 .pm-member-home-stat span { display: block; font: var(--regular) var(--text-xs)/var(--line-xs) var(--font-ui); color: var(--muted); }
-.pm-member-home-stars { display: flex; gap: 1px; line-height: 1; }
+.pm-member-home-stars { display: flex; gap: 1px; line-height: var(--pm-guide-line-icon); }
 .pm-member-home-stars span { color: var(--neutral); font-size: var(--text-h3); }
 .pm-member-home-stars span.is-filled { color: var(--pm-tone-ffb42c); }
 .pm-member-home-learning .pm-dash-btn { width: 100%; margin-top: var(--s3); min-height: var(--control-height); }

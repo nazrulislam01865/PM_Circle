@@ -16,8 +16,8 @@
 .pm-v2-post-card:hover, .pm-v2-post-card:focus-within { position: relative; z-index: 2; }
 .pm-v2-post-author { display: flex; align-items: center; gap: var(--s2); min-width: 0; }
 .pm-v2-post-author > div:nth-child(2) { display: grid; min-width: 0; }
-.pm-v2-post-author strong { font-weight: var(--bold); font-size: var(--pm-v2-font-ui); line-height: 1.4; color: var(--ink); }
-.pm-v2-post-author small { font-size: var(--pm-v2-font-caption); line-height: 1.35; color: var(--muted); }
+.pm-v2-post-author strong { font-weight: var(--bold); font-size: var(--pm-v2-font-ui); line-height: var(--pm-guide-line-h4); color: var(--ink); }
+.pm-v2-post-author small { font-size: var(--pm-v2-font-caption); line-height: var(--pm-guide-line-h3); color: var(--muted); }
 /* Keep scenario and real post titles, paragraphs, media and topic chips in the
    author-name column; engagement rows remain full-width below. */
 .pm-v2-scenario-card .pm-v2-post-content,
@@ -27,13 +27,13 @@
     padding: var(--s3) 0;
     text-align: start;
 }
-.pm-v2-post-content h3 { margin-bottom: var(--s2); font-size: var(--pm-v2-font-ui); line-height: 1.4; font-weight: var(--bold); color: var(--ink); }
+.pm-v2-post-content h3 { margin-bottom: var(--s2); font-size: var(--pm-v2-font-ui); line-height: var(--pm-guide-line-h4); font-weight: var(--bold); color: var(--ink); }
 .pm-v2-post-content h3 a { color: inherit; text-decoration: none; }
 .pm-v2-post-content h3 a:hover { color: var(--blue); text-decoration: underline; }
-.pm-v2-post-content > p, .pm-v2-post-body { font-size: var(--pm-v2-font-body); line-height: 1.55; color: var(--muted); overflow-wrap: anywhere; }
+.pm-v2-post-content > p, .pm-v2-post-body { font-size: var(--pm-v2-font-body); line-height: var(--pm-guide-line-body); color: var(--muted); overflow-wrap: anywhere; }
 .pm-v2-post-body img { width: 100%; height: auto; border-radius: var(--radius-control); }
 .pm-v2-topic-list { display: flex; gap: var(--s2); flex-wrap: wrap; margin: var(--s2) 0; }
-.pm-v2-topic-list span { padding: 2px var(--s2); border-radius: var(--radius-pill); background: var(--blue-soft); color: var(--blue); font-size: var(--pm-v2-font-caption); line-height: 1.35; }
+.pm-v2-topic-list span { padding: 2px var(--s2); border-radius: var(--radius-pill); background: var(--blue-soft); color: var(--blue); font-size: var(--pm-v2-font-caption); line-height: var(--pm-guide-line-h3); }
 .pm-v2-scenario-link { display: inline-flex; align-items: center; min-height: var(--control-compact); color: var(--blue); text-decoration: none; font-size: var(--pm-v2-font-body); font-weight: var(--semibold); }
 .pm-v2-community-posts { display: grid; gap: var(--s3); }
 .pm-v2-subsection-line { display: flex; gap: var(--s3); align-items: center; color: var(--ink); font-size: var(--pm-v2-font-body); font-weight: var(--bold); }
@@ -52,7 +52,7 @@
     display: inline-flex; align-items: center; gap: var(--s1); min-height: 36px;
     padding: var(--s1) var(--s2); border: 0; border-radius: var(--radius-control);
     background: transparent; color: var(--muted); font-family: inherit;
-    font-size: var(--pm-v2-font-caption); line-height: 1.45; text-decoration: none; cursor: pointer;
+    font-size: var(--pm-v2-font-caption); line-height: var(--pm-guide-line-body); text-decoration: none; cursor: pointer;
 }
 .pm-v2-post-actions .pm-home-action:hover,
 .pm-v2-scenario-actions .pm-home-action:hover { background: var(--blue-soft); color: var(--blue); }
@@ -67,12 +67,12 @@
 .pm-v2-scenario-actions .pm-home-reaction-options { z-index: 25; }
 .pm-v2-community-sidebar { display: grid; gap: var(--s3); min-width: 0; }
 .pm-v2-aside-box { padding: var(--s5); border: 1px solid var(--border); background: var(--surface); border-radius: var(--pm-v2-card-border-radius); min-width: 0; }
-.pm-v2-aside-box h3 { font-size: var(--pm-v2-font-ui); font-weight: var(--bold); line-height: 1.4; margin-bottom: var(--s2); }
-.pm-v2-aside-box > p { font-size: var(--pm-v2-font-body); line-height: 1.55; color: var(--muted); margin-bottom: var(--s3); }
+.pm-v2-aside-box h3 { font-size: var(--pm-v2-font-ui); font-weight: var(--bold); line-height: var(--pm-guide-line-h4); margin-bottom: var(--s2); }
+.pm-v2-aside-box > p { font-size: var(--pm-v2-font-body); line-height: var(--pm-guide-line-body); color: var(--muted); margin-bottom: var(--s3); }
 .pm-v2-member { display: flex; align-items: center; gap: var(--s2); padding: var(--s2) 0; border-bottom: 1px solid var(--border); }
 .pm-v2-member > div:nth-child(2) { display: grid; min-width: 0; }
-.pm-v2-member strong, .pm-v2-skill { color: var(--ink); font-weight: var(--semibold); font-size: var(--pm-v2-font-body); line-height: 1.55; }
-.pm-v2-member small { color: var(--muted); font-size: var(--pm-v2-font-caption); line-height: 1.35; }
+.pm-v2-member strong, .pm-v2-skill { color: var(--ink); font-weight: var(--semibold); font-size: var(--pm-v2-font-body); line-height: var(--pm-guide-line-body); }
+.pm-v2-member small { color: var(--muted); font-size: var(--pm-v2-font-caption); line-height: var(--pm-guide-line-h3); }
 .pm-v2-aside-box > .pm-v2-text-link { display: block; margin-top: var(--s3); }
 .pm-v2-skill { display: flex; align-items: center; gap: var(--s2); min-height: 54px; text-decoration: none; border-bottom: 1px solid var(--border); }
 .pm-v2-skill:last-child { border-bottom: 0; }
@@ -93,7 +93,7 @@
 .pm-v2-resume-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: var(--radius-control); background: var(--blue-soft); color: var(--blue); margin-bottom: var(--s2); }
 .pm-v2-resume-icon svg { width: 19px; height: 19px; }
 .pm-v2-resume-panel h2 { font-size: var(--pm-v2-font-resume-title); line-height: var(--line-h3); font-weight: var(--bold); }
-.pm-v2-resume-panel p { margin-top: var(--s1); color: var(--muted); font-size: var(--pm-v2-font-body); line-height: 1.55; }
+.pm-v2-resume-panel p { margin-top: var(--s1); color: var(--muted); font-size: var(--pm-v2-font-body); line-height: var(--pm-guide-line-body); }
 .pm-v2-resume-panel > span { margin: var(--s2) 0; color: var(--blue); font-size: var(--pm-v2-font-caption); }
 .pm-v2-resume-panel .pm-v2-button { margin-top: auto; }
 .pm-v2-resume-flow { min-width: 0; }
@@ -103,17 +103,17 @@
 .pm-v2-resume-step-icon { display: grid; place-items: center; flex: none; width: 42px; height: 42px; background: var(--blue-soft); color: var(--blue); border-radius: var(--radius-control); }
 .pm-v2-resume-step-icon svg { width: 16px; height: 16px; }
 .pm-v2-resume-step strong { font-size: var(--pm-v2-font-ui); font-weight: var(--bold); }
-.pm-v2-resume-step p { font-size: var(--pm-v2-font-body); line-height: 1.55; color: var(--muted); margin-top: 2px; }
+.pm-v2-resume-step p { font-size: var(--pm-v2-font-body); line-height: var(--pm-guide-line-body); color: var(--muted); margin-top: 2px; }
 .pm-v2-events-section { padding-bottom: 2.75rem !important; }
 .pm-v2-create-event { position: absolute; right: 0; top: var(--s10); }
 .pm-v2-events-list { display: grid; gap: var(--s2); }
 .pm-v2-event { display: flex; align-items: center; gap: var(--s4); min-height: 130px; padding: var(--s5); border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--surface); }
 .pm-v2-event-date { display: grid; justify-items: center; align-content: center; flex: none; width: 72px; min-height: 70px; border-radius: var(--radius-control); background: var(--blue-soft); color: var(--blue); }
 .pm-v2-event-date strong { font-size: var(--pm-v2-font-event-date); font-weight: var(--bold); line-height: var(--line-h3); }
-.pm-v2-event-date span { font-size: var(--pm-v2-font-caption); line-height: 1.35; font-weight: var(--semibold); }
+.pm-v2-event-date span { font-size: var(--pm-v2-font-caption); line-height: var(--pm-guide-line-h3); font-weight: var(--semibold); }
 .pm-v2-event-copy { flex: 1; min-width: 0; }
-.pm-v2-event-copy h3 { font-size: var(--pm-v2-font-ui); font-weight: var(--bold); line-height: 1.4; }
-.pm-v2-event-copy p, .pm-v2-event-copy span { display: block; color: var(--muted); font-size: var(--pm-v2-font-body); line-height: 1.55; }
+.pm-v2-event-copy h3 { font-size: var(--pm-v2-font-ui); font-weight: var(--bold); line-height: var(--pm-guide-line-h4); }
+.pm-v2-event-copy p, .pm-v2-event-copy span { display: block; color: var(--muted); font-size: var(--pm-v2-font-body); line-height: var(--pm-guide-line-body); }
 .pm-v2-join-banner { display: flex; align-items: center; gap: var(--s5); min-height: 124px; margin-top: var(--s6); padding: var(--s8) var(--s8); border-radius: var(--radius-card); background: var(--pm-v2-cta); color: var(--surface); }
 .pm-v2-join-banner > div { flex: 1; }
 .pm-v2-join-banner h2 { color: var(--surface); font-size: var(--pm-v2-font-section-heading); line-height: var(--line-h2); font-weight: var(--bold); }
@@ -126,25 +126,31 @@
 .pm-v2-event-form label { display: grid; gap: var(--s1); color: var(--ink); font-size: var(--pm-v2-font-ui); font-weight: var(--semibold); }
 .pm-v2-event-form input { width: 100%; min-height: var(--control-height); padding: var(--s2); border: 1px solid var(--control-border); border-radius: var(--radius-control); color: var(--ink); background: var(--surface); font-size: var(--pm-v2-font-ui); }
 .pm-v2-form-error { color: var(--red); font-size: var(--pm-v2-font-body); }
-/* Keep the same admin-managed dark footer, but align it with the prototype's narrower grid. */
+/* Legacy footer layout rules retained for compatibility with existing components. */
 .pm-home-v2-shell .pm-unified-footer { background: var(--pm-v2-footer-bg); }
 .pm-home-v2-shell .pm-unified-footer .pm-container { width: var(--pm-v2-container-width); }
 .pm-home-v2-shell .pm-unified-footer-grid { gap: var(--s5); }
 .pm-home-v2-shell .pm-unified-footer-grid h2 { font-size: var(--pm-v2-font-ui); }
-.pm-home-v2-shell .pm-unified-footer-grid p, .pm-home-v2-shell .pm-unified-footer-grid a { font-size: var(--pm-v2-font-body); line-height: 1.55; }
+.pm-home-v2-shell .pm-unified-footer-grid p, .pm-home-v2-shell .pm-unified-footer-grid a { font-size: var(--pm-v2-font-body); line-height: var(--pm-guide-line-body); }
 .pm-home-v2-shell .pm-unified-footer-bottom { background: var(--pm-v2-footer-lower); }
-/* Five-column reference footer; follows the existing admin footer configuration. */
-.pm-home-v2-shell .pm-v2-site-footer { background: var(--pm-v2-footer-bg); color: var(--surface); padding: 2.75rem 0 2rem; }
-.pm-home-v2-shell .pm-v2-site-footer .pm-v2-container { width: var(--pm-v2-container-width); margin-inline: auto; }
+/* Canonical five-column footer is shared across all eligible layouts, not just .pm-home-v2-shell. */
+.pm-v2-site-footer { background: var(--pm-v2-footer-bg); color: var(--surface); padding: 2.75rem 0 2rem; font-family: var(--pm-guide-font); }
+.pm-v2-site-footer .pm-v2-container { width: min(var(--pm-guide-container), calc(100% - 2 * var(--pm-guide-gutter))); margin-inline: auto; }
+/* The approved homepage footer is also used on course, event and legal pages.
+   Follow the same guide rail as each page's main content without modifying that content. */
+.pm-home-v2-shell .pm-v2-site-footer .pm-v2-container { width: var(--pm-v2-container-width); }
+.pm-events-shell .pm-v2-site-footer .pm-v2-container { width: min(var(--pm-guide-container), calc(100% - 2 * var(--pm-guide-gutter))); }
+.pm-guide-public-shell:not(.pm-events-shell) .pm-v2-site-footer .pm-v2-container { max-width: var(--pm-guide-container); }
+.pm-page-shell:has(.pm-learn-v3) .pm-v2-site-footer .pm-v2-container { width: var(--pm-v2-container-width); }
 .pm-v2-footer-grid { display: grid; grid-template-columns: 1.45fr repeat(4, minmax(0, 1fr)); gap: 2.75rem; align-items: start; }
 /* IMPORTANT: never apply the link-column direction to the nested social navigation. */
 .pm-v2-footer-grid > nav { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s1); }
-.pm-v2-footer-grid h2 { color: var(--surface); font-size: var(--pm-v2-font-ui); line-height: 1.4; font-weight: var(--bold); margin-bottom: var(--s2); }
-.pm-v2-footer-grid a, .pm-v2-footer-grid p { color: var(--surface); font-size: var(--pm-v2-font-footer); line-height: 1.55; text-decoration: none; }
+.pm-v2-footer-grid h2 { color: var(--surface); font-size: var(--pm-v2-font-ui); line-height: var(--pm-guide-line-h4); font-weight: var(--bold); margin-bottom: var(--s2); }
+.pm-v2-footer-grid a, .pm-v2-footer-grid p { color: var(--surface); font-size: var(--pm-v2-font-footer); line-height: var(--pm-guide-line-body); text-decoration: none; }
 .pm-v2-footer-grid nav a:hover { text-decoration: underline; }
 .pm-v2-footer-identity { min-width: 0; }
 .pm-v2-footer-identity .pm-unified-footer-brand { margin-bottom: var(--s2); }
-.pm-v2-footer-identity .pm-brand-copy strong { font-size: var(--pm-v2-font-brand-title); line-height: 1.1; }
+.pm-v2-footer-identity .pm-brand-copy strong { font-size: var(--pm-v2-font-brand-title); line-height: var(--pm-guide-line-h1); }
 .pm-v2-footer-identity .pm-brand-copy small { font-size: var(--pm-v2-font-caption); }
 .pm-v2-footer-identity .pm-brand-icon { position: relative; width: var(--pm-v2-footer-brand-size); height: var(--pm-v2-footer-brand-size); }
 .pm-v2-footer-identity .pm-brand-icon::before { top: 50%; left: 50%; width: 58%; height: 58%; transform: translate(-50%, -50%); }
@@ -157,7 +163,7 @@
 .pm-v2-footer-payments { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s3); margin-top: var(--s5); font-size: var(--pm-v2-font-caption); }
 .pm-v2-footer-payments img { max-height: 22px; max-width: 50px; object-fit: contain; }
 .pm-v2-footer-legal { margin-top: var(--s5); padding-top: var(--s3); border-top: 1px solid var(--pm-v2-footer-border); }
-.pm-v2-footer-legal > p { font-size: var(--pm-v2-font-caption); line-height: 1.35; color: var(--surface); opacity: .86; }
+.pm-v2-footer-legal > p { font-size: var(--pm-v2-font-caption); line-height: var(--pm-guide-line-h3); color: var(--surface); opacity: .86; }
 .pm-v2-footer-last { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s5); padding-top: var(--s3); border-top: 1px solid var(--pm-v2-footer-border); color: var(--surface); font-size: var(--pm-v2-font-caption); }
 
 .pm-v2-resume-icon img { width: 19px; height: 19px; object-fit: contain; }

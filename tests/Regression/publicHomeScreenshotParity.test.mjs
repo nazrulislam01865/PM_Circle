@@ -4,25 +4,27 @@ import { readFileSync } from 'node:fs';
 
 const read = path => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 
-test('home footer keeps five admin-aware columns without inventing routes or duplicating support/legal links', () => {
+test('home footer keeps exactly the prototype five columns and excludes legacy extra navigation links', () => {
     const footer = read('resources/js/components/home/v2/HomeFooter.tsx');
     const layout = read('resources/css/pm-home-v2-sections.css');
     assert.match(footer, /const companyLinks: LinkData\[\]/);
-    assert.match(footer, /href: '\/about'/);
-    assert.match(footer, /href: '\/contact'/);
-    assert.match(footer, /href: '\/help-center'/);
+    assert.match(footer, /prototypeLink\(explore, '\/about'/);
+    assert.match(footer, /label: 'Testimonials'/);
+    assert.match(footer, /label: 'Trends'/);
+    assert.match(footer, /prototypeLink\(support, '\/help-center'/);
     assert.match(footer, /content\.show_explore === false && content\.show_support === false/);
     assert.match(footer, /uniqueLinks\(/);
-    assert.match(footer, /content\.explore_heading && content\.explore_heading !== 'Explore'/);
+    assert.match(footer, /<FooterLinks title="Company" items=\{companyLinks\}\/>/);
+    assert.doesNotMatch(footer, /supportOther|supportCompany|company\.filter/);
     assert.match(footer, /<FooterLinks title="Learning"/);
     assert.match(footer, /<FooterLinks title="Community"/);
     assert.match(footer, /<FooterLinks title="Plans & Policies"/);
     assert.match(layout, /grid-template-columns: 1\.45fr repeat\(4, minmax\(0, 1fr\)\)/);
 });
 
-test('footer social icons stay horizontal, round and homepage-ordered without changing other footers', () => {
+test('footer social icons stay horizontal, round and homepage-ordered in the canonical footer', () => {
     const layout = read('resources/css/pm-home-v2-sections.css');
-    const social = read('resources/js/components/exam/PmpPublicFooter.tsx');
+    const social = read('resources/js/components/pm/FooterIdentity.tsx');
     const homeFooter = read('resources/js/components/home/v2/HomeFooter.tsx');
     assert.match(layout, /\.pm-v2-footer-grid > nav \{[^}]*flex-direction: column/);
     assert.match(layout, /\.pm-v2-footer-identity \.pm-unified-footer-social \{[^}]*flex-direction: row/);
@@ -37,8 +39,8 @@ test('community cards retain live content but match prototype typography, height
     const styles = read('resources/css/pm-home-v2-sections.css');
     const component = read('resources/js/components/home/v2/HomeCommunity.tsx');
     const picker = read('resources/js/components/home/HomeEngagement.tsx');
-    assert.match(tokens, /--pm-v2-font-body: \.9375rem/);
-    assert.match(tokens, /--pm-v2-font-ui: 1rem/);
+    assert.match(tokens, /--pm-v2-font-body: var\(--pm-guide-text-body\)/);
+    assert.match(tokens, /--pm-v2-font-ui: var\(--pm-guide-text-control\)/);
     assert.match(styles, /\.pm-v2-scenario-card \{[^}]*min-height: 314px/);
     assert.match(styles, /\.pm-v2-scenario-card \.pm-v2-post-content > p \{[^}]*-webkit-line-clamp: 2/);
     assert.match(component, /scenario\?\.title/);

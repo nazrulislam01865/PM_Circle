@@ -3,12 +3,14 @@ import { Gift } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import type { HomePathwayContent } from '@/types/home';
 import type { RewardPromotionData } from '@/types/reward';
+import { useRewardOfferDialog } from '@/components/rewards/RewardOfferDialog';
 import { HomePhoto } from './HomePhoto';
 import { HomeAction, HomeCarouselControls, HomeSectionTitle, moveCard } from './HomeUi';
 import { homeExamCards, referenceText, sampleCourses, type HomeCourseCard } from './reference';
 
 export function HomeCertification({ content, promotion }: { content?: HomePathwayContent['exams']; promotion: RewardPromotionData | null }) {
     const scroller = useRef<HTMLDivElement>(null);
+    const openOffer = useRewardOfferDialog();
     return <section className="pm-v2-section pm-v2-certifications pm-v2-container" aria-labelledby="pm-pathway-exams-title" id="pm-v2-exams">
         <HomeSectionTitle id="pm-pathway-exams-title" title={referenceText(content?.heading, 'Practise today. Prepare for your next certification.', 'Prepare for your certification')}
             description={referenceText(content?.description, 'Explore exam simulators for your next professional milestone.', 'Practise under exam conditions, then review the answers and find your weak areas.')}
@@ -16,7 +18,7 @@ export function HomeCertification({ content, promotion }: { content?: HomePathwa
         {promotion && <div className="pm-v2-reward"><div className="pm-v2-reward-icon"><Gift aria-hidden="true"/></div><div>
             <strong>Complete your profile. Get {promotion.discountLabel} off.</strong>
             <p>Reach 100% profile completion to receive a discount code for any PM Circle Exam Simulator.</p>
-        </div><HomeAction href="/register">See how it works</HomeAction></div>}
+        </div><button type="button" className="pm-v2-button" onClick={() => openOffer?.()}>See how it works</button></div>}
         <HomeCarouselControls label="exam cards" previous={() => moveCard(scroller, -1)} next={() => moveCard(scroller, 1)}/>
         <div className="pm-v2-card-track pm-v2-exam-track" ref={scroller} tabIndex={0} role="region" aria-label="Certification simulators">
             {homeExamCards.map((card, index) => {

@@ -1,0 +1,40 @@
+/* All guest-accessible pages use the homepage's established outer rail.
+   This selector intentionally outranks the legacy .pm-app:not(.pm-auth-shell)
+   .pm-container rule (including its mobile override), which otherwise makes
+   old content pages wider than the homepage header and approved footer. */
+.pm-app.pm-page-shell.pm-guest-public-shell > .pm-v2-header .pm-v2-header-inner,
+.pm-app.pm-page-shell.pm-guest-public-shell > .pm-v2-site-footer .pm-v2-container,
+.pm-app.pm-page-shell.pm-guest-public-shell > main .pm-container {
+    width: var(--pm-v2-container-width);
+    max-width: 100%;
+    margin-inline: auto;
+}
+
+/* Keep the restored course details, tabs and all membership actions untouched;
+   only its guest canvas matches the white public homepage. */
+.pm-app.pm-page-shell.pm-guest-public-shell > main .pm-course-detail {
+    background: var(--surface);
+}
+
+/* Event, legal, exam and course pages must not silently widen the footer. */
+.pm-home-v2-shell.pm-events-shell > .pm-v2-site-footer .pm-v2-container,
+.pm-home-v2-shell.pm-guide-public-shell > .pm-v2-site-footer .pm-v2-container {
+    width: var(--pm-v2-container-width);
+    max-width: 100%;
+}
+
+/* Preserve the reference's compact link typography on public and auth pages. */
+.pm-v2-site-footer .pm-v2-footer-grid a,
+.pm-v2-site-footer .pm-v2-footer-grid p {
+    font-size: var(--pm-v2-font-body);
+}
+
+/* Public feature pages keep their inner composition but not a second rail. */
+.pm-app.pm-page-shell.pm-guest-public-shell > main .pm-event-wrap,
+.pm-app.pm-page-shell.pm-guest-public-shell > main .pm-pmp-public-container,
+.pm-app.pm-page-shell.pm-guest-public-shell > main .pm-sim-banner > .pm-v2-container,
+.pm-app.pm-page-shell.pm-guest-public-shell > main .pm-sim-main {
+    width: var(--pm-v2-container-width);
+    max-width: 100%;
+    margin-inline: auto;
+}

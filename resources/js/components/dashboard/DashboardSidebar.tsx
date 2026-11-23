@@ -1,58 +1,104 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Bookmark, BookOpen, BriefcaseBusiness, ChartNoAxesColumnIncreasing, History, ChevronsLeft, ChevronsRight, ChevronRight, Crown, Home, LockKeyhole, Mic, Settings, Trophy, UserRound, RefreshCcw, ClipboardList, CalendarDays } from 'lucide-react';
+import { useState, type MouseEvent } from 'react';
+import {
+    Award, BarChart3, Bookmark, BookOpen, BriefcaseBusiness, CalendarDays,
+    ChevronDown, ChevronLeft, ChevronRight, ClipboardList, Crown, History,
+    Home, LockKeyhole, MessagesSquare, Mic, Pencil, Settings, Sparkles,
+    UserRound, UsersRound, X,
+} from 'lucide-react';
 import { Brand } from '@/components/pm/Brand';
-import { DashboardAvatar } from '@/components/dashboard/DashboardAvatar';
 import type { DashboardShellData } from '@/types/dashboard';
 
-type Item = { label: string; href: string; icon: typeof Home; requires?: 'plus' | 'pro' };
-const primaryItems: Item[] = [
-    { label: 'Home', href: '/dashboard', icon: Home },
-    { label: 'My profile', href: '/settings/profile', icon: UserRound },
-    { label: 'Learn & practice', href: '/dashboard/learning', icon: BookOpen },
-    { label: 'Interview Preparation', href: '/interview-preparation', icon: Mic },
-    { label: 'PMP Exam Simulator', href: '/exams/pmp', icon: ClipboardList, requires: 'plus' },
-    { label: 'Scrum / CSM Simulator', href: '/simulators/scrum', icon: RefreshCcw, requires: 'plus' },
-    { label: 'Project Simulator', href: '/simulators/project', icon: ChartNoAxesColumnIncreasing, requires: 'pro' },
-];
-const secondaryItems: Item[] = [
-    { label: 'Achievements', href: '/dashboard/features/achievements', icon: Trophy },
-    { label: 'Daily Challenge', href: '/dashboard/daily-challenge', icon: CalendarDays },
-    { label: 'Saved posts', href: '/saved-posts', icon: Bookmark },
-    { label: 'Jobs & resume', href: '/careers', icon: BriefcaseBusiness },
-    { label: 'Activity Log', href: '/activity-log', icon: History },
-    { label: 'Settings', href: '/settings/security', icon: Settings },
+type NavItem = { label: string; href: string; icon: typeof Home; requires?: 'plus' | 'pro' };
+type NavGroup = { title: string; items: NavItem[] };
+
+/** One central, route-backed member navigation catalogue, not separate page menus. */
+const groups: NavGroup[] = [
+    { title: 'Profile & career', items: [
+        { label: 'My profile', href: '/settings/profile', icon: UserRound },
+        { label: 'Profile completion', href: '/settings/profile?tab=overview', icon: BarChart3 },
+        { label: 'Edit profile', href: '/settings/profile?tab=edit', icon: Pencil },
+        { label: 'AI Resume Assistant', href: '/dashboard/features/resume', icon: Sparkles },
+        { label: 'Careers', href: '/careers', icon: BriefcaseBusiness },
+        { label: 'Activity Log', href: '/activity-log', icon: History },
+    ] },
+    { title: 'Learn & practise', items: [
+        { label: 'My learning', href: '/dashboard/learning', icon: BookOpen },
+        { label: 'Courses', href: '/learning', icon: BookOpen },
+        { label: 'Exam simulator', href: '/exams/pmp', icon: ClipboardList },
+        { label: 'Scrum simulator', href: '/simulators/scrum', icon: ClipboardList },
+        { label: 'Project simulator', href: '/simulators/project', icon: ClipboardList, requires: 'pro' },
+        { label: 'Interview preparation', href: '/interview-preparation', icon: Mic },
+    ] },
+    { title: 'Community', items: [
+        { label: 'Community feed', href: '/community', icon: MessagesSquare },
+        { label: 'Members', href: '/members', icon: UsersRound },
+        { label: 'Daily challenge', href: '/dashboard/daily-challenge', icon: CalendarDays },
+        { label: 'Saved posts', href: '/saved-posts', icon: Bookmark },
+        { label: 'Badges', href: '/dashboard/features/achievements', icon: Award },
+    ] },
+    { title: 'Account', items: [
+        { label: 'Settings', href: '/settings/security', icon: Settings },
+        { label: 'Membership', href: '/membership', icon: Crown },
+    ] },
 ];
 
-export function DashboardSidebar({ dashboard, open, close, collapsed, onToggle }: { dashboard: DashboardShellData; open: boolean; close: () => void; collapsed: boolean; onToggle: () => void }) {
-    const activePath = usePage().url.split('?')[0];
-    const paid = dashboard.plan !== 'free';
-    const label = dashboard.plan === 'free' ? 'Free member' : `${dashboard.plan === 'premium' ? 'Premium' : 'Pro'} member`;
-    const isCurrent = (href: string) => href === '/interview-preparation' ? activePath.startsWith('/interview-preparation') : href === '/exams/pmp' ? activePath.startsWith('/exams/pmp')
-        : href === '/dashboard' ? activePath === href
-        : href === '/dashboard/learning' ? activePath.startsWith('/dashboard/learning') || activePath.startsWith('/learning/')
-        : href === '/settings/profile' ? activePath === '/settings/profile'
-        : href === '/settings/security' ? activePath === '/settings/security' || activePath === '/settings/appearance'
-        : href === '/dashboard/daily-challenge' ? activePath.startsWith(href)
-        : activePath === href;
-    const items = (list: Item[]) => list.map(item => {
+export function DashboardSidebar({ dashboard, open, close, collapsed, onToggle }: {
+    dashboard: DashboardShellData;
+    open: boolean;
+    close: () => void;
+    collapsed: boolean;
+    onToggle: () => void;
+}) {
+    // Keep every submenu visible on first render, while allowing manual collapse.
+    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() =>
+        Object.fromEntries(groups.map(group => [group.title, true])),
+    );
+    const toggleGroup = (event: MouseEvent<HTMLElement>, title: string) => {
+        event.preventDefault();
+        setExpandedGroups(previous => ({ ...previous, [title]: !previous[title] }));
+    };
+    const url = usePage().url;
+    const currentPath = url.split('?')[0];
+    const plan = dashboard.plan;
+    const isActive = (href: string) => {
+        const [path, query] = href.split('?');
+        if (path === '/dashboard') return currentPath === '/dashboard';
+        if (path === '/settings/profile') return currentPath === path && (query ? url.includes(query) : !url.includes('tab='));
+        if (path === '/dashboard/learning') return currentPath.startsWith('/dashboard/learning');
+        if (path === '/learning') return currentPath === '/learning' || currentPath.startsWith('/learning/');
+        if (path === '/community') return currentPath === path || currentPath.startsWith('/posts/');
+        if (path === '/exams/pmp') return currentPath.startsWith(path);
+        if (path === '/settings/security') return currentPath.startsWith('/settings/security') || currentPath.startsWith('/settings/appearance');
+        return currentPath === path || currentPath.startsWith(`${path}/`);
+    };
+    const renderItem = (item: NavItem) => {
         const Icon = item.icon;
-        const locked = item.requires === 'pro' ? dashboard.plan !== 'pro' : item.requires === 'plus' && !paid;
-        return <Link key={item.label} href={locked ? '/membership' : item.href} onClick={close}
-            className={`pm-dash-nav-link ${isCurrent(item.href) ? 'is-active' : ''}`} title={item.label}
-            aria-current={isCurrent(item.href) ? 'page' : undefined}>
-            <Icon size={23} strokeWidth={2} aria-hidden="true" /><span>{item.label}</span>
-            {locked && <LockKeyhole className="pm-dash-nav-lock" size={15} aria-label="Requires paid membership" />}
+        const locked = item.requires === 'pro' && plan !== 'pro' || item.requires === 'plus' && plan === 'free';
+        const active = isActive(item.href);
+        return <Link key={`${item.href}-${item.label}`} href={locked ? '/membership' : item.href} onClick={close}
+            className={`pm-dash-nav-link${active ? ' is-active' : ''}`} aria-current={active ? 'page' : undefined} title={item.label}>
+            <Icon size={20} strokeWidth={1.9} aria-hidden="true"/><span>{item.label}</span>
+            {locked && <LockKeyhole className="pm-dash-nav-lock" size={14} aria-label="Requires membership"/>}
         </Link>;
-    });
+    };
     return <>
-        {open && <button type="button" className="pm-dash-scrim" aria-label="Close navigation" onClick={close} />}
-        <aside className={`pm-dash-sidebar ${open ? 'is-open' : ''} ${collapsed && !open ? 'is-collapsed' : ''}`} aria-label="Member navigation">
-            <div className="pm-dash-side-logo"><Brand /><button className="pm-dash-sidebar-close" type="button" onClick={onToggle} aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}>{collapsed ? <ChevronsRight size={22}/> : <ChevronsLeft size={22}/>}</button><button className="pm-dash-drawer-close" type="button" onClick={close} aria-label="Close navigation">×</button></div>
-            <nav className="pm-dash-sidebar-links" aria-label="Dashboard sections">{items(primaryItems)}<div className="pm-dash-nav-divider" />{items(secondaryItems)}</nav>
-            <div className="pm-dash-side-bottom">
-                <Link href="/settings/profile" className="pm-dash-side-member" onClick={close}><DashboardAvatar name={dashboard.member.name} size={46} demo={dashboard.isDemo} src={dashboard.member.avatar_path}/><span className="pm-dash-member-details"><strong>{dashboard.member.name}</strong><small className="pm-dash-member-tier">{paid && <Crown size={13} fill="currentColor" aria-hidden="true"/>}<span>{label}</span></small></span><ChevronRight className="pm-dash-member-chevron" size={17} aria-hidden="true"/></Link>
-                <Link className="pm-dash-plan-link" href="/membership" onClick={close}>{paid ? <Settings size={21}/> : <Crown size={21}/>} {paid ? 'Manage plan' : 'Compare plans'}</Link>
+        {open && <button className="pm-dash-scrim" type="button" aria-label="Close member navigation" onClick={close}/>}
+        <aside id="pm-member-sidebar" className={`pm-dash-sidebar pm-member-restored-sidebar${open ? ' is-open' : ''}${collapsed && !open ? ' is-collapsed' : ''}`} aria-label="Member navigation">
+            <div className="pm-dash-side-logo">
+                <Brand href="/dashboard"/>
+                <button type="button" className="pm-dash-sidebar-close" aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'} onClick={onToggle}>
+                    {collapsed ? <ChevronRight size={20}/> : <ChevronLeft size={20}/>}
+                </button>
+                <button type="button" className="pm-dash-drawer-close" aria-label="Close navigation" onClick={close}><X size={22}/></button>
             </div>
+            <nav className="pm-dash-sidebar-links" aria-label="Member sections">
+                {renderItem({ label: 'Home', href: '/dashboard', icon: Home })}
+                {groups.map(group => <details className="pm-member-sidebar-group" key={group.title} open={expandedGroups[group.title]}>
+                    <summary onClick={event => toggleGroup(event, group.title)}><span>{group.title}</span><ChevronDown size={16} aria-hidden="true"/></summary>
+                    <div className="pm-member-sidebar-submenu">{group.items.map(renderItem)}</div>
+                </details>)}
+            </nav>
         </aside>
     </>;
 }

@@ -75,9 +75,8 @@
 /* The shared member footer was pinned to row 3 in the original two-bar
    layout. Row 3 now holds the page body: keep the footer in its own row so
    it cannot cover PMP tabs, cards, learning content, or the activity log. */
-.pm-member-shell > .pm-unified-footer {
-    grid-row: 4;
-}
+.pm-member-shell > .pm-unified-footer { grid-row: 4; }
+.pm-member-shell > .pm-v2-site-footer { grid-row: 4; }
 /* Ensure the post-filter row sticks *under* the primary and secondary bars. */
 .pm-member-shell .pm-dash-feed-sticky-controls,
 .pm-member-shell.pm-member-home .pm-dash-feed-sticky-controls {

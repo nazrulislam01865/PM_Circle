@@ -48,7 +48,7 @@ test('footer groups, social icons and event link share existing admin data and v
     const footer = read('resources/js/components/home/v2/HomeFooter.tsx');
     assert.match(footer, /eventsVisible = true/);
     assert.match(footer, /aiVisible = true/);
-    assert.match(footer, /show_payments !== false/);
+    assert.doesNotMatch(footer, /pm-v2-footer-payments/);
     assert.match(footer, /show_legal !== false/);
     assert.match(footer, /FooterSocial content=\{content\} compact prototypeOrder/);
     assert.match(footer, /href: '\/events'/);

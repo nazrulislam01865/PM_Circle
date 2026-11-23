@@ -60,5 +60,5 @@ test('type, spacing, radii and container use the guide values', () => {
 test('shared homepage shell remains in use and mockup footer wording is removed', () => {
     assert.match(layout, /<PublicLayout siteLayout homePrototype/);
     assert.doesNotMatch(footer, /Homepage design mockup|Sample content/);
-    assert.match(footer, /<span>© \{new Date\(\)\.getFullYear\(\)\} \{content\.copyright_label\}<\/span>/);
+    assert.match(footer, /<span>© PM Circle by ITQAN<\/span>/);
 });

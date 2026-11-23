@@ -1,0 +1,279 @@
+/* Authenticated navigation only. The public homepage header/footer stay unchanged.
+   All sizing, colors, font metrics and spacing inherit the central PM Circle tokens. */
+/* The member header, sidebar and page form one bounded grid. The shared
+   homepage footer is a separate sibling BELOW this grid, spanning full width.
+   A sticky sidebar cannot enter the footer because its containing block ends. */
+.pm-app.pm-member-sidebar-layout {
+    --pm-member-sidebar-width: var(--pm-member-sidebar-expanded-width);
+    --pm-member-offer-top: 0px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 100dvh;
+    background: var(--canvas);
+}
+.pm-app.pm-member-sidebar-layout.has-member-offer {
+    --pm-member-offer-top: clamp(38px, 2.55vw, 52px);
+}
+.pm-member-sidebar-layout > .pm-v2-offer-bar { z-index: 101; }
+.pm-member-sidebar-layout > .pm-member-content-frame {
+    display: grid;
+    flex: 1 0 auto;
+    grid-template-columns: var(--pm-member-sidebar-width) minmax(0, 1fr);
+    grid-template-rows: var(--header-height) minmax(0, 1fr);
+    min-width: 0;
+    min-height: calc(100dvh - var(--pm-member-offer-top));
+    align-content: start;
+}
+.pm-member-content-frame > .pm-member-compact-header {
+    grid-column: 2;
+    grid-row: 1;
+}
+.pm-member-content-frame > .pm-dash-sidebar {
+    grid-column: 1;
+    grid-row: 1 / 3;
+}
+.pm-member-sidebar-layout .pm-dashboard-layout { display: contents; }
+.pm-member-sidebar-layout .pm-dash-workspace,
+.pm-member-sidebar-layout.pm-member-home .pm-dash-workspace {
+    grid-column: 2;
+    grid-row: 2;
+    width: 100%;
+    min-width: 0;
+}
+/* Footer follows the taller of full sidebar navigation and page content.
+   Keep the HomeFooter component and all of its existing design/copy. */
+.pm-member-sidebar-layout > .pm-unified-footer,
+.pm-member-sidebar-layout > .pm-v2-site-footer {
+    flex: none;
+    width: 100%;
+    min-width: 0;
+}
+/* Public-home gutters are used within the available member workspace.
+   The footer below the frame retains the original full-width homepage rail. */
+.pm-app.pm-member-sidebar-layout:not(.pm-member-full-width) .pm-dash-body {
+    width: min(var(--pm-v2-container-width), calc(100% - 2 * var(--s4)));
+    max-width: 100%;
+    margin-inline: auto;
+}
+.pm-member-sidebar-layout.is-sidebar-collapsed { --pm-member-sidebar-width: var(--pm-member-sidebar-collapsed-width); }
+.pm-member-content-frame > .pm-member-restored-sidebar {
+    position: sticky;
+    top: var(--pm-member-offer-top);
+    align-self: start;
+    height: max-content;
+    width: 100%;
+    flex-basis: auto;
+    min-height: calc(100dvh - var(--pm-member-offer-top));
+    z-index: 45;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+}
+.pm-member-sidebar-layout .pm-dash-side-logo {
+    min-height: var(--header-height);
+    height: var(--header-height);
+    padding-inline: var(--s3);
+    border-bottom: 1px solid var(--border);
+}
+.pm-member-sidebar-layout .pm-dash-sidebar-links {
+    padding: var(--s4) var(--s3) var(--s6);
+    flex: 0 0 auto;
+    min-height: auto;
+    overflow: visible;
+}
+/* Override the legacy <=1050px icon-only rule until the mobile drawer breakpoint. */
+.pm-member-sidebar-layout:not(.is-sidebar-collapsed) .pm-dash-nav-link span,
+.pm-member-exam-compact .pm-dash-nav-link span { display: block; }
+.pm-member-sidebar-layout:not(.is-sidebar-collapsed) .pm-dash-side-logo .pm-brand-copy,
+.pm-member-exam-compact .pm-dash-side-logo .pm-brand-copy { display: flex; }
+.pm-member-sidebar-layout .pm-dash-sidebar-close { display: grid; }
+.pm-member-sidebar-layout .pm-dash-nav-link {
+    min-height: var(--control-height);
+    gap: var(--s3);
+    margin: 0;
+    padding: var(--s2) var(--s3);
+    border-radius: var(--radius-control);
+    color: var(--ink);
+    font: var(--medium) var(--text-ui)/var(--line-ui) var(--font-ui);
+    text-decoration: none;
+    white-space: normal;
+}
+.pm-member-sidebar-layout .pm-dash-nav-link span {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    min-width: 0;
+}
+.pm-member-sidebar-layout .pm-dash-nav-link:is(:hover, :focus-visible),
+.pm-member-sidebar-layout .pm-dash-nav-link.is-active {
+    background: var(--blue-soft);
+    color: var(--blue);
+}
+.pm-member-sidebar-layout .pm-dash-nav-link.is-active::before { display: none; }
+.pm-member-sidebar-group { margin-top: var(--s4); }
+.pm-member-sidebar-group > summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--s2);
+    min-height: var(--control-height);
+    padding: var(--s2) var(--s3);
+    color: var(--muted);
+    font: var(--bold) var(--text-sm)/var(--line-sm) var(--font-ui);
+    list-style: none;
+    cursor: pointer;
+}
+.pm-member-sidebar-group > summary::-webkit-details-marker { display: none; }
+.pm-member-sidebar-group > summary svg { flex: none; transition: transform .15s ease; }
+.pm-member-sidebar-group:not([open]) > summary svg { transform: rotate(-90deg); }
+.pm-member-sidebar-submenu { display: grid; gap: var(--s1); }
+.pm-member-sidebar-layout.is-sidebar-collapsed .pm-member-sidebar-group > summary span,
+.pm-member-sidebar-layout.is-sidebar-collapsed .pm-member-sidebar-group > summary svg,
+.pm-member-sidebar-layout.is-sidebar-collapsed .pm-member-sidebar-submenu .pm-dash-nav-link span,
+.pm-member-sidebar-layout.is-sidebar-collapsed .pm-dash-nav-lock { display: none; }
+.pm-member-sidebar-layout.is-sidebar-collapsed .pm-member-sidebar-group > summary { min-height: 1px; padding: var(--s2); border-top: 1px solid var(--border); }
+.pm-member-sidebar-layout.is-sidebar-collapsed .pm-dash-nav-link { justify-content: center; padding-inline: var(--s2); }
+.pm-member-sidebar-layout.is-sidebar-collapsed .pm-dash-side-logo { justify-content: center; padding-inline: var(--s1); }
+.pm-member-sidebar-layout.is-sidebar-collapsed .pm-dash-side-logo .pm-brand { display: none; }
+.pm-member-sidebar-layout.is-sidebar-collapsed .pm-dash-sidebar-close { display: grid; }
+
+.pm-member-exam-compact { --pm-member-offer-top: 0px; }
+.pm-member-exam-compact:has(> .pm-v2-offer-bar) { --pm-member-offer-top: clamp(38px, 2.55vw, 52px); }
+/* Timed exam keeps its full question canvas; the same sidebar opens on demand. */
+.pm-member-exam-compact > .pm-member-compact-header .pm-member-sidebar-trigger { display: inline-flex; align-items: center; justify-content: center; }
+.pm-member-exam-compact .pm-member-compact-brand { display: flex; align-items: center; margin-right: auto; }
+.pm-member-exam-compact .pm-member-compact-actions { margin-left: 0; }
+.pm-member-exam-compact > .pm-member-restored-sidebar {
+    position: fixed; inset: 0 auto 0 0; width: min(300px, calc(100vw - 48px));
+    height: 100dvh; z-index: 121; transform: translateX(-105%);
+    visibility: hidden; pointer-events: none; background: var(--surface);
+    transition: transform .16s ease, visibility .16s ease;
+}
+.pm-member-exam-compact > .pm-member-restored-sidebar.is-open {
+    transform: translateX(0); visibility: visible; pointer-events: auto;
+    box-shadow: 10px 0 32px color-mix(in srgb, var(--ink) 14%, transparent);
+}
+.pm-member-exam-compact .pm-dash-scrim { position: fixed; display: block; inset: 0; z-index: 120; background: color-mix(in srgb, var(--ink) 42%, transparent); border: 0; }
+.pm-member-exam-compact .pm-dash-drawer-close { display: inline-flex; align-items: center; justify-content: center; }
+.pm-member-exam-compact .pm-dash-sidebar-close { display: none; }
+.pm-member-exam-compact .pm-dash-sidebar-links { flex: 1; min-height: 0; overflow-y: auto; padding: var(--s4) var(--s3); }
+.pm-member-exam-compact .pm-dash-nav-link { display: flex; align-items: center; gap: var(--s3); padding: var(--s2) var(--s3); border-radius: var(--radius-control); font: var(--medium) var(--text-ui)/var(--line-ui) var(--font-ui); text-decoration: none; }
+.pm-member-exam-compact .pm-member-sidebar-group { margin-top: var(--s4); }
+.pm-member-exam-compact .pm-member-sidebar-group > summary { display: flex; justify-content: space-between; align-items: center; padding: var(--s3); color: var(--muted); cursor: pointer; }
+.pm-member-exam-compact .pm-member-sidebar-submenu { display: grid; gap: var(--s1); }
+/* Member header controls: Search, Notifications, Account (profile links stay in the account menu). */
+.pm-member-content-frame > .pm-member-compact-header,
+.pm-member-exam-compact > .pm-member-compact-header {
+    position: sticky;
+    top: var(--pm-member-offer-top);
+    z-index: 90;
+    width: 100%;
+    min-width: 0;
+    height: var(--header-height);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+}
+.pm-member-compact-header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--s4);
+    width: 100%;
+    height: 100%;
+    padding-inline: var(--s5);
+}
+.pm-member-compact-brand { display: none; }
+.pm-member-compact-actions { display: flex; align-items: center; gap: var(--s4); margin-left: auto; }
+.pm-member-compact-header .pm-dash-header-controls,
+.pm-member-compact-header .pm-dash-header-right { display: flex; align-items: center; gap: var(--s3); }
+.pm-member-compact-header .pm-site-member-search { position: relative; }
+.pm-member-compact-header .pm-site-member-search > button {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: var(--control-touch); height: var(--control-touch); border: 0;
+    border-radius: var(--radius-control); background: transparent; color: var(--ink);
+}
+.pm-member-compact-header .pm-site-member-search input {
+    display: none; position: absolute; right: 0; top: calc(100% + var(--s2));
+    width: min(320px, calc(100vw - 32px)); min-height: var(--control-height);
+    border: 1px solid var(--border); border-radius: var(--radius-control);
+    padding: var(--s2) var(--s3); background: var(--surface); z-index: 105;
+    box-shadow: var(--pm-shadow);
+}
+.pm-member-compact-header .pm-site-member-search.is-open input { display: block; }
+.pm-member-compact-header .pm-dash-header-right { position: relative; }
+.pm-member-compact-header .pm-dash-account-menu { z-index: 106; }
+.pm-member-sidebar-trigger { display: none; color: var(--ink); background: transparent; border: 0; border-radius: var(--radius-control); min-width: var(--control-touch); min-height: var(--control-touch); }
+.pm-member-sidebar-layout .pm-dash-feed-sticky-controls,
+.pm-member-sidebar-layout.pm-member-home .pm-dash-feed-sticky-controls,
+.pm-member-sidebar-layout .pm-member-tertiary-sticky { top: calc(var(--header-height) + var(--pm-member-offer-top)); }
+.pm-member-sidebar-layout #main-content { scroll-margin-top: calc(var(--header-height) + var(--pm-member-offer-top)); }
+.pm-member-sidebar-layout.pm-member-full-width .pm-dash-body,
+.pm-member-sidebar-layout.pm-member-full-width.pm-member-home .pm-dash-body { width: 100%; padding: 0; }
+.pm-member-sidebar-layout.pm-member-full-width .pm-member-public-content { width: 100%; min-width: 0; }
+.pm-member-sidebar-layout.pm-member-full-width .pm-member-public-content > .pm-container {
+    width: min(var(--pm-v2-container-width), calc(100% - 2 * var(--s4)));
+    max-width: 100%;
+    margin-inline: auto;
+}
+/* Keep the same responsive rail changes as the public homepage, but scoped
+   to logged-in pages so the sidebar reduces the available content width. */
+@media (max-width: 1500px) {
+    .pm-app.pm-member-sidebar-layout { --pm-v2-container-width: min(70.2vw, calc(100% - 3rem)); }
+}
+@media (max-width: 1050px) {
+    .pm-app.pm-member-sidebar-layout { --pm-v2-container-width: min(90vw, calc(100% - 3rem)); }
+}
+@media (max-width: 700px) {
+    .pm-app.pm-member-sidebar-layout { --pm-v2-container-width: calc(100% - 2 * var(--s4)); }
+}
+
+@media (max-width: 960px) {
+    .pm-member-sidebar-layout > .pm-member-content-frame { grid-template-columns: minmax(0, 1fr); }
+    .pm-member-sidebar-layout.is-sidebar-collapsed { --pm-member-sidebar-width: var(--pm-member-sidebar-expanded-width); }
+    .pm-member-content-frame > .pm-member-compact-header,
+    .pm-member-sidebar-layout .pm-dash-workspace,
+    .pm-member-sidebar-layout.pm-member-home .pm-dash-workspace { grid-column: 1; }
+    .pm-member-content-frame > .pm-member-restored-sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        grid-column: auto;
+        grid-row: auto;
+        width: min(300px, calc(100vw - 48px));
+        height: 100dvh;
+        z-index: 121;
+        transform: translateX(-105%);
+        visibility: hidden;
+        pointer-events: none;
+        box-shadow: none;
+        transition: transform .16s ease, visibility .16s ease;
+    }
+    .pm-member-content-frame > .pm-member-restored-sidebar.is-open {
+        transform: translateX(0);
+        visibility: visible;
+        pointer-events: auto;
+        box-shadow: 10px 0 32px color-mix(in srgb, var(--ink) 14%, transparent);
+    }
+    .pm-member-sidebar-layout .pm-dash-sidebar-links {
+        flex: 1;
+        min-height: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+    .pm-member-sidebar-layout .pm-dash-scrim { display: block; position: fixed; inset: 0; z-index: 120; border: 0; background: color-mix(in srgb, var(--ink) 42%, transparent); }
+    .pm-member-sidebar-layout .pm-dash-drawer-close { display: inline-flex; align-items: center; justify-content: center; }
+    .pm-member-sidebar-layout .pm-dash-sidebar-close { display: none; }
+    .pm-member-sidebar-layout .pm-member-sidebar-trigger { display: inline-flex; align-items: center; justify-content: center; }
+    .pm-member-sidebar-layout .pm-member-compact-brand { display: flex; align-items: center; margin-right: auto; }
+    .pm-member-sidebar-layout .pm-member-compact-actions { margin-left: 0; }
+    .pm-member-sidebar-layout .pm-dash-body { width: min(100% - 2 * var(--s4), var(--pm-member-page-max-width)); }
+}
+@media (max-width: 520px) {
+    .pm-member-compact-header-inner { padding-inline: var(--s2); gap: var(--s1); }
+    .pm-member-compact-actions, .pm-member-compact-header .pm-dash-header-controls,
+    .pm-member-compact-header .pm-dash-header-right { gap: var(--s1); }
+    .pm-member-compact-header .pm-member-compact-brand .pm-brand-copy { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .pm-member-content-frame > .pm-member-restored-sidebar { transition: none; }
+}

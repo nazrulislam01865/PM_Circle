@@ -4,7 +4,8 @@ import { test } from 'node:test';
 
 const root = new URL('../../', import.meta.url);
 const read = (name) => readFileSync(new URL(name, root), 'utf8');
-const guide = read('PM_Circle_UI_Style_Guide (4)(8).html');
+const guide = read('pmDoc/PM_Circle_UI_Style_Guide (4)(8).html');
+const currentGuide = read('PM_Circle_Design_Guidelines (1).html');
 const tokens = read('resources/css/pm-design-tokens.css');
 const css = read('resources/css/pm-activity-log.css');
 const page = read('resources/js/pages/account/ActivityLog.tsx');
@@ -12,8 +13,8 @@ const parts = read('resources/js/components/activity/ActivityLogParts.tsx');
 const sharedControls = read('resources/css/pm-ui-guideline.css');
 
 test('canonical typography, spacing, control, and icon tokens match the approved guide', () => {
-    for (const name of ['font-ui', 'text-h1', 'line-h1', 'text-h2', 'line-h2', 'text-h5', 'line-h5',
-        'text-body', 'line-body', 'text-ui', 'line-ui', 'text-sm', 'line-sm',
+    for (const name of ['font-ui',
+        'text-ui',
         'text-xs', 'line-xs', 's2', 's3', 's4', 's5', 'radius-card', 'radius-control',
         'control-height', 'control-touch', 'icon', 'ink', 'muted', 'blue', 'border', 'control-border']) {
         const escape = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -27,6 +28,15 @@ test('canonical typography, spacing, control, and icon tokens match the approved
             assert.equal(actual, expected, `Token ${name} must match the approved UI guide`);
         }
     }
+    // The November 23 HTML guide supersedes the earlier body and heading types.
+    assert.match(currentGuide, /font-size: clamp\(2rem,5vw,3\.1rem\)/);
+    for (const [name, value] of Object.entries({
+        'text-body': '1rem', 'line-body': '1.6',
+        'text-h1': 'var(--pm-guide-text-h1)', 'line-h1': 'var(--pm-guide-line-h1)',
+        'text-h2': 'var(--pm-guide-text-h2)', 'line-h2': 'var(--pm-guide-line-h2)',
+        'text-sm': '.875rem', 'line-sm': '1.35',
+        'text-h5': '1rem', 'line-h5': '1.4', 'line-ui': '1.35',
+    })) assert.match(tokens, new RegExp(`--${name}:\\s*${value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')};`));
 });
 
 test('Activity Log inherits member layout rather than defining a new page frame or color scale', () => {

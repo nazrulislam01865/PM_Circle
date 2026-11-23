@@ -101,8 +101,7 @@ test('relevant canonical global tokens match the uploaded authoritative UI style
     const approved = cssVariables(guide);
     const actual = cssVariables(tokens);
     for (const token of [
-        '--font-ui', '--text-h2', '--line-h2', '--text-h3', '--line-h3', '--text-h4',
-        '--line-h4', '--text-body', '--line-body', '--text-ui', '--line-ui',
+        '--font-ui', '--text-ui',
         '--regular', '--semibold', '--bold', '--s2', '--s3', '--s4', '--s5', '--s6',
         '--s8', '--s10', '--radius-control', '--radius-card', '--control-height',
         '--control-touch', '--icon', '--ink', '--surface', '--border', '--blue',
@@ -111,5 +110,14 @@ test('relevant canonical global tokens match the uploaded authoritative UI style
         if (token === '--font-ui') assert.ok(actual.get(token)?.startsWith('\"Inter\"'), 'sitewide Inter font');
         else assert.equal(actual.get(token), approved.get(token), token);
     }
+    // The newest HTML guide also supersedes legacy H1-H4 and meta typography.
+    for (const [token, expected] of Object.entries({
+        '--text-body': '1rem', '--line-body': '1.6',
+        '--text-h1': 'var(--pm-guide-text-h1)', '--line-h1': 'var(--pm-guide-line-h1)',
+        '--text-h2': 'var(--pm-guide-text-h2)', '--line-h2': 'var(--pm-guide-line-h2)',
+        '--text-h3': 'var(--pm-guide-text-h3)', '--line-h3': 'var(--pm-guide-line-h3)',
+        '--text-h4': 'var(--pm-guide-text-h4)', '--line-h4': 'var(--pm-guide-line-h4)',
+        '--line-ui': '1.35',
+    })) assert.equal(actual.get(token), expected, token);
     // The existing homepage/header layout intentionally retains its approved dimensions.
 });

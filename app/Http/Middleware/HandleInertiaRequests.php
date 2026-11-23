@@ -35,11 +35,8 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        // Public homepage-style pages never mount the dashboard sidebar.
-        // Community uses the member shell only when signed in; guest presentation is unchanged.
-        // Avoid computing its member projection on those requests.
-        $siteLayout = in_array($request->path(), ['/', 'daily-challenge', 'learning', 'contact', 'help-center', 'refund-policy'], true)
-            || $request->is('learning/courses/*') || $request->is('admin', 'admin/*');
+        // Member navigation is shared on all signed-in pages, including public URLs.
+        // Lazy evaluation avoids the dashboard projection for guests and administrators.
 
         return [
             ...parent::share($request),
@@ -73,7 +70,8 @@ class HandleInertiaRequests extends Middleware
                     'secure' => config('notifications.reverb_public_secure'),
                 ] : null,
             ] : null,
-            'memberShell' => fn () => ! $siteLayout && $request->user() && $request->user()->is_admin !== true ? app(\App\Domain\Dashboard\Queries\MemberShell::class)->forMember($request->user()) : null,
+            'memberShell' => fn () => $request->user() && $request->user()->is_admin !== true && $request->user()->onboarding_step >= 3
+                ? app(\App\Domain\Dashboard\Queries\MemberShell::class)->forMember($request->user()) : null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

@@ -5,6 +5,7 @@ import type { HomeContent } from '@/types/home';
 import { HomePhoto } from './HomePhoto';
 import { HomeAction } from './HomeUi';
 import { referenceText } from './reference';
+import { useRewardOfferDialog } from '@/components/rewards/RewardOfferDialog';
 
 const slides = [
     { tab: 'Exam Simulator', eyebrow: 'PMP & CSM Exam Simulator', title: 'Build your project management career.',
@@ -20,9 +21,10 @@ const slides = [
 
 export function HomeOfferBar({ discountLabel }: { discountLabel?: string }) {
     const [visible, setVisible] = useState(true);
+    const openOffer = useRewardOfferDialog();
     if (!visible || !discountLabel) return null;
     return <div className="pm-v2-offer-bar"><strong>Exam Simulator offer</strong><span>· Complete your profile to get {discountLabel} off</span>
-        <a href="/#pm-pathway-exams-title">View offer</a>
+        <span><button type="button" className="pm-v2-offer-link" onClick={() => openOffer?.()}>View offer</button></span>
         <button type="button" aria-label="Dismiss promotional offer" onClick={() => setVisible(false)}><X aria-hidden="true"/></button></div>;
 }
 
@@ -52,7 +54,7 @@ export function HomeHero({ hero, eventsVisible = true }: { hero?: HomeContent['h
         </div></div>
         <nav className="pm-v2-quick-links" aria-label="Homepage quick links"><div className="pm-v2-container">
             <Link href="/learning">Courses by experience level</Link><Link href="/exam-simulator/pmp">Certification practice</Link>
-            <Link href="/community">Peer discussions</Link>{eventsVisible && <Link href="#pm-v2-events-title">Community events</Link>}
+            <Link href="/community">Peer discussions</Link>{eventsVisible && <Link href="/events">Community events</Link>}
         </div></nav>
     </>;
 }

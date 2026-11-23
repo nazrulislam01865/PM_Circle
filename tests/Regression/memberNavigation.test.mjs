@@ -98,15 +98,14 @@ test('Activity Log uses the same authenticated member content frame and shared U
     assert.match(component, /<PublicLayout>/);
 });
 
-test('public header stays separate and page-level third-layer tabs remain', () => {
+test('guest header stays separate and member navigation lives in the sidebar', () => {
     const root = new URL('../../', import.meta.url);
-    const load = (path) => readFileSync(new URL(path, root), 'utf8');
-    const header = load('resources/js/components/dashboard/MemberHomeHeader.tsx');
+    const load = path => readFileSync(new URL(path, root), 'utf8');
     const shell = load('resources/js/layouts/pm/MemberDashboardLayout.tsx');
     const publicShell = load('resources/js/layouts/pm/PublicLayout.tsx');
-    assert.match(header, /memberMode \? <>/);
-    assert.match(header, /: <>\s*<Link href=\{isMember/);
-    assert.match(shell, /<MemberSecondaryNavigation \/>/);
+    assert.match(shell, /<MemberCompactHeader dashboard=\{dashboard\}/);
+    assert.match(shell, /<DashboardSidebar dashboard=\{dashboard\}/);
+    assert.doesNotMatch(shell, /<MemberSecondaryNavigation/);
     assert.doesNotMatch(publicShell, /MemberSecondaryNavigation/);
     assert.match(load('resources/js/components/dashboard/DashboardFeed.tsx'), /<FeedScopeTabs/);
     assert.match(load('resources/js/pages/exam/Index.tsx'), /<PmpWorkspaceTabs/);
@@ -114,20 +113,16 @@ test('public header stays separate and page-level third-layer tabs remain', () =
 });
 
 
-test('secondary navigation gives the page body and footer separate grid rows', () => {
+test('authenticated sidebar grid keeps the footer outside the page body', () => {
     const root = new URL('../../', import.meta.url);
-    const load = (path) => readFileSync(new URL(path, root), 'utf8');
-    const css = load('resources/css/pm-member-navigation.css');
+    const load = path => readFileSync(new URL(path, root), 'utf8');
+    const css = load('resources/css/pm-member-sidebar-restore.css');
     const shell = load('resources/js/layouts/pm/MemberDashboardLayout.tsx');
     const app = load('resources/css/app.css');
-
-    // The original member shell's footer occupied row 3. With secondary
-    // navigation, the page is row 3 and the footer must be row 4.
-    assert.match(css, /\.pm-member-shell \.pm-dash-workspace,[\s\S]*?grid-row:\s*3;/);
-    assert.match(css, /\.pm-member-shell\s*>\s*\.pm-unified-footer\s*\{\s*grid-row:\s*4;/);
-    assert.match(css, /grid-template-rows:\s*var\(--header-height\)\s+var\(--pm-member-secondary-height\)\s+minmax\(0,\s*1fr\)\s+auto;/);
-    assert.match(shell, /<MemberSecondaryNavigation \/>/);
+    assert.match(css, /grid-template-columns: var\(--pm-member-sidebar-width\) minmax\(0, 1fr\)/);
+    assert.match(css, /\.pm-member-sidebar-layout \.pm-dash-workspace/);
+    assert.match(css, /\.pm-member-sidebar-layout > \.pm-v2-site-footer/);
+    assert.match(shell, /<div className="pm-member-content-frame">/);
     assert.match(shell, /<SiteFooter \/>/);
-    assert.ok(app.lastIndexOf("@import './pm-member-navigation.css';") > app.lastIndexOf("@import './pm-member-shell.css';"),
-        'the footer row override must come after the original member shell stylesheet');
+    assert.ok(app.includes("@import './pm-member-sidebar-restore.css';"));
 });

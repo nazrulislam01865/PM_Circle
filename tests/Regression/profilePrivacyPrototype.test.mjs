@@ -26,7 +26,7 @@ test('the four prototype groups and all 31 labels are preserved exactly', () => 
 test('privacy stays inside the existing profile page, member header and footer', () => {
   assert.match(page, /<ProfilePrivacyTab/);
   assert.match(page, /<MemberDashboardLayout/);
-  assert.match(layout, /<MemberHomeHeader/);
+  assert.match(layout, /<MemberCompactHeader/);
   assert.match(layout, /<SiteFooter/);
   assert.match(page, /'Manage your professional profile and who can see it\.'/);
   assert.match(page, /Resume & imports/);

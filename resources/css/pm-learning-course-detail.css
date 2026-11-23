@@ -9,6 +9,9 @@
 }
 /* Width and horizontal gutters are inherited from the homepage pm-container. */
 .pm-course-detail-inner { min-width: 0; }
+/* Guest course details align with the existing homepage header, course list and footer.
+   Member course layouts retain their established dashboard sizing. */
+.pm-guest-public-shell .pm-course-detail-inner { width: var(--pm-v2-container-width); }
 .pm-course-detail a { text-decoration: none; }
 .pm-course-detail-breadcrumb {
     display: flex; align-items: center; flex-wrap: wrap;

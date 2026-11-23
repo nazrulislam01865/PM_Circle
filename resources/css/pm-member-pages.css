@@ -119,13 +119,15 @@
 .pm-dashboard .pm-member-public-content .pm-feed-hero-content h1 {
     font-family: var(--pm-member-font);
     color: var(--pm-dash-deep);
-    font-size: var(--pm-member-page-heading-size);
-    letter-spacing: -.7px;
-    line-height: var(--type-line-h2);
+    font-size: var(--text-h1);
+    font-weight: var(--pm-guide-static-h1-weight);
+    letter-spacing: -.04em;
+    line-height: var(--line-h1);
     margin-bottom: 8px;
 }
 .pm-dashboard .pm-member-public-content .pm-feed-hero-content p {
-    font-size: var(--pm-member-font-body);
+    font-size: var(--pm-guide-text-lead);
+    line-height: var(--line-body);
     color: var(--pm-dash-muted);
     margin-bottom: 12px;
 }

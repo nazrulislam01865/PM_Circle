@@ -14,7 +14,6 @@ final class SiteNavigation
             ['href' => '/daily-challenge', 'label' => 'Daily Challenge'],
             ['href' => '/community', 'label' => 'Community Feed'],
             ['href' => '/learning', 'label' => 'Learn & Practice'],
-            ['href' => '/careers', 'label' => 'Careers'],
             ['href' => '/members', 'label' => 'Members'],
             ['href' => '/pm-trends', 'label' => 'PM Trends'],
         ],
@@ -29,7 +28,7 @@ final class SiteNavigation
     /** Menu-only data. Never expose other master-data categories publicly. */
     public static function links(): array
     {
-        return Cache::remember(self::CACHE_KEY, 300, static function (): array {
+        $links = Cache::remember(self::CACHE_KEY, 300, static function (): array {
             $items = MasterDataOption::query()
                 ->whereIn('category', ['header_menu', 'footer_menu'])
                 ->orderBy('sort_order')->orderBy('id')
@@ -45,6 +44,16 @@ final class SiteNavigation
 
             return $links;
         });
+
+        // Also filter previously cached and administrator-configured Careers destinations.
+        return array_map(static fn (array $group): array => array_values(array_filter(
+            $group,
+            static function (array $link): bool {
+                $path = rtrim((string) parse_url($link['href'], PHP_URL_PATH), '/');
+
+                return $path !== '/careers' && ! str_starts_with($path, '/careers/');
+            },
+        )), $links);
     }
 
     public static function clearCache(): void

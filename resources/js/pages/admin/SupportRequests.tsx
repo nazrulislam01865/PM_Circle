@@ -1,0 +1,5 @@
+import { router } from '@inertiajs/react';
+import { AdminLayout } from '@/layouts/admin/AdminLayout';
+import { TicketList, statusLabel, type Ticket, type Paginated } from '@/components/account/SupportTicket';
+import { PMDropdown } from '@/components/pm/PMDropdown';
+export default function SupportRequests({tickets,statusFilter,statuses}:{tickets:Paginated<Ticket>;statusFilter:string;statuses:string[]}){return <AdminLayout title="Support requests" active="/admin/support-requests" subtitle="Review member requests and reply securely."><div className="pm-account-page"><section className="pm-account-card"><PMDropdown id="support-status" aria-label="Filter by status" value={statusFilter||'all'} options={[{value:'all',label:'All statuses'},...statuses.map(s=>({value:s,label:statusLabel(s)}))]} onValueChange={v=>router.get('/admin/support-requests',v==='all'?{}:{status:v},{preserveScroll:true})} placeholder="All statuses"/></section><TicketList tickets={tickets} base="/admin/support-requests"/></div></AdminLayout>;}

@@ -1,6 +1,8 @@
+import { AdjacentPagination } from '@/components/pm/Pagination';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { BookOpen, CheckCircle2, ChevronLeft, ChevronRight, Clock3, Download, Layers3, Pencil, Plus, Search, Settings2, Trash2, UploadCloud, X } from 'lucide-react';
+import { BookOpen, CheckCircle2, Clock3, Download, Layers3, Pencil, Plus, Search, Settings2, Trash2, UploadCloud, X } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AdminChoice } from '@/components/admin/AdminChoice';
 import { AdminLayout } from '@/layouts/admin/AdminLayout';
 
@@ -149,14 +151,14 @@ export default function InterviewCatalog({ options, sets, questions, settings, f
             <form className="pm-interview-admin-filters" onSubmit={filter} role="search"><label className="pm-admin-field"><span>Search questions</span><input value={search} onChange={event => setSearch(event.target.value)} type="search" placeholder="Search question text"/></label><AdminChoice id="interview-filter-set" label="Question set" value={setFilter} onChange={setSetFilter} placeholder="All sets" clearable options={sets.map(item => ({ value: String(item.id), label: item.title }))}/><button type="submit" className="pm-admin-button"><Search size={17}/> Filter</button></form>
             <div className="pm-interview-admin-record-list">{questions.data.map(item => <article className="pm-interview-admin-record" key={item.id}><div className="pm-interview-admin-record-text"><small>{item.set_title} · {labelFor('type', item.type)}</small><h3>{item.text}</h3></div><span className={`pm-interview-admin-status ${item.is_active ? 'is-active' : ''}`}>{item.is_active ? 'Active' : 'Hidden'}</span><button type="button" className="pm-admin-button" onClick={() => startEdit('question', item)}><Pencil size={15}/> Edit</button><button type="button" className="pm-admin-button pm-interview-admin-delete" onClick={() => confirmDelete('question', item.id, item.text)}><Trash2 size={15}/> Delete</button></article>)}
                 {questions.data.length === 0 && <p className="pm-interview-admin-muted">No questions match these filters.</p>}</div>
-            <div className="pm-interview-admin-pagination"><span>{questions.from ?? 0}–{questions.to ?? 0} of {questions.total}</span><div>{questions.prev_page_url ? <Link className="pm-admin-button" href={questions.prev_page_url}><ChevronLeft size={16}/> Previous</Link> : null}{questions.next_page_url ? <Link className="pm-admin-button" href={questions.next_page_url}>Next <ChevronRight size={16}/></Link> : null}</div></div>
+            <div className="pm-interview-admin-pagination"><span>{questions.from ?? 0}–{questions.to ?? 0} of {questions.total}</span><AdjacentPagination previous={questions.prev_page_url} next={questions.next_page_url} label="Interview question pages"/></div>
         </section>}
         {tab === 'settings' && <section className="pm-admin-panel pm-interview-admin-settings"><div className="pm-interview-admin-title"><div><h2>Practice timing</h2><p>Set the estimated time per question. Existing sessions keep their original timing.</p></div><Clock3 size={24}/></div><form onSubmit={saveSettings}>
             <label className="pm-admin-field"><span>Minutes per question</span><input min="1" max="30" required type="number" value={minutes} onChange={event => setMinutes(Number(event.target.value))}/></label>{errors.minutes_per_question && <p role="alert" className="pm-interview-admin-error">{errors.minutes_per_question}</p>}
             <button className="pm-admin-button pm-admin-button-primary" disabled={busy} type="submit">{busy ? 'Saving…' : 'Save timing'}</button></form><p className="pm-interview-admin-muted">AI evaluation and credit usage are not enabled by this setting.</p>
         </section>}
-        {importOpen && <div className="pm-interview-admin-modal-overlay"><div className="pm-interview-admin-modal pm-interview-import-modal" role="dialog" aria-modal="true" aria-label="Import interview questions">
-            <header><div><h2>Import interview questions</h2><p>Add multiple questions to a selected set.</p></div><button type="button" aria-label="Close import dialog" disabled={busy} onClick={closeImport}><X size={20}/></button></header>
+        {importOpen && <Dialog open onOpenChange={open => { if (!open && !busy) closeImport(); }}><DialogContent className="pm-interview-admin-modal pm-interview-import-modal" showCloseButton={false} onPointerDownOutside={event => event.preventDefault()}>
+            <header><div><DialogTitle>Import interview questions</DialogTitle><DialogDescription>Add multiple questions to a selected set.</DialogDescription></div><button type="button" aria-label="Close import dialog" disabled={busy} onClick={closeImport}><X size={20}/></button></header>
             <form className="pm-interview-import-form" onSubmit={importQuestions}>
                 <section className="pm-interview-import-section" aria-label="Step 1: Choose a question set">
                     <div className="pm-interview-import-heading"><span className="pm-interview-import-step" aria-hidden="true">1</span><strong>Choose a question set</strong></div>
@@ -176,16 +178,16 @@ export default function InterviewCatalog({ options, sets, questions, settings, f
                 {Object.entries(importErrors).filter(([key]) => key !== 'set_id' && key !== 'file').map(([key, value]) => <p className="pm-interview-admin-error" role="alert" key={key}>{value}</p>)}
                 <footer><button type="button" disabled={busy} className="pm-admin-button" onClick={closeImport}>Cancel</button><button type="submit" disabled={busy || !importFile || !importSet} className="pm-admin-button pm-admin-button-primary"><UploadCloud size={17}/>{busy ? 'Importing…' : 'Import questions'}</button></footer>
             </form>
-        </div></div>}
-        {deleting && <div className="pm-interview-admin-modal-overlay"><div className="pm-interview-admin-modal pm-interview-admin-confirm" role="alertdialog" aria-modal="true" aria-label="Confirm delete">
-            <header><div><h2>Delete {deleting.kind}?</h2><p>Only the selected item will be deleted.</p></div><button aria-label="Close delete dialog" type="button" disabled={busy} onClick={() => setDeleting(null)}><X size={20}/></button></header>
+        </DialogContent></Dialog>}
+        {deleting && <Dialog open onOpenChange={open => { if (!open && !busy) setDeleting(null); }}><DialogContent className="pm-interview-admin-modal pm-interview-admin-confirm" showCloseButton={false} onPointerDownOutside={event => event.preventDefault()} role="alertdialog">
+            <header><div><DialogTitle>Delete {deleting.kind}?</DialogTitle><DialogDescription>Only the selected item will be deleted.</DialogDescription></div><button aria-label="Close delete dialog" type="button" disabled={busy} onClick={() => setDeleting(null)}><X size={20}/></button></header>
             <p className="pm-interview-admin-delete-label">{deleting.name}</p>
             <p className="pm-interview-admin-muted">This action cannot be undone. Used question types and non-empty question sets are protected. Existing interview sessions keep their original questions.</p>
             {deleteError && <p className="pm-interview-admin-error" role="alert">{deleteError}</p>}
             <footer><button type="button" className="pm-admin-button" disabled={busy} onClick={() => setDeleting(null)}>Cancel</button><button type="button" className="pm-admin-button pm-interview-admin-delete-confirm" disabled={busy} onClick={destroy}><Trash2 size={16}/>{busy ? 'Deleting…' : 'Delete'}</button></footer>
-        </div></div>}
-        {editor && <div className="pm-interview-admin-modal-overlay"><div className="pm-interview-admin-modal" role="dialog" aria-modal="true" aria-label={`Edit ${editor.kind}`}>
-            <header><div><h2>{editor.id ? `Edit ${editor.kind}` : `Add ${editor.kind}`}</h2><p>{editor.id ? 'Change the fields you need and save.' : 'Enter the details for this new record.'}</p></div><button type="button" aria-label="Close dialog" disabled={busy} onClick={() => setEditor(null)}><X size={20}/></button></header>
+        </DialogContent></Dialog>}
+        {editor && <Dialog open onOpenChange={open => { if (!open && !busy) setEditor(null); }}><DialogContent className="pm-interview-admin-modal" showCloseButton={false} onPointerDownOutside={event => event.preventDefault()}>
+            <header><div><DialogTitle>{editor.id ? `Edit ${editor.kind}` : `Add ${editor.kind}`}</DialogTitle><DialogDescription>{editor.id ? 'Change the fields you need and save.' : 'Enter the details for this new record.'}</DialogDescription></div><button type="button" aria-label="Close dialog" disabled={busy} onClick={() => setEditor(null)}><X size={20}/></button></header>
             <form onSubmit={submit}>
                 {editor.kind === 'option' && <>
                     <AdminChoice id="interview-option-group" contentClassName="pm-interview-admin-choice-content" label="Option group" disabled={Boolean(editor.id)} required value={String(form.group ?? '')} onChange={next => change('group', next)} options={groups.map(group => ({ value: group.key, label: group.name }))} />
@@ -206,6 +208,6 @@ export default function InterviewCatalog({ options, sets, questions, settings, f
                 {Object.entries(errors).map(([key, value]) => <p className="pm-interview-admin-error" role="alert" key={key}>{value}</p>)}
                 <footer><button type="button" className="pm-admin-button" disabled={busy} onClick={() => setEditor(null)}>Cancel</button><button className="pm-admin-button pm-admin-button-primary" disabled={busy} type="submit">{busy ? 'Saving…' : 'Save changes'}</button></footer>
             </form>
-        </div></div>}
+        </DialogContent></Dialog>}
     </AdminLayout>;
 }

@@ -1,3 +1,4 @@
+import { Link } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { HomeAction, HomeSectionTitle } from './HomeUi';
@@ -30,13 +31,12 @@ export function HomeEvents({ join }: { join?: NonNullable<HomeContent['careers']
 
     return <section className="pm-v2-section pm-v2-container pm-v2-events-section" id="pm-v2-events-title" aria-labelledby="pm-v2-event-heading">
         <HomeSectionTitle id="pm-v2-event-heading" title="Community events"
-            description="Join study sessions, practical workshops and discussions hosted by members." action="View all events" href="/events"/>
-        <button className="pm-v2-button pm-v2-create-event" type="button" onClick={() => setCreating(true)}>Create event</button>
+            description="Join study sessions, practical workshops and discussions hosted by members." actions={<div className="pm-v2-events-heading-actions"><Link href="/events" className="pm-v2-text-link">View all events</Link><button className="pm-v2-button" type="button" onClick={() => setCreating(true)}>Create event</button></div>}/>
         <p className="sr-only">Illustrative event previews. The events shown here are not published or open for booking.</p>
-        <div className="pm-v2-events-list">{events.map(item => <article className="pm-v2-event" key={item.id}>
-            <div className="pm-v2-event-date"><strong>{item.day}</strong><span>{item.month}</span></div>
-            <div className="pm-v2-event-copy"><h3>{item.title}</h3><p>{item.date} · {item.time} · {item.location}</p><span>{item.description}</span></div>
-            <button type="button" className="pm-v2-button" onClick={() => setSelected(item)}>View event</button>
+        <div className="pm-v2-events-list">{events.map(item => <article className="pm-v2-event pm-event-row-layout" key={item.id}>
+            <div className="pm-v2-event-date pm-event-row-date"><strong>{item.day}</strong><span>{item.month}</span></div>
+            <div className="pm-v2-event-copy pm-event-row-copy"><h3>{item.title}</h3><p>{item.date} · {item.time} · {item.location}</p><span>{item.description}</span></div>
+            <button type="button" className="pm-v2-button pm-event-row-action" onClick={() => setSelected(item)}>View event</button>
         </article>)}</div>
         <div className="pm-v2-join-banner"><div><h2>{referenceText(join?.heading, "Don't just manage projects. Grow with people who do.", 'Grow with people who do what you do.')}</h2>
             <p>{referenceText(join?.description, 'Start with one discussion, one lesson, one connection.', 'Join PM Circle and take your first step in learning, practice, or discussion.')}</p></div>

@@ -11,7 +11,7 @@ export type SavedComment = {
     likes_count: number;
     viewer_liked: boolean;
     viewer_reaction?: import('@/components/home/HomeEngagement').ReactionType | null;
-    author: { name: string; avatar_path?: string | null };
+    author: { name: string; avatar_path?: string | null; profile_url?: string | null };
     replies: SavedComment[];
     replies_count?: number;
 };

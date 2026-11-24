@@ -21,7 +21,7 @@
 .pm-course-public-access { padding: .1875rem var(--pm-guide-s2); border-radius: var(--pm-guide-radius-pill); font-weight: var(--pm-guide-weight-control); }
 .pm-course-public-access.is-free { color: var(--pm-guide-green); background: var(--pm-guide-green-bg); }
 .pm-course-public-access.is-paid { color: var(--pm-guide-purple); background: var(--pm-guide-purple-bg); }
-.pm-course-public-heading h1 { font-size: var(--pm-guide-text-course-title); font-weight: var(--pm-guide-static-h1-weight); line-height: var(--pm-guide-line-h1); letter-spacing: -.04em; margin-bottom: var(--pm-guide-s3); }
+.pm-course-public-heading h1 { font-size: var(--pm-guide-text-course-title); font-weight: var(--pm-guide-static-h1-weight); line-height: var(--pm-guide-line-h1); letter-spacing: var(--pm-guide-tracking-h1); margin-bottom: var(--pm-guide-s3); }
 .pm-course-public-heading > p { font-size: var(--pm-guide-text-lead); margin-bottom: var(--pm-guide-s5); }
 .pm-course-public-anchor-links { display: flex; align-items: center; flex-wrap: wrap; gap: var(--pm-guide-s4); font-size: var(--pm-guide-text-meta); }
 .pm-course-public-anchor-links a { text-decoration: none; }

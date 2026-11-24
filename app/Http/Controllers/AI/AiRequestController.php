@@ -54,9 +54,7 @@ final class AiRequestController extends Controller
             ->whereNotIn('code', ['scenario_generate', 'trend_draft', 'daily_challenge_review'])
             ->get(['code', 'min_plan', 'credit_tariff', 'tariff_version', 'max_input_chars']);
         $plan = $plans->code($request->user());
-        $rank = ['free' => 0, 'plus' => 1, 'pro' => 2];
-        $features = $features->filter(fn ($f) => ($rank[$f->min_plan] ?? 99)
-            <= ($rank[$plan] ?? 0))->values();
+        $features = $features->filter(fn ($f) => \App\Domain\Billing\Queries\MemberFeatureAccess::allowsAi($plan, $f->code, $f->min_plan))->values();
         return response()->json(['enabled' => true, 'features' => $features]);
     }
 

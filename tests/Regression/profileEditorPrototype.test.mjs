@@ -59,7 +59,7 @@ test('profile editing aligns with the shared member width and canonical control 
   assert.match(memberCss, /width: min\(var\(--pm-member-page-max-width\), calc\(100% - 64px\)\)/);
   assert.doesNotMatch(css, /max-width: 1276px/);
   assert.match(css, /border-color: var\(--control-border\)/);
-  assert.match(tokens, /--control-border:\s*#8597ab/);
+  assert.match(tokens, /--control-border:\s*var\(--pm-guide-control-line\)/);
   assert.match(css, /@media \(max-width: 1120px\)/);
   assert.match(css, /@media \(max-width: 760px\)/);
 });

@@ -18,7 +18,7 @@ final class SavedPostsController extends Controller
                 ->whereHas('saves', fn ($query) => $query->where('user_id', $request->user()->id))
                 ->whereNotExists(fn ($hidden) => $hidden->selectRaw('1')->from('post_hides')
                     ->whereColumn('post_hides.post_id', 'posts.id')->where('post_hides.user_id', $request->user()->id))
-                ->with(['author:id,name', 'author.profile' => fn ($query) => $query->where('visibility', 'public')->select('id', 'user_id', 'role')])
+                ->with(['author:id,name', 'author.profile' => fn ($query) => $query->where('visibility', 'public')->select('id', 'user_id', 'role', 'avatar_path')])
                 ->when(EngagementStats::readsEnabled(), fn ($query) => PostReactionSummary::selectStats($query
                     ->leftJoin('post_engagement_stats as saved_stats', 'saved_stats.post_id', '=', 'posts.id')
                     ->select('posts.*')

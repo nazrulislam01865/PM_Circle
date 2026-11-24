@@ -41,7 +41,7 @@ function ReviewExample({ example }: { example: typeof examples[number] }) {
 }
 
 export default function AiResumeAssistant() {
-    const { auth } = usePage<{ auth?: { user?: { is_admin?: boolean } | null } }>().props;
+    const { auth, memberShell } = usePage<{ auth?: { user?: { is_admin?: boolean } | null }; memberShell?: { featureAccess?: { resume: boolean } } }>().props;
     const isMember = Boolean(auth?.user && !auth.user.is_admin);
     return <PublicLayout siteLayout homePrototype guideLayout>
         <Head title="AI Resume Assistant"><meta name="description" content={description}/></Head>
@@ -58,7 +58,7 @@ export default function AiResumeAssistant() {
                 </div><HomePhoto photo="leader" source="/images/resume/experience.webp" alt="" className="pm-public-resume-photo" eager/></section>
                 <section aria-labelledby="pm-public-resume-how"><h2 id="pm-public-resume-how">How it works</h2><p className="pm-public-resume-subtitle">Follow a sample résumé from import to export.</p><ol className="pm-public-resume-steps">{steps.map((step, index) => <StepCard key={step.title} step={step} number={index + 1}/>)}</ol></section>
                 <section className="pm-public-resume-review" aria-labelledby="pm-public-resume-review-title"><h2 id="pm-public-resume-review-title">See what an AI review could suggest</h2><p>Four sample résumé bullets from project delivery roles.</p>{examples.map(example => <ReviewExample key={example.title} example={example}/>)}<p className="pm-public-resume-note">Before using a suggestion, verify any added detail, responsibility, or number against your own experience.</p></section>
-                <section className="pm-public-resume-cta" aria-labelledby="pm-public-resume-start"><div><h2 id="pm-public-resume-start">Start with the résumé you already have</h2><p>Sign in to continue to the member experience. This public preview uses sample content.</p></div><div className="pm-public-resume-actions">{isMember ? <Link href="/settings/profile?tab=imports" className="pm-button">Open résumé imports</Link> : <><Link href="/register" className="pm-guide-button">Create an account</Link><Link href="/login" className="pm-guide-button is-outline">Log in</Link></>}</div></section>
+                <section className="pm-public-resume-cta" aria-labelledby="pm-public-resume-start"><div><h2 id="pm-public-resume-start">Start with the résumé you already have</h2><p>Sign in to continue to the member experience. This public preview uses sample content.</p></div><div className="pm-public-resume-actions">{isMember ? <><Link href={memberShell?.featureAccess?.resume ? "/dashboard/resume-assistant" : "/membership"} className="pm-button">{memberShell?.featureAccess?.resume ? "Open Resume Assistant" : "View Plan & usage"}</Link><Link href="/settings/profile?tab=imports" className="pm-guide-button is-outline">Open résumé imports</Link></> : <><Link href="/register" className="pm-guide-button">Create an account</Link><Link href="/login" className="pm-guide-button is-outline">Log in</Link></>}</div></section>
             </div>
         </div>
     </PublicLayout>;

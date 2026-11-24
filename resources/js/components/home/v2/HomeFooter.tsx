@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { trademarkNotice } from '@/components/pm/trademarkNotice';
 import { FooterBrand, FooterSocial } from '@/components/pm/FooterIdentity';
 import type { PmpPublicContent } from '@/types/pmp-public';
 
@@ -66,7 +67,7 @@ export function HomeFooter({ content, eventsVisible = true, aiVisible = true }: 
         ] : []),
     ];
     const prototypeDescription = 'Learn project management, practise for certification, and connect with peers.';
-    const prototypeLegalNotice = 'PMP®, CAPM®, PMI-ACP® and PMI-PBA® are marks of Project Management Institute, Inc. Certified ScrumMaster® (CSM) is a certification of Scrum Alliance, Inc. Certification names identify the exams covered by our independent practice materials. PM Circle provides community learning and exam preparation and is not affiliated with, sponsored by, or endorsed by PMI or Scrum Alliance.';
+
     const showBrand = content.show_brand !== false || content.show_about !== false || content.show_social !== false;
 
     return <footer className="pm-v2-site-footer" aria-label="PM Circle footer"><div className="pm-v2-container">
@@ -82,7 +83,7 @@ export function HomeFooter({ content, eventsVisible = true, aiVisible = true }: 
             <FooterLinks title="Plans & Policies" items={plans}/>
         </div>
         {content.show_legal !== false && <div className="pm-v2-footer-legal">
-            <p><strong>Trademark notice.</strong> {prototypeLegalNotice}</p>
+            <p><strong>Trademark notice.</strong> {trademarkNotice}</p>
             <div className="pm-v2-footer-last"><span>© PM Circle by ITQAN</span></div>
         </div>}
     </div></footer>;

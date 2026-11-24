@@ -40,7 +40,7 @@ test('Refund layout reuses central legal styles and scopes its adjustments', () 
         assert.ok(css.includes(`.pm-terms-${name}`));
     }
     assert.match(css, /\.pm-refund-page \.pm-terms-main \{ padding-bottom: var\(--pm-guide-s12\)/);
-    assert.match(css, /\.pm-member-public-content \.pm-refund-page/);
+    assert.doesNotMatch(css, /--pm-v2-container-width\s*:/);
     assert.match(css, /@media \(max-width: 40\.625rem\)/);
     const adjustments = css.split('/* Refund Policy shares')[1];
     assert.ok(adjustments);

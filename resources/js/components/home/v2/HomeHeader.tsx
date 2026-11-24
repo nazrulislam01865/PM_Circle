@@ -12,7 +12,7 @@ function HeaderDropdown({ label, items, onNavigate }: { label: string; items: Na
     const closeDropdown = () => { detailsRef.current?.removeAttribute('open'); onNavigate(); };
 
     return <details ref={detailsRef} className="pm-v2-nav-menu"
-        onMouseLeave={() => detailsRef.current?.removeAttribute('open')}
+        onPointerLeave={event => { if (event.pointerType === 'mouse') detailsRef.current?.removeAttribute('open'); }}
         onKeyDown={event => {
             if (event.key === 'Escape') {
                 event.preventDefault();
@@ -56,16 +56,17 @@ export function HomeHeader({ eventsVisible = true }: { eventsVisible?: boolean }
                 ]}/>
                 <Link href="/pm-trends" onClick={close} aria-current={page.url.split('?')[0] === '/pm-trends' ? 'page' : undefined}>Trends</Link>
                 {eventsVisible && <Link href="/events" onClick={close}>Events</Link>}
+                {!auth?.user?.is_admin && <Link href="/login" className="pm-v2-mobile-login" onClick={close}>Log in</Link>}
             </nav>
             <div className="pm-v2-header-utilities">
-                <button type="button" className="pm-v2-search-toggle" aria-expanded={searchOpen} aria-controls="pm-v2-header-search" onClick={() => setSearchOpen(value => !value)}>
+                <button type="button" className="pm-v2-search-toggle" aria-label="Search" aria-expanded={searchOpen} aria-controls="pm-v2-header-search" onClick={() => { setMenuOpen(false); setSearchOpen(value => !value); }}>
                     <Search aria-hidden="true"/> Search
                 </button>
                 {auth?.user?.is_admin ? <Link href="/admin" className="pm-v2-button pm-v2-button-primary">Administration</Link> : <>
                     <Link href="/login" className="pm-v2-login">Log in</Link>
                     <Link href="/register" className="pm-v2-button pm-v2-button-primary">Join free</Link>
                 </>}
-                <button type="button" className="pm-v2-menu-toggle" aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen} onClick={() => setMenuOpen(value => !value)}>
+                <button type="button" className="pm-v2-menu-toggle" aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen} onClick={() => { setSearchOpen(false); setMenuOpen(value => !value); }}>
                     {menuOpen ? <X aria-hidden="true"/> : <Menu aria-hidden="true"/>}
                 </button>
             </div>

@@ -1,7 +1,7 @@
 /* Shared member/public reaction summary and roster. All dimensions, colors, type use approved UI tokens. */
 /* The reaction count is a peer of the actions, not nested in Save.
-   Desktop keeps the count and Save right-aligned; mobile gives the count
-   its own unobstructed row while the four actions share equal slots. */
+   Desktop keeps the count and Save right-aligned; mobile groups the count
+   with the reaction picker and keeps comments in the same row. */
 .pm-unified-post-card .pm-engagement-actions > .pm-post-reaction-summary {
     margin-inline-start: auto;
 }
@@ -104,8 +104,6 @@
 .pm-post-reactions-member:last-of-type { border-bottom: 0; }
 .pm-post-reactions-member .pm-avatar { flex: none; }
 .pm-post-reactions-name { min-width: 0; flex: 1; font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui); overflow-wrap: anywhere; }
-.pm-post-reactions-name a { color: var(--ink); text-decoration: none; }
-.pm-post-reactions-name a:hover { color: var(--blue); text-decoration: underline; }
 .pm-post-reactions-member > .pm-post-reaction-icon { margin-inline-start: auto; }
 .pm-post-reactions-feedback { padding: var(--s4) 0; color: var(--muted); font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui); }
 .pm-post-reactions-feedback button, .pm-post-reactions-more { color: var(--blue); background: transparent; border: 0; cursor: pointer; font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui); }

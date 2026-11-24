@@ -1,3 +1,4 @@
+import { MobileFilterPanel } from '@/components/pm/MobileFilterPanel';
 import { ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 
@@ -21,7 +22,7 @@ export function ScenarioLibraryFilters({ filters, topics, statusCounts, onChange
     const [expanded, setExpanded] = useState({ topics: true, status: true, time: true });
     const toggle = (name: keyof typeof expanded) => setExpanded(current => ({ ...current, [name]: !current[name] }));
     const visibleTopics = showAll ? topics : topics.slice(0, 5);
-    return <aside className="pm-challenge-filter-panel" aria-label="Filter scenarios">
+    return <MobileFilterPanel className="pm-challenge-filter-panel" label="Filter Scenarios" activeCount={Number(Boolean(filters.topic)) + Number(filters.status !== 'all') + Number(filters.time !== 'all')}>
         <h2>Filter Scenarios</h2>
         <div className="pm-challenge-filter-body">
             <section className="pm-challenge-filter-section">
@@ -46,5 +47,5 @@ export function ScenarioLibraryFilters({ filters, topics, statusCounts, onChange
             </section>
         </div>
         <div className="pm-challenge-filter-footer"><button type="button" onClick={onReset}><RotateCcw size={18} aria-hidden="true"/> Reset Filters</button></div>
-    </aside>;
+    </MobileFilterPanel>;
 }

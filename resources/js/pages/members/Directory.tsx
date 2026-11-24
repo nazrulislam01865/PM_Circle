@@ -1,3 +1,4 @@
+import { LinkedPagination } from '@/components/pm/Pagination';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Check, Crown, Search, UsersRound, Zap, Plus } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
@@ -16,7 +17,7 @@ type Member = {
 };
 type Filters = { role: string; industry: string; location: string; tab: 'all' | 'following'; sort: 'recent' | 'name' | 'followers' };
 type Props = {
-    members: { data: Member[]; total: number; next_page_url: string | null; prev_page_url: string | null };
+    members: { data: Member[]; total: number; links: { url: string | null; label: string; active: boolean }[]; next_page_url: string | null; prev_page_url: string | null };
     search: string;
     filters: Filters;
     filterOptions: { roles: string[]; industries: string[]; locations: PMDropdownOption[] };
@@ -153,10 +154,7 @@ export default function Directory({ members, search, filters, filterOptions }: P
                 {isFiltered && <Link href="/members" className="pm-members-profile-button">View all members</Link>}
             </section>}
 
-            {(members.prev_page_url || members.next_page_url) && <nav className="pm-members-pagination" aria-label="Member pages">
-                {members.prev_page_url && <Link href={members.prev_page_url} preserveScroll>Previous</Link>}
-                {members.next_page_url && <Link href={members.next_page_url} preserveScroll>Next</Link>}
-            </nav>}
+            <LinkedPagination links={members.links} label="Member pages"/>
             <p className="pm-members-privacy"><UsersRound size={16} aria-hidden="true"/>Only public profile details are shown.</p>
         </div>
     </PublicLayout>;

@@ -1,5 +1,5 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useRef, useState } from 'react';
 import { Crown, ShieldCheck } from 'lucide-react';
 import { PricingComparisonContent, type PricingPlanCode } from '@/components/billing/PricingComparisonContent';
 import type { Plan } from '@/components/billing/PlanCard';
@@ -12,24 +12,31 @@ export default function Membership({ plans, currentPlan, temporaryAccessEnabled 
     temporaryAccessEnabled: boolean;
 }) {
     const { memberShell } = usePage<{ memberShell: DashboardShellData }>().props;
+    const submitting = useRef(false);
     const [processing, setProcessing] = useState<PricingPlanCode | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const activate = (plan: PricingPlanCode) => {
-        if (!temporaryAccessEnabled || processing !== null || plan === currentPlan) return;
+        if (!temporaryAccessEnabled || submitting.current || processing !== null || plan === currentPlan) return;
+        submitting.current = true;
         setProcessing(plan);
         setError(null);
         // Server-side environment/permissions determine whether demo access is permitted.
         router.post('/membership/temporary', { plan }, {
-            preserveScroll: true,
+            // Reveal the existing inline alert even if the plan buttons are below the fold.
+            preserveScroll: page => !page.props.errors?.plan,
             onError: errors => setError(errors.plan || 'Unable to update membership.'),
-            onFinish: () => setProcessing(null),
+            onFinish: () => {
+                submitting.current = false;
+                setProcessing(null);
+            },
         });
     };
 
     return <MemberDashboardLayout dashboard={memberShell}>
         <Head title="Membership plans" />
         <div className="pm-membership-comparison">
+            <Link href="/membership" className="pm-account-back">← Plan &amp; usage</Link>
             <PricingComparisonContent
                 plans={plans}
                 error={error}

@@ -20,11 +20,11 @@ test('browse and PMP details reuse one homepage header, footer and guide rail', 
     assert.match(shell, /const showHomeHeader = homePrototype \|\| isGuest/);
     assert.match(shell, /showHomeHeader \? <HomeHeader/);
     assert.match(shell, /variant=\{homePrototype \? 'home' : footerVariant\}/);
-    assert.match(catalogCss, /\.pm-home-v2-shell\.pm-guide-public-shell\s*\{/);
-    assert.match(catalogCss, /--pm-v2-container-width: min\(var\(--pm-guide-container\)/);
-    assert.match(catalogCss, /--pm-v2-footer-bg: var\(--pm-guide-footer\)/);
-    assert.match(detailCss, /\.pm-pmp-public-container\s*\{\s*width: min\(var\(--pm-guide-container\)/);
-    assert.match(detailCss, /--pm-guide-gutter-mobile/);
+    assert.doesNotMatch(catalogCss, /--pm-v2-container-width\s*:/);
+    assert.match(catalogCss, /width: var\(--pm-v2-container-width\)/);
+    assert.match(tokens, /--pm-v2-footer-bg: var\(--pm-guide-footer\)/);
+    assert.match(detailCss, /\.pm-pmp-public-container\s*\{\s*width: var\(--pm-v2-container-width\)/);
+    assert.match(tokens, /--pm-guide-gutter: var\(--pm-guide-gutter-mobile\)/);
     assert.doesNotMatch(footer, /Homepage design mockup|Sample content/);
 });
 

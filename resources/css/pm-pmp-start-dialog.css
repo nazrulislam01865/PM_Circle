@@ -3,12 +3,12 @@
 .pm-pmp-start-overlay {
     position: fixed;
     inset: 0;
-    z-index: 2000;
-    background: color-mix(in srgb, var(--ink) 55%, transparent);
+    z-index: var(--pm-guide-dialog-layer);
+    background: var(--pm-guide-dialog-backdrop);
 }
 .pm-pmp-start-dialog {
     position: fixed;
-    z-index: 2001;
+    z-index: var(--pm-guide-dialog-layer);
     top: calc(50% + var(--s4));
     left: 50%;
     transform: translate(-50%, -50%);
@@ -27,7 +27,7 @@
 .pm-pmp-start-dialog :is(h2, p) { margin: 0; }
 .pm-pmp-start-body { min-height: 0; overflow-y: auto; display: grid; gap: var(--s3); padding: var(--s5) var(--s8) var(--s4); }
 .pm-pmp-start-head { display: flex; align-items: start; justify-content: space-between; gap: var(--s3); }
-.pm-pmp-start-title { font: var(--bold) var(--text-h2)/var(--line-h2) var(--font-ui); letter-spacing: -.015em; }
+.pm-pmp-start-title { font: var(--bold) var(--text-h2)/var(--line-h2) var(--font-ui); letter-spacing: var(--pm-tracking-neg-p015em); }
 .pm-pmp-start-close { flex: none; border: 0; border-radius: var(--radius-control); width: var(--control-compact); height: var(--control-compact); background: var(--track); color: var(--muted); display: grid; place-items: center; cursor: pointer; }
 .pm-pmp-start-close:hover { color: var(--ink); background: var(--blue-soft); }
 .pm-pmp-start-sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }

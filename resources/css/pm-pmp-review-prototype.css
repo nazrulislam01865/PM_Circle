@@ -14,7 +14,7 @@
 .pm-exam-review-page .pm-exam-review-top { margin-bottom: var(--s4); align-items: center; }
 .pm-exam-review-page .pm-exam-review-top h1 {
     margin: 0; font-size: var(--text-h1); line-height: var(--line-h1);
-    font-weight: var(--bold); letter-spacing: -.025em;
+    font-weight: var(--bold); letter-spacing: var(--pm-tracking-neg-p025em);
 }
 .pm-review-outline-button {
     display: inline-flex; justify-content: center; align-items: center; gap: var(--s1);
@@ -169,7 +169,7 @@
     font-size: var(--text-ui); line-height: var(--line-ui); font-weight: var(--bold);
 }
 .pm-exam-review-page .pm-review-tab-content p {
-    font-size: var(--text-ui); line-height: var(--line-ui);
+    font-size: var(--text-body); line-height: var(--line-body);
     white-space: pre-line; overflow-wrap: anywhere;
 }
 .pm-exam-review-page .pm-review-correct-rationale {
@@ -335,7 +335,7 @@
 }
 .pm-exam-review-page .pm-review-ai-message.is-member { align-self: flex-end; background: var(--blue-soft); }
 .pm-exam-review-page .pm-review-ai-message>strong { font-size: var(--text-xs); line-height: var(--line-xs); color: var(--blue); }
-.pm-exam-review-page .pm-review-ai-message>p { margin: 0; font-size: var(--text-sm); line-height: var(--line-body); white-space: pre-wrap; }
+.pm-exam-review-page .pm-review-ai-message>p { margin: 0; font-size: var(--text-body); line-height: var(--line-body); white-space: pre-wrap; }
 .pm-exam-review-page .pm-review-ai-next { padding-top: var(--s2); border-top: 1px solid var(--border); }
 .pm-exam-review-page .pm-review-ai-message.is-pending>p:last-child,
 .pm-exam-review-page .pm-review-ai-loading { display: flex; align-items: center; gap: var(--s2); }

@@ -33,6 +33,15 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
 
+        // Keep demo membership switching independent of unrelated member requests.
+        RateLimiter::for('support-submit', fn ($request) => Limit::perMinute(5)->by('support-submit:'.$request->user()->getAuthIdentifier()));
+
+        RateLimiter::for('membership-switch', function (Request $request): Limit {
+            $member = (string) ($request->user()?->getAuthIdentifier() ?? $request->ip());
+
+            return Limit::perMinute(10)->by('membership-switch:'.$member);
+        });
+
         // Repeated clicks and retries are bounded per member, independent of other routes.
         RateLimiter::for('pmp-exam-start', function (Request $request): array {
             $member = (string) ($request->user()?->getAuthIdentifier() ?? $request->ip());

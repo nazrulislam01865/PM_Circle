@@ -36,12 +36,13 @@ final class AiGateway
         if ($existing) {
             return $this->receipt($existing);
         }
-        $feature = $this->catalog->get($featureCode);
         $plan = $this->plans->code($user);
-        $rank = ['free' => 0, 'plus' => 1, 'pro' => 2];
-        $minPlan = AiFeatureCatalog::FEATURES[$featureCode]['min_plan'];
-        if (($rank[$plan] ?? 0) < ($rank[$minPlan] ?? 99)
-            || ($rank[$feature->min_plan] ?? 99) > ($rank[$plan] ?? 0)) {
+        if (isset(AiFeatureCatalog::FEATURES[$featureCode])
+            && ! \App\Domain\Billing\Queries\MemberFeatureAccess::allows($plan, AiFeatureCatalog::FEATURES[$featureCode]['min_plan'])) {
+            throw new AiFailure('NOT_ENTITLED', 403);
+        }
+        $feature = $this->catalog->get($featureCode);
+        if (! \App\Domain\Billing\Queries\MemberFeatureAccess::allowsAi($plan, $featureCode, $feature->min_plan)) {
             throw new AiFailure('NOT_ENTITLED', 403);
         }
         // Testing-only temporary grants cannot be mistaken for a paid entitlement.

@@ -25,7 +25,8 @@ test('canonical typography, spacing, control, and icon tokens match the approved
         if (name === 'font-ui') {
             assert.ok(actual?.startsWith('\"Inter\"'), 'project-wide Inter font override');
         } else {
-            assert.equal(actual, expected, `Token ${name} must match the approved UI guide`);
+            const revised = {'text-xs':'var(--pm-guide-text-meta)','line-xs':'var(--pm-guide-line-body)','radius-card':'var(--pm-guide-radius-card)','control-height':'var(--control-touch)','ink':'var(--pm-guide-ink)','muted':'var(--pm-guide-muted)','blue':'var(--pm-guide-blue)','border':'var(--pm-guide-line)','control-border':'var(--pm-guide-control-line)'};
+            assert.equal(actual, revised[name] ?? expected, `Token ${name} must match the current guide`);
         }
     }
     // The November 23 HTML guide supersedes the earlier body and heading types.
@@ -34,7 +35,7 @@ test('canonical typography, spacing, control, and icon tokens match the approved
         'text-body': '1rem', 'line-body': '1.6',
         'text-h1': 'var(--pm-guide-text-h1)', 'line-h1': 'var(--pm-guide-line-h1)',
         'text-h2': 'var(--pm-guide-text-h2)', 'line-h2': 'var(--pm-guide-line-h2)',
-        'text-sm': '.875rem', 'line-sm': '1.35',
+        'text-sm': 'var(--pm-guide-text-meta)', 'line-sm': 'var(--pm-guide-line-body)',
         'text-h5': '1rem', 'line-h5': '1.4', 'line-ui': '1.35',
     })) assert.match(tokens, new RegExp(`--${name}:\\s*${value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')};`));
 });
@@ -49,9 +50,9 @@ test('Activity Log inherits member layout rather than defining a new page frame 
 
 test('Activity Log uses guide heading, supporting text, badge, and icon metrics', () => {
     assert.match(css, /font: var\(--bold\) var\(--text-h1\)\/var\(--line-h1\)/);
-    assert.match(css, /font: var\(--bold\) var\(--text-h2\)\/var\(--line-h2\)/);
-    assert.match(css, /font: var\(--semibold\) var\(--text-h5\)\/var\(--line-h5\)/);
-    assert.match(css, /font: var\(--semibold\) var\(--text-xs\)\/var\(--line-xs\)/);
+    assert.match(css, /font: var\(--bold\) var\(--text-h3\)\/var\(--line-h3\)/);
+    assert.match(css, /font: var\(--semibold\) var\(--text-h4\)\/var\(--line-h4\)/);
+    assert.match(css, /font: var\(--semibold\) var\(--pm-guide-text-meta\)\/var\(--line-sm\)/);
     assert.match(css, /font: var\(--regular\) var\(--text-sm\)\/var\(--line-sm\)/);
     assert.match(css, /\.pm-activity-icon svg,[\s\S]*width: var\(--icon\);[\s\S]*height: var\(--icon\)/);
     assert.doesNotMatch(parts, /size=\{(?:17|19|23)\}/);

@@ -17,7 +17,7 @@ export function PublicLayout({ children, active, joinLabel = 'Join the community
     // Every guest page renders the exact public homepage header, regardless of its route.
     if (auth?.user && !auth.user.is_admin && memberShell && auth.user.onboarding_step >= 3) {
         return <MemberDashboardLayout dashboard={memberShell} variant={memberVariant} fullWidth={siteLayout || homePrototype || guideLayout || eventPrototype}>
-            <div className="pm-member-public-content">{children}</div>
+            <div className={`pm-member-public-content${guideLayout ? ' pm-guide-public-shell' : ''}`}>{children}</div>
         </MemberDashboardLayout>;
     }
     const isGuest = !auth?.user;

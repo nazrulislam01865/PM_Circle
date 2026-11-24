@@ -42,11 +42,13 @@ export function HomeAiPractice({ content }: { content?: HomeAiFeaturesContent })
 export function HomeResume({ content }: { content?: HomeContent['careers'] }) {
     const title = referenceText(content?.resume?.title, 'Your experience deserves a clearer resume.', 'AI Resume Assistant');
     const description = referenceText(content?.resume?.description, 'Turn projects, responsibilities and outcomes into a focused PM resume.', 'Build your PM Circle profile and improve your résumé in one place.');
+    const configuredHref = content?.resume?.button_url;
+    const resumeHref = configuredHref && !/^\/careers(?:[/?#]|$)/.test(configuredHref) ? configuredHref : '/ai-resume-assistant';
     return <section className="pm-v2-resume-section" aria-labelledby="pm-v2-resume-title"><div className="pm-v2-container pm-v2-resume-grid">
         <div className="pm-v2-resume-panel"><div className="pm-v2-resume-icon">{content?.resume?.icon_image ? <img src={content.resume.icon_image} alt=""/> : <FileText aria-hidden="true"/>}</div>
             <h2 id="pm-v2-resume-title">{title}</h2><p>{description}</p>
             <span>One starter AI review with free tokens</span>
-            <HomeAction href={content?.resume?.button_url || '/ai-resume-assistant'} primary>{referenceText(content?.resume?.button_label, 'Explore AI resume assistant', 'Explore Resume Assistant')}</HomeAction>
+            <HomeAction href={resumeHref} primary>{referenceText(content?.resume?.button_label, 'Explore AI resume assistant', 'Explore Resume Assistant')}</HomeAction>
         </div>
         <div className="pm-v2-resume-flow"><h3>How it works</h3><div className="pm-v2-resume-steps">
             {steps.map(({ title: stepTitle, description: stepDescription, Icon }) => <div className="pm-v2-resume-step" key={stepTitle}>

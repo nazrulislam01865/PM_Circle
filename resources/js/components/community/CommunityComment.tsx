@@ -1,3 +1,4 @@
+import { PostAuthorLink } from './PostAuthorLinks';
 import { CommunityResponsiveImage } from './CommunityResponsiveImage';
 import { router } from '@inertiajs/react';
 import { ChevronDown } from 'lucide-react';
@@ -9,7 +10,7 @@ import { Avatar } from '@/components/pm/Avatar';
 
 export type CommunityCommentData = {
     id: number; body: string; media_url?: string | null; created_at: string; likes_count: number;
-    author: { name: string; profile?: { avatar_path?: string | null } | null }; replies: CommunityCommentData[];
+    author: { name: string; id?: number; profile_url?: string | null; profile?: { avatar_path?: string | null } | null }; replies: CommunityCommentData[];
     replies_count?: number; viewer_reaction?: ReactionType | null;
 };
 const relativeTime = (created: string) => {
@@ -21,7 +22,7 @@ const relativeTime = (created: string) => {
 
 const displaySaved = (comment: SavedComment): CommunityCommentData => ({
     ...comment,
-    author: { name: comment.author.name, profile: { avatar_path: comment.author.avatar_path } },
+    author: { name: comment.author.name, profile_url: comment.author.profile_url ?? null, profile: { avatar_path: comment.author.avatar_path } },
     replies: [],
 });
 
@@ -77,10 +78,14 @@ export function CommunityComment({ comment, postId, postAuthor, canInteract, lik
         onCommentAdded?.();
     };
 
+    // Detail responses already include the public-only author.profile relation;
+    // newly posted and paginated replies carry a server-filtered profile URL.
+    const authorHref = 'profile_url' in comment.author ? comment.author.profile_url
+        : comment.author.id && comment.author.profile ? `/members/${comment.author.id}` : undefined;
     return <div className={nested ? 'pm-thread-reply' : 'pm-thread-comment'}>
-        <div className="pm-thread-portrait"><Avatar name={comment.author.name} src={comment.author.profile?.avatar_path} size={nested ? 32 : 38}/></div>
+        <div className="pm-thread-portrait"><PostAuthorLink href={authorHref} name={comment.author.name} avatar><Avatar name={comment.author.name} src={comment.author.profile?.avatar_path} size={nested ? 32 : 38}/></PostAuthorLink></div>
         <div className="pm-thread-body">
-            <div className="pm-thread-author"><strong>{comment.author.name}</strong>{comment.author.name === postAuthor && <span className="pm-author-chip">Author</span>}<span>· {relativeTime(comment.created_at)}</span></div>
+            <div className="pm-thread-author"><strong><PostAuthorLink href={authorHref} name={comment.author.name}>{comment.author.name}</PostAuthorLink></strong>{comment.author.name === postAuthor && <span className="pm-author-chip">Author</span>}<span>· {relativeTime(comment.created_at)}</span></div>
             {comment.body && <p>{comment.body}</p>}
             {comment.media_url && <CommunityResponsiveImage className="pm-comment-attachment" src={comment.media_url} alt="Comment attachment" sizes="(max-width: 640px) 85vw, 480px"/>}
             <div className="pm-thread-actions"><CommentEngagementActions postId={postId} commentId={comment.id}

@@ -22,7 +22,7 @@
     padding: var(--pm-guide-banner-pad-top) 0 var(--pm-guide-banner-pad-bottom);
 }
 .pm-sim-banner > .pm-v2-container, .pm-sim-main {
-    width: min(var(--pm-guide-container), calc(100% - 2 * var(--pm-guide-gutter)));
+    width: var(--pm-v2-container-width);
     margin-inline: auto;
 }
 .pm-sim-breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: var(--pm-guide-s2); color: var(--pm-guide-muted); font-size: var(--pm-guide-text-meta); }
@@ -32,7 +32,7 @@
     font-size: var(--pm-guide-text-h1);
     font-weight: var(--pm-guide-static-h1-weight);
     line-height: var(--pm-guide-line-h1);
-    letter-spacing: -.04em;
+    letter-spacing: var(--pm-guide-tracking-h1);
 }
 .pm-sim-banner p { margin-top: var(--pm-guide-s2); max-width: 65ch; font-size: var(--pm-guide-text-lead); line-height: var(--pm-guide-line-body); color: var(--pm-guide-muted); }
 .pm-sim-main { padding: var(--pm-guide-s8) 0 var(--pm-guide-s12); }
@@ -191,7 +191,7 @@
     .pm-sim-reward .pm-sim-action { margin-left: 0; }
 }
 @media (max-width: 540px) {
-    .pm-sim-banner > .pm-v2-container, .pm-sim-main { width: calc(100% - 2 * var(--pm-guide-gutter-mobile)); }
+
     .pm-sim-filters, .pm-sim-card-grid, .pm-sim-spotlight-benefits, .pm-sim-review-grid { grid-template-columns: minmax(0, 1fr); }
     .pm-sim-filters label:first-child { grid-column: auto; }
     .pm-sim-reward .pm-sim-action { width: 100%; }
@@ -203,12 +203,3 @@
 
 /* Catalog and PMP details share the exact guide rail with the existing
    homepage header and footer. Other homepage routes retain their own width. */
-.pm-home-v2-shell.pm-guide-public-shell {
-    --pm-v2-container-width: min(var(--pm-guide-container), calc(100% - 2 * var(--pm-guide-gutter)));
-    --pm-v2-footer-bg: var(--pm-guide-footer);
-}
-@media (max-width: 540px) {
-    .pm-home-v2-shell.pm-guide-public-shell {
-        --pm-v2-container-width: calc(100% - 2 * var(--pm-guide-gutter-mobile));
-    }
-}

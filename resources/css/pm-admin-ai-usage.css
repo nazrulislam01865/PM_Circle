@@ -49,7 +49,7 @@
 .pm-ai-admin-plan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s4);align-items:start;min-width:0}
 .pm-ai-admin-plan-card,.pm-ai-admin-credit-card{display:grid;gap:var(--s4);min-width:0;padding:var(--s4);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-control)}
 .pm-ai-admin-plan-header{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s3)}
-.pm-ai-admin-plan-header p,.pm-ai-admin-credit-card p{color:var(--muted);font-size:var(--text-sm);margin-top:var(--s1)}
+.pm-ai-admin-plan-header p,.pm-ai-admin-credit-card p{color:var(--muted);font-size:var(--text-body);margin-top:var(--s1)}
 .pm-ai-admin-plan-name{font:var(--bold) var(--text-h4)/var(--line-h4) var(--font-ui);color:var(--ink)}
 .pm-ai-admin-plan-status{flex-shrink:0;border:1px solid var(--border);border-radius:var(--radius-control);padding:var(--s1) var(--s2);color:var(--muted);font-size:var(--text-xs)}
 .pm-ai-admin-policy-current{display:grid;gap:var(--s1);background:var(--canvas);padding:var(--s3);border-radius:var(--radius-control);font-size:var(--text-sm);min-width:0}
@@ -58,7 +58,7 @@
 .pm-ai-admin-plan-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
 .pm-ai-admin-choice-trigger{width:100%;min-width:0;min-height:var(--control-height);background:var(--surface);color:var(--ink);border-color:var(--control-border);box-shadow:none;font-family:var(--font-ui);font-size:var(--text-ui)}
 .pm-ai-admin-choice-trigger:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
-.pm-ai-admin-choice-menu{z-index:120;background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:var(--radius-control);box-shadow:0 8px 26px rgba(15,23,42,.16);min-width:var(--radix-select-trigger-width);max-width:min(26rem,calc(100vw - 2rem))}
+.pm-ai-admin-choice-menu{z-index:var(--pm-guide-floating-layer);background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:var(--radius-control);box-shadow:0 8px 26px var(--pm-overlay-15-23-42-16);min-width:var(--radix-select-trigger-width);max-width:min(26rem,calc(100vw - 2rem))}
 .pm-ai-admin-choice-menu [data-slot="select-viewport"]{height:auto!important;min-height:fit-content;max-height:14rem}
 .pm-ai-admin-choice-menu [data-slot="select-item"]{font-family:var(--font-ui);font-size:var(--text-ui);white-space:normal;line-height:var(--line-ui);color:var(--ink)}
 .pm-ai-admin-choice-menu [data-slot="select-item"][data-highlighted]{background:var(--blue-soft);color:var(--blue)}

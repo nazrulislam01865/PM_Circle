@@ -19,7 +19,7 @@ test('AI usage revalidates on tab open with a private, authenticated JSON route'
     const controller = read('app/Http/Controllers/Exam/PmpAiUsageController.php');
     const view = read('resources/js/pages/exam/Index.tsx');
     assert.match(routes, /Route::get\('\/exams\/pmp\/ai-usage'/);
-    assert.match(controller, /abort_unless\(in_array\(\$plans->code/);
+    assert.match(controller, /abort_unless\([^\n]*MemberFeatureAccess::allowsExamSimulator\(\$plans->code/);
     assert.match(controller, /'Cache-Control', 'private, no-store'/);
     assert.match(view, /fetch\('\/exams\/pmp\/ai-usage'/);
     assert.match(view, /next === 'ai'/);

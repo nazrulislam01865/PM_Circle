@@ -21,12 +21,7 @@
 }
 /* Older browsers keep the guide's vw-based H1/H2 rather than inheriting a
    small body font when container units are unsupported. */
-@supports (container-type: inline-size) and (width: 1cqw) {
-    .pm-about-wrap {
-        --pm-guide-text-h1: var(--pm-guide-rail-h1);
-        --pm-guide-text-h2: var(--pm-guide-rail-h2);
-    }
-}
+
 .pm-about-banner {
     padding: var(--pm-guide-banner-pad-top) 0 var(--pm-guide-banner-pad-bottom);
     background: radial-gradient(ellipse at 92% 0%, var(--pm-guide-banner-glow), transparent 65%), var(--pm-guide-banner-surface);
@@ -47,7 +42,7 @@
     font-size: var(--pm-guide-text-h1);
     font-weight: var(--pm-guide-static-h1-weight); /* Guide ships 400/600/700 faces, not an 800 face. */
     line-height: var(--pm-guide-line-h1);
-    letter-spacing: -.04em;
+    letter-spacing: var(--pm-guide-tracking-h1);
     overflow-wrap: anywhere;
 }
 .pm-about-banner p {
@@ -101,4 +96,9 @@
 }
 @media (max-width: 33.75rem) {
     .pm-about-wrap { max-width: calc(100% - 2 * var(--pm-guide-gutter-mobile)); }
+}
+
+@supports (container-type: inline-size) and (width: 1cqw) {
+    .pm-about-banner h1 { font-size: var(--pm-guide-rail-h1); }
+    .pm-about-content h2 { font-size: var(--pm-guide-rail-h2); }
 }

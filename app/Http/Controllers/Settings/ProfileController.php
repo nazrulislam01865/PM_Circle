@@ -93,6 +93,9 @@ class ProfileController extends Controller
         // The dashboard and profile must use the exact same server-side criteria.
         $completenessScore = app(ProfileCompleteness::class)->percentage($user);
 
+        $stats = $activeTab === 'overview' ? app(\App\Domain\Dashboard\Queries\MemberDashboardStats::class)->forMember($user) : null;
+        $plan = app(\App\Domain\Billing\Queries\CurrentMemberPlan::class)->code($user);
+
         return Inertia::render('settings/profile', [
             'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
@@ -121,19 +124,19 @@ class ProfileController extends Controller
                 'linkedin_url' => $profile->linkedin_url ?? '',
                 'languages' => $profile->languages ?? [],
                 'editor_details' => in_array($activeTab, ['edit', 'overview'], true) ? ($profile->editor_details ?? []) : [],
-                'plan_label' => '👑 Plus member',
+                'plan_label' => ucfirst($plan).' member',
                 'location_label' => implode(', ', array_filter([$profile->city, $profile->country])),
                 'status_label' => $profile->open_to_opportunities ? 'Open to opportunities' : 'Not actively looking',
                 'completeness' => $completenessScore,
                 'insights' => [
-                    'views' => 18,
-                    'change' => '+50%',
-                    'period' => 'this week',
+                    'views' => $stats['overview']['insights']['last30'] ?? 0,
+                    'change' => (string) ($stats['overview']['insights']['thisWeek'] ?? 0),
+                    'period' => 'views in the last 7 days',
                 ],
                 'learning_stats' => [
-                    'activities' => 24,
-                    'hours' => 8,
-                    'achievements' => 6,
+                    'activities' => ($stats['learning']['completedActivities'] ?? 0) + ($stats['learning']['scenarios'] ?? 0),
+                    'hours' => round(($stats['learning']['minutes'] ?? 0) / 60, 1),
+                    'achievements' => count($stats['overview']['badges'] ?? []),
                 ],
                 'experiences' => $experiences,
                 'featured_project' => $featuredProject,
@@ -645,6 +648,7 @@ class ProfileController extends Controller
             $user->delete();
         }, 3);
 
+        Storage::disk('local')->deleteDirectory('support/'.$user->id);
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

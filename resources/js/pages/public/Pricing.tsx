@@ -7,7 +7,7 @@ export default function Pricing({ plans }: { plans: Plan[] }) {
     const { auth } = usePage<{ auth: { user: { onboarding_step: number; is_admin?: boolean } | null } }>().props;
     const signedIn = Boolean(auth?.user && !auth.user.is_admin);
     // Existing account/checkout routes: no client-side checkout is fabricated by this page.
-    const chooseHref = auth?.user?.is_admin ? '/admin' : !signedIn ? '/register' : (auth.user?.onboarding_step ?? 0) < 3 ? '/join/step/3' : '/membership';
+    const chooseHref = auth?.user?.is_admin ? '/admin' : !signedIn ? '/register' : (auth.user?.onboarding_step ?? 0) < 3 ? '/join/step/3' : '/membership?view=plans';
 
     return <PublicLayout active="/pricing" pricingPrototype>
         <Head title="Compare Free, Plus and Pro" />

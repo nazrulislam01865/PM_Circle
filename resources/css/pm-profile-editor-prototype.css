@@ -58,7 +58,7 @@
 .pm-profile-page--editor .pm-prototype-collection-body { padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
 .pm-profile-page--editor .pm-prototype-entry { padding: var(--space-3); border: 1px solid var(--divider); border-radius: var(--radius-control); background: var(--canvas); min-width: 0; }
 .pm-profile-page--editor .pm-prototype-entry-head { display: flex; gap: var(--space-3); align-items: center; justify-content: space-between; }
-.pm-profile-page--editor .pm-prototype-entry-head h4 { font-size: var(--text-ui); font-weight: var(--bold); line-height: var(--line-ui); color: var(--text); margin: 0; }
+.pm-profile-page--editor .pm-prototype-entry-head h4 { font-size: var(--text-h4); font-weight: var(--pm-guide-weight-control); line-height: var(--line-h4); color: var(--text); margin: 0; }
 .pm-profile-page--editor .pm-prototype-remove { flex-shrink: 0; color: var(--danger); font-weight: var(--bold); font-size: var(--text-sm); padding: var(--space-1); border: 0; background: transparent; cursor: pointer; }
 .pm-profile-page--editor .pm-prototype-remove:hover { text-decoration: underline; }
 .pm-profile-page--editor .pm-prototype-checkbox { align-self: end; display: flex; gap: var(--space-2); align-items: center; min-height: var(--control-height); color: var(--text); font-size: var(--text-sm); font-weight: var(--bold); line-height: var(--line-sm); cursor: pointer; }

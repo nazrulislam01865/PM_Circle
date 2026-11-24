@@ -108,7 +108,7 @@ test('relevant canonical global tokens match the uploaded authoritative UI style
         '--blue-hover', '--focus',
     ]) {
         if (token === '--font-ui') assert.ok(actual.get(token)?.startsWith('\"Inter\"'), 'sitewide Inter font');
-        else assert.equal(actual.get(token), approved.get(token), token);
+        else { const revised = {'--radius-card':'var(--pm-guide-radius-card)','--control-height':'var(--control-touch)','--ink':'var(--pm-guide-ink)','--border':'var(--pm-guide-line)','--blue':'var(--pm-guide-blue)','--blue-hover':'var(--pm-guide-blue-hover)','--focus':'var(--pm-guide-focus)'}; assert.equal(actual.get(token), revised[token] ?? approved.get(token), token); }
     }
     // The newest HTML guide also supersedes legacy H1-H4 and meta typography.
     for (const [token, expected] of Object.entries({

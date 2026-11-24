@@ -31,7 +31,7 @@ test('latest guide governs all public, member, admin and authentication typograp
         'text-h2': 'var(--pm-guide-text-h2)', 'line-h2': 'var(--pm-guide-line-h2)',
         'text-h3': 'var(--pm-guide-text-h3)', 'line-h3': 'var(--pm-guide-line-h3)',
         'text-h4': 'var(--pm-guide-text-h4)', 'line-h4': 'var(--pm-guide-line-h4)',
-        'text-sm': '.875rem', 'text-ui': '.875rem',
+        'text-sm': 'var(--pm-guide-text-meta)', 'text-ui': '.875rem',
         'type-lead': 'var(--pm-guide-text-lead)',
         'pm-v2-font-body': 'var(--pm-guide-text-body)',
         'pm-v2-font-body-mobile': 'var(--pm-guide-text-body)',

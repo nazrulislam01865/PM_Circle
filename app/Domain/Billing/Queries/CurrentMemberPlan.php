@@ -40,7 +40,7 @@ final class CurrentMemberPlan
                 ->where('user_id', $user->getKey())->value('plan_code');
             if (in_array($temporary, ['free', 'plus', 'pro'], true)) {
                 return [
-                    'code' => $temporary, 'source' => 'complimentary',
+                    'code' => $temporary, 'source' => 'complimentary', 'status' => 'complimentary', 'months' => null,
                     'starts_at' => null, 'ends_at' => null,
                 ];
             }
@@ -55,13 +55,14 @@ final class CurrentMemberPlan
             ->where('subscriptions.ends_at', '>', now())
             ->whereIn('plans.code', ['plus', 'pro'])
             ->orderByDesc('subscriptions.ends_at')
-            ->first(['plans.code', 'subscriptions.starts_at', 'subscriptions.ends_at']);
+            ->first(['plans.code', 'subscriptions.starts_at', 'subscriptions.ends_at', 'subscriptions.status', 'subscriptions.cancel_at_term_end', 'plan_prices.months']);
 
         return $subscription ? [
             'code' => $subscription->code, 'source' => 'subscription',
+            'status' => $subscription->cancel_at_term_end ? 'cancel_at_term_end' : $subscription->status, 'months' => (int) $subscription->months,
             'starts_at' => $subscription->starts_at, 'ends_at' => $subscription->ends_at,
         ] : [
-            'code' => 'free', 'source' => 'none', 'starts_at' => null, 'ends_at' => null,
+            'code' => 'free', 'source' => 'none', 'status' => 'free', 'months' => null, 'starts_at' => null, 'ends_at' => null,
         ];
     }
 

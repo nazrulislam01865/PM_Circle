@@ -52,7 +52,7 @@ export default function Homepage({ configured, content, version, options, master
     const currentSection = homepageSections[sectionIndex];
     // Suggestions are existing public destinations; the route field is also writable.
     const routeSuggestions: SelectOption[] = [...new Map([
-        ...['/daily-challenge', '/community', '/register', '/learning', '/careers', '/pricing', '/ai-resume-assistant'].map(path => [path, { value: path, label: path }] as const),
+        ...['/daily-challenge', '/community', '/register', '/learning', '/pricing', '/ai-resume-assistant'].map(path => [path, { value: path, label: path }] as const),
         ...(['/', '/about', '/members', '/discover-pm', '/pm-trends', '/dashboard'] as const).map(path => [path, { value: path, label: path }] as const),
     ]).values()];
     const cardRouteSuggestions = [{ value: '/learning', label: '/learning' }, ...routeSuggestions.filter(option => option.value !== '/learning')];

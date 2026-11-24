@@ -13,7 +13,7 @@ final class PmpAiUsageController extends Controller
 {
     public function __invoke(Request $request, CurrentMemberPlan $plans, PmpAiUsageReadModel $usage, PmpQuestionHelpService $legacy): JsonResponse
     {
-        abort_unless(in_array($plans->code($request->user()), ['plus', 'pro'], true), 403);
+        abort_unless(\App\Domain\Billing\Queries\MemberFeatureAccess::allowsExamSimulator($plans->code($request->user())), 403);
 
         return response()->json($legacy->enabled()
             ? $legacy->summary((int) $request->user()->id) : $usage->summary($request->user()))

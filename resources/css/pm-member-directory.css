@@ -16,7 +16,7 @@
     padding: 0 0 var(--s10);
 }
 .pm-members-intro { margin-bottom: var(--s4); }
-.pm-members-intro h1 { font: var(--bold) var(--text-h1)/var(--line-h1) var(--font-ui); letter-spacing: -.025em; }
+.pm-members-intro h1 { font: var(--bold) var(--text-h1)/var(--line-h1) var(--font-ui); letter-spacing: var(--pm-tracking-neg-p025em); }
 .pm-members-intro p { color: var(--muted); font: var(--regular) var(--text-body)/var(--line-body) var(--font-ui); }
 .pm-members-toolbar { display: flex; align-items: center; gap: var(--s4); margin-bottom: var(--s2); }
 .pm-members-search { display: flex; flex: 1 1 auto; align-items: center; min-width: 0; gap: var(--s3); height: var(--control-height); padding: 0 var(--s3); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-control); }
@@ -59,7 +59,6 @@
 .pm-members-actions .pm-members-profile-button, .pm-members-empty .pm-members-profile-button { border-color: var(--border); color: var(--ink); font-weight: var(--medium); }
 .pm-members-actions button:disabled { opacity: .6; cursor: wait; }
 .pm-members-privacy { display: flex; align-items: center; gap: var(--s2); padding-top: var(--s3); color: var(--muted); font-size: var(--text-xs); }
-.pm-members-pagination { display: flex; justify-content: center; gap: var(--s3); margin-top: var(--s4); }
 .pm-members-empty { display: grid; justify-items: center; gap: var(--s2); padding: var(--s8); border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--surface); color: var(--muted); text-align: center; }
 .pm-members-empty strong { color: var(--ink); }
 @media (max-width: 68rem) {

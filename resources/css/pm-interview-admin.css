@@ -29,8 +29,7 @@
 .pm-interview-admin-settings{max-width:45rem}
 .pm-interview-admin-settings form{display:flex;align-items:flex-end;gap:var(--s3);flex-wrap:wrap}
 .pm-interview-admin-settings .pm-admin-field{max-width:14rem}
-.pm-interview-admin-modal-overlay{position:fixed;inset:0;z-index:1000;background:color-mix(in srgb,var(--ink) 54%,transparent);display:grid;place-items:center;padding:var(--s4)}
-.pm-interview-admin-modal{width:min(100%,42rem);max-height:min(92dvh,52rem);overflow:auto;background:var(--surface);border-radius:var(--radius-card);border:1px solid var(--border);box-shadow:0 20px 70px #0a1b3340;padding:var(--s5);color:var(--ink)}
+.pm-interview-admin-modal{width:min(calc(100% - 2 * var(--s4)),42rem);max-width:none;display:block;max-height:min(92dvh,52rem);overflow:auto;background:var(--surface);border-radius:var(--radius-card);border:1px solid var(--border);box-shadow:0 20px 70px var(--pm-tone-0a1b3340);padding:var(--s5);color:var(--ink)}
 .pm-interview-admin-modal>header{display:flex;justify-content:space-between;gap:var(--s3);margin-bottom:var(--s4)}
 .pm-interview-admin-modal h2{font-size:var(--text-h2)}
 .pm-interview-admin-modal header p{color:var(--muted);font-size:var(--text-sm)}
@@ -62,12 +61,9 @@
 
 .pm-interview-admin-master-note{font:var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui);color:var(--muted);margin-bottom:var(--s3)}
 
-/* Radix renders dropdown content in a body-level portal. Interview dialogs use
-   z-index:1000; keep only their own dropdowns above the dialog backdrop. */
-.pm-admin-choice-content.pm-interview-admin-choice-content{z-index:1010}
 
 /* Compact interview import workflow. centralized typeface and shared design tokens are inherited. */
-.pm-interview-import-modal{width:min(100%,39rem)}
+.pm-interview-import-modal{width:min(calc(100% - 2 * var(--s4)),39rem)}
 .pm-interview-admin-modal .pm-interview-import-form{gap:var(--s4)}
 .pm-interview-import-section{display:grid;gap:var(--s2);min-width:0}
 .pm-interview-import-heading{display:flex;align-items:center;gap:var(--s2);font:var(--semibold) var(--text-body)/var(--line-body) var(--font-ui)}

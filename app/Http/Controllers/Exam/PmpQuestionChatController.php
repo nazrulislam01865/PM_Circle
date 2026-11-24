@@ -18,7 +18,7 @@ final class PmpQuestionChatController extends Controller
         CurrentMemberPlan $plans, AiChatQuotaService $quotas): JsonResponse
     {
         $user = $request->user();
-        abort_unless(in_array($plans->code($user), ['plus', 'pro'], true), 403);
+        abort_unless(\App\Domain\Billing\Queries\MemberFeatureAccess::allowsExamSimulator($plans->code($user)), 403);
 
         $exam = DB::table('pmp_exam_attempts')->where('id', $attempt)
             ->where('user_id', $user->id)->where('status', 'completed')

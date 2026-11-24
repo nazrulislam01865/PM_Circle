@@ -44,7 +44,7 @@
 }
 .pm-profile-page :is(.pm-input,.pm-select,.pm-textarea):disabled { background: var(--disabled-bg); color: var(--disabled-text); }
 .pm-profile-page .pm-btn { min-height: var(--field-height); font: inherit; font-size: var(--type-body); font-weight: var(--type-weight-bold); padding: var(--pm-control-padding-10px) var(--pm-control-padding-18px); border-radius: var(--radius); }
-.pm-profile-page .pm-btn-sm { min-height: var(--pm-control-dimension-40px); font-size: var(--type-small); padding: var(--space-2) var(--pm-control-padding-14px); }
+.pm-profile-page .pm-btn-sm { min-height: var(--pm-guide-button-height); font-size: var(--type-small); padding: var(--space-2) var(--pm-control-padding-14px); }
 .pm-profile-page .pm-btn-primary { background: var(--primary); border-color: var(--primary); color: var(--surface); }
 .pm-profile-page .pm-btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
 .pm-profile-page .pm-btn-secondary { color: var(--primary); background: var(--surface); border-color: var(--primary); }

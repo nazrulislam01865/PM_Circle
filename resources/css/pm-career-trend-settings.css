@@ -10,7 +10,7 @@
 .pm-career-settings-panel .pm-admin-field { display: grid; grid-template-columns: minmax(0, 27%) minmax(0, 1fr); gap: var(--s1) var(--s2); align-items: center; }
 .pm-career-settings-column:first-child .pm-career-settings-panel:nth-child(2) .pm-admin-field { grid-template-columns: minmax(0, 25%) minmax(0, 1fr); }
 .pm-career-settings-column:nth-child(2) .pm-admin-field { grid-template-columns: minmax(0, 40%) minmax(0, 1fr); }
-.pm-career-settings-panel .pm-admin-field > label,.pm-career-settings-sections legend { font: var(--regular) var(--pm-admin-settings-control-text)/var(--pm-guide-line-control) var(--pm-guide-font); }
+.pm-career-settings-panel .pm-admin-field > label,.pm-career-settings-sections legend { font: var(--pm-guide-weight-control) var(--pm-admin-settings-control-text)/var(--pm-guide-line-control) var(--pm-guide-font); }
 .pm-career-settings-panel .pm-admin-field > :is(small,.pm-error) { grid-column: 2; }
 .pm-career-settings-panel :is(.pm-admin-choice-trigger,.pm-admin-field input:not([type=checkbox])) { min-height: var(--pm-admin-settings-control-height); padding-block: var(--s1); font-size: var(--pm-admin-settings-control-text); }
 .pm-career-settings-panel .pm-admin-multi-inline-control { display: flex; min-width: 0; align-items: center; border: 1px solid var(--control-border); border-radius: var(--radius-control); background: var(--surface); padding-inline-start: var(--s1); min-height: var(--pm-admin-settings-control-height); }
@@ -46,7 +46,7 @@
 .pm-career-settings-dialog::backdrop { background: var(--pm-guide-dialog-backdrop); }
 .pm-career-settings-dialog > * + * { margin-top: var(--s3); }
 .pm-career-settings-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); }
-.pm-career-settings-dialog h2 { font-size: var(--pm-admin-settings-section-title); font-weight: var(--bold); }
+.pm-career-settings-dialog h2 { font-size: var(--pm-guide-text-dialog-title); font-weight: var(--bold); }
 .pm-career-settings-dialog h3 { font-size: var(--text-h3); font-weight: var(--bold); overflow-wrap: anywhere; }
 .pm-career-settings-dialog ul { list-style: disc; padding-inline-start: var(--s5); }
 @media (max-width: 76rem) { .pm-career-settings-grid { grid-template-columns: minmax(0, 1fr); } }

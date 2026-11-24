@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { MessageCircle } from 'lucide-react';
 
 type ScenarioStory = {
@@ -17,12 +18,12 @@ const formatDate = (value: string) => new Date(value).toLocaleDateString('en-GB'
 });
 
 /** Shared, presentation-only scenario article. No fetching or interaction state. */
-export function ScenarioStoryContent({ scenario }: { scenario: ScenarioStory }) {
+export function ScenarioStoryContent({ scenario, actions }: { scenario: ScenarioStory; actions?: ReactNode }) {
     const isToday = scenario.daily_slot === new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' });
     const isClosed = scenario.status === 'closed' || Boolean(scenario.expires_at && new Date(scenario.expires_at).getTime() <= Date.now());
 
     return <>
-        <p className="pm-scenario-detail-kicker">{isToday ? "TODAY'S SCENARIO" : 'DAILY CHALLENGE'}</p>
+        <div className="pm-scenario-story-heading"><p className="pm-scenario-detail-kicker">{isToday ? "TODAY'S SCENARIO" : 'DAILY CHALLENGE'}</p>{actions}</div>
         <h1 className="pm-scenario-detail-title">{scenario.title}</h1>
         <div className="pm-scenario-detail-meta">
             <span>PM Circle Editorial</span>

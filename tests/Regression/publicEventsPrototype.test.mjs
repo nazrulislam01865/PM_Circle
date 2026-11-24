@@ -16,7 +16,7 @@ test('public event listing and details use named GET routes, no booking endpoint
     assert.doesNotMatch(controller, /DB::|::query\(|->create\(|->save\(/);
 });
 
-test('listing retains original filters, two-slide advertisements and pagination', () => {
+test('listing retains original filters, available advertisements and pagination', () => {
     const page = read('resources/js/pages/events/Index.tsx');
     for (const term of ['Advertisements', 'HostPromotion', 'EventListingRow', 'PAGE_SIZE = 10', 'setPlaying', 'setFormat', 'setSort', 'setSearch', 'setPage', 'filtered.slice', 'Clear filters']) {
         assert.match(page, new RegExp(term));
@@ -65,7 +65,7 @@ test('events use the exact guideline rail, shared control classes and no missing
     const used = [...new Set([...css.matchAll(/var\((--pm-(?:guide|event)-[\w-]+)/g)].map(match => match[1]))];
     for (const variable of used) assert.ok(tokens.includes(`${variable}:`), `Missing design token ${variable}`);
     for (const breakpoint of ['max-width: 33.75rem', 'max-width: 40.625rem', 'max-width: 53.125rem']) assert.ok(css.includes(breakpoint));
-    assert.match(css, /width: min\(var\(--pm-guide-container\), calc\(100% - 2 \* var\(--pm-guide-gutter\)\)\)/);
+    assert.match(css, /width: var\(--pm-v2-container-width\)/);
     assert.doesNotMatch(css, /70\.2vw|90vw|--pm-v2-container-width:/);
     assert.match(css, /\.pm-event-listing-copy p \{[^}]*font-size: var\(--pm-guide-text-body\)/);
     assert.match(css, /\.pm-event-listing-copy p\.pm-event-meta \{[^}]*font-size: var\(--pm-guide-text-meta\)/);

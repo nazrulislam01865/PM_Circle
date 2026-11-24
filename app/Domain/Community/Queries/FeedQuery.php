@@ -171,6 +171,8 @@ final class FeedQuery
                 'is_anonymous' => (bool) ($post['is_anonymous'] ?? false),
                 'visibility' => $post['visibility'] ?? 'public',
                 'author' => $author['name'] ?? 'Member',
+                'authorId' => ! empty($post['is_anonymous']) ? null : ($author['id'] ?? null),
+                'authorHasPublicProfile' => empty($post['is_anonymous']) && ! empty($author['profile']),
                 'authorRole' => $profile['role'] ?? null,
                 'authorAvatar' => $profile['avatar_path'] ?? null,
                 'publishedAt' => $post['published_at'] ?? null,

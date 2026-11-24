@@ -45,20 +45,38 @@ return Application::configure(basePath: dirname(__DIR__))
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
 
-        // Preserve rate limiting but return a normal Inertia validation error for the
-        // Daily Challenge form, instead of displaying Laravel's HTML 429 in a modal.
+        // Preserve throttling; Inertia forms need inline errors rather than HTML 429 modals.
         $exceptions->respond(function (SymfonyResponse $response, \Throwable $exception, Request $request): SymfonyResponse {
             if ($response->getStatusCode() !== 429
                 || ! $request->isMethod('POST')
-                || ! $request->is('admin/ai/daily-challenge/generate')
-                || ! $request->hasHeader('X-Inertia')) {
+                || ! $request->hasHeader('X-Inertia')
+                || $request->expectsJson()) {
                 return $response;
             }
 
             $retryAfter = max(1, (int) $response->headers->get('Retry-After', '60'));
 
-            return redirect()->route('admin.ai.daily-challenge.index')
-                ->withErrors(['date' => "Too many generation requests. Try again in {$retryAfter} seconds."]);
+            if ($request->is('membership/temporary')) {
+                return redirect()->route('membership.index', [], 303)
+                    ->withErrors(['plan' => "Too many membership switch requests. Try again in {$retryAfter} seconds."]);
+            }
+
+            if ($request->is('help-center/requests')) {
+                return redirect()->route('support.create', [], 303)
+                    ->withErrors(['subject' => "Too many support requests. Try again in {$retryAfter} seconds."]);
+            }
+
+            if ($request->is('admin/support-requests/*') && $request->route('ticket')) {
+                return redirect()->route('admin.support.show', $request->route('ticket'), 303)
+                    ->withErrors(['body' => "Too many updates. Try again in {$retryAfter} seconds."]);
+            }
+
+            if ($request->is('admin/ai/daily-challenge/generate')) {
+                return redirect()->route('admin.ai.daily-challenge.index')
+                    ->withErrors(['date' => "Too many generation requests. Try again in {$retryAfter} seconds."]);
+            }
+
+            return $response;
         });
     })->create();
 

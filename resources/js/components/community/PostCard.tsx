@@ -1,8 +1,10 @@
 import { Link } from '@inertiajs/react';
+import { PostAuthorLink, postAuthorHref, postAuthorUnavailable } from './PostAuthorLinks';
 import { PostEngagementActions } from '@/components/community/PostEngagementActions';
 import type { ReactionType, RequestToJoin } from '@/components/home/HomeEngagement';
 import { Avatar } from '@/components/pm/Avatar';
 import { PostContent } from '@/components/community/PostContent';
+import { usePostSecondaryActions } from '@/components/community/usePostSecondaryActions';
 import { PostActionMenu } from '@/components/community/PostActionMenu';
 import { PostPoll } from '@/components/community/PostPoll';
 import type { ReactionCounts } from '@/components/community/PostReactions';
@@ -44,7 +46,7 @@ export function PostCard({
     post: PostPreview;
     isGuest?: boolean;
     onJoin?: RequestToJoin;
-    onReactionChange?: (reaction: ReactionType | null, count: number) => void;
+    onReactionChange?: (reaction: ReactionType | null, count: number, counts: ReactionCounts) => void;
     onCommentAdded?: () => void;
     onSavedChange?: (saved: boolean) => void;
     onHiddenChange?: (hidden: boolean) => void;
@@ -53,6 +55,7 @@ export function PostCard({
     onMuteChange?: (muted: boolean) => void;
     mode?: 'feed' | 'detail';
 }) {
+    const secondary = usePostSecondaryActions({ postId: post.id, canInteract: !isGuest, onJoin, saved: Boolean(post.viewer_saved), onSavedChange });
     const formattedDate = post.published_at
         ? new Date(post.published_at).toLocaleDateString('en-GB', {
               day: 'numeric',
@@ -62,6 +65,8 @@ export function PostCard({
         : '';
 
 
+    const authorHref = postAuthorHref(post);
+    const authorUnavailable = postAuthorUnavailable(post);
     const categoryLabel = post.topic === 'Ask the community' || post.topic === 'Questions'
         ? 'Question' : post.topic === 'Poll' ? 'Poll' : null;
 
@@ -69,13 +74,13 @@ export function PostCard({
         <article className={`pm-discussion-card pm-unified-post-card${mode === 'detail' ? ' pm-post-detail-card' : ''}`}>
             <header className="pm-card-author-header">
                 <div className="pm-author-info-wrap">
-                    <Avatar name={post.author.name} src={post.author.profile?.avatar_path} size={40} />
+                    <PostAuthorLink href={authorHref} name={post.author.name} avatar unavailable={authorUnavailable}><Avatar name={post.author.name} src={post.author.profile?.avatar_path} size={40} /></PostAuthorLink>
                     <div className="pm-author-meta">
-                        <strong>{post.author.name}</strong>
+                        <strong><PostAuthorLink href={authorHref} name={post.author.name} unavailable={authorUnavailable}>{post.author.name}</PostAuthorLink></strong>
                         <small>Posted {formattedDate}{categoryLabel && <> · <span className="pm-post-category-inline">{categoryLabel}</span></>}</small>
                     </div>
                 </div>
-                {!isGuest && <PostActionMenu post={{ id: post.id, body: post.body, image_path: post.image_path, topic: post.topic, is_anonymous: post.is_anonymous, visibility: post.visibility }} isOwner={Boolean(post.viewer_is_author)} muted={Boolean(post.viewer_muted)} hidden={Boolean(post.viewer_hidden)} authorName={post.author.name}
+                {(!isGuest || !post.viewer_hidden) && <PostActionMenu post={{ id: post.id, body: post.body, image_path: post.image_path, topic: post.topic, is_anonymous: post.is_anonymous, visibility: post.visibility }} isOwner={Boolean(post.viewer_is_author)} muted={Boolean(post.viewer_muted)} hidden={Boolean(post.viewer_hidden)} authorName={post.author.name} mobileOnly={isGuest} canInteract={!isGuest} onJoin={onJoin} secondary={post.viewer_hidden ? undefined : secondary} readHref={mode === 'feed' ? `/posts/${post.id}` : undefined}
                     onRemoved={onRemoved} onUpdated={onUpdated} onMuteChange={onMuteChange} onHiddenChange={onHiddenChange} />}
             </header>
 
@@ -100,7 +105,7 @@ export function PostCard({
             <footer className="pm-card-action-bar">
                 {post.viewer_hidden ? <span className="pm-post-hidden-hint">Hidden post · Use the post menu to unhide before interacting.</span> : <PostEngagementActions postId={post.id} initial={post.viewer_reaction}
                     total={post.reactions_count ?? post.likes_count ?? 0} breakdown={post.reaction_breakdown} comments={post.comments_count}
-                    canInteract={!isGuest} onJoin={onJoin} onReactionChange={onReactionChange} onCommentAdded={onCommentAdded} showSave saved={Boolean(post.viewer_saved)} onSavedChange={onSavedChange} inlineComments={mode === 'feed'} />}
+                    canInteract={!isGuest} onJoin={onJoin} onReactionChange={onReactionChange} onCommentAdded={onCommentAdded} showSave secondary={secondary} inlineComments={mode === 'feed'} />}
                 {isGuest && mode === 'feed' && <Link href={`/posts/${post.id}`} className="pm-read-discussion-link">Read discussion →</Link>}
             </footer>
         </article>

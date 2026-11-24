@@ -1,8 +1,9 @@
-import { Link } from '@inertiajs/react';
-import { Pencil } from 'lucide-react';
+import { Link, router } from '@inertiajs/react';
+import { Pencil, ArrowRight, Share2 } from 'lucide-react';
 import { Avatar } from '@/components/pm/Avatar';
 import { PostCardV2 } from '@/components/community/PostCardV2';
-import { ReactionPicker, HomeCommentAction, HomeShareAction, type RequestToJoin } from '@/components/home/HomeEngagement';
+import { ReactionPicker, HomeCommentAction, useHomeShare, type RequestToJoin } from '@/components/home/HomeEngagement';
+import { EngagementOverflowMenu } from '@/components/community/EngagementOverflowMenu';
 import { EngagementActionBar } from '@/components/community/EngagementActionBar';
 import type { ScenarioSummary } from '@/components/home/ScenarioPreview';
 import type { HomePost } from '@/components/home/HomePostPreview';
@@ -19,20 +20,28 @@ function DailyScenarioCard({ scenario, canInteract, onJoin, content }: {
     scenario: ScenarioSummary | null; canInteract: boolean; onJoin: RequestToJoin; content?: HomeContent['scenario'];
 }) {
     const url = scenario ? `/scenarios/${encodeURIComponent(scenario.slug)}` : '/daily-challenge';
+    const readUrl = content?.read_url || url;
+    const share = useHomeShare({ href: url, canInteract: canInteract && Boolean(scenario), onJoin });
     return <article className="pm-v2-scenario-card"><div className="pm-v2-post-author"><span className="pm-v2-official-avatar" aria-label="PM Circle">PM</span><div>
-        <strong>PM Circle</strong><small>Today’s Daily Challenge</small></div></div>
+        <strong>PM Circle</strong><small>Today’s Daily Challenge</small></div>
+        <EngagementOverflowMenu label="More scenario options" actions={[
+            { label: share.copied ? 'Copied' : 'Share', icon: <Share2 size={17}/>, onSelect: () => { void share.share(); } },
+            { label: 'Read discussion', icon: <ArrowRight size={17}/>, onSelect: () => router.visit(readUrl) },
+        ]}/></div>
         <div className="pm-v2-post-content"><h3><Link href={url}>{scenario?.title || 'Balancing scope, cost, and risk on a Bangladesh rail upgrade'}</Link></h3>
             <p>{scenario?.summary || 'A pilot upgrade is running behind. A supplier proposes a cheaper workaround that could affect testing. What would you check before recommending a decision?'}</p>
             <div className="pm-v2-topic-list">{(scenario?.topics?.length ? scenario.topics.slice(0, 2) : ['Scope and change', 'Risk management']).map(topic => <span key={topic}>{topic}</span>)}</div>
-            <Link href={content?.read_url || url} className="pm-v2-scenario-link">{content?.read_button_label && content.read_button_label !== 'Read scenario' ? content.read_button_label : 'Read discussion'}</Link>
+            <Link href={content?.read_url || url} className="pm-v2-scenario-link pm-post-desktop-action">{content?.read_button_label && content.read_button_label !== 'Read scenario' ? content.read_button_label : 'Read discussion'}</Link>
             {!scenario && <small className="sr-only">Illustrative scenario · View current challenges</small>}
         </div>
-        <div className="pm-v2-scenario-actions">{scenario ? <EngagementActionBar>
+        <div className="pm-v2-scenario-actions">{scenario ? <EngagementActionBar className="pm-post-engagement-row pm-scenario-engagement-row">
             <ReactionPicker endpoint={`/scenarios/${scenario.id}/reactions`} initial={scenario.viewer_reaction}
-                total={scenario.reactions_count} canInteract={canInteract} onJoin={onJoin} label="scenario" buttonLabel="React" prototypeIcon/>
+                total={scenario.reactions_count} canInteract={canInteract} onJoin={onJoin} label="scenario"/>
             <HomeCommentAction href={url} label="Comment" canInteract={canInteract} onJoin={onJoin}/>
-            <HomeShareAction href={url} canInteract={canInteract} onJoin={onJoin}/>
-        </EngagementActionBar> : <PreviewEngagementActions href={url} onJoin={onJoin} reactions={12}/> }</div>
+            <button type="button" className="pm-home-action pm-post-desktop-action" onClick={() => { void share.share(); }}><Share2 size={19} aria-hidden="true"/>{share.copied ? 'Copied' : 'Share'}</button>
+            {share.error && <span className="pm-post-secondary-error" role="alert">{share.error}</span>}
+            {share.copied && <span className="pm-post-copy-status" role="status">Link copied.</span>}
+        </EngagementActionBar> : <PreviewEngagementActions href={url} onJoin={onJoin} reactions={12} mobileCompact/> }</div>
     </article>;
 }
 

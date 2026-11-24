@@ -30,7 +30,7 @@ test('catalog palette uses the exact approved design-guide colors in centralized
 test('type, spacing, radii and container use the guide values', () => {
     for (const spec of [
         '--pm-guide-font: var(--font-ui);',
-        '--pm-guide-text-body: 1rem;',
+        '--pm-guide-text-body: var(--text-body);',
         '--pm-guide-text-lead: 1.0625rem;',
         '--pm-guide-text-h1: clamp(2rem, 5vw, 3.1rem);',
         '--pm-guide-text-h2: clamp(1.5rem, 3vw, 2rem);',
@@ -46,7 +46,7 @@ test('type, spacing, radii and container use the guide values', () => {
         '--pm-guide-gutter-mobile: var(--s4);',
         '--pm-guide-s12: 3rem;',
     ]) assert.ok(tokens.includes(spec), `missing design token ${spec}`);
-    assert.match(css, /\.pm-sim-banner > \.pm-v2-container, \.pm-sim-main\s*\{\s*width: min\(var\(--pm-guide-container\)/);
+    assert.match(css, /\.pm-sim-banner > \.pm-v2-container, \.pm-sim-main\s*\{\s*width: var\(--pm-v2-container-width\)/);
     assert.match(css, /\.pm-sim-card-grid\s*\{[^}]*repeat\(3,/);
     assert.match(css, /@media \(max-width: 850px\)/);
     assert.match(css, /@media \(max-width: 540px\)/);

@@ -143,7 +143,7 @@ export function ReactionPicker({ endpoint, initial, total, canInteract, onJoin, 
             onPointerDown={event => { touch.current = event.pointerType === 'touch'; }}
             onClick={() => { if (touch.current) { setOpen(value => !value); touch.current = false; } else void react(active ?? 'like'); }}>
             <ReactionGlyph type={selectedType} size={19} prototypeLikeIcon={prototypeIcon && !active}/>
-            <span>{chosen?.label ?? buttonLabel ?? 'Like'}</span>
+            <span className="pm-home-reaction-label">{chosen?.label ?? buttonLabel ?? 'Like'}</span>
             {showCount && count > 0 && <span className="pm-home-reaction-count">{count}</span>}
         </button>
         <div className="pm-home-reaction-options" data-many={options.length > 7 || archivedSelection ? 'true' : undefined} role="group" aria-label={`Choose reaction to ${label}`}>
@@ -171,7 +171,7 @@ export function HomeCommentAction({ label, count, href, canInteract, onJoin }: {
     }}><MessageCircle size={19} aria-hidden="true"/>{count === undefined ? label : `${count} ${label}`}</button>;
 }
 
-export function HomeShareAction({ href, canInteract, onJoin }: {
+export function useHomeShare({ href, canInteract, onJoin }: {
     href: string; canInteract: boolean; onJoin: RequestToJoin;
 }) {
     const [copied, setCopied] = useState(false);
@@ -186,6 +186,11 @@ export function HomeShareAction({ href, canInteract, onJoin }: {
             setError('Copy unavailable. Please copy the page URL from your browser.');
         }
     };
+    return { share, copied, error };
+}
+
+export function HomeShareAction(props: { href: string; canInteract: boolean; onJoin: RequestToJoin }) {
+    const { share, copied, error } = useHomeShare(props);
     return <span className="pm-home-share-wrap"><button type="button" className="pm-home-action" onClick={() => { void share(); }}>
         <Share2 size={19} aria-hidden="true"/>{copied ? 'Copied' : 'Share'}
     </button>{error && <span className="pm-home-reaction-error" role="alert">{error}</span>}</span>;

@@ -21,9 +21,9 @@
 .pm-discover-step.is-current .pm-discover-step-number { background: var(--blue); color: var(--surface); border-color: var(--blue); }
 .pm-discover-progress { background: var(--border); height: .1875rem; border-radius: var(--radius-pill); overflow: hidden; margin-bottom: var(--s6); }
 .pm-discover-progress > span { display: block; height: 100%; background: var(--blue); opacity: 1; transition: width .15s ease; }
-.pm-discover-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: var(--s8); box-shadow: 0 1px 2px rgb(0 0 0 / 2%); }
-.pm-discover-eyebrow { margin: 0 0 var(--s3); color: var(--blue); font-size: var(--text-xs); line-height: var(--line-xs); font-weight: var(--bold); letter-spacing: .12em; }
-.pm-discover-card > h1 { color: var(--ink); font-size: var(--text-h1); line-height: var(--line-h1); font-weight: var(--bold); letter-spacing: -.025em; margin: 0; }
+.pm-discover-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: var(--s8); box-shadow: 0 1px 2px var(--pm-overlay-0-0-0-2); }
+.pm-discover-eyebrow { margin: 0 0 var(--s3); color: var(--blue); font-size: var(--text-xs); line-height: var(--line-xs); font-weight: var(--bold); letter-spacing: var(--pm-tracking-p12em); }
+.pm-discover-card > h1 { color: var(--ink); font-size: var(--text-h1); line-height: var(--line-h1); font-weight: var(--bold); letter-spacing: var(--pm-tracking-neg-p025em); margin: 0; }
 .pm-discover-description { margin: var(--s4) 0 var(--s6); color: var(--muted); font-size: var(--text-body); line-height: var(--line-body); }
 .pm-discover-info { margin: 0 0 var(--s5); background: var(--blue-soft); border-radius: var(--radius-control); padding: var(--s5); }
 .pm-discover-info h2, .pm-discover-feedback h2 { font-size: var(--text-h4); line-height: var(--line-h4); font-weight: var(--bold); margin: 0 0 var(--s3); }
@@ -67,7 +67,7 @@
 .pm-discover-feedback small { display: block; margin-top: var(--s4); color: var(--muted); font-size: var(--text-xs); line-height: var(--line-xs); }
 .pm-discover-next-overview { padding-top: 0; margin-bottom: var(--s5); }
 .pm-discover-next-highlight { background: var(--blue-soft); padding: var(--s5); border-radius: var(--radius-control); }
-.pm-discover-next-label { color: var(--blue); font-size: var(--text-xs); line-height: var(--line-xs); font-weight: var(--bold); text-transform: uppercase; letter-spacing: .06em; }
+.pm-discover-next-label { color: var(--blue); font-size: var(--text-xs); line-height: var(--line-xs); font-weight: var(--bold); text-transform: uppercase; letter-spacing: var(--pm-tracking-p06em); }
 .pm-discover-next-highlight h2 { margin: var(--s2) 0; font-size: var(--text-h2); line-height: var(--line-h2); }
 .pm-discover-next-highlight p, .pm-discover-next-section p { margin: 0; }
 .pm-discover-next-section { padding: var(--s5) 0; border-bottom: 1px solid var(--border); }
@@ -116,7 +116,7 @@
     font-size: var(--text-xs);
     line-height: var(--line-xs);
     font-weight: var(--bold);
-    letter-spacing: .12em;
+    letter-spacing: var(--pm-tracking-p12em);
     margin-bottom: var(--s1) !important;
 }
 .pm-discover-career-info:has(.pm-discover-career-info-label) h2 { font-size: var(--text-h2); line-height: var(--line-h2); }
@@ -152,13 +152,13 @@
     padding: var(--s5);
     min-width: 0;
 }
-.pm-discover-career-outline p { font-size: var(--text-ui); line-height: var(--line-body); margin: 0; }
+.pm-discover-career-outline p { font-size: var(--text-body); line-height: var(--line-body); margin: 0; }
 .pm-discover-career-twocol + .pm-discover-career-info { margin-top: var(--s5); }
 .pm-discover-career-warning {
-    border-left: 3px solid #d9a128;
+    border-left: 3px solid var(--pm-tone-d9a128);
     padding: var(--s2) var(--s3);
     margin: var(--s4) 0 0;
-    background: #fffaf0;
+    background: var(--pm-tone-fffaf0);
     color: var(--muted);
     font-size: var(--text-xs);
     line-height: var(--line-sm);
@@ -228,7 +228,7 @@
     .pm-discover-page .pm-header, .pm-discover-page .pm-footer,
     .pm-discover-steps, .pm-discover-progress, .pm-discover-actions,
     .pm-discover-print, .pm-discover-final-selected, .pm-discover-pills { display: none !important; }
-    .pm-discover-page, .pm-discover, .pm-discover-main { background: #fff !important; min-height: 0; }
+    .pm-discover-page, .pm-discover, .pm-discover-main { background: var(--pm-tone-fff) !important; min-height: 0; }
     .pm-discover-main { width: 100%; max-width: none; padding: 0; }
     .pm-discover-card { box-shadow: none; break-inside: avoid; }
 }

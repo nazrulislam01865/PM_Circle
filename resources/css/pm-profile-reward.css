@@ -19,7 +19,7 @@
 .pm-profile-reward-main h2 {
     margin: 0 0 var(--s1); font: var(--bold) var(--text-ui)/var(--line-ui) var(--font-ui); color: var(--ink);
 }
-.pm-profile-reward-main > p { margin: 0; font: var(--regular) var(--text-xs)/var(--line-xs) var(--font-ui); color: var(--ink); }
+.pm-profile-reward-main > p { margin: 0; font: var(--regular) var(--text-body)/var(--line-body) var(--font-ui); color: var(--ink); }
 .pm-profile-reward-complete {
     display: inline-flex; align-items: center; gap: var(--s1); margin-top: var(--s2);
     color: var(--blue); font: var(--semibold) var(--text-sm)/var(--line-sm) var(--font-ui);
@@ -31,7 +31,7 @@
 }
 .pm-profile-reward-code {
     font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui);
-    letter-spacing: .03em; font-variant-numeric: tabular-nums;
+    letter-spacing: var(--pm-tracking-p03em); font-variant-numeric: tabular-nums;
     padding: var(--s1) var(--s2); min-width: 0; overflow-wrap: anywhere;
 }
 .pm-profile-reward-copy {

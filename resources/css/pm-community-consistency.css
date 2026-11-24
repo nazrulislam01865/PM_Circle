@@ -10,36 +10,6 @@
 .pm-unified-post-card .pm-post-card-main { padding-inline: 0; }
 .pm-unified-post-card .pm-post-card-main .pm-card-body { text-align: start; }
 
-/* Identity and audience dropdowns share an identical baseline and field height. */
-.pm-compose-prototype .pm-compose-identity-bar {
-    display: grid;
-    grid-template-columns: 40px minmax(0,1fr) minmax(0,1fr);
-    gap: var(--s3);
-    align-items: end;
-}
-.pm-compose-prototype .pm-compose-identity-bar > .pm-avatar,
-.pm-compose-prototype .pm-compose-identity-bar > :first-child {
-    align-self: end;
-    margin-bottom: 0;
-}
-.pm-compose-prototype .pm-compose-identity-choice,
-.pm-compose-prototype .pm-compose-audience {
-    display: grid;
-    grid-template-rows: var(--line-xs) var(--control-height);
-    align-content: end;
-    gap: var(--s1);
-    width: 100%;
-    min-width: 0;
-    max-width: none;
-    margin: 0;
-}
-.pm-compose-prototype .pm-compose-label-spacer { display: block; height: var(--line-xs); }
-.pm-compose-prototype .pm-compose-audience label { font: var(--medium) var(--text-xs)/var(--line-xs) var(--font-ui); }
-.pm-compose-prototype :is(.pm-compose-identity-choice, .pm-compose-audience) .pm-dropdown-trigger {
-    width: 100%; height: var(--control-height); min-height: var(--control-height);
-    box-sizing: border-box;
-}
-
 /* Comment composer and list: compact avatar-led layout, no padded container within the card. */
 .pm-inline-comments { margin-top: var(--s4); padding-top: var(--s4); }
 .pm-inline-comments-head { margin-bottom: var(--s3); }
@@ -144,9 +114,5 @@
     .pm-unified-post-card .pm-post-card-main.pm-post-aligned-content,
     .pm-member-home .pm-unified-post-card .pm-post-card-main.pm-post-aligned-content,
     .pm-unified-post-card .pm-tag-pills-row { margin-inline-start: calc(var(--pm-unified-avatar, 40px) + var(--s3)); }
-    .pm-compose-prototype .pm-compose-identity-bar { grid-template-columns: 40px minmax(0,1fr); }
-    .pm-compose-prototype .pm-compose-identity-bar > :first-child { grid-column: 1; grid-row: 1; }
-    .pm-compose-prototype .pm-compose-identity-choice { grid-column: 2; grid-row: 1; }
-    .pm-compose-prototype .pm-compose-audience { grid-column: 2; grid-row: 2; }
     .pm-post-comments-panel { padding: var(--s4); }
 }

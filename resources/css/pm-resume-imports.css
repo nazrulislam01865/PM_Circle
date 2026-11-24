@@ -2,10 +2,6 @@
 .pm-resume-imports {
     /* These aliases use the approved, stable PM Circle tokens rather than
        Tailwind's unrelated --primary/--muted/--border defaults. */
-    --primary: var(--pm-system-primary);
-    --muted: var(--pm-system-muted);
-    --border: var(--pm-system-border);
-    --radius: var(--pm-system-radius);
     --resume-gap: var(--space-3);
     color: var(--text);
     font-family: var(--font);
@@ -18,7 +14,7 @@
 .pm-resume-imports * { box-sizing: border-box; }
 .pm-resume-heading { margin-bottom: 0; }
 .pm-resume-heading h2 { font-size: var(--type-h3); font-weight: var(--type-weight-bold); margin: 0; }
-.pm-resume-heading p, .pm-resume-muted { color: var(--muted); font-size: var(--type-small); margin: 0; }
+.pm-resume-heading p, .pm-resume-muted { color: var(--muted); font-size: var(--text-body); margin: 0; }
 .pm-resume-source-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
 .pm-resume-panel { min-width: 0; background: var(--surface); border: 1px solid var(--divider); border-radius: var(--card-radius); padding: var(--space-4); }
 .pm-resume-panel-heading { display: flex; gap: var(--space-2); justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: var(--space-3); }

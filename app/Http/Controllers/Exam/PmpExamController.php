@@ -24,7 +24,7 @@ final class PmpExamController extends Controller
     public function entry(Request $request, CurrentMemberPlan $plans): RedirectResponse
     {
         // Resolve access only on navigation, not on every shared header render.
-        return in_array($plans->code($request->user()), ['plus', 'pro'], true)
+        return \App\Domain\Billing\Queries\MemberFeatureAccess::allowsExamSimulator($plans->code($request->user()))
             ? to_route('exams.pmp.index')
             : to_route('pricing');
     }
@@ -32,7 +32,7 @@ final class PmpExamController extends Controller
     public function index(Request $request, CurrentMemberPlan $plans, LearningOverview $overview, PmpQuestionHelpService $ai, PmpExamSettings $examSettings, PmpAiUsageReadModel $usage): Response
     {
         $plan = $plans->details($request->user());
-        abort_unless(in_array($plan['code'], ['plus', 'pro'], true), 403,
+        abort_unless(\App\Domain\Billing\Queries\MemberFeatureAccess::allowsExamSimulator($plan['code']), 403,
             'PMP simulator access requires an active Plus or Pro membership.');
         $userId = (int) $request->user()->id;
         $rules = $examSettings->get();
@@ -443,7 +443,7 @@ final class PmpExamController extends Controller
     private function authorizeMember(Request $request, CurrentMemberPlan $plans): string
     {
         $code = $plans->code($request->user());
-        abort_unless(in_array($code, ['plus', 'pro'], true), 403,
+        abort_unless(\App\Domain\Billing\Queries\MemberFeatureAccess::allowsExamSimulator($code), 403,
             'PMP simulator access requires an active Plus or Pro membership.');
         return $code;
     }

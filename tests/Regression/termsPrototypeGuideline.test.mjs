@@ -66,7 +66,7 @@ test('Terms typography matches the approved Inter guide and other guide-based pu
     assert.match(tokens, /--pm-guide-text-h1: clamp\(2rem, 5vw, 3\.1rem\)/);
     assert.match(tokens, /--pm-guide-text-h2: clamp\(1\.5rem, 3vw, 2rem\)/);
     assert.match(tokens, /--pm-guide-text-h4: 1rem/);
-    assert.match(tokens, /--pm-guide-text-body: 1rem/);
+    assert.match(tokens, /--pm-guide-text-body: var\(--text-body\)/);
     assert.match(tokens, /--pm-guide-text-meta: var\(--text-ui\)/);
     assert.doesNotMatch(style, /\.pm-terms-section h2\s*\{[^}]*var\(--pm-guide-text-h3\)/);
 });
@@ -74,9 +74,9 @@ test('Terms typography matches the approved Inter guide and other guide-based pu
 
 test('Terms uses the same public rail and prototype column proportions as Learn & Practice', () => {
     const learning = read('resources/css/pm-learning-public.css');
-    assert.match(style, /\.pm-home-v2-shell\.pm-guide-public-shell:has\(\.pm-terms-page\)/);
-    assert.match(style, /--pm-v2-container-width: min\(var\(--pm-v2-prototype-rail\), var\(--pm-guide-container\), calc\(100% - 2 \* var\(--pm-guide-gutter\)\)\)/);
-    assert.match(learning, /--pm-v2-container-width: min\(var\(--pm-v2-prototype-rail\), var\(--pm-guide-container\), calc\(100% - 2 \* var\(--pm-guide-gutter\)\)\)/);
+    assert.doesNotMatch(style, /--pm-v2-container-width\s*:/);
+    assert.match(style, /width: var\(--pm-v2-container-width\)/);
+    assert.match(learning, /width: var\(--pm-v2-container-width\)/);
     assert.match(style, /grid-template-columns: var\(--pm-guide-terms-sidebar-width\) minmax\(0,1fr\)/);
     assert.match(tokens, /--pm-guide-terms-sidebar-width: 17rem/);
     assert.match(tokens, /--pm-guide-terms-column-gap: calc\(var\(--pm-guide-s12\) \+ var\(--pm-guide-s3\)\)/);

@@ -1,37 +1,5 @@
 /* PM Circle mobile layouts. All type, colors, radii and spacing reference
    the approved central design tokens. Desktop prototypes remain unchanged. */
-/* Tablet feed cards may share a row with Read discussion and squeeze the
-   reaction controls into a second flex line. Keep the footer actions together. */
-@media (max-width: 53rem) {
-    .pm-unified-post-card .pm-card-action-bar,
-    .pm-unified-post-card .pm-card-action-bar:has(.pm-inline-comments) {
-        display: block;
-    }
-    .pm-unified-post-card .pm-card-action-bar .pm-engagement-shell {
-        width: 100%;
-    }
-    .pm-unified-post-card .pm-card-action-bar .pm-engagement-actions {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1.28fr) minmax(0, 1fr) minmax(0, 1fr);
-        align-items: stretch;
-        gap: var(--s1);
-    }
-    .pm-unified-post-card .pm-engagement-actions > .pm-post-reaction-summary {
-        grid-column: 1 / -1;
-        grid-row: 1;
-        justify-self: end;
-        margin: 0;
-    }
-    .pm-unified-post-card .pm-engagement-actions > .pm-post-save-action {
-        margin: 0;
-    }
-    .pm-unified-post-card .pm-card-action-bar .pm-read-discussion-link {
-        display: block;
-        width: fit-content;
-        margin: var(--s2) 0 0 auto;
-        text-align: end;
-    }
-}
 @media (max-width: 42rem) {
     /* The site and member shells fill the device viewport. Avoid using
        overflow-x:hidden on the body: that clips menus and reaction pickers. */
@@ -114,21 +82,6 @@
     .pm-guest-banner-text { min-width: 0; overflow-wrap: anywhere; }
     .pm-app .pm-guest-banner-card > .pm-button { width: 100%; min-height: var(--control-touch); }
 
-    /* Shared Community/Home/Dashboard cards: balanced four-action bar.
-       Reaction counts are independent of Save and never alter its height. */
-    .pm-unified-post-card .pm-card-action-bar .pm-engagement-actions {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1.28fr) minmax(0, 1fr) minmax(0, 1fr);
-        gap: var(--s1);
-    }
-    .pm-unified-post-card .pm-card-action-bar .pm-home-action:not(.pm-home-reaction-choice) {
-        font-size: var(--text-sm);
-        line-height: var(--line-sm);
-    }
-    /* Never split the word "comments" into broken syllables. */
-    .pm-unified-post-card .pm-card-action-bar .pm-engagement-actions > button.pm-home-action {
-        overflow-wrap: normal;
-        word-break: normal;
-    }
     .pm-home .pm-home-community-card .pm-section-head {
         display: flex;
         flex-wrap: wrap;
@@ -137,7 +90,7 @@
     }
     .pm-home .pm-home-community-card .pm-section-head h2 { min-width: 0; }
     .pm-home .pm-home-community-card .pm-section-head a { margin-left: auto; }
-    .pm-home .pm-home-community-posts .pm-unified-post-card { padding: var(--s3); }
+
 
     /* Guest navigation retains both links but shortens the primary CTA only
        on narrow phones; the accessible name remains the original joinLabel. */
@@ -162,10 +115,132 @@
     .pm-sort-dropdown { justify-self: start; }
     .pm-feed-search-input { min-height: var(--control-touch); }
 }
-/* On the smallest phones each of the four actions retains a readable label.
-   Two balanced rows are preferable to splitting "Share" or "Save" mid-word. */
-@media (max-width: 22rem) {
-    .pm-unified-post-card .pm-card-action-bar .pm-engagement-actions {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+
+/* Post interaction contract: one roster and one save/share state across breakpoints. */
+.pm-post-reaction-group { display: contents; }
+.pm-post-mobile-menu, .pm-post-mobile-item { display: none; }
+.pm-post-copy-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.pm-post-secondary-error { flex-basis: 100%; color: var(--red); font-size: var(--text-sm); overflow-wrap: anywhere; }
+@media (max-width: 767px) {
+    .pm-post-mobile-menu, .pm-post-menu-content .pm-post-mobile-item { display: flex; }
+    .pm-post-menu-content .pm-post-mobile-item.pm-post-menu-separator { display: block; }
+    .pm-post-actions-root { flex: none; align-self: flex-start; }
+    .pm-post-actions-root .pm-post-menu-trigger { width: var(--control-touch); height: var(--control-touch); }
+    .pm-post-menu-content .pm-post-menu-item { min-height: var(--control-touch); }
+    .pm-unified-post-card .pm-author-info-wrap, .pm-v2-post-author > div:nth-child(2) { min-width: 0; overflow-wrap: anywhere; }
+    .pm-unified-post-card .pm-card-author-header, .pm-v2-post-author { align-items: flex-start; }
+    .pm-unified-post-card .pm-card-action-bar { display: block; }
+    .pm-unified-post-card .pm-card-action-bar .pm-engagement-actions.pm-post-engagement-row,
+    .pm-v2-post-actions .pm-engagement-actions.pm-post-engagement-row,
+    .pm-v2-scenario-actions .pm-engagement-actions.pm-post-engagement-row,
+    .pm-scenario-engagement .pm-engagement-actions.pm-post-engagement-row {
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s1); min-width: 0;
     }
+    .pm-post-engagement-row .pm-post-reaction-group { display: inline-flex; align-items: center; min-width: 0; gap: 0; }
+    .pm-post-engagement-row .pm-home-reaction-root { flex: none; width: auto; }
+    .pm-post-engagement-row .pm-post-reaction-summary { margin: 0; padding-inline: var(--s1); gap: var(--s1); min-width: var(--control-touch); color: var(--muted); }
+    .pm-post-reaction-zero { padding-inline: var(--s2); color: var(--muted); font-size: var(--text-ui); }
+    .pm-post-copy-status { position: static; width: 100%; height: auto; overflow: visible; clip-path: none; font-size: var(--text-ui); color: var(--muted); }
+    .pm-post-engagement-row .pm-post-reaction-stack { display: inline-flex; padding-inline-start: var(--s1); }
+    .pm-post-engagement-row .pm-post-reaction-stack .pm-post-reaction-icon { width: var(--s6); height: var(--s6); margin-inline-start: calc(-1 * var(--s1)); }
+    .pm-post-engagement-row .pm-post-reaction-stack .pm-post-reaction-icon:nth-child(n+3) { display: none; }
+    .pm-post-engagement-row .pm-post-reaction-total { color: var(--muted); }
+    .pm-unified-post-card .pm-card-action-bar .pm-engagement-actions.pm-post-engagement-row .pm-home-action,
+    .pm-v2-post-actions .pm-engagement-actions.pm-post-engagement-row .pm-home-action,
+    .pm-v2-scenario-actions .pm-engagement-actions.pm-post-engagement-row .pm-home-action,
+    .pm-scenario-engagement .pm-engagement-actions.pm-post-engagement-row .pm-home-action {
+        display: inline-flex; align-items: center; flex-direction: row; width: auto; min-width: 0; min-height: var(--control-touch); padding: var(--s2); gap: var(--s1); font-size: var(--text-ui); line-height: var(--line-ui); white-space: normal;
+    }
+    .pm-unified-post-card .pm-card-action-bar .pm-engagement-actions.pm-post-engagement-row .pm-post-desktop-action,
+    .pm-v2-post-actions .pm-engagement-actions.pm-post-engagement-row .pm-post-desktop-action,
+    .pm-v2-scenario-actions .pm-engagement-actions.pm-post-engagement-row .pm-post-desktop-action,
+    .pm-scenario-engagement .pm-engagement-actions.pm-post-engagement-row .pm-post-desktop-action,
+    .pm-v2-scenario-card .pm-v2-scenario-link.pm-post-desktop-action,
+    .pm-unified-post-card .pm-card-action-bar .pm-read-discussion-link { display: none; }
+    .pm-post-engagement-row .pm-home-reaction-options { flex-wrap: wrap; width: max-content; max-width: min(calc(100vw - 2 * var(--pm-guide-gutter) - 2 * var(--pm-guide-card-padding)), calc(4 * var(--control-touch) + 5 * var(--s2))); padding: var(--s2); gap: var(--s1); border-radius: var(--radius-card); }
+    .pm-post-engagement-row .pm-home-reaction-choice { flex: 0 0 var(--control-touch); width: var(--control-touch); height: var(--control-touch); min-height: var(--control-touch); }
+    .pm-post-engagement-row .pm-post-secondary-error { width: 100%; }
+}
+
+/* Shared disclosure pattern, with existing desktop filter children kept in the grid. */
+.pm-mobile-filter-toggle { display: none; }
+.pm-mobile-filter-content { display: contents; }
+@media (max-width: 700px) {
+    .pm-responsive-filter-panel .pm-mobile-filter-toggle {
+        display: flex; align-items: center; gap: var(--s2); width: 100%; grid-column: 1/-1;
+        min-height: var(--control-touch); padding: var(--s2) var(--s3); border: 0; background: var(--surface); color: var(--ink);
+        border-radius: var(--radius-control); font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui); text-align: start;
+    }
+    .pm-mobile-filter-toggle > span { flex: 1; min-width: 0; }
+    .pm-mobile-filter-toggle svg { flex: none; }
+    .pm-mobile-filter-toggle[aria-expanded="true"] > svg:last-child { transform: rotate(180deg); }
+    .pm-responsive-filter-panel[data-mobile-expanded="false"] > .pm-mobile-filter-content { display: none; }
+    .pm-responsive-filter-panel[data-mobile-expanded="false"] { padding: var(--s2); min-height: 0; }
+    .pm-learn-v3-content { grid-template-columns: minmax(0,1fr); }
+    .pm-course-catalog .pm-catalog-sort { min-width: 0; }
+    .pm-course-catalog .pm-catalog-toolbar-end { min-width: 0; max-width: 100%; }
+    .pm-responsive-filter-panel .pm-mobile-filter-content > h2,
+    .pm-responsive-filter-panel .pm-learn-v3-filter-heading h2,
+    .pm-responsive-filter-panel .pm-catalog-sidebar-heading h2 { display: none; }
+    .pm-responsive-filter-panel :is(.pm-learn-v3-filter-heading,.pm-catalog-sidebar-heading) { justify-content: flex-end; grid-column: 1/-1; }
+    .pm-responsive-filter-panel .pm-challenge-filter-body { padding-inline: var(--s3); }
+    .pm-responsive-filter-panel .pm-challenge-filter-footer { padding: var(--s3); }
+    .pm-responsive-filter-panel .pm-learn-v3-filter-heading button,
+    .pm-responsive-filter-panel .pm-catalog-sidebar-heading button { min-height: var(--control-touch); }
+}
+
+@media (max-width: 767px) and (hover: none) {
+    .pm-post-engagement-row .pm-home-reaction-root[data-open="false"] .pm-home-reaction-options { opacity: 0; visibility: hidden; pointer-events: none; }
+}
+
+@media (max-width: 23.5rem) {
+    .pm-unified-post-card .pm-card-action-bar .pm-engagement-actions.pm-post-engagement-row .pm-home-action,
+    .pm-v2-post-actions .pm-engagement-actions.pm-post-engagement-row .pm-home-action,
+    .pm-v2-scenario-actions .pm-engagement-actions.pm-post-engagement-row .pm-home-action,
+    .pm-scenario-engagement .pm-engagement-actions.pm-post-engagement-row .pm-home-action { padding-inline: var(--s1); }
+    .pm-post-engagement-row .pm-post-reaction-summary { padding-inline: var(--s1); }
+    .pm-post-engagement-row .pm-post-reaction-stack .pm-post-reaction-icon:nth-child(n+2) { display: none; }
+    .pm-post-engagement-row .pm-home-reaction-main .pm-home-reaction-label { display: none; }
+    .pm-post-engagement-row .pm-home-reaction-main { min-width: var(--control-touch); }
+}
+
+@media (max-width: 767px) {
+    .pm-event-row-layout.pm-v2-event,
+    .pm-event-row-layout.pm-event-listing-row {
+        display: grid; grid-template-columns: var(--pm-event-date-size) minmax(0, 1fr);
+        align-items: start; gap: var(--s2) var(--s3); min-height: 0;
+        padding: var(--pm-guide-card-padding); border-radius: var(--radius-card);
+    }
+    .pm-event-row-layout .pm-event-row-date { grid-column: 1; grid-row: 1 / span 2; width: var(--pm-event-date-size); min-height: var(--pm-event-date-size); }
+    .pm-event-row-layout .pm-event-row-copy { grid-column: 2; grid-row: 1; min-width: 0; overflow-wrap: anywhere; }
+    .pm-event-row-layout .pm-event-row-action { grid-column: 2; grid-row: 2; justify-self: start; margin: 0; max-width: 100%; white-space: normal; }
+    .pm-event-row-layout .pm-event-row-date strong { font-size: var(--text-h3); line-height: var(--line-h3); }
+    .pm-event-row-layout .pm-event-row-date span { font-size: var(--pm-guide-text-meta); line-height: var(--pm-guide-line-control); }
+    .pm-home-v2 .pm-v2-post-card { border-radius: var(--radius-card); padding: var(--pm-guide-card-padding); }
+    .pm-home-v2 .pm-v2-post-author strong { font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui); }
+    .pm-home-v2 .pm-v2-post-author small { font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui); }
+    .pm-home-v2 .pm-v2-post-card .pm-v2-post-content h3 { font: var(--bold) var(--text-h3)/var(--line-h3) var(--font-ui); }
+    .pm-home-v2 .pm-v2-post-card .pm-v2-post-body { color: var(--text); font: var(--regular) var(--text-body)/var(--line-body) var(--font-ui); }
+    .pm-profile-page .pm-card-header-row { flex-direction: column; align-items: flex-start; gap: var(--s2); }
+    .pm-profile-page .pm-card-header-row .pm-btn-ghost { min-height: var(--control-touch); padding-inline: 0; max-width: 100%; text-align: start; }
+    .pm-profile-page .pm-card-header-row .pm-btn-ghost svg { flex: none; }
+    .pm-profile-page .pm-progress-widget:last-child { margin-bottom: 0; }
+    .pm-profile-page .pm-progress-text { min-width: 0; overflow-wrap: anywhere; }
+    .pm-profile-page .pm-learning-triplet { grid-template-columns: repeat(3,minmax(0,1fr)); gap: var(--s2); margin-top: var(--s3); }
+    .pm-profile-page .pm-learning-triplet .pm-stat-box { min-width: 0; padding: var(--s2); overflow-wrap: anywhere; }
+    .pm-members-list { display: grid; gap: var(--pm-guide-card-gap); border: 0; background: transparent; overflow: visible; }
+    .pm-members-list .pm-members-row { grid-template-columns: minmax(0,1fr); gap: var(--s3); padding: var(--pm-guide-card-padding); border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--surface); }
+    .pm-members-list .pm-members-row:last-child { border-bottom: 1px solid var(--border); }
+    .pm-members-list .pm-members-counts { grid-row: auto; grid-column: 1; padding: 0; min-height: 0; border: 0; white-space: normal; flex-wrap: wrap; }
+    .pm-members-list .pm-members-actions { grid-row: auto; grid-column: 1; gap: var(--s2); }
+    .pm-members-list .pm-members-actions :is(button,a) { min-height: var(--control-touch); white-space: normal; text-align: center; padding-inline: var(--s2); }
+    .pm-members-list .pm-members-follow-placeholder { display: none; }
+    .pm-members-list .pm-members-actions:has(.pm-members-follow-placeholder) .pm-members-profile-button { grid-column: 1/-1; }
+    .pm-members-list :is(.pm-members-role,.pm-members-meta,.pm-members-name) { white-space: normal; overflow-wrap: anywhere; }
+    .pm-member-home .pm-dash-feed-tabs { display: block; min-width: 0; }
+    .pm-member-home .pm-dash-feed-tabs .pm-feed-scope-tabs { flex-wrap: nowrap; overflow-x: auto; gap: var(--s1); }
+    .pm-member-home .pm-dash-feed-tabs .pm-feed-scope-tab { flex: none; padding-inline: var(--s2); }
+    .pm-member-home .pm-dash-posts { gap: var(--pm-guide-card-gap); }
+    .pm-member-home .pm-dash-posts .pm-unified-post-card { margin-bottom: 0; }
+    .pm-virtual-feed.pm-dash-posts > .pm-virtual-feed-item { padding-bottom: var(--pm-guide-card-gap); }
 }

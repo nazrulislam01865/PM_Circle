@@ -36,7 +36,7 @@ test('scoped visual rules use centralized tokens and leave actions intact', () =
     assert.match(css, /\.pm-scenario-detail-info-row/);
     assert.match(css, /var\(--s10\)/);
     assert.match(css, /var\(--blue-soft\)/);
-    for (const label of ['<ReactionPicker', '<HomeShareAction', '<CommentComposer', 'scenario-responses', 'scenario-submit-card']) {
+    for (const label of ['<ReactionPicker', 'scenarioShare.share()', '<CommentComposer', 'scenario-responses', 'scenario-submit-card']) {
         assert.ok(page.includes(label), `Existing interaction altered: ${label}`);
     }
 });

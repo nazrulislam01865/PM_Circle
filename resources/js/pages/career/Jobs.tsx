@@ -1,4 +1,5 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { AdjacentPagination } from '@/components/pm/Pagination';
+import { Head, router } from '@inertiajs/react';
 import { BriefcaseBusiness, Search } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { CareerJobCard } from '@/components/career/CareerJobCard';
@@ -70,11 +71,7 @@ export default function Jobs({ jobs, filters }: Props) {
                 {jobs.data.length ? jobs.data.map(job => <CareerJobCard key={job.id} job={job}/>)
                     : <div className="pm-trend-empty">No current listings match your search. Try another title, company or location.</div>}
             </div>
-            {(jobs.currentPage > 1 || jobs.hasMore) && <nav className="pm-careers-pagination" aria-label="Careers pages">
-                {jobs.currentPage > 1 && <Link className="btn secondary" href={pageUrl(jobs.currentPage - 1)}>Previous</Link>}
-                <span>Page {jobs.currentPage}</span>
-                {jobs.hasMore && <Link className="btn secondary" href={pageUrl(jobs.currentPage + 1)}>Next</Link>}
-            </nav>}
+            <AdjacentPagination previous={jobs.currentPage > 1 ? pageUrl(jobs.currentPage - 1) : null} next={jobs.hasMore ? pageUrl(jobs.currentPage + 1) : null} current={jobs.currentPage} label="Careers pages"/>
         </div>
     </PublicLayout>;
 }

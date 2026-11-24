@@ -15,9 +15,12 @@ final class MemberShell
     {
         $user->loadMissing('profile');
 
+        $plan = $this->plans->code($user);
         return [
-            'plan' => $this->plans->dashboardCode($user),
+            'plan' => $plan === 'plus' ? 'premium' : $plan,
+            'featureAccess' => app(\App\Domain\Billing\Queries\MemberFeatureAccess::class)->forPlan($plan),
             'member' => [
+                'id' => $user->getKey(),
                 'name' => $user->name,
                 'role' => $user->profile?->role,
                 'avatar_path' => $user->profile?->avatar_path,

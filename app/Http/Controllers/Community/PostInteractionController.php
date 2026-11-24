@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use App\Models\Comment;
 use App\Models\Post;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -50,10 +51,10 @@ class PostInteractionController extends Controller
         $this->ensurePublic($post, $request);
         $sort = $request->query('sort') === 'newest' ? 'newest' : 'relevant';
         $query = $post->comments()->visible()->whereNull('parent_id')
-            ->with(['author:id,name', 'author.profile:id,user_id,avatar_path,visibility'])
+            ->with(['author:id,name,status,is_admin,email_verified_at', 'author.profile:id,user_id,avatar_path,visibility'])
             ->withCount(['likes', 'replies' => fn ($query) => $query->visible()])
             ->with(['replies' => fn ($replies) => $replies->visible()->orderBy('created_at')->orderBy('id')->limit(2)
-                ->with(['author:id,name', 'author.profile:id,user_id,avatar_path,visibility'])->withCount('likes')]);
+                ->with(['author:id,name,status,is_admin,email_verified_at', 'author.profile:id,user_id,avatar_path,visibility'])->withCount('likes')]);
         if ($sort === 'relevant') {
             $query->orderByDesc('likes_count');
         }
@@ -80,6 +81,7 @@ class PostInteractionController extends Controller
                 'viewer_reaction' => $liked[$comment->id] ?? null,
                 'author' => [
                     'name' => $comment->author?->name ?? 'Member',
+                    'profile_url' => $this->commentProfileUrl($comment->author),
                     'avatar_path' => $comment->author && (
                         $comment->author->id === $viewerId || $comment->author->profile?->visibility === 'public'
                     ) ? $comment->author->profile?->avatar_path : null,
@@ -197,6 +199,14 @@ class PostInteractionController extends Controller
         return response()->json(['status' => 'pending_check'], 202);
     }
 
+    /** Call only with the existing eagerly loaded profile; no additional query. */
+    private function commentProfileUrl(?User $author): ?string
+    {
+        return $author && $author->status === 'active' && ! $author->is_admin
+            && $author->hasVerifiedEmail() && $author->profile?->visibility === 'public'
+            ? '/members/'.$author->id : null;
+    }
+
     /** Shared serializer for ordinary and newly approved comments. */
     private function commentResult(Comment $comment, Request $request): array
     {
@@ -209,6 +219,7 @@ class PostInteractionController extends Controller
             'author' => [
                 'name' => $request->user()->name,
                 'avatar_path' => $request->user()->loadMissing('profile')->profile?->avatar_path,
+                'profile_url' => $this->commentProfileUrl($request->user()),
             ], 'replies' => [],
         ];
     }
@@ -343,7 +354,7 @@ class PostInteractionController extends Controller
         }
 
         $query = $comment->replies()->visible()->with([
-            'author:id,name', 'author.profile:id,user_id,avatar_path,visibility',
+            'author:id,name,status,is_admin,email_verified_at', 'author.profile:id,user_id,avatar_path,visibility',
         ])->withCount('likes');
         if ($after) {
             $query->where(fn ($builder) => $builder->where('created_at', '>', $after->created_at)
@@ -368,6 +379,7 @@ class PostInteractionController extends Controller
                 'viewer_reaction' => $reactions->get($reply->id),
                 'author' => [
                     'name' => $reply->author?->name ?? 'Member',
+                    'profile_url' => $this->commentProfileUrl($reply->author),
                     'avatar_path' => $reply->author && ($reply->author->id === $viewerId
                         || $reply->author->profile?->visibility === 'public')
                         ? $reply->author->profile?->avatar_path : null,

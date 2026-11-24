@@ -10,3 +10,9 @@ export function shouldShowSiteFooter(pageUrl: string): boolean {
     if (/^\/exams\/pmp\/attempts\/\d+$/.test(path)) return false;
     return true;
 }
+
+/** The member prototype includes its compact footer even on Home. */
+export function shouldShowMemberFooter(pageUrl: string): boolean {
+    const path = (pageUrl.split(/[?#]/, 1)[0] || '/').replace(/\/+$/, '') || '/';
+    return path === '/dashboard' || path === '/dashboard/home' || shouldShowSiteFooter(pageUrl);
+}

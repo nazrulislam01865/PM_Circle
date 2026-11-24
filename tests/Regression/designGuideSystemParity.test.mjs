@@ -52,15 +52,15 @@ test('semantic color and type values match provided HTML exactly', () => {
     assert.equal(tokenValue('pm-guide-text-h1'), 'clamp(2rem, 5vw, 3.1rem)');
     assert.equal(tokenValue('pm-guide-text-h2'), 'clamp(1.5rem, 3vw, 2rem)');
     assert.equal(tokenValue('pm-guide-text-h3'), '1.125rem');
-    assert.equal(tokenValue('pm-guide-text-body'), '1rem');
-    assert.equal(tokenValue('pm-guide-line-body'), '1.6');
+    assert.equal(tokenValue('pm-guide-text-body'), 'var(--text-body)');
+    assert.equal(tokenValue('pm-guide-line-body'), 'var(--line-body)');
 });
 
 test('About Us keeps the homepage rail and guide scale at different viewport sizes', () => {
     assert.match(about, /\.pm-about-wrap\s*\{[^}]*container-type: inline-size;/);
     assert.match(about, /@supports \(container-type: inline-size\) and \(width: 1cqw\)/);
-    assert.match(about, /--pm-guide-text-h1: var\(--pm-guide-rail-h1\);/);
-    assert.match(about, /--pm-guide-text-h2: var\(--pm-guide-rail-h2\);/);
+    assert.match(about, /\.pm-about-banner h1\s*\{\s*font-size: var\(--pm-guide-rail-h1\);/);
+    assert.match(about, /\.pm-about-content h2\s*\{\s*font-size: var\(--pm-guide-rail-h2\);/);
     assert.equal(tokenValue('pm-guide-rail-h1'), 'clamp(2rem, 5cqw, 3.1rem)');
     assert.equal(tokenValue('pm-guide-rail-h2'), 'clamp(1.5rem, 2.25cqw, 1.625rem)');
     assert.match(about, /font-weight: var\(--pm-guide-static-h1-weight\)/);

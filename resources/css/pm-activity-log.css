@@ -27,13 +27,13 @@
 .pm-activity-heading h1 {
     color: var(--ink);
     font: var(--bold) var(--text-h1)/var(--line-h1) var(--font-ui);
-    letter-spacing: -.025em;
+    letter-spacing: var(--pm-guide-tracking-h1);
     margin: 0;
 }
 .pm-activity-heading p {
     color: var(--muted);
     margin: var(--s1) 0 0;
-    font: var(--regular) var(--text-body)/var(--line-body) var(--font-ui);
+    font: var(--regular) var(--pm-guide-text-lead)/var(--line-body) var(--font-ui);
 }
 
 /* Reuse the global .pm-button contract; only this danger action's tone differs. */
@@ -67,7 +67,7 @@
     border: 1px solid var(--border);
     box-shadow: var(--pm-shadow);
     border-radius: var(--radius-card);
-    padding: var(--s5);
+    padding: var(--pm-guide-card-padding);
 }
 .pm-activity-toolbar {
     display: flex;
@@ -101,7 +101,7 @@
     border: 1px solid var(--control-border);
     border-radius: var(--radius-control);
     color: var(--ink);
-    font: var(--medium) var(--text-ui)/var(--line-ui) var(--font-ui);
+    font: var(--regular) var(--pm-guide-text-control)/var(--pm-guide-line-control) var(--font-ui);
     cursor: pointer;
 }
 .pm-activity-select:has(.pm-activity-select-icon) select {
@@ -131,7 +131,7 @@
     background: var(--track);
     border-radius: var(--radius-control);
     color: var(--ink);
-    font: var(--bold) var(--text-h2)/var(--line-h2) var(--font-ui);
+    font: var(--semibold) var(--text-h4)/var(--line-h4) var(--font-ui);
 }
 .pm-activity-row {
     display: grid;
@@ -164,7 +164,7 @@
     white-space: nowrap;
     text-decoration: none;
     color: var(--ink);
-    font: var(--semibold) var(--text-h5)/var(--line-h5) var(--font-ui);
+    font: var(--semibold) var(--text-h4)/var(--line-h4) var(--font-ui);
 }
 .pm-activity-title:hover { text-decoration: underline; color: var(--blue); }
 .pm-activity-row-copy p {
@@ -182,7 +182,7 @@
     white-space: nowrap;
     color: var(--blue);
     background: var(--blue-soft);
-    font: var(--semibold) var(--text-xs)/var(--line-xs) var(--font-ui);
+    font: var(--semibold) var(--pm-guide-text-meta)/var(--line-sm) var(--font-ui);
 }
 .pm-activity-score.is-above { color: var(--green); background: var(--green-soft); }
 .pm-activity-score.is-below { color: var(--warning); background: var(--warning-soft); }
@@ -210,7 +210,7 @@
 .pm-activity-privacy-note p { margin: 0; }
 .pm-activity-privacy-note svg { color: var(--blue); }
 .pm-activity-empty { padding: var(--s10) var(--s4); text-align: center; }
-.pm-activity-empty h2 { color: var(--ink); font: var(--bold) var(--text-h2)/var(--line-h2) var(--font-ui); }
+.pm-activity-empty h2 { color: var(--ink); font: var(--bold) var(--text-h3)/var(--line-h3) var(--font-ui); }
 .pm-activity-empty p {
     color: var(--muted);
     margin: var(--s2) auto 0;
@@ -240,7 +240,6 @@
 @media (max-width: 42rem) {
     .pm-activity-heading { align-items: flex-start; flex-direction: column; gap: var(--s2); }
     .pm-activity-clear { margin-top: 0; }
-    .pm-activity-card { padding: var(--s4); }
     .pm-activity-toolbar { align-items: stretch; flex-direction: column; }
     .pm-activity-filter-group {
         display: grid;

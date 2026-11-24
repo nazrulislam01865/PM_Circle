@@ -41,7 +41,7 @@
 }
 .pm-app .pm-site-header .pm-header-actions { gap: var(--space-4); }
 .pm-app .pm-site-header .pm-header-actions .pm-button {
-    min-height: var(--pm-control-dimension-40px);
+    min-height: var(--pm-guide-button-height);
     padding: var(--space-2) var(--pm-control-padding-15px);
     border-radius: var(--radius);
     font-family: var(--font);

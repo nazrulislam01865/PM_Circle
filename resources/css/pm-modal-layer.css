@@ -1,0 +1,20 @@
+/* Shared body-level portal layering. Feature CSS must not set independent modal z-indexes.
+   Native showModal() dialogs use the browser top layer instead. */
+:is([data-slot="dialog-overlay"], [data-slot="sheet-overlay"]) {
+    position: fixed;
+    inset: 0;
+    z-index: var(--pm-guide-dialog-layer);
+    background: var(--pm-guide-dialog-backdrop);
+}
+:is([data-slot="dialog-content"], [data-slot="sheet-content"]) {
+    z-index: var(--pm-guide-dialog-layer);
+}
+/* Default viewport constraint; specialized flex/scroll dialogs retain their own layout. */
+[data-slot="dialog-content"] {
+    max-height: calc(100dvh - 2 * var(--pm-guide-s3));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+:is([data-slot="select-content"], [data-slot="dropdown-menu-content"], [data-slot="dropdown-menu-sub-content"], [data-slot="tooltip-content"]) {
+    z-index: var(--pm-guide-floating-layer);
+}

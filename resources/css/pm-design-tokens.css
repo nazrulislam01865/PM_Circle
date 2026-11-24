@@ -3,18 +3,23 @@
    Historical accent variants intentionally keep their exact values to prevent visual changes.
    Do not define fonts, colors or control metrics in feature stylesheets. */
 :root {
-    /* PM_Circle_Design_Guidelines (1)(20261123-174005).html is authoritative
+    /* PM_Circle_Design_Guidelines (1)(20261124-091530).html is authoritative
        for all type roles across public, member, admin and auth screens.
        Legacy feature CSS references these shared aliases rather than local sizes.
-       The 0.75rem micro type and 2rem statistic tokens are reserved for dense
+       The dedicated metric caption and 2rem statistic tokens are reserved for dense
        charts/metrics, not ordinary body, heading, labels or form controls. */
     color-scheme: light;
-    --font-ui: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    --text-xs: .75rem;
+    --font-ui: "Inter", system-ui, Arial, sans-serif;
+    --text-xs: var(--pm-guide-text-meta);
+    --text-metric-caption: .75rem; /* Dense chart annotations only. */
+    --line-metric-caption: 1rem;
+    --pm-guide-tracking-h1: -.04em;
+    --pm-guide-tracking-h2: normal;
+    --pm-guide-text-dialog-title: clamp(1.25rem, 4vw, 1.5rem);
     --text-donut-label: .6875rem; /* Compact review circle label; keeps the text within the ring. */
-    --line-xs: 1rem;
-    --text-sm: .875rem;
-    --line-sm: 1.35;
+    --line-xs: var(--pm-guide-line-body);
+    --text-sm: var(--pm-guide-text-meta);
+    --line-sm: var(--pm-guide-line-body);
     --text-ui: .875rem;
     --line-ui: 1.35;
     --text-body: 1rem; /* Approved HTML guide: 400 1rem/1.6 Inter. */
@@ -46,40 +51,40 @@
     --s8: 2rem;
     --s10: 2.5rem;
     --radius-control: .5rem;
-    --radius-card: .75rem;
+    --radius-card: var(--pm-guide-radius-card);
     --radius-pill: 999px;
     --header-height: 5rem;
     --sidebar-width: 14rem;
     --content-width: 70rem;
     /* Shared public-page content rail (same dimensions as the existing .pm-container). */
-    --pm-public-layout-max-width: 92.5rem;
-    --pm-public-layout-gutter: 2rem;
-    --control-height: 2.5rem;
+    --pm-public-layout-max-width: var(--pm-guide-container);
+    --pm-public-layout-gutter: var(--pm-guide-gutter);
+    --control-height: var(--control-touch);
     --control-compact: 2rem;
     --control-touch: 2.75rem;
     --icon: 1.25rem;
     --avatar: 2rem;
     --bar-height: .5rem;
     --donut: 7.5rem;
-    --ink: #172842;
-    --muted: #4c5d74;
-    --blue: #075eb5;
-    --blue-hover: #084c91;
-    --blue-soft: #e7f1fd;
+    --ink: var(--pm-guide-ink);
+    --muted: var(--pm-guide-muted);
+    --blue: var(--pm-guide-blue);
+    --blue-hover: var(--pm-guide-blue-hover);
+    --blue-soft: var(--pm-guide-pale);
     --exam-nav-ink: #a33d21;
     --exam-nav-soft: #fff0e7;
     --exam-nav-hover: #ffe6d7;
-    --canvas: #f4f7fa;
+    --canvas: var(--pm-guide-soft);
     --surface: #fff;
-    --border: #dce4ee;
-    --control-border: #8597ab;
+    --border: var(--pm-guide-line);
+    --control-border: var(--pm-guide-control-line);
     --track: #e8eef5;
-    --green: #187448;
-    --green-soft: #e9f6ef;
-    --red: #b33d4e;
+    --green: var(--pm-guide-green);
+    --green-soft: var(--pm-guide-green-bg);
+    --red: var(--pm-guide-error);
     --red-soft: #fceff0;
     --neutral: #7a899e;
-    --focus: #0866c4;
+    --focus: var(--pm-guide-focus);
     --reward-surface: #fff7e6;
     --reward-surface-bright: #fffdf6;
     --reward-border: #f2dfbb;
@@ -88,7 +93,7 @@
 
     /* Approved PM_Circle_Design_Guidelines (1).html.
        Shared semantic tokens for the exam catalog and any later explicitly approved
-       guide-based page. Do not override the legacy/global palette or homepage tokens. */
+       guide-based page. Legacy aliases resolve to the same canonical palette. */
     --pm-guide-font: var(--font-ui);
     --pm-guide-ink: #10223d;
     --pm-guide-body-color: #344861;
@@ -119,9 +124,19 @@
     --pm-guide-shadow: 0 4px 14px #12346112;
     --pm-guide-dialog-shadow: 0 18px 60px #10223d50;
     --pm-guide-dialog-backdrop: #102441a6;
+    /* One modal plane above all navigation (highest shell layer: 121).
+       Overlay and content share a layer: portal insertion order keeps a later
+       modal's backdrop above the earlier modal, including nested dialogs.
+       Portaled select menus and other floating controls stay above the modal. */
+    --pm-guide-dialog-layer: 900;
+    --pm-guide-floating-layer: 1000;
+    --pm-compose-width: 40rem;
+    --pm-compose-editor-min-height: 8rem;
+    --pm-compose-image-max-height: 12rem;
+    --pm-compose-submit-width: 6rem;
     /* Shared promotional dialog, matched to the guide's accessible dialog pattern. */
     --pm-guide-reward-dialog-width: 37.5rem;
-    --pm-guide-reward-title-size: clamp(1.25rem, 4vw, 1.5rem);
+    --pm-guide-reward-title-size: var(--pm-guide-text-dialog-title);
     --pm-guide-reward-icon-size: 3.5rem;
     --pm-guide-reward-icon-mobile: 3rem;
     --pm-guide-reward-step-size: var(--control-touch);
@@ -136,6 +151,8 @@
     --pm-guide-s12: 3rem;
     --pm-guide-radius-sm: var(--radius-control);
     --pm-guide-radius-card: .875rem;
+    --pm-guide-card-padding: var(--pm-guide-s4);
+    --pm-guide-card-gap: var(--pm-guide-s4);
     --pm-guide-radius-feature: 1.125rem;
     --pm-guide-radius-pill: .375rem;
     --pm-guide-container: 73.75rem;
@@ -186,17 +203,15 @@
     --pm-guide-text-h3: 1.125rem;
     --pm-guide-text-h4: 1rem;
     --pm-guide-text-lead: 1.0625rem;
-    --pm-guide-text-body: 1rem;
+    --pm-guide-text-body: var(--text-body);
     --pm-guide-text-control: var(--text-ui);
     --pm-guide-text-meta: var(--text-ui);
     --pm-guide-weight-h1: 750;
-    /* The HTML guide embeds static Inter 400/600/700. With 800 also available
-       globally, 750 selects 800, appearing bolder than the screenshot.
-       Render the same nearest guide face (700) only on guide-based pages. */
+    /* The guide requests 750; the approved static faces resolve to 700. */
     --pm-guide-static-h1-weight: var(--bold);
     --pm-guide-weight-h2: var(--bold);
     --pm-guide-weight-control: 650;
-    --pm-guide-line-body: 1.6;
+    --pm-guide-line-body: var(--line-body);
     --pm-guide-line-h1: 1.12;
     --pm-guide-line-h2: 1.2;
     --pm-guide-line-h3: 1.35;
@@ -225,9 +240,9 @@
 
     /* Public homepage prototype V2: one shared palette/type source. */
     /* Restore the previous homepage-only centered rail, without changing other public pages. */
-    --pm-v2-width: 90rem;
+    --pm-v2-width: var(--pm-guide-container);
     --pm-v2-prototype-rail: min(70.2vw, var(--pm-v2-width));
-    --pm-v2-container-width: min(70.2vw, var(--pm-v2-width));
+    --pm-v2-container-width: min(var(--pm-v2-prototype-rail), calc(100% - 2 * var(--pm-guide-gutter)));
     /* Homepage elements consume the same approved semantic type roles as other pages. */
     --pm-v2-font-caption: var(--pm-guide-text-meta);
     --pm-v2-font-body: var(--pm-guide-text-body);
@@ -240,7 +255,7 @@
     --pm-v2-font-ui: var(--pm-guide-text-control);
     --pm-v2-font-card-heading: var(--pm-guide-text-h3);
     --pm-v2-font-section-heading: var(--pm-guide-text-h2);
-    --pm-v2-font-footer: 1rem;
+    --pm-v2-font-footer: var(--pm-guide-text-body);
     --pm-v2-font-brand-title: var(--pm-guide-text-h3);
     --pm-v2-font-resume-title: var(--pm-guide-text-h2);
     --pm-v2-font-resume-subtitle: var(--pm-guide-text-h3);
@@ -249,7 +264,7 @@
     --pm-v2-font-body-mobile: var(--pm-guide-text-body);
     --pm-v2-font-ui-mobile: var(--pm-guide-text-control);
     --pm-v2-font-card-heading-mobile: var(--pm-guide-text-h3);
-    --pm-v2-button-height-mobile: 2.75rem;
+    --pm-v2-button-height-mobile: var(--pm-guide-button-height);
     --pm-v2-brand-size: 2.375rem;
     --pm-v2-footer-brand-size: 2.5rem;
     --pm-v2-nav-dropdown-width: 17rem;
@@ -257,7 +272,7 @@
     --pm-v2-font-hero: var(--pm-guide-text-h1);
     --pm-v2-font-hero-mobile: var(--pm-guide-text-h1);
     --pm-v2-button-height: 2.875rem;
-    --pm-v2-card-border-radius: 1rem;
+    --pm-v2-card-border-radius: var(--pm-guide-radius-card);
     /* V2 post title/body starts under the author name, like the canonical community cards. */
     --pm-v2-post-avatar-size: 2.625rem;
     --pm-v2-post-content-indent: calc(var(--pm-v2-post-avatar-size) + var(--s2));
@@ -296,7 +311,7 @@
     --primary-hover: var(--blue-hover);
     --primary-active: var(--blue-hover);
     --primary-soft: var(--blue-soft);
-    --text: var(--ink);
+    --text: var(--pm-guide-body-color);
 
     --divider: var(--border);
     --danger: var(--red);
@@ -305,8 +320,8 @@
     --success-soft: var(--green-soft);
     --warning: #845400;
     --warning-soft: #FFF7E0;
-    --disabled-bg: var(--track);
-    --disabled-text: var(--neutral);
+    --disabled-bg: var(--pm-guide-control-disabled);
+    --disabled-text: var(--pm-guide-muted);
 
     --radius: var(--radius-control);
     --card-radius: var(--radius-card);
@@ -319,7 +334,7 @@
     --space-8: var(--s8);
     --font: var(--font-ui);
     --pm-system-primary: var(--blue);
-    --pm-system-text: var(--ink);
+    --pm-system-text: var(--pm-guide-body-color);
     --pm-system-muted: var(--muted);
     --pm-system-border: var(--border);
     --pm-system-divider: var(--border);
@@ -388,7 +403,7 @@
     --type-line-lead: var(--pm-guide-line-body);
     --type-line-body: var(--line-body);
     --type-line-small: var(--line-sm);
-    --type-line-caption: var(--line-xs);
+    --type-line-caption: var(--pm-guide-line-body);
     --type-line-button: var(--line-ui);
     --type-line-button-compact: var(--line-ui);
     --type-line-field: var(--line-ui);
@@ -403,7 +418,7 @@
     --pm-primary: var(--blue);
     --pm-primary-hover: var(--primary-hover);
     --pm-navy: var(--ink);
-    --pm-copy: var(--ink);
+    --pm-copy: var(--pm-guide-body-color);
     --pm-muted: var(--muted);
     --pm-canvas: var(--canvas);
     --pm-surface: var(--surface);
@@ -417,7 +432,7 @@
     --ring: var(--focus);
     --input: var(--control-border);
     --background: var(--surface);
-    --foreground: var(--ink);
+    --foreground: var(--pm-guide-body-color);
     --muted-foreground: var(--muted);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
@@ -487,7 +502,7 @@
     --pm-control-dimension-41px: 41px;
     --pm-control-dimension-42px: 42px;
     --pm-control-dimension-43px: 43px;
-    --pm-control-dimension-44px: 44px;
+    --pm-control-dimension-44px: var(--control-touch);
     --pm-control-dimension-48px: 48px;
     --pm-control-dimension-49px: 49px;
     --pm-control-dimension-50px: 50px;
@@ -544,8 +559,8 @@
     --pm-font-size-zero: 0;
     --pm-font-weight-500: var(--medium);
     --pm-font-weight-550: var(--medium);
-    --pm-font-weight-650: var(--semibold);
-    --pm-font-weight-750: var(--bold);
+    --pm-font-weight-650: var(--pm-guide-weight-control);
+    --pm-font-weight-750: var(--pm-guide-static-h1-weight);
     --pm-font-weight-800: var(--bold);
     --pm-font-weight-850: var(--bold);
     --pm-line-height-1: 1;
@@ -1210,11 +1225,200 @@
 
 /* Compact settings workspace roles; scoped consumers opt in, other pages unchanged. */
 :root {
-    --pm-admin-settings-title: var(--text-stat);
+    --pm-admin-settings-title: var(--text-h1);
     --pm-admin-settings-section-title: var(--pm-guide-text-legal-section);
-    --pm-admin-settings-control-text: var(--pm-guide-text-body);
-    --pm-admin-settings-control-height: 2.125rem;
-    --pm-admin-settings-action-height: 3rem;
+    --pm-admin-settings-control-text: var(--pm-guide-text-control);
+    --pm-admin-settings-control-height: var(--pm-guide-button-height);
+    --pm-admin-settings-action-height: var(--pm-guide-button-height);
     --pm-admin-settings-provider-size: 4.25rem;
     --pm-admin-settings-tag: #dce9ff;
+}
+
+/* Shared member layout and typography roles. */
+:root {
+    --pm-dash-blue: var(--pm-primary);
+    --pm-dash-deep: var(--pm-navy);
+    --pm-dash-muted: var(--muted);
+    --pm-dash-border: var(--border);
+    --pm-dash-surface: var(--surface);
+    --pm-dash-radius: var(--radius-card);
+    --pm-member-font: var(--pm-font-family);
+    --pm-member-font-xs: var(--type-caption);
+    --pm-member-font-sm: var(--text-sm);
+    --pm-member-font-body: var(--text-body);
+    --pm-member-font-section: var(--text-h3);
+    --pm-member-font-heading: var(--text-h1);
+    --pm-member-control-height: var(--control-height);
+    --pm-member-control-radius: var(--radius-control);
+    --pm-member-card-radius: var(--pm-dash-radius);
+    --pm-member-section-gap: var(--s4);
+    --pm-member-content-inset: 28px;
+    --pm-member-content-block: var(--s4);
+    --pm-member-page-max-width: 1480px;
+    --pm-member-page-heading-size: var(--text-h1);
+    --pm-member-page-gap: var(--s4);
+    --pm-dash-bg: var(--canvas);
+    --pm-member-sidebar-expanded-width: 15.125rem; /* Member navigation prototype: 242px. */
+    --pm-member-sidebar-collapsed-width: 80px;
+    --pm-member-header-height: var(--header-height);
+    --pm-member-sidebar-width: var(--pm-member-sidebar-expanded-width);
+}
+
+:root { --pm-tracking-neg-p025em: -.025em; }
+
+:root { --pm-tracking-p08em: .08em; }
+
+:root { --pm-tracking-neg-p7px: -.7px; }
+
+:root { --pm-tracking-1p5px: 1.5px; }
+
+:root { --pm-tracking-neg-p4px: -.4px; }
+
+:root { --pm-tracking-neg-p5px: -.5px; }
+
+:root { --pm-tracking-2px: 2px; }
+
+:root { --pm-tracking-neg-1p6px: -1.6px; }
+
+:root { --pm-tracking-1px: 1px; }
+
+:root { --pm-tracking-neg-1p3px: -1.3px; }
+
+:root { --pm-tracking-1p2px: 1.2px; }
+
+:root { --pm-tracking-0p5px: 0.5px; }
+
+:root { --pm-tracking-neg-p8px: -.8px; }
+
+:root { --pm-tracking-neg-p45px: -.45px; }
+
+:root { --pm-tracking-neg-1p05px: -1.05px; }
+
+:root { --pm-tracking-p3px: .3px; }
+
+:root { --pm-tracking-neg-p1px: -.1px; }
+
+:root { --pm-tracking-neg-p3px: -.3px; }
+
+:root { --pm-tracking-p5px: .5px; }
+
+:root { --pm-tracking-p12em: .12em; }
+
+:root { --pm-tracking-p06em: .06em; }
+
+:root { --pm-tracking-neg-p6px: -.6px; }
+
+:root { --pm-tracking-neg-0p7px: -0.7px; }
+
+:root { --pm-tracking-neg-p015em: -.015em; }
+
+:root { --pm-tracking-neg-p02em: -.02em; }
+
+:root { --pm-tracking-p03em: .03em; }
+
+:root { --pm-tracking-neg-0p02em: -0.02em; }
+
+:root { --pm-tracking-1p8px: 1.8px; }
+
+:root { --pm-tracking-neg-p2px: -.2px; }
+
+:root {
+    --pm-avatar-initial-min: .6875rem;
+}
+
+/* One responsive rail for all public headers, main content and footers. */
+@media (max-width: 1050px) { :root { --pm-v2-prototype-rail: 90vw; } }
+@media (max-width: 540px) { :root { --pm-v2-prototype-rail: 100%; --pm-guide-gutter: var(--pm-guide-gutter-mobile); } }
+:root { --pm-v2-card-radius: var(--pm-v2-card-border-radius); --pm-v2-gap: clamp(var(--s4), 1.2vw, var(--s6)); }
+
+:root { --pm-tone-dce4ee: #dce4ee; }
+
+:root { --pm-tone-4c5d74: #4c5d74; }
+
+:root { --pm-tone-075eb5: #075eb5; }
+
+:root { --pm-tone-f4f7fa: #f4f7fa; }
+
+:root { --pm-tone-e8eef5: #e8eef5; }
+
+:root { --pm-tone-e9f6ef: #e9f6ef; }
+
+:root { --pm-tone-187448: #187448; }
+
+:root { --pm-tone-172b4d: #172b4d; }
+
+:root { --pm-tone-b42318: #b42318; }
+
+:root { --pm-tone-17284233: #17284233; }
+
+:root { --pm-tone-1728423a: #1728423a; }
+
+:root { --pm-tone-64748b: #64748b; }
+
+:root { --pm-tone-d9a128: #d9a128; }
+
+:root { --pm-tone-fffaf0: #fffaf0; }
+
+:root { --pm-tone-fff: #fff; }
+
+:root { --pm-tone-0a1b3340: #0a1b3340; }
+
+:root { --pm-tone-000: #000; }
+
+:root { --pm-tone-0a66c2: #0a66c2; }
+
+:root { --pm-tone-1877f2: #1877f2; }
+
+:root { --pm-tone-feda75: #feda75; }
+
+:root { --pm-tone-fa7e1e: #fa7e1e; }
+
+:root { --pm-tone-d62976: #d62976; }
+
+:root { --pm-tone-962fbf: #962fbf; }
+
+:root { --pm-tone-4f5bd5: #4f5bd5; }
+
+:root { --pm-tone-ff0033: #ff0033; }
+
+:root { --pm-tone-eb001b: #eb001b; }
+
+:root { --pm-tone-f79e1b: #f79e1b; }
+
+/* Centralized translucent overlay and shadow colors. */
+:root {
+    --pm-overlay-15-23-42-16: rgba(15,23,42,.16);
+    --pm-overlay-11-34-64-56: rgb(11 34 64 / 56%);
+    --pm-overlay-11-34-64-22: rgb(11 34 64 / 22%);
+    --pm-overlay-0-0-0-2: rgb(0 0 0 / 2%);
+    --pm-overlay-23-40-66-15: rgb(23 40 66 / 15%);
+    --pm-overlay-8-28-54-99: rgb(8 28 54 / 99%);
+    --pm-overlay-8-28-54-94: rgb(8 28 54 / 94%);
+    --pm-overlay-8-28-54-73: rgb(8 28 54 / 73%);
+    --pm-overlay-8-28-54-22: rgb(8 28 54 / 22%);
+    --pm-overlay-8-28-54-0: rgb(8 28 54 / 0%);
+    --pm-overlay-9-32-59-97: rgb(9 32 59 / 97%);
+    --pm-overlay-9-32-59-78: rgb(9 32 59 / 78%);
+    --pm-overlay-9-32-59-40: rgb(9 32 59 / 40%);
+    --pm-overlay-171-204-236-50: rgb(171 204 236 / 50%);
+    --pm-overlay-255-255-255-10: rgb(255 255 255 / 10%);
+    --pm-overlay-17-36-67-16: rgba(17, 36, 67, .16);
+    --pm-overlay-23-40-66-16: rgba(23,40,66,.16);
+}
+
+/* Member body geometry follows the Profile Workspace reference; the 1180px
+   public rail remains unchanged. All other visual roles use the approved guide. */
+.pm-app.pm-member-sidebar-layout .pm-dash-body {
+    --pm-member-page-max-width: 82.5rem;
+    --pm-member-body-gutter: var(--s8);
+    --pm-member-section-gap: var(--pm-guide-card-gap);
+    --pm-member-body-rail: min(var(--pm-member-page-max-width), calc(100% - 2 * var(--pm-member-body-gutter)));
+    --pm-v2-container-width: 100%;
+    box-sizing: border-box;
+}
+@media (max-width: 70.625rem) {
+    .pm-app.pm-member-sidebar-layout .pm-dash-body { --pm-member-body-gutter: var(--s6); }
+}
+@media (max-width: 42rem) {
+    .pm-app.pm-member-sidebar-layout .pm-dash-body { --pm-member-body-gutter: var(--s4); }
 }

@@ -3,7 +3,7 @@
    scale, primary actions, focus ring or standard form geometry. */
 .pm-app, .pm-dashboard {
     font-family: var(--font-ui);
-    color: var(--ink);
+    color: var(--pm-guide-body-color);
 }
 .pm-app :is(button, input, select, textarea),
 .pm-dashboard :is(button, input, select, textarea) {
@@ -15,33 +15,29 @@
     font-family: var(--font-ui);
     font-size: var(--text-ui) !important;
     line-height: var(--line-ui) !important;
-    font-weight: var(--semibold);
+    font-weight: var(--pm-guide-weight-control);
     border-radius: var(--radius-control);
-    min-height: var(--control-height);
+    min-height: var(--pm-guide-button-height);
 }
 .pm-app :is(.btn, .pm-button, .pm-btn, .pm-dash-btn):focus-visible,
 .pm-dashboard :is(.btn, .pm-button, .pm-btn, .pm-dash-btn):focus-visible {
     outline: 3px solid var(--focus);
     outline-offset: 3px;
 }
-.pm-app :is(.pm-field input, .pm-field select, .pm-input, .pm-select, .pm-textarea),
-.pm-dashboard :is(.pm-field input, .pm-field select, .pm-input, .pm-select, .pm-textarea) {
-    min-height: var(--control-height);
+.pm-app :is(.pm-field input:not([type="checkbox"], [type="radio"], [type="file"], [type="range"], [type="color"], [type="hidden"]), .pm-field select, .pm-input, .pm-select, .pm-textarea, .pm-feed-search-input, .pm-inline-guest-textarea, .pm-response-textarea, .pm-challenge-search input, .pm-challenge-sort-wrap select, .pm-sort-dropdown),
+.pm-dashboard :is(.pm-field input:not([type="checkbox"], [type="radio"], [type="file"], [type="range"], [type="color"], [type="hidden"]), .pm-field select, .pm-input, .pm-select, .pm-textarea, .pm-feed-search-input, .pm-inline-guest-textarea, .pm-response-textarea, .pm-challenge-search input, .pm-challenge-sort-wrap select, .pm-sort-dropdown) {
+    min-height: var(--pm-guide-button-height);
     font-size: var(--text-ui);
     line-height: var(--line-ui);
     border-radius: var(--radius-control);
-    color: var(--ink);
+    color: var(--pm-guide-body-color);
     background-color: var(--surface);
     border-color: var(--control-border);
 }
-.pm-app :is(.pm-field input, .pm-field select, .pm-input, .pm-select, .pm-textarea):focus-visible,
-.pm-dashboard :is(.pm-field input, .pm-field select, .pm-input, .pm-select, .pm-textarea):focus-visible {
+.pm-app :is(.pm-field input:not([type="checkbox"], [type="radio"], [type="file"], [type="range"], [type="color"], [type="hidden"]), .pm-field select, .pm-input, .pm-select, .pm-textarea, .pm-feed-search-input, .pm-inline-guest-textarea, .pm-response-textarea, .pm-challenge-search input, .pm-challenge-sort-wrap select, .pm-sort-dropdown):focus-visible,
+.pm-dashboard :is(.pm-field input:not([type="checkbox"], [type="radio"], [type="file"], [type="range"], [type="color"], [type="hidden"]), .pm-field select, .pm-input, .pm-select, .pm-textarea, .pm-feed-search-input, .pm-inline-guest-textarea, .pm-response-textarea, .pm-challenge-search input, .pm-challenge-sort-wrap select, .pm-sort-dropdown):focus-visible {
     outline: 3px solid var(--focus);
     outline-offset: 3px;
-}
-.pm-app :is(.pm-field [aria-invalid="true"], .pm-input[aria-invalid="true"], .pm-select[aria-invalid="true"]),
-.pm-dashboard :is(.pm-field [aria-invalid="true"], .pm-input[aria-invalid="true"], .pm-select[aria-invalid="true"]) {
-    border-color: var(--red);
 }
 @media (pointer: coarse) {
     .pm-app :is(.btn, .pm-button, .pm-btn, .pm-dash-btn),
@@ -50,9 +46,14 @@
     }
 }
 
-.pm-app :is(.pm-field input, .pm-field select, .pm-input, .pm-select, .pm-textarea):focus,
-.pm-dashboard :is(.pm-field input, .pm-field select, .pm-input, .pm-select, .pm-textarea):focus {
+.pm-app :is(.pm-field input:not([type="checkbox"], [type="radio"], [type="file"], [type="range"], [type="color"], [type="hidden"]), .pm-field select, .pm-input, .pm-select, .pm-textarea, .pm-feed-search-input, .pm-inline-guest-textarea, .pm-response-textarea, .pm-challenge-search input, .pm-challenge-sort-wrap select, .pm-sort-dropdown):focus,
+.pm-dashboard :is(.pm-field input:not([type="checkbox"], [type="radio"], [type="file"], [type="range"], [type="color"], [type="hidden"]), .pm-field select, .pm-input, .pm-select, .pm-textarea, .pm-feed-search-input, .pm-inline-guest-textarea, .pm-response-textarea, .pm-challenge-search input, .pm-challenge-sort-wrap select, .pm-sort-dropdown):focus {
     border-color: var(--focus);
+}
+
+.pm-app :is(.pm-field input:not([type="checkbox"], [type="radio"], [type="file"], [type="range"], [type="color"], [type="hidden"]), .pm-field select, .pm-input, .pm-select, .pm-textarea, .pm-feed-search-input, .pm-inline-guest-textarea, .pm-response-textarea, .pm-challenge-search input, .pm-challenge-sort-wrap select, .pm-sort-dropdown)[aria-invalid="true"],
+.pm-dashboard :is(.pm-field input:not([type="checkbox"], [type="radio"], [type="file"], [type="range"], [type="color"], [type="hidden"]), .pm-field select, .pm-input, .pm-select, .pm-textarea, .pm-feed-search-input, .pm-inline-guest-textarea, .pm-response-textarea, .pm-challenge-search input, .pm-challenge-sort-wrap select, .pm-sort-dropdown)[aria-invalid="true"] {
+    border-color: var(--red);
 }
 
 /* Reusable components for pages explicitly using the approved HTML design guideline.
@@ -108,3 +109,22 @@
     outline: 3px solid var(--pm-guide-focus);
     outline-offset: 3px;
 }
+
+/* Shared determinate progress indicator. Explicit track/fill reset browser defaults. */
+.pm-progress {
+    appearance: none;
+    -webkit-appearance: none;
+    display: block;
+    width: 100%;
+    height: var(--bar-height);
+    border: 0;
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+    background: var(--track);
+    color: var(--blue);
+    accent-color: var(--blue);
+    margin: var(--s2) 0 var(--s3);
+}
+.pm-progress::-webkit-progress-bar { background: var(--track); border-radius: var(--radius-pill); }
+.pm-progress::-webkit-progress-value { background: var(--blue); border-radius: var(--radius-pill); }
+.pm-progress::-moz-progress-bar { background: var(--blue); border-radius: var(--radius-pill); }

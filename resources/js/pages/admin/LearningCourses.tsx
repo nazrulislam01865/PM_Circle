@@ -1,3 +1,4 @@
+import { LinkedPagination } from '@/components/pm/Pagination';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { BookOpen, CheckCircle2, Clock3, Eye, Pencil, Plus, Search } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
@@ -83,9 +84,7 @@ export default function LearningCourses({ courses, filters, stats }: Props) {
             </div>
             <div className="pm-course-admin-pagination">
                 <span>{courses.total === 0 ? 'No courses' : `Showing ${courses.from}–${courses.to} of ${courses.total} courses`}</span>
-                <nav aria-label="Course table pages">{courses.links.map((link, index) => link.url
-                    ? <Link key={index} href={link.url} className={`pm-course-admin-page ${link.active ? 'is-active' : ''}`} aria-current={link.active ? 'page' : undefined} preserveScroll>{link.label.replace(/&laquo;|&raquo;/g, '').trim()}</Link>
-                    : <span key={index} className="pm-course-admin-page is-disabled">{link.label.replace(/&laquo;|&raquo;/g, '').trim()}</span>)}</nav>
+                <LinkedPagination links={courses.links} label="Course table pages"/>
             </div>
         </section>
     </AdminLayout>;

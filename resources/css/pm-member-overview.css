@@ -1,7 +1,7 @@
 /* Authenticated homepage side panels: canonical UI-guide tokens and consistent spacing. */
 .pm-member-home .pm-dash-right { gap: var(--s3); margin-top: 0; }
 .pm-member-home .pm-dash-right .pm-member-overview-card { padding: var(--s4); border: 1px solid var(--border); border-radius: var(--radius-card); min-width: 0; }
-.pm-member-home .pm-dash-right .pm-member-overview-card h2 { font: var(--bold) var(--text-h4)/var(--line-h4) var(--font-ui); margin: 0 0 var(--s3); color: var(--ink); }
+.pm-member-home .pm-dash-right .pm-member-overview-card h2 { font: var(--bold) var(--text-h3)/var(--line-h3) var(--font-ui); margin: 0 0 var(--s3); color: var(--ink); }
 .pm-member-overview-heading { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s2); }
 .pm-member-overview-heading .pm-member-overview-heading-link { display: inline-flex; align-items: center; gap: var(--s1); font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui); color: var(--blue); white-space: nowrap; }
 .pm-member-home .pm-dash-right .pm-member-overview-heading h2 { margin: 0; }

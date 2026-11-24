@@ -14,9 +14,7 @@
 .pm-public-resume-page h4 { font-size: var(--pm-guide-text-h4); line-height: var(--pm-guide-line-h4); }
 .pm-public-resume-page a:not(.pm-guide-button, .pm-button) { color: var(--pm-guide-blue); text-decoration: underline; text-underline-offset: .18em; }
 .pm-public-resume-page a:focus-visible { outline: 3px solid var(--pm-guide-focus); outline-offset: 3px; }
-.pm-home-v2-shell.pm-guide-public-shell:has(.pm-public-resume-page) { --pm-v2-container-width: min(var(--pm-v2-prototype-rail), var(--pm-guide-container), calc(100% - 2 * var(--pm-guide-gutter))); }
 .pm-public-resume-wrap { width: var(--pm-v2-container-width); max-width: 100%; margin-inline: auto; container-type: inline-size; }
-.pm-member-public-content .pm-public-resume-page { --pm-v2-container-width: min(var(--pm-guide-container), calc(100% - 2 * var(--pm-guide-gutter))); }
 .pm-public-resume-page .pm-terms-banner h1 { margin-top: var(--pm-guide-s3); }
 .pm-public-resume-page .pm-terms-banner p { margin-top: var(--pm-guide-s2); max-width: 65ch; }
 .pm-public-resume-main { display: grid; gap: calc(var(--pm-guide-s12) + var(--pm-guide-s2)); padding-block: var(--pm-guide-editorial-section-inset); }
@@ -59,7 +57,6 @@
 .pm-public-resume-cta p { margin-top: var(--pm-guide-s1); }
 .pm-public-resume-actions { display: flex; gap: var(--pm-guide-s2); flex-wrap: wrap; flex: none; }
 @media (max-width: 65.625rem) {
-    .pm-home-v2-shell.pm-guide-public-shell:has(.pm-public-resume-page) { --pm-v2-container-width: min(90vw, calc(100% - 2 * var(--pm-guide-gutter))); }
     .pm-public-resume-copy { padding: var(--pm-guide-s5); }
     .pm-public-resume-cta { align-items: flex-start; flex-direction: column; }
 }
@@ -69,9 +66,6 @@
     .pm-public-resume-photo { height: auto; }
     .pm-public-resume-main { gap: var(--pm-guide-s8); padding-block: var(--pm-guide-s6); }
     .pm-public-resume-page .pm-terms-banner { padding-bottom: var(--pm-guide-s6); }
-}
-@media (max-width: 43.75rem) {
-    .pm-home-v2-shell.pm-guide-public-shell:has(.pm-public-resume-page), .pm-member-public-content .pm-public-resume-page { --pm-v2-container-width: calc(100% - 2 * var(--pm-guide-gutter-mobile)); }
 }
 @media (max-width: 33.75rem) {
     .pm-public-resume-studies { grid-template-columns: minmax(0,1fr); }

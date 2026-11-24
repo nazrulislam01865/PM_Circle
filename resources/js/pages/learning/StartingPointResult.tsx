@@ -84,10 +84,10 @@ export default function StartingPointResult({ shell, recommendedSlug = 'student-
                     }}
                 >
                     <div>
-                        <h1 style={{ fontSize: 'var(--pm-font-size-32px)', fontWeight: 'var(--pm-font-weight-850)', margin: '0 0 8px' }}>
+                        <h1 style={{ fontSize: 'var(--pm-guide-text-h1)', fontWeight: 'var(--pm-font-weight-850)', margin: '0 0 8px' }}>
                             Here's a good place to begin, {firstName}.
                         </h1>
-                        <p style={{ fontSize: 'var(--type-body)', color: 'var(--muted)', margin: '0 0 12px' }}>
+                        <p style={{ fontSize: 'var(--pm-guide-text-body)', color: 'var(--muted)', margin: '0 0 12px' }}>
                             Based on your experience, learning goal and answers to the practice questions.
                         </p>
                         <span
@@ -125,7 +125,7 @@ export default function StartingPointResult({ shell, recommendedSlug = 'student-
                                 marginBottom: '24px',
                             }}
                         >
-                            <div style={{ fontSize: 'var(--pm-font-size-11px)', letterSpacing: '1px', fontWeight: 'var(--pm-font-weight-800)', color: 'var(--primary)', textTransform: 'uppercase', marginBottom: '10px' }}>
+                            <div style={{ fontSize: 'var(--pm-font-size-11px)', letterSpacing: 'var(--pm-tracking-1px)', fontWeight: 'var(--pm-font-weight-800)', color: 'var(--primary)', textTransform: 'uppercase', marginBottom: '10px' }}>
                                 RECOMMENDED STARTING PATH
                             </div>
 
@@ -147,11 +147,11 @@ export default function StartingPointResult({ shell, recommendedSlug = 'student-
                                 ))}
                             </div>
 
-                            <h2 style={{ fontSize: 'var(--type-h2-mobile)', fontWeight: 'var(--pm-font-weight-800)', margin: '0 0 10px' }}>
+                            <h2 style={{ fontSize: 'var(--pm-guide-text-h2)', fontWeight: 'var(--pm-font-weight-800)', margin: '0 0 10px' }}>
                                 {p.title}
                             </h2>
 
-                            <p style={{ fontSize: 'var(--pm-font-size-15px)', color: 'var(--text)', lineHeight: 'var(--type-line-body)', margin: '0 0 18px' }}>
+                            <p style={{ fontSize: 'var(--pm-guide-text-body)', color: 'var(--text)', lineHeight: 'var(--pm-guide-line-body)', margin: '0 0 18px' }}>
                                 {p.description}
                             </p>
 
@@ -182,47 +182,47 @@ export default function StartingPointResult({ shell, recommendedSlug = 'student-
 
                         {/* Why we recommend this */}
                         <div className="pm-panel" style={{ padding: '28px', borderRadius: 'var(--card-radius)', marginBottom: '24px' }}>
-                            <h3 style={{ fontSize: 'var(--type-lead)', fontWeight: 'var(--pm-font-weight-800)', margin: '0 0 20px' }}>
+                            <h3 style={{ fontSize: 'var(--pm-guide-text-h3)', fontWeight: 'var(--pm-font-weight-800)', margin: '0 0 20px' }}>
                                 Why we recommend this
                             </h3>
 
                             <div style={{ display: 'flex', gap: '16px', marginBottom: '18px' }}>
-                                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--primary-soft)', color: 'var(--primary)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                                <div style={{ width: '36px', height: '36px', borderRadius: 'var(--radius-pill)', background: 'var(--primary-soft)', color: 'var(--primary)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
                                     <User size={18} />
                                 </div>
                                 <div>
                                     <strong style={{ display: 'block', fontSize: 'var(--type-small)', marginBottom: '2px' }}>
                                         Your experience
                                     </strong>
-                                    <p style={{ margin: 0, fontSize: 'var(--type-small)', color: 'var(--muted)' }}>
+                                    <p style={{ margin: 0, fontSize: 'var(--pm-guide-text-body)', color: 'var(--muted)' }}>
                                         You're new to formal project work.
                                     </p>
                                 </div>
                             </div>
 
                             <div style={{ display: 'flex', gap: '16px', marginBottom: '18px' }}>
-                                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--pm-tone-f5f3ff)', color: 'var(--pm-tone-7c3aed)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                                <div style={{ width: '36px', height: '36px', borderRadius: 'var(--radius-pill)', background: 'var(--pm-tone-f5f3ff)', color: 'var(--pm-tone-7c3aed)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
                                     <Target size={18} />
                                 </div>
                                 <div>
                                     <strong style={{ display: 'block', fontSize: 'var(--type-small)', marginBottom: '2px' }}>
                                         Your goal
                                     </strong>
-                                    <p style={{ margin: 0, fontSize: 'var(--type-small)', color: 'var(--muted)' }}>
+                                    <p style={{ margin: 0, fontSize: 'var(--pm-guide-text-body)', color: 'var(--muted)' }}>
                                         You want to build confidence before your first project role.
                                     </p>
                                 </div>
                             </div>
 
                             <div style={{ display: 'flex', gap: '16px' }}>
-                                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--pm-tone-ecfdf5)', color: 'var(--pm-tone-059669)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                                <div style={{ width: '36px', height: '36px', borderRadius: 'var(--radius-pill)', background: 'var(--pm-tone-ecfdf5)', color: 'var(--pm-tone-059669)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
                                     <FileText size={18} />
                                 </div>
                                 <div>
                                     <strong style={{ display: 'block', fontSize: 'var(--type-small)', marginBottom: '2px' }}>
                                         Your practice answers
                                     </strong>
-                                    <p style={{ margin: 0, fontSize: 'var(--type-small)', color: 'var(--muted)' }}>
+                                    <p style={{ margin: 0, fontSize: 'var(--pm-guide-text-body)', color: 'var(--muted)' }}>
                                         Project scope and basic planning would be useful starting topics.
                                     </p>
                                 </div>
@@ -231,7 +231,7 @@ export default function StartingPointResult({ shell, recommendedSlug = 'student-
 
                         {/* Your first three steps */}
                         <div className="pm-panel" style={{ padding: '28px', borderRadius: 'var(--card-radius)' }}>
-                            <h3 style={{ fontSize: 'var(--type-lead)', fontWeight: 'var(--pm-font-weight-800)', margin: '0 0 18px' }}>
+                            <h3 style={{ fontSize: 'var(--pm-guide-text-h3)', fontWeight: 'var(--pm-font-weight-800)', margin: '0 0 18px' }}>
                                 Your first three steps
                             </h3>
 
@@ -253,7 +253,7 @@ export default function StartingPointResult({ shell, recommendedSlug = 'student-
                                             style={{
                                                 width: '28px',
                                                 height: '28px',
-                                                borderRadius: '50%',
+                                                borderRadius: 'var(--radius-pill)',
                                                 background: 'var(--primary-soft)',
                                                 color: 'var(--primary)',
                                                 fontWeight: 'var(--pm-font-weight-800)',
@@ -287,7 +287,7 @@ export default function StartingPointResult({ shell, recommendedSlug = 'student-
                     <aside className="pm-result-sidebar">
                         {/* Topics to focus on */}
                         <div className="pm-panel" style={{ padding: '24px', borderRadius: 'var(--card-radius)', marginBottom: '20px' }}>
-                            <h3 style={{ fontSize: 'var(--pm-font-size-17px)', fontWeight: 'var(--pm-font-weight-800)', margin: '0 0 14px' }}>
+                            <h3 style={{ fontSize: 'var(--pm-guide-text-h3)', fontWeight: 'var(--pm-font-weight-800)', margin: '0 0 14px' }}>
                                 Topics to focus on
                             </h3>
 
@@ -313,7 +313,7 @@ export default function StartingPointResult({ shell, recommendedSlug = 'student-
 
                         {/* Prefer another route? */}
                         <div className="pm-panel" style={{ padding: '24px', borderRadius: 'var(--card-radius)', marginBottom: '20px' }}>
-                            <h3 style={{ fontSize: 'var(--pm-font-size-17px)', fontWeight: 'var(--pm-font-weight-800)', margin: '0 0 14px' }}>
+                            <h3 style={{ fontSize: 'var(--pm-guide-text-h3)', fontWeight: 'var(--pm-font-weight-800)', margin: '0 0 14px' }}>
                                 Prefer another route?
                             </h3>
 
@@ -352,12 +352,12 @@ export default function StartingPointResult({ shell, recommendedSlug = 'student-
 
                         {/* Your first milestone */}
                         <div className="pm-panel" style={{ padding: '24px', borderRadius: 'var(--card-radius)' }}>
-                            <h3 style={{ fontSize: 'var(--pm-font-size-17px)', fontWeight: 'var(--pm-font-weight-800)', margin: '0 0 14px' }}>
+                            <h3 style={{ fontSize: 'var(--pm-guide-text-h3)', fontWeight: 'var(--pm-font-weight-800)', margin: '0 0 14px' }}>
                                 Your first milestone
                             </h3>
 
                             <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
-                                <div style={{ width: '48px', height: '48px', borderRadius: '50%', border: '2px solid var(--pm-tone-e2e8f0)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                                <div style={{ width: '48px', height: '48px', borderRadius: 'var(--radius-pill)', border: '2px solid var(--pm-tone-e2e8f0)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
                                     <Award size={24} color="var(--pm-tone-94a3b8)" />
                                 </div>
                                 <div>

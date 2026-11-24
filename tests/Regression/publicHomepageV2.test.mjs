@@ -25,7 +25,7 @@ test('the V2 post card reuses existing moderation-safe display and engagement se
     assert.match(card, /PostContent/);
     assert.match(card, /post\.ai_generated/);
     assert.match(card, /PreviewEngagementActions/);
-    assert.match(card, /buttonLabel="React"/);
+    assert.doesNotMatch(card, /buttonLabel=|prototypeIcon/);
     assert.doesNotMatch(card, /dangerouslySetInnerHTML/);
     assert.doesNotMatch(card, /fetch\(/);
 });
@@ -64,11 +64,11 @@ test('public-home proportions match the supplied desktop section references', ()
     const responsive = read('resources/css/pm-home-v2-responsive.css');
     const layout = read('resources/css/pm-home-v2-layout.css');
     const sections = read('resources/css/pm-home-v2-sections.css');
-    assert.match(tokens, /--pm-v2-container-width:\s*min\(70\.2vw, var\(--pm-v2-width\)\)/);
-    assert.match(responsive, /max-width:\s*1500px[^}]*\{[^}]*min\(70\.2vw/);
+    assert.match(tokens, /--pm-v2-prototype-rail:\s*min\(70\.2vw, var\(--pm-v2-width\)\)/);
+    assert.doesNotMatch(responsive, /--pm-v2-container-width\s*:/);
     assert.match(layout, /pm-v2-exam-card \.pm-v2-card-content \{ min-height: 205px/);
     assert.match(layout, /pm-v2-course-card \.pm-v2-card-content \{ min-height: 290px/);
-    assert.match(sections, /\.pm-v2-post-actions \.pm-home-action/);
+    assert.match(read('resources/css/pm-unified-engagement.css'), /\.pm-v2-post-actions[^\n]*\.pm-engagement-actions\.pm-post-engagement-row \.pm-home-action/);
     assert.match(sections, /pm-v2-scenario-card, \.pm-v2-post-card[^}]*overflow: visible/);
     assert.match(tokens, /--pm-v2-font-section-heading: var\(--pm-guide-text-h2\)/);
 });
@@ -81,7 +81,7 @@ test('search control delegates to existing filtered routes without new database 
     assert.match(search, /router\.get\('\/community', \{ search: searchText \}/);
     assert.match(search, /'\/daily-challenge'/);
     assert.match(search, /'\/members'/);
-    assert.match(search, /'\/careers'/);
+    assert.doesNotMatch(search, /'\/careers'/);
     assert.match(search, /event\.key === 'Escape'/);
     assert.doesNotMatch(search, /fetch\(/);
 });

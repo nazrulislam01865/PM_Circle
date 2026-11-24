@@ -9,6 +9,7 @@ import {
     Lock,
     MessageCircle,
     MoreHorizontal,
+    Share2,
     Sparkles,
     Star,
     Target,
@@ -18,10 +19,11 @@ import { Avatar } from '@/components/pm/Avatar';
 import { ScenarioStoryContent } from '@/components/scenarios/ScenarioStoryContent';
 import { ScenarioDetailsAside } from '@/components/scenarios/ScenarioDetailsAside';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
+import { EngagementOverflowMenu } from '@/components/community/EngagementOverflowMenu';
 import { EngagementActionBar } from '@/components/community/EngagementActionBar';
 import { CommentEngagementActions } from '@/components/community/CommentEngagementActions';
 import { CommentComposer } from '@/components/community/CommentComposer';
-import { HomeShareAction, JoinCommunityDialog, ReactionPicker, type ReactionType } from '@/components/home/HomeEngagement';
+import { useHomeShare, JoinCommunityDialog, ReactionPicker, type ReactionType } from '@/components/home/HomeEngagement';
 
 type NestedReply = {
     id: number;
@@ -162,6 +164,7 @@ export default function Show({ scenario, responses, related }: Props) {
     const [bookmarked, setBookmarked] = useState(Boolean(scenario.viewer_bookmarked));
     const [bookmarkBusy, setBookmarkBusy] = useState(false);
     const scenarioUrl = `/scenarios/${encodeURIComponent(scenario.slug)}`;
+    const scenarioShare = useHomeShare({ href: scenarioUrl, canInteract: canReact, onJoin: setJoinAction });
     const toggleBookmark = () => {
         if (!canReact) { setJoinAction('save a scenario'); return; }
         if (bookmarkBusy) return;
@@ -232,7 +235,7 @@ export default function Show({ scenario, responses, related }: Props) {
                     <span>Scenario</span>
                 </nav>
 
-                <div style={{ marginBottom: '18px' }}>
+                <div style={{ marginBottom: 'var(--s4)' }}>
                     <Link href={libraryRoot} className="pm-back" style={{ fontWeight: 'var(--type-weight-semibold)' }}>
                         ← All challenges
                     </Link>
@@ -243,32 +246,40 @@ export default function Show({ scenario, responses, related }: Props) {
                     <div className="pm-scenario-main-col">
                         {/* Scenario article — shared presentation component */}
                         <article className="pm-panel pm-scenario-detail-article">
-                            <ScenarioStoryContent scenario={scenario} />
+                            <ScenarioStoryContent scenario={scenario} actions={<EngagementOverflowMenu label="More scenario options" actions={[
+                                { label: scenarioShare.copied ? 'Copied' : 'Share', icon: <Share2 size={17}/>, onSelect: () => { void scenarioShare.share(); } },
+                                { label: bookmarked ? 'Saved' : 'Save', icon: <Bookmark size={17} fill={bookmarked ? 'currentColor' : 'none'}/>, onSelect: toggleBookmark, disabled: bookmarkBusy },
+                            ]}/>}/>
 
                             {/* Action Row */}
                             <div className="pm-card-action-bar pm-scenario-engagement">
-                                <EngagementActionBar>
+                                <EngagementActionBar className="pm-post-engagement-row pm-scenario-engagement-row">
                                     <ReactionPicker endpoint={`/scenarios/${scenario.id}/reactions`} initial={scenario.viewer_reaction}
                                         total={scenario.reactions_count ?? 0} canInteract={canReact} onJoin={setJoinAction} label="scenario" />
                                     <button type="button" className="pm-home-action" onClick={() => {
                                         document.getElementById('scenario-responses')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                    }}><MessageCircle size={19} aria-hidden="true"/> {responses.total ?? responses.data.length} responses</button>
-                                    <HomeShareAction href={scenarioUrl} canInteract={canReact} onJoin={setJoinAction}/>
-                                    <button type="button" className="pm-home-action" disabled={bookmarkBusy}
+                                    }}><MessageCircle size={19} aria-hidden="true"/> {responses.total ?? responses.data.length} {(responses.total ?? responses.data.length) === 1 ? 'response' : 'responses'}</button>
+                                    <button type="button" className="pm-home-action pm-post-desktop-action" onClick={() => { void scenarioShare.share(); }}><Share2 size={19} aria-hidden="true"/>{scenarioShare.copied ? 'Copied' : 'Share'}</button>
+                                    <button type="button" className="pm-home-action pm-post-desktop-action" disabled={bookmarkBusy}
                                         aria-pressed={bookmarked} onClick={toggleBookmark}>
                                         <Bookmark size={19} fill={bookmarked ? 'currentColor' : 'none'} aria-hidden="true"/>
                                         {bookmarked ? 'Saved' : 'Save'}
                                     </button>
+                                    {scenarioShare.error && <span className="pm-post-secondary-error" role="alert">{scenarioShare.error}</span>}
+                                    {scenarioShare.copied && <span className="pm-post-copy-status" role="status">Link copied.</span>}
                                 </EngagementActionBar>
                             </div>
                         </article>
 
                         {/* Interactive Response Submitter Box */}
                         <section className="pm-scenario-submit-card">
-                            <h3>What would you do?</h3>
+                            <h3 id="scenario-response-heading">What would you do?</h3>
                             <form onSubmit={handleSubmitResponse}>
                                 <textarea
                                     className="pm-response-textarea"
+                                    aria-invalid={Boolean(form.errors.body)}
+                                    aria-labelledby="scenario-response-heading"
+                                    aria-describedby={form.errors.body ? "scenario-response-error" : undefined}
                                     value={form.data.body}
                                     onChange={(e) => form.setData('body', e.target.value)}
                                     placeholder="Share your approach and explain why..."
@@ -279,7 +290,7 @@ export default function Show({ scenario, responses, related }: Props) {
                                 />
 
                                 {form.errors.body && (
-                                    <p className="pm-error" role="alert" style={{ marginTop: '8px' }}>
+                                    <p id="scenario-response-error" className="pm-error" role="alert" style={{ marginTop: 'var(--s2)' }}>
                                         {form.errors.body}
                                     </p>
                                 )}
@@ -291,7 +302,7 @@ export default function Show({ scenario, responses, related }: Props) {
                                         <div className="pm-submit-lock-notice">
                                             <Lock size={14} /> Sign in to submit your response and receive AI feedback.
                                         </div>
-                                        <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                                        <div style={{ display: 'flex', gap: 'var(--s3)', alignItems: 'center', flexWrap: 'wrap' }}>
                                             <Link href="/login" className="pm-button pm-button-sm">
                                                 Log in to respond
                                             </Link>
@@ -301,7 +312,7 @@ export default function Show({ scenario, responses, related }: Props) {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'flex-end' }}>
+                                    <div style={{ marginTop: 'var(--s3)', display: 'flex', justifyContent: 'flex-end' }}>
                                         <button
                                             type="submit"
                                             className="pm-button pm-button-sm"
@@ -324,7 +335,7 @@ export default function Show({ scenario, responses, related }: Props) {
                                     </span>
                                 </div>
 
-                                <button type="button" className="pm-sort-dropdown" style={{ height: '40px' }}>
+                                <button type="button" className="pm-sort-dropdown">
                                     Most helpful <ChevronDown size={14} />
                                 </button>
                             </div>
@@ -357,7 +368,7 @@ export default function Show({ scenario, responses, related }: Props) {
                                                     </div>
                                                 </div>
 
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s3)', flexWrap: 'wrap' }}>
                                                     {resp.is_community_helpful && (
                                                         <span className="pm-helpful-badge">
                                                             <Star size={14} fill="currentColor" /> Community helpful
@@ -377,7 +388,7 @@ export default function Show({ scenario, responses, related }: Props) {
                                             </div>
 
                                             {/* Response Body */}
-                                            <p className="pm-card-body" style={{ margin: '8px 0 14px' }}>
+                                            <p className="pm-card-body">
                                                 {resp.body}
                                             </p>
 
@@ -414,7 +425,7 @@ export default function Show({ scenario, responses, related }: Props) {
                                                                     style={{
                                                                         display: 'flex',
                                                                         alignItems: 'center',
-                                                                        gap: '8px',
+                                                                        gap: 'var(--s2)',
                                                                     }}
                                                                 >
                                                                     <Cpu size={16} color="var(--primary)" /> AI feedback
@@ -543,7 +554,7 @@ export default function Show({ scenario, responses, related }: Props) {
 
                         {/* 4. Explore another situation */}
                         {related.length > 0 && (
-                            <section className="pm-sidebar-card" style={{ marginTop: '20px' }}>
+                            <section className="pm-sidebar-card pm-scenario-related-card">
                                 <h3>Explore another situation</h3>
                                 <nav className="pm-topics-nav-list" aria-label="Other scenarios">
                                     {related.map((item) => (
@@ -551,9 +562,8 @@ export default function Show({ scenario, responses, related }: Props) {
                                             key={item.id}
                                             href={`${memberView ? libraryRoot : '/scenarios'}/${encodeURIComponent(item.slug)}`}
                                             className="pm-topic-nav-item"
-                                            style={{ padding: '14px 0' }}
                                         >
-                                            <span style={{ fontSize: 'var(--type-small)', color: 'var(--text)' }}>{item.title}</span>
+                                            <span>{item.title}</span>
                                             <ChevronRight size={16} color="var(--primary)" />
                                         </Link>
                                     ))}

@@ -1,3 +1,4 @@
+import { LinkedPagination } from '@/components/pm/Pagination';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { AlertCircle, BookOpen, CheckCircle2, Download, FileSpreadsheet, Plus, Save, Search, ShieldCheck, Upload, X } from 'lucide-react';
@@ -273,9 +274,7 @@ export default function PmpQuestionBank({ settings, selectedSampleQuestions, que
                                 title={!item.is_active && item.review_status !== 'Approved' ? 'Approve this question before activating it' : undefined}>
                                 {item.is_active ? 'Deactivate' : 'Activate'}</button></div></td></tr>)}
                     </tbody></table>{questions.data.length === 0 && <p className="pm-pmp-bank-description">No questions match your filters.</p>}</div>
-                <nav className="pm-pmp-bank-pagination" aria-label="Question pages">{questions.links.map((link, index) => link.url ? <Link key={index} href={link.url} preserveScroll preserveState
-                    aria-current={link.active ? 'page' : undefined} className={link.active ? 'is-active' : ''}>{link.label.replace(/&laquo;|&raquo;/g, '').trim() || 'Page'}</Link>
-                    : <span key={index}>{link.label.replace(/&laquo;|&raquo;/g, '').trim() || 'Page'}</span>)}</nav>
+                <LinkedPagination links={questions.links} label="Question pages" preserveState/>
             </section>
         </>}
         {question && <section id="pmp-question-editor" className="pm-admin-panel pm-pmp-bank-panel" aria-label="Question editor">

@@ -23,7 +23,7 @@ export function HomeOfferBar({ discountLabel }: { discountLabel?: string }) {
     const [visible, setVisible] = useState(true);
     const openOffer = useRewardOfferDialog();
     if (!visible || !discountLabel) return null;
-    return <div className="pm-v2-offer-bar"><strong>Exam Simulator offer</strong><span>· Complete your profile to get {discountLabel} off</span>
+    return <div className="pm-v2-offer-bar"><span className="pm-v2-offer-copy"><strong>Exam Simulator offer</strong> · Complete your profile to get {discountLabel.replace(/\s+off$/i, '')} off</span>
         <span><button type="button" className="pm-v2-offer-link" onClick={() => openOffer?.()}>View offer</button></span>
         <button type="button" aria-label="Dismiss promotional offer" onClick={() => setVisible(false)}><X aria-hidden="true"/></button></div>;
 }

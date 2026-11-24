@@ -4,6 +4,7 @@ namespace Tests\Feature\Community;
 
 use App\Domain\Community\Queries\FeedQuery;
 use App\Domain\Community\Queries\PostReactionSummary;
+use App\Models\Comment;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -86,6 +87,38 @@ final class PostReactionRosterTest extends TestCase
         $this->getJson("/posts/{$post->id}/reactions/users?type=like")
             ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.name', 'Rafi Hasan');
         $this->getJson("/posts/{$post->id}/reactions/users?type=fake")->assertUnprocessable();
+    }
+
+    public function test_anonymous_post_never_exposes_the_author_identity_in_feed_or_detail(): void
+    {
+        $post = $this->createTestPost();
+        $post->author->profile()->create(['visibility' => 'public', 'avatar_path' => 'author.png']);
+        $post->update(['is_anonymous' => true]);
+
+        $item = collect(app(FeedQuery::class)->page('all', 'All', null, null)['data'])->firstWhere('id', $post->id);
+        $this->assertSame('Anonymous member', $item['author']['name']);
+        $this->assertArrayNotHasKey('id', $item['author']);
+        $this->assertArrayNotHasKey('author_id', $item);
+        $this->get("/posts/{$post->id}")->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('post.author.name', 'Anonymous member')
+            ->missing('post.author.id')->missing('post.author_id')->etc());
+    }
+
+    public function test_comment_profile_links_are_available_only_for_public_profiles(): void
+    {
+        $post = $this->createTestPost();
+        $public = User::factory()->create();
+        $private = User::factory()->create();
+        $public->profile()->create(['visibility' => 'public']);
+        $private->profile()->create(['visibility' => 'private']);
+        $root = Comment::create(['post_id' => $post->id, 'author_id' => $public->id, 'body' => 'Public author']);
+        Comment::create(['post_id' => $post->id, 'author_id' => $private->id, 'parent_id' => $root->id, 'body' => 'Private author']);
+
+        $this->getJson("/posts/{$post->id}/comments/preview")->assertOk()
+            ->assertJsonPath('data.0.author.profile_url', "/members/{$public->id}")
+            ->assertJsonPath('data.0.replies.0.author.profile_url', null);
+        $this->getJson("/posts/{$post->id}/comments/{$root->id}/replies")->assertOk()
+            ->assertJsonPath('data.0.author.profile_url', null);
     }
 
     public function test_roster_paginates_by_indexed_reaction_id_without_duplicates(): void

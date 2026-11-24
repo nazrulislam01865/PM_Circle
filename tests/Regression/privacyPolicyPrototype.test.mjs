@@ -62,8 +62,8 @@ test('Privacy reuses centralized legal-page roles and responsive layout', () => 
     for (const [, token] of additions.matchAll(/var\((--[\w-]+)/g)) assert.ok(tokens.includes(`${token}:`), token);
     assert.match(additions, /font-size: var\(--pm-guide-text-body\)/);
     assert.match(additions, /line-height: var\(--pm-guide-line-body\)/);
-    assert.match(additions, /\.pm-member-public-content \.pm-privacy-policy-page/);
+    assert.doesNotMatch(additions, /--pm-v2-container-width\s*:/);
     assert.match(additions, /@media \(max-width: 40\.625rem\)/);
-    assert.match(additions, /@media \(max-width: 33\.75rem\)/);
+    assert.match(tokens, /@media \(max-width: 540px\)/);
     assert.match(additions, /scroll-margin-top: calc\(var\(--header-height\) \+ var\(--pm-guide-s12\)\)/);
 });

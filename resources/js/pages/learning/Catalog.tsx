@@ -1,5 +1,7 @@
+import { Pagination } from '@/components/pm/Pagination';
+import { MobileFilterPanel } from '@/components/pm/MobileFilterPanel';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ChevronDown, ChevronLeft, ChevronRight, GraduationCap, Grid2X2, Layers3, List, Search, SlidersHorizontal, Target, Trophy } from 'lucide-react';
+import { ChevronDown, GraduationCap, Grid2X2, Layers3, List, Search, SlidersHorizontal, Target, Trophy } from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
 import { CourseCard, type CatalogCard } from '@/components/learning/CourseCard';
 import { PublicCourseCatalog } from '@/components/learning/PublicCourseCatalog';
@@ -90,7 +92,7 @@ function LegacyCatalog({ shell, paths, courses, practiceModules, isMember, membe
     // PMP now has a real sample practice workflow; Scrum remains a planned module.
     const examItems = useMemo<CatalogCard[]>(() => ([
         { id: 'pmp-simulator', title: 'PMP Exam Simulator', description: 'Timed PMP-style sample questions, answer tools and scored reviews for Plus and Pro.', category: 'Project Management', level: 'Advanced', minutes: 11, thumbnail: 6, accessTier: 'plus', progress: 0, href: '/exams/pmp', action: 'Open simulator', available: true },
-        { id: 'scrum-simulator', title: 'Scrum / CSM Simulator', description: 'Exam simulator content is not yet available.', category: 'Project Management', level: 'Intermediate', minutes: 0, thumbnail: 2, accessTier: 'plus', progress: 0, href: '/simulators/scrum', action: 'View status', available: false },
+        { id: 'scrum-simulator', title: 'Scrum / CSM Simulator', description: 'Exam simulator content is not yet available.', category: 'Project Management', level: 'Intermediate', minutes: 0, thumbnail: 2, accessTier: 'plus', progress: 0, href: '/exams/scrum', action: 'View status', available: false },
     ] as CatalogCard[]), []);
 
     const allItems = tab === 'paths' ? pathItems : tab === 'practice' ? practiceItems : tab === 'exams' ? examItems : courseItems;
@@ -158,7 +160,7 @@ function LegacyCatalog({ shell, paths, courses, practiceModules, isMember, membe
                 ] as const).map(([key, Icon, title, count]) => <button type="button" key={key} className={tab === key ? 'is-active' : ''} aria-current={tab === key ? 'page' : undefined} onClick={() => chooseTab(key)}><Icon size={21} strokeWidth={1.8} aria-hidden="true" />{title} <span>({count})</span></button>)}
             </nav>
             <div className="pm-catalog-layout">
-                <aside className="pm-catalog-sidebar" aria-label="Filter learning content">
+                <MobileFilterPanel className="pm-catalog-sidebar" label="Filter learning content" activeCount={Object.values(selected).reduce((total, values) => total + values.length, 0)}>
                     <div className="pm-catalog-sidebar-heading"><h2>Filter {tab === 'paths' ? 'Paths' : tab === 'exams' ? 'Simulators' : 'Courses'}</h2><button type="button" onClick={clear}>Clear All</button></div>
                     <FilterSection title="Category" expanded={expanded.categories} onToggle={() => setExpanded(prev => ({ ...prev, categories: !prev.categories }))}>
                         {renderOptions('categories', availableCategories)}
@@ -169,7 +171,7 @@ function LegacyCatalog({ shell, paths, courses, practiceModules, isMember, membe
                     <FilterSection title="Duration" expanded={expanded.durations} onToggle={() => setExpanded(prev => ({ ...prev, durations: !prev.durations }))}>
                         {renderOptions('durations', durations)}
                     </FilterSection>
-                </aside>
+                </MobileFilterPanel>
                 <section className="pm-catalog-results" aria-label="Learning results">
                     <div className="pm-catalog-toolbar">
                         <label className="pm-catalog-search"><Search size={19} aria-hidden="true"/><span className="sr-only">Search learning content</span><input type="search" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} placeholder="Search courses (e.g., project, risk, stakeholder...)" /></label>
@@ -182,7 +184,7 @@ function LegacyCatalog({ shell, paths, courses, practiceModules, isMember, membe
                     {shown.length ? <div className={`pm-catalog-course-grid${display === 'list' ? ' is-list' : ''}`}>
                         {shown.map(item => <CourseCard key={item.id} course={item} listView={display === 'list'} saved={!!item.slug && saved.includes(`${item.saveType === 'course' ? 'course' : 'path'}:${item.slug}`)} saving={saving === `${item.saveType === 'course' ? 'course' : 'path'}:${item.slug}`} onToggleSave={isMember ? toggleSave : undefined} onEnroll={item.saveType === 'course' && isMember && (item.accessTier === 'free' || memberTier !== 'free') ? enrollDemoCourse : undefined} enrolling={enrolling === item.slug} />)}
                     </div> : <div className="pm-catalog-empty"><SlidersHorizontal size={28} aria-hidden="true" /><h2>No matching learning content</h2><p>Try adjusting your search or filters.</p><button type="button" className="pm-catalog-course-action" onClick={clear}>Clear filters</button></div>}
-                    {pageCount > 1 && <nav className="pm-catalog-pagination" aria-label="Learning results pagination"><button type="button" aria-label="Previous page" disabled={activePage === 1} onClick={() => setPage(activePage - 1)}><ChevronLeft size={18}/></button>{Array.from({ length: pageCount }, (_, i) => <button key={i + 1} type="button" aria-current={i + 1 === activePage ? 'page' : undefined} className={i + 1 === activePage ? 'is-active' : ''} onClick={() => setPage(i + 1)}>{i + 1}</button>)}<button type="button" aria-label="Next page" disabled={activePage === pageCount} onClick={() => setPage(activePage + 1)}><ChevronRight size={18}/></button></nav>}
+                    <Pagination current={activePage} last={pageCount} label="Learning results pagination" onPageChange={setPage}/>
                 </section>
             </div>
         </div>

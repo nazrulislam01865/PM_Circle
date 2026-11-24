@@ -54,6 +54,8 @@ export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onU
     const [emojiOpen, setEmojiOpen] = useState(false);
     const [error, setError] = useState('');
     const editor = useRef<HTMLDivElement>(null);
+    const dialogTitle = useRef<HTMLHeadingElement>(null);
+    const opener = useRef<HTMLElement | null>(null);
     const fileInput = useRef<HTMLInputElement>(null);
     const restoreDraftOnError = useRef(false);
     const editing = Boolean(editPost);
@@ -175,24 +177,32 @@ export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onU
     };
 
     return <Dialog open={open} onOpenChange={next => { if (!next) close(); }}>
-        <DialogContent className="pm-compose-dialog pm-compose-prototype" aria-describedby="pm-compose-help" onEscapeKeyDown={event => { if (busy) event.preventDefault(); }} onInteractOutside={event => { if (busy) event.preventDefault(); }}
-            onOpenAutoFocus={event => { event.preventDefault(); if (editor.current) { editor.current.textContent = editPost?.body ?? body; editor.current.focus(); } }}>
-            <DialogTitle className="pm-compose-title">{editing ? 'Edit post' : 'Create a post'}</DialogTitle>
+        <DialogContent className="pm-compose-dialog pm-compose-prototype" overlayClassName="pm-compose-overlay" closeClassName="pm-compose-close" aria-describedby="pm-compose-help" onEscapeKeyDown={event => { if (busy) event.preventDefault(); }} onInteractOutside={event => { if (busy) event.preventDefault(); }}
+            onOpenAutoFocus={event => {
+                event.preventDefault();
+                opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+                if (editor.current) editor.current.textContent = editPost?.body ?? body;
+                if (window.matchMedia('(pointer: fine) and (min-width: 42rem)').matches) editor.current?.focus();
+                else dialogTitle.current?.focus();
+            }} onCloseAutoFocus={event => {
+                if (opener.current?.isConnected) { event.preventDefault(); opener.current.focus(); }
+            }}>
+            <DialogTitle ref={dialogTitle} tabIndex={-1} className="pm-compose-title">{editing ? 'Edit post' : 'Create a post'}</DialogTitle>
             <DialogDescription id="pm-compose-help" className="pm-compose-sr-description">Share your experience with the community. Only your text and selected audience are shared.</DialogDescription>
+            <form className="pm-compose-form" onSubmit={submit}>
+                <div className="pm-compose-scroll-region">
             <div className="pm-compose-identity-bar">
                 <DashboardAvatar name={identity === 'anonymous' ? 'Anonymous member' : name} size={40} src={identity === 'anonymous' ? null : auth?.user?.avatar_path}/>
-                {editing ? <strong>{editPost?.is_anonymous ? 'Anonymous member' : name}</strong> : <div className="pm-compose-identity-choice"><span className="pm-compose-label-spacer" aria-hidden="true"/><PMDropdown id="pm-compose-identity" value={identity} onValueChange={setIdentity} options={[{ value: 'named', label: name }, ...(canAnonymous ? [{ value: 'anonymous', label: 'Post anonymously' }] : [])]} placeholder="Post as" /></div>}
+                {editing ? <strong>{editPost?.is_anonymous ? 'Anonymous member' : name}</strong> : <div className="pm-compose-identity-choice"><label htmlFor="pm-compose-identity">Post as</label><PMDropdown id="pm-compose-identity" value={identity} onValueChange={setIdentity} options={[{ value: 'named', label: name }, ...(canAnonymous ? [{ value: 'anonymous', label: 'Post anonymously' }] : [])]} placeholder="Post as" required /></div>}
                 <div className="pm-compose-audience"><label htmlFor="pm-compose-audience">Audience</label>
-                    {editing ? <span>{audience === 'public' ? 'Public' : 'Community members only'}</span> : <PMDropdown id="pm-compose-audience" value={audience} onValueChange={setAudience} options={[{ value: 'public', label: 'Public' }, { value: 'members', label: 'Community members only' }]} placeholder="Audience" />}
+                    {editing ? <span>{audience === 'public' ? 'Public' : 'Community members only'}</span> : <PMDropdown id="pm-compose-audience" value={audience} onValueChange={setAudience} options={[{ value: 'public', label: 'Public' }, { value: 'members', label: 'Community members only' }]} placeholder="Audience" required />}
                 </div>
             </div>
             {!editing && identity === 'anonymous' && <p className="pm-compose-anon-note">Viewers will see Anonymous member. PM Circle administrators can see your identity. Your post will appear after it passes the AI safety check.</p>}
-            <form className="pm-compose-form" onSubmit={submit}>
-                <div className="pm-compose-scroll-region">
+                <div className="pm-compose-editor-field">
                 <div ref={editor} className="pm-compose-editor" contentEditable={!busy} role="textbox" aria-label="Post content" aria-multiline="true" data-placeholder={topic === 'Ask the community' ? 'Ask the community a question...' : topic === 'Poll' ? 'What would you like to ask?' : 'Share your thoughts...'} suppressContentEditableWarning onInput={() => { if (editor.current) setBody(editorText(editor.current)); }} onPaste={event => { event.preventDefault(); insertText(event.clipboardData.getData('text/plain')); }} />
                 {(preview || (editPost?.image_path && !removeImage)) && <div className="pm-compose-image"><img alt="Post image preview" src={preview ?? editPost?.image_path ?? ''}/><button type="button" onClick={() => { setImage(null); setRemoveImage(true); if (fileInput.current) fileInput.current.value = ''; }} aria-label="Remove image"><X size={18}/></button></div>}
-                {topic === 'Poll' && !editing && <div className="pm-compose-poll-options"><label>Poll choices</label>{pollOptions.map((option, index) => <div key={index} className="pm-compose-poll-choice"><input aria-label={`Poll choice ${index + 1}`} maxLength={120} value={option} onChange={event => setPollOptions(prev => prev.map((value, i) => i === index ? event.target.value : value))} placeholder={`Option ${index + 1}`}/>{pollOptions.length > 2 && <button type="button" aria-label={`Remove choice ${index + 1}`} onClick={() => setPollOptions(prev => prev.filter((_, i) => i !== index))}><X size={16}/></button>}</div>)}{pollOptions.length < 4 && <button type="button" className="pm-compose-add-option" onClick={() => setPollOptions(prev => [...prev, ''])}>+ Add option</button>}</div>}
-                </div>
+
                 <input ref={fileInput} type="file" className="pm-compose-file" accept="image/png,image/jpeg,image/webp" aria-label="Attach a post image" onChange={event => chooseFile(event.target.files?.[0])}/>
                 <div className="pm-compose-toolbar" role="toolbar" aria-label="Format your post">
                     <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => format('bold')} aria-label="Bold"><Bold size={18}/></button>
@@ -205,8 +215,11 @@ export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onU
                     <button type="button" onClick={() => fileInput.current?.click()} aria-label="Attach image"><ImagePlus size={18}/></button>
                 </div>
                 {emojiOpen && <div className="pm-compose-emojis">{emojiList.map(emoji => <button key={emoji} type="button" onClick={() => insertText(emoji)}>{emoji}</button>)}</div>}
+                </div>
+                {topic === 'Poll' && !editing && <div className="pm-compose-poll-options"><label>Poll choices</label>{pollOptions.map((option, index) => <div key={index} className="pm-compose-poll-choice"><input aria-label={`Poll choice ${index + 1}`} maxLength={120} value={option} onChange={event => setPollOptions(prev => prev.map((value, i) => i === index ? event.target.value : value))} placeholder={`Option ${index + 1}`}/>{pollOptions.length > 2 && <button type="button" aria-label={`Remove choice ${index + 1}`} onClick={() => setPollOptions(prev => prev.filter((_, i) => i !== index))}><X size={16}/></button>}</div>)}{pollOptions.length < 4 && <button type="button" className="pm-compose-add-option" onClick={() => setPollOptions(prev => [...prev, ''])}>+ Add option</button>}</div>}
                 {!editing && <div className="pm-compose-types"><span>Post type</span>{postComposerTypes.map(option => <button key={option.value} type="button" className={topic === option.value ? 'is-selected' : ''} aria-pressed={topic === option.value} onClick={() => setTopic(option.value)}>{option.editorLabel}</button>)}</div>}
                 {error && <p className="pm-post-action-error pm-compose-error" role="alert">{error}</p>}
+                </div>
                 <div className="pm-compose-footer"><span>{characterCount} / 5000</span><button className="pm-button" type="submit" disabled={!canSubmit}>{busy ? 'Saving…' : editing ? 'Save changes' : 'Post'}</button></div>
             </form>
         </DialogContent>

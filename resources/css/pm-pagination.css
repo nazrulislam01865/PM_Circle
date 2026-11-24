@@ -1,0 +1,23 @@
+/* Shared numbered and adjacent pagination, for public, member and admin lists. */
+nav.pm-pagination {
+    display: flex; align-items: center; justify-content: center; flex-wrap: wrap;
+    gap: var(--pm-guide-s2); margin-block: var(--pm-guide-s4); min-width: 0;
+}
+nav.pm-pagination .pm-pagination-control.is-outline {
+    display: inline-flex; align-items: center; justify-content: center; flex: none;
+    min-width: var(--pm-guide-button-height); min-height: var(--pm-guide-button-height);
+    padding: var(--pm-guide-s2); border: 1px solid var(--pm-guide-blue);
+    border-radius: var(--pm-guide-radius-sm); background: var(--pm-guide-white); color: var(--pm-guide-blue);
+    font: var(--pm-guide-weight-control) var(--pm-guide-text-control)/var(--pm-guide-line-control) var(--font-ui);
+    text-decoration: none; cursor: pointer;
+}
+nav.pm-pagination .pm-pagination-control.is-outline:hover:not(:disabled):not([aria-current="page"]) { background: var(--pm-guide-pale); }
+nav.pm-pagination .pm-pagination-control.is-outline[aria-current="page"] { background: var(--pm-guide-blue); color: var(--pm-guide-white); border-color: var(--pm-guide-blue); }
+nav.pm-pagination .pm-pagination-control.is-outline:disabled { background: var(--pm-guide-control-disabled); color: var(--pm-guide-muted); border-color: var(--pm-guide-line); cursor: default; }
+.pm-pagination-control:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.pm-pagination-gap, .pm-pagination-position { color: var(--pm-guide-muted); font-size: var(--pm-guide-text-meta); }
+@media (max-width: 767px) {
+    nav.pm-pagination { gap: var(--pm-guide-s1); }
+    .pm-course-admin-pagination, .pm-interview-admin-pagination { flex-wrap: wrap; }
+    .pm-course-admin-pagination nav.pm-pagination, .pm-interview-admin-pagination nav.pm-pagination { margin-block: var(--s2); }
+}

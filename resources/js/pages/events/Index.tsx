@@ -1,3 +1,4 @@
+import { Pagination } from '@/components/pm/Pagination';
 import { Head } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -8,32 +9,29 @@ import { usePage } from '@inertiajs/react';
 import type { RewardPromotionData } from '@/types/reward';
 
 const PAGE_SIZE = 10;
-const advertisements = [
-    { company: 'Northbridge Digital', initials: 'NB', category: 'Careers · Hiring', title: 'Start your career in project delivery',
-        description: 'Explore a sample Project Coordinator role supporting software teams in Dhaka.',
-        image: '/images/home/prototype/leader.webp', action: 'View role', href: '/careers' },
+const advertisements: { company: string; initials: string; category: string; title: string; description: string; image: string; action: string; href: string }[] = [
     { company: 'PM Circle Community', initials: 'PM', category: 'Learning · Workshops', title: 'Learn with project professionals',
         description: 'Explore community practice and discussions with other project professionals.',
         image: '/images/home/prototype/stakeholder.webp', action: 'Explore learning', href: '/learning' },
-] as const;
+];
 
 function Advertisements() {
     const [index, setIndex] = useState(0);
     const [playing, setPlaying] = useState(true);
     useEffect(() => {
-        if (!playing) return;
+        if (!playing || advertisements.length < 2) return;
         const handle = window.setInterval(() => setIndex(current => (current + 1) % advertisements.length), 7000);
         return () => window.clearInterval(handle);
     }, [playing]);
     const ad = advertisements[index];
     return <section className="pm-event-ad-section" aria-label="Company advertisements">
         <div className="pm-event-ad-top"><span>Company advertisements · Sample placements</span>
-            <div className="pm-event-ad-controls" aria-label="Advertisement controls">
+            {advertisements.length > 1 && <div className="pm-event-ad-controls" aria-label="Advertisement controls">
                 <button type="button" className="pm-guide-button is-outline" onClick={() => setIndex(i => (i + advertisements.length - 1) % advertisements.length)} aria-label="Previous advertisement"><ChevronLeft aria-hidden="true"/></button>
                 <span aria-live="polite">{index + 1} / {advertisements.length}</span>
                 <button type="button" className="pm-guide-button is-outline" onClick={() => setIndex(i => (i + 1) % advertisements.length)} aria-label="Next advertisement"><ChevronRight aria-hidden="true"/></button>
                 <button type="button" className="pm-guide-button is-outline pm-event-ad-pause" onClick={() => setPlaying(value => !value)} aria-label={playing ? 'Pause advertisements' : 'Resume advertisements'}>{playing ? <><Pause aria-hidden="true"/> Pause</> : <><Play aria-hidden="true"/> Play</>}</button>
-            </div>
+            </div>}
         </div>
         <article className="pm-event-ad-card" key={ad.title}>
             <div className="pm-event-ad-copy"><div className="pm-event-ad-brand"><span>{ad.initials}</span><strong>{ad.company}</strong></div>
@@ -92,11 +90,7 @@ export default function CommunityEvents({ events }: { events: EventPreview[] }) 
                         </div>)}
                     </div> : <div className="pm-event-empty"><h3>No matching events</h3><p>Try a different title, topic or event format.</p>
                         <button type="button" className="pm-guide-button is-outline" onClick={() => { setSearch(''); setFormat('all'); setPage(1); }}>Clear filters</button></div>}
-                    {filtered.length > PAGE_SIZE && <nav className="pm-event-pagination" aria-label="Event pages">
-                        <button type="button" className="pm-guide-button is-outline" disabled={currentPage === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Previous</button>
-                        {Array.from({ length: pageCount }, (_, i) => i + 1).map(n => <button type="button" key={n} aria-current={currentPage === n ? 'page' : undefined} className={`pm-guide-button is-outline${currentPage === n ? ' is-current' : ''}`} onClick={() => setPage(n)}>{n}</button>)}
-                        <button type="button" className="pm-guide-button is-outline" disabled={currentPage === pageCount} onClick={() => setPage(p => Math.min(pageCount, p + 1))}>Next</button>
-                    </nav>}
+                    <Pagination current={currentPage} last={pageCount} label="Event pages" onPageChange={setPage}/>
                 </section>
             </div>
         </div>

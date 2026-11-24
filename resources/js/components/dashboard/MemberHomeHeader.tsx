@@ -1,7 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     BookOpen,
-    BriefcaseBusiness,
     CalendarCheck2,
     ChartNoAxesColumnIncreasing,
     ChevronDown,
@@ -30,7 +29,6 @@ const defaultLinks: NavigationLink[] = [
     { href: '/daily-challenge', label: 'Daily Challenge' },
     { href: '/community', label: 'Community Feed' },
     { href: '/learning', label: 'Learn & Practice' },
-    { href: '/careers', label: 'Careers' },
     { href: '/members', label: 'Members' },
 ];
 
@@ -60,7 +58,6 @@ export function MemberHomeHeader({ dashboard, active, actions, brandHref, joinLa
     const daily = item('/daily-challenge');
     const community = item('/community');
     const learning = item('/learning');
-    const careers = item('/careers');
     const members = item('/members');
     const close = () => setMobileOpen(false);
     const closeDropdown = (event: MouseEvent) => {
@@ -153,7 +150,7 @@ export function MemberHomeHeader({ dashboard, active, actions, brandHref, joinLa
                 </>}
                 {page.props.rewardPromotion && <a className="pm-header-profile-reward-badge" href={pathname === '/' ? '#pm-pathway-exams-title' : '/#pm-pathway-exams-title'} aria-label={`${page.props.rewardPromotion.discountLabel} profile completion reward — view exam offers`} onClick={close}><Gift className="pm-nav-icon" aria-hidden="true"/>{page.props.rewardPromotion.discountLabel}</a>}
                 <div className="pm-member-home-mobile-utilities" aria-label="More links">
-                    {careers && <><Link href="/careers" onClick={close}><BriefcaseBusiness aria-hidden="true"/>Careers</Link><Link href="/dashboard/features/career" onClick={close}><BookOpen aria-hidden="true"/>Career Tools</Link></>}
+                    <Link href="/dashboard/features/career" onClick={close}><BookOpen aria-hidden="true"/>Career Tools</Link>
                     <Link href="/pm-trends" onClick={close}><Newspaper aria-hidden="true"/>Trends</Link>
                     <Link href="/help-center" onClick={close}><CircleHelp aria-hidden="true"/>Help Center</Link>
                     <Link href="/contact" onClick={close}><Mail aria-hidden="true"/>Contact Us</Link>
@@ -168,7 +165,7 @@ export function MemberHomeHeader({ dashboard, active, actions, brandHref, joinLa
             <details className="pm-member-home-utility-group" onKeyDown={closeOnEscape} onMouseLeave={closeDropdownOnMouseLeave}>
                 <summary aria-label="More PM Circle links"><Menu aria-hidden="true"/></summary>
                 <div className="pm-member-home-submenu pm-member-home-utility-submenu">
-                    {careers && <><Link href="/careers" onClick={closeDropdown}><BriefcaseBusiness aria-hidden="true"/>Careers</Link><Link href="/dashboard/features/career" onClick={closeDropdown}><BookOpen aria-hidden="true"/>Career Tools</Link></>}
+                    <Link href="/dashboard/features/career" onClick={closeDropdown}><BookOpen aria-hidden="true"/>Career Tools</Link>
                     <Link href="/pm-trends" onClick={closeDropdown}><Newspaper aria-hidden="true"/>Trends</Link>
                     <Link href="/help-center" onClick={closeDropdown}><CircleHelp aria-hidden="true"/>Help Center</Link>
                     <Link href="/contact" onClick={closeDropdown}><Mail aria-hidden="true"/>Contact Us</Link>

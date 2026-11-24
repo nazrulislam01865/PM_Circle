@@ -39,6 +39,11 @@ final class AiExecutionService
                 }
                 // Revoked private-resume consent prevents queued work from sending content.
                 if (in_array($request->feature_code, ['resume_analyze', 'resume_rewrite'], true)) {
+                    $plan = app(\App\Domain\Billing\Queries\CurrentMemberPlan::class)->code($user);
+                    $minimum = DB::table('ai_features')->where('code', $request->feature_code)->value('min_plan');
+                    if (! is_string($minimum) || ! \App\Domain\Billing\Queries\MemberFeatureAccess::allowsAi($plan, $request->feature_code, $minimum)) {
+                        throw new AiFailure('NOT_ENTITLED', 403);
+                    }
                     $consent = DB::table('ai_resume_consents')->where('request_id', $id)
                         ->where('user_id', $user->id)->whereNull('revoked_at')->exists();
                     if (! $consent) {

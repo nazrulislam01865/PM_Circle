@@ -101,14 +101,14 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
     const { memberShell } = usePage<{ memberShell?: DashboardShellData }>().props;
 
     const dashboardShell: DashboardShellData = memberShell || {
-        plan: 'premium',
+        plan: 'free',
         member: {
             id: profileData?.id ?? 0,
-            name: profileData?.name || 'Sara Ahmed',
-            role: profileData?.role || 'Project Manager',
-            completion: profileData?.completeness || 80,
+            name: profileData?.name || '',
+            role: profileData?.role || '',
+            completion: profileData?.completeness ?? 0,
         },
-        isDemo: true,
+        isDemo: false,
     };
 
     // Older resume imports could place a comma-separated address into the headline
@@ -297,7 +297,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                             type="button"
                                             className="pm-hero-avatar-camera"
                                             onClick={() => fileInputRef.current?.click()}
-                                            title="Update profile picture"
+                                            aria-label="Update profile picture"
                                         >
                                             <Camera size={16} />
                                         </button>
@@ -337,7 +337,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                     </div>
 
                                     <p className="text-(length:--pm-font-size-13p5px) text-(color:--pm-tone-475569) m-0">
-                                        Track your practical simulation experience, solved workplace dilemmas, and accredited learning hours.
+                                        Track completed learning activities, scenarios and measured PMP practice time.
                                     </p>
 
                                     <div className="pm-learning-triplet">
@@ -347,7 +347,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                         </div>
                                         <div className="pm-stat-box">
                                             <div className="pm-stat-num">{profileData.learning_stats.hours}</div>
-                                            <div className="pm-stat-label">Learning Hours</div>
+                                            <div className="pm-stat-label">PMP Practice Hours</div>
                                         </div>
                                         <div className="pm-stat-box">
                                             <div className="pm-stat-num">{profileData.learning_stats.achievements}</div>
@@ -512,13 +512,13 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
 
                                     <div className="flex items-baseline gap-2 mb-2">
                                         <span className="text-(length:--type-h2) font-bold text-(color:--pm-tone-0f172a)">{profileData.insights.views}</span>
-                                        <span className="text-(length:--pm-font-size-13px) text-(color:--pm-tone-16a34a) font-semibold">
+                                        <span className="text-(length:--pm-guide-text-meta) text-(color:--pm-guide-muted) font-semibold">
                                             {profileData.insights.change} {profileData.insights.period}
                                         </span>
                                     </div>
 
                                     <p className="text-(length:--pm-font-size-13px) text-(color:--disabled-text) mb-3">
-                                        Profile views from peers, project leaders, and verified recruiters.
+                                        Recorded profile views in the last 30 days.
                                     </p>
 
                                     <div className="p-3 bg-(color:--pm-tone-eff6ff) border border-(color:--pm-tone-bfdbfe) rounded-lg">

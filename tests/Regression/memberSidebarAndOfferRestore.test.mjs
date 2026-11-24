@@ -23,18 +23,13 @@ test('one common sidebar and simplified member header render across member route
     assert.match(middleware, /'memberShell' => fn \(\) => \$request->user\(\)/);
 });
 
-test('sidebar preserves reference groups, the profile and course links, and responsive drawer', () => {
-    for (const item of ['Home', 'Profile & career', 'Profile completion', 'Edit profile', 'AI Resume Assistant', 'Learn & practise', 'My learning', 'Exam simulator', 'Community feed', 'Daily challenge', 'Badges']) {
-        assert.ok(sidebar.includes(item), `${item} missing`);
-    }
+test('sidebar uses the exact prototype groups and opens learning plus the active group', () => {
+    assert.match(sidebar, /memberSidebarGroups\.map/);
     assert.match(sidebar, /<details className="pm-member-sidebar-group"/);
-    assert.match(sidebar, /Object\.fromEntries\(groups\.map\(group => \[group\.title, true\]\)\)/,
-        'All submenu groups must start expanded');
-    assert.match(sidebar, /open=\{expandedGroups\[group\.title\]\}/,
-        'Each submenu must use the expanded state');
-    assert.match(sidebar, /onClick=\{event => toggleGroup\(event, group\.title\)\}/,
-        'Submenus remain manually collapsible');
-    assert.match(sidebar, /aria-controls="|id="pm-member-sidebar"/);
+    assert.match(sidebar, /group\.title === 'Learn & practise' \|\| group\.title === activeGroup/);
+    assert.match(sidebar, /open=\{compact \|\| expandedGroups\[group\.title\]\}/);
+    assert.match(sidebar, /onClick=\{event => toggleGroup\(event, group\.title\)\}/);
+    assert.match(sidebar, /id="pm-member-sidebar"/);
     assert.match(css, /@media \(max-width: 960px\)/);
     assert.match(css, /\.pm-member-sidebar-layout \.pm-dash-scrim/);
     assert.match(css, /\.pm-member-content-frame > \.pm-member-restored-sidebar\.is-open/);

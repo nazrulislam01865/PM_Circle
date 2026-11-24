@@ -32,6 +32,6 @@ test('homepage footer uses screenshot-matching links and the approved social ico
         assert.ok(footer.includes(`'${label}'`), `missing ${label}`);
     }
     assert.doesNotMatch(footer, /pm-v2-footer-payments/);
-    assert.match(footer, /prototypeLegalNotice/);
+    assert.match(footer, /\{trademarkNotice\}/);
     assert.match(footer, /FooterSocial content=\{content\} compact prototypeOrder/);
 });

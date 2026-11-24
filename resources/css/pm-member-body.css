@@ -1,0 +1,279 @@
+/* Member content only. Header, primary sidebar and footer retain their original CSS.
+   The shared main element owns the rail for both ordinary and public-style member pages.
+   The public nested wrappers fill that rail rather than adding viewport-based gutters. */
+.pm-app.pm-member-sidebar-layout:not(.pm-member-full-width) .pm-dash-body,
+.pm-app.pm-member-sidebar-layout.pm-member-full-width .pm-dash-body,
+.pm-app.pm-member-sidebar-layout.pm-member-home .pm-dash-body {
+    width: var(--pm-member-body-rail);
+    max-width: var(--pm-member-page-max-width);
+    min-width: 0;
+    margin-inline: auto;
+    padding: var(--s6) 0 var(--s8);
+    container: member-workspace / inline-size;
+}
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-member-public-content {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin: 0;
+}
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-member-public-content .pm-container {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-inline: auto;
+    padding-inline: 0;
+}
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-member-public-content > .pm-container {
+    padding-block: 0;
+}
+/* These route-specific wrappers previously applied a second public rail. */
+.pm-member-sidebar-layout .pm-dash-body :is(.pm-terms-wrap, .pm-about-wrap, .pm-event-wrap, .pm-public-trends-wrap, .pm-public-resume-wrap, .pm-pmp-public-container, .pm-sim-main, .pm-sim-banner > .pm-v2-container, .pm-catalog-layout) {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-inline: auto;
+    padding-inline: 0;
+}
+/* Plain workspace heading and tab strip, matching the profile reference structure. */
+.pm-member-sidebar-layout .pm-dash-body .pm-member-workspace-heading {
+    margin: 0 0 var(--pm-guide-card-gap);
+    min-width: 0;
+}
+.pm-member-sidebar-layout .pm-dash-body .pm-member-workspace-heading h1 {
+    margin: 0;
+    color: var(--ink);
+    font: var(--pm-guide-static-h1-weight) var(--text-h1)/var(--line-h1) var(--font-ui);
+    letter-spacing: var(--pm-guide-tracking-h1);
+    overflow-wrap: anywhere;
+}
+.pm-member-sidebar-layout .pm-dash-body .pm-member-workspace-heading p {
+    margin: var(--s1) 0 0;
+    color: var(--muted);
+    font: var(--regular) var(--pm-guide-text-lead)/var(--line-body) var(--font-ui);
+    overflow-wrap: anywhere;
+}
+.pm-member-sidebar-layout .pm-dash-body .pm-member-workspace-tabs .pm-feed-scope-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: var(--s3);
+}
+.pm-member-sidebar-layout .pm-dash-body .pm-member-workspace-tabs .pm-feed-scope-tab { flex: none; }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-member-discussions .pm-two-column {
+    grid-template-columns: minmax(0, 2.12fr) minmax(17.1875rem, 1fr);
+    gap: var(--pm-guide-card-gap);
+    align-items: start;
+}
+.pm-member-sidebar-layout .pm-dash-body .pm-member-discussions .pm-feed-toolbar {
+    display: flex;
+    margin-bottom: var(--pm-guide-card-gap);
+}
+.pm-member-sidebar-layout .pm-dash-body .pm-member-discussions .pm-community-sticky-sidebar {
+    top: calc(var(--header-height) + var(--pm-member-offer-top, 0px) + var(--s4));
+}
+/* Public feature banners become ordinary headings inside the member body only.
+   Preserve their copy, controls and all route-specific content. */
+.pm-member-sidebar-layout .pm-dash-body :is(.pm-terms-page, .pm-public-trends-page, .pm-public-resume-page, .pm-about-page, .pm-events-page, .pm-simulators-page) {
+    background: transparent;
+}
+.pm-member-sidebar-layout .pm-dash-body :is(.pm-terms-banner, .pm-about-banner, .pm-event-banner, .pm-sim-banner, .pm-catalog-hero) {
+    background: transparent;
+    border: 0;
+    min-height: 0;
+    padding: 0 0 var(--pm-guide-card-gap);
+}
+.pm-member-sidebar-layout .pm-dash-body .pm-course-catalog .pm-catalog-hero h1 { color: var(--ink); font-size: var(--text-h1); line-height: var(--line-h1); }
+.pm-member-sidebar-layout .pm-dash-body .pm-course-catalog .pm-catalog-hero p { color: var(--muted); font-size: var(--pm-guide-text-lead); }
+.pm-member-sidebar-layout .pm-dash-body :is(.pm-terms-main, .pm-sim-main, .pm-public-resume-main, .pm-about-content, .pm-event-main, .pm-challenge-container, .pm-course-detail) { padding-block-start: var(--s4); }
+.pm-member-sidebar-layout .pm-dash-body .pm-catalog-layout { padding-inline: 0; }
+.pm-member-sidebar-layout .pm-dash-body > *,
+.pm-member-sidebar-layout .pm-dash-body :is(.pm-profile-overview-grid, .pm-catalog-layout, .pm-dash-columns, .pm-two-column, .pm-challenge-layout) > * {
+    min-width: 0;
+}
+.pm-member-sidebar-layout .pm-dash-body .pm-profile-overview-grid {
+    grid-template-columns: minmax(0, 2.12fr) minmax(17.1875rem, 1fr);
+    gap: var(--pm-member-section-gap);
+}
+.pm-member-sidebar-layout .pm-dash-body :is(.pm-profile-top-bar, .pm-profile-top-actions, .pm-catalog-toolbar, .pm-catalog-toolbar-end) {
+    flex-wrap: wrap;
+}
+.pm-member-sidebar-layout .pm-dash-body .pm-catalog-toolbar-end {
+    min-width: 0;
+    max-width: 100%;
+}
+.pm-member-sidebar-layout .pm-dash-body .pm-catalog-sort { min-width: min(11.5625rem, 100%); }
+.pm-member-sidebar-layout .pm-dash-body .pm-catalog-tabs { padding-inline: 0; }
+.pm-member-sidebar-layout .pm-dash-body .pm-catalog-tabs button { min-width: 0; white-space: normal; }
+.pm-member-sidebar-layout .pm-dash-body .pm-catalog-course-grid:not(.is-list) {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr));
+}
+.pm-member-sidebar-layout .pm-dash-body .pm-catalog-course.is-list .pm-catalog-course-cover {
+    width: min(35%, 14.6875rem);
+    flex-basis: min(35%, 14.6875rem);
+}
+.pm-member-sidebar-layout .pm-dash-body .pm-catalog-course-info { min-width: 0; overflow-wrap: anywhere; }
+@container member-workspace (max-width: 53.125rem) {
+    .pm-member-sidebar-layout .pm-dash-body :is(.pm-profile-overview-grid, .pm-catalog-layout, .pm-challenge-layout, .pm-member-public-content .pm-two-column, .pm-profile-page .pm-privacy-layout, .pm-event-detail-layout),
+    .pm-member-sidebar-layout.pm-member-home .pm-dash-body .pm-dash-columns {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .pm-member-sidebar-layout.pm-member-home .pm-dash-body .pm-dash-right {
+        position: static;
+        margin-top: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+    }
+    .pm-member-sidebar-layout .pm-dash-body .pm-catalog-sidebar { min-height: 0; }
+    .pm-member-sidebar-layout .pm-dash-body .pm-profile-page--editor .pm-prototype-edit-grid { grid-template-columns: minmax(0, 1fr); }
+    .pm-member-sidebar-layout .pm-dash-body .pm-profile-page--editor .pm-prototype-help { grid-column: auto; grid-template-columns: minmax(0, 1fr); }
+    .pm-member-sidebar-layout .pm-dash-body .pm-profile-page--editor .pm-prototype-nav { position: static; max-height: none; }
+    .pm-member-sidebar-layout .pm-dash-body :is(.pm-sim-card-grid, .pm-sim-review-grid, .pm-sim-filters) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container member-workspace (max-width: 33.75rem) {
+    .pm-member-sidebar-layout .pm-dash-body :is(.pm-profile-page--editor .pm-prototype-fields, .pm-profile-page .pm-form-row-2, .pm-profile-page .pm-overview-field-grid, .pm-sim-card-grid, .pm-sim-review-grid, .pm-sim-filters) { grid-template-columns: minmax(0, 1fr); }
+    .pm-member-sidebar-layout .pm-dash-body .pm-catalog-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .pm-member-sidebar-layout .pm-dash-body .pm-catalog-toolbar-end { width: 100%; }
+    .pm-member-sidebar-layout .pm-dash-body .pm-catalog-course.is-list .pm-catalog-course-cover { flex-basis: 30%; }
+}
+
+@container member-workspace (max-width: 53.125rem) {
+    .pm-app.pm-member-sidebar-layout .pm-dash-body .pm-member-discussions .pm-two-column,
+    .pm-member-sidebar-layout .pm-dash-body :is(.pm-course-detail-grid, .pm-course-detail-hero, .pm-terms-grid, .pm-scenario-detail-layout, .pm-contact-layout, .pm-pmp-public-video-grid, .pm-public-resume-split) {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .pm-member-sidebar-layout .pm-dash-body .pm-member-discussions .pm-community-sticky-sidebar { position: static; }
+}
+@container member-workspace (max-width: 33.75rem) {
+    .pm-member-sidebar-layout .pm-dash-body :is(.pm-event-filters, .pm-event-ad-card, .pm-pmp-public-benefit-grid, .pm-about-cards) { grid-template-columns: minmax(0, 1fr); }
+    .pm-member-sidebar-layout .pm-dash-body .pm-event-filters > label:first-child { grid-column: auto; }
+}
+
+/* All ordinary member workspaces have one outer rail. Remove the second
+   feature-page inset, but leave the padding of cards, forms and dialogs alone. */
+.pm-app.pm-member-sidebar-layout .pm-dash-body > :is(.pm-learn-content, .pm-exam-page, .pm-profile-page, .pm-interview, .pm-member-settings, .pm-account-page),
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-member-public-content > :is(.pm-learn-content, .pm-course-catalog, .pm-compare-page, .pm-container),
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-membership-comparison .pm-compare-page {
+    width: 100%; max-width: 100%; min-width: 0; margin-inline: auto; padding: 0;
+}
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-compare-intro { text-align: start; margin-bottom: var(--s4); }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-trends-hero {
+    background: transparent; border: 0; border-radius: 0; min-height: 0; margin-bottom: var(--s4); overflow: visible;
+}
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-trends-hero::after { content: none; }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-trends-hero-content,
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-trends-hero-text { padding: 0; border: 0; }
+/* Public PMP information retains its links, sample and pricing content. Only
+   the marketing header is flattened when displayed inside the member workspace. */
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-pmp-public-hero {
+    background: transparent; border: 0; border-radius: 0; min-height: 0; box-shadow: none;
+}
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-pmp-public-hero-image { display: none; }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-pmp-public-hero-copy { width: 100%; padding: 0 0 var(--s4); }
+/* Existing page titles use the same semantic type role; no changes to card
+   titles, form fields, navigation or specialized exam question typography. */
+.pm-app.pm-member-sidebar-layout .pm-dash-body :is(.pm-profile-top-titles, .pm-member-settings-heading, .pm-feature-heading, .pm-activity-heading, .pm-challenge-heading-row, .pm-interview-heading, .pm-members-intro, .pm-exam-report-heading, .pm-compare-intro, .pm-trends-hero, .pm-catalog-hero, .pm-terms-banner, .pm-about-banner, .pm-event-banner, .pm-sim-banner, .pm-pmp-public-hero) h1 {
+    font: var(--pm-guide-static-h1-weight) var(--text-h1)/var(--line-h1) var(--font-ui);
+    color: var(--ink); letter-spacing: var(--pm-guide-tracking-h1); overflow-wrap: anywhere;
+}
+.pm-app.pm-member-sidebar-layout .pm-dash-body :is(.pm-profile-top-titles, .pm-member-settings-heading, .pm-feature-heading, .pm-challenge-heading-row, .pm-interview-heading, .pm-members-intro, .pm-exam-report-heading, .pm-compare-intro, .pm-trends-hero, .pm-catalog-hero, .pm-terms-banner, .pm-about-banner, .pm-event-banner, .pm-sim-banner) p {
+    font: var(--regular) var(--pm-guide-text-lead)/var(--line-body) var(--font-ui); color: var(--muted); overflow-wrap: anywhere;
+}
+.pm-app.pm-member-sidebar-layout .pm-dash-body :is(.pm-member-settings-tabs, .pm-members-tabs, .pm-learn-tabs, .pm-challenge-tabs, .pm-pmp-tabs) {
+    min-width: 0; max-width: 100%; overflow-x: auto;
+}
+.pm-app.pm-member-sidebar-layout .pm-dash-body :is(.pm-member-settings-tabs, .pm-members-tabs, .pm-learn-tabs, .pm-challenge-tabs, .pm-pmp-tabs) > :is(a, button) { flex-shrink: 0; }
+.pm-app.pm-member-sidebar-layout .pm-dash-body :is(.pm-interview-home-grid, .pm-interview-feedback-grid, .pm-interview-results-two, .pm-learn-columns, .pm-pmp-ai-grid, .pm-pmp-analysis-grid, .pm-exam-review-grid, .pm-exam-result-grid, .pm-exam-home-grid, .pm-exam-intro, .pm-trend-cards, .pm-account-grid) > * { min-width: 0; }
+@container member-workspace (max-width: 53.125rem) {
+    .pm-app.pm-member-sidebar-layout .pm-dash-body :is(.pm-interview-home-grid, .pm-interview-feedback-grid, .pm-interview-results-two, .pm-interview-options-grid, .pm-learn-columns, .pm-pmp-ai-grid, .pm-pmp-analysis-grid, .pm-exam-review-grid, .pm-exam-result-grid, .pm-exam-home-grid, .pm-exam-intro) { grid-template-columns: minmax(0, 1fr); }
+    .pm-app.pm-member-sidebar-layout .pm-dash-body :is(.pm-pmp-metric-grid, .pm-pmp-overview-cards, .pm-feature-progress-grid, .pm-feature-jobs, .pm-learn-practice-grid, .pm-interview-industry-grid, .pm-interview-role-grid, .pm-interview-experience-grid) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .pm-app.pm-member-sidebar-layout .pm-dash-body :is(.pm-members-row, .pm-members-filters, .pm-interview-setup-footer) { grid-template-columns: minmax(0, 1fr); }
+    .pm-app.pm-member-sidebar-layout .pm-dash-body :is(.pm-members-filters, .pm-learn-continue-stats) { flex: 1 1 100%; }
+    .pm-app.pm-member-sidebar-layout .pm-dash-body :is(.pm-learn-continue, .pm-exam-report-heading, .pm-feature-heading) { flex-wrap: wrap; }
+}
+@container member-workspace (max-width: 33.75rem) {
+    .pm-app.pm-member-sidebar-layout .pm-dash-body :is(.pm-pmp-overview-cards, .pm-pmp-summary-strip, .pm-feature-progress-grid, .pm-feature-jobs, .pm-career-detail-facts, .pm-course-detail-aside, .pm-learn-path-grid, .pm-exam-review-side) { grid-template-columns: minmax(0, 1fr); }
+    .pm-app.pm-member-sidebar-layout .pm-dash-body .pm-learn-continue-main { min-width: 0; }
+    .pm-app.pm-member-sidebar-layout .pm-dash-body .pm-interview-hero > div:first-child { width: 100%; padding: var(--s4); }
+}
+
+/* Dedicated task canvases retain their original chrome and arrangement. */
+.pm-app.pm-exam-taking .pm-exam-take-body {
+    width: min(var(--pm-guide-container), calc(100% - 2 * var(--pm-guide-gutter)));
+    padding-block: var(--s6) var(--s8);
+}
+.pm-discover-member-body .pm-discover-main {
+    width: min(47rem, calc(100% - 2 * var(--pm-guide-gutter)));
+    padding-block: var(--s6) var(--s8);
+}
+@container member-workspace (max-width: 53.125rem) {
+    .pm-app.pm-member-sidebar-layout .pm-dash-body .pm-members-toolbar { flex-wrap: wrap; }
+    .pm-app.pm-member-sidebar-layout .pm-dash-body .pm-members-search { flex-basis: 100%; }
+    .pm-app.pm-member-sidebar-layout .pm-dash-body .pm-public-resume-split { grid-template-columns: minmax(0, 1fr); }
+}
+/* Remove residual independent page rail caps, not card, article or dialog caps. */
+.pm-app.pm-member-sidebar-layout .pm-dash-body > :is(.pm-container, .pm-feature-page),
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-member-public-content > :is(.pm-feature-page, .pm-learn-v3),
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-learn-v3-wrap {
+    width: 100%; max-width: 100%; min-width: 0; margin-inline: 0; padding-inline: 0;
+}
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-member-public-content > .pm-feature-page { padding-block-start: 0; }
+/* Shared workspace tab pattern. Catalog formerly used a public filled-button bar. */
+.pm-app.pm-member-sidebar-layout .pm-dash-body :is(.pm-catalog-tabs, .pm-profile-nav-tabs, .pm-member-settings-tabs, .pm-members-tabs, .pm-learn-tabs, .pm-challenge-tabs, .pm-pmp-tabs) {
+    display: flex; align-items: stretch; justify-content: flex-start; flex-wrap: nowrap;
+    gap: var(--s5); padding: 0; margin: 0 0 var(--s5);
+    background: var(--canvas); border: 0; border-bottom: 1px solid var(--border);
+    min-width: 0; max-width: 100%; overflow-x: auto; scrollbar-width: thin;
+}
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-tabs > button {
+    flex: none; justify-content: flex-start; min-height: var(--control-height);
+    min-width: 0; gap: var(--s2); padding: var(--s2) var(--s1);
+    color: var(--muted); background: transparent; border: 0; border-radius: 0;
+    border-bottom: 3px solid transparent; white-space: nowrap;
+    font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui);
+}
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-tabs > button::before { content: none; }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-tabs > button.is-active { background: transparent; color: var(--blue); border-bottom-color: var(--blue); }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-tabs > button:hover { background: var(--blue-soft); color: var(--blue); }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-profile-tab-item { flex: none; white-space: nowrap; border-bottom: 3px solid transparent; }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-profile-tab-item.is-active { border-bottom-color: var(--blue); }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-profile-tab-item.is-active::after { content: none; }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-pmp-tab-wrap { flex: none; }
+/* Keep all existing catalog filters, sorting, view switches and empty states. */
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-course-catalog { min-height: 0; background: transparent; }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-hero { margin: 0 0 var(--s3); padding: 0; }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-layout {
+    grid-template-columns: minmax(13rem, 1fr) minmax(0, 3.5fr); align-items: start;
+    gap: var(--pm-guide-card-gap); padding: 0;
+}
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-sidebar {
+    min-height: 0; padding: var(--pm-guide-card-padding); border-radius: var(--radius-card);
+}
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-sidebar-heading { flex-wrap: wrap; gap: var(--s2); padding-bottom: var(--s3); }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-sidebar-heading h2,
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-empty h2 {
+    font: var(--bold) var(--text-h3)/var(--line-h3) var(--font-ui);
+}
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-filter-section { padding-block: var(--s2); }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-toolbar { display: flex; flex-wrap: wrap; gap: var(--s3); align-items: center; margin-bottom: var(--s3); }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-search { flex: 1 1 14rem; min-width: 0; max-width: none; }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-toolbar-end { flex: 0 0 auto; flex-wrap: nowrap; gap: var(--s2); width: auto; max-width: 100%; }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-sort { flex: 1 1 11.5625rem; min-width: 0; }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-view-switch { flex: none; }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-empty { padding: var(--s8) var(--s4); gap: var(--s2); }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-course-grid:not(.is-list) { grid-template-columns: repeat(3, minmax(0,1fr)); }
+/* Browse Courses also enters through a public route; flatten its banner only
+   in member mode and retain its starting-point panel and actual course rows. */
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-learn-v3 { background: transparent; }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-learn-v3-banner { background: transparent; border: 0; padding: 0; }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-learn-v3-main { padding-block: var(--s4) var(--s8); }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-learn-v3-content { gap: var(--pm-guide-card-gap); }
+@container member-workspace (max-width: 53.125rem) {
+    .pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-layout { grid-template-columns: minmax(0,1fr); }
+    .pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-course-grid:not(.is-list) { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .pm-app.pm-member-sidebar-layout .pm-dash-body :is(.pm-catalog-tabs, .pm-profile-nav-tabs, .pm-member-settings-tabs, .pm-members-tabs, .pm-learn-tabs, .pm-challenge-tabs, .pm-pmp-tabs) { gap: var(--s3); }
+}
+@container member-workspace (max-width: 33.75rem) {
+    .pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-course-grid:not(.is-list) { grid-template-columns: minmax(0,1fr); }
+    .pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-search,
+    .pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-toolbar-end { flex: 1 1 100%; width: 100%; }
+}

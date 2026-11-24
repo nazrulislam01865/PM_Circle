@@ -70,9 +70,9 @@ test('Activity Log replaces Profile insights under Home, never under Community',
     assert.equal(state('/dashboard/features/insights').section, 'home');
     const root = new URL('../../', import.meta.url);
     const load = path => readFileSync(new URL(path, root), 'utf8');
-    const sidebar = load('resources/js/components/dashboard/DashboardSidebar.tsx');
+    const sidebar = load('resources/js/components/dashboard/memberSidebarNavigation.ts');
     const overview = load('resources/js/components/dashboard/MemberHomeOverview.tsx');
-    assert.match(sidebar, /label: 'Activity Log', href: '\/activity-log'/);
+    assert.match(sidebar, /label: 'Activity log', href: '\/activity-log'/);
     assert.match(overview, /<Link href="\/activity-log" className="pm-member-overview-link">View activity/);
 });
 
@@ -113,7 +113,7 @@ test('guest header stays separate and member navigation lives in the sidebar', (
 });
 
 
-test('authenticated sidebar grid keeps the footer outside the page body', () => {
+test('authenticated sidebar grid keeps the compact footer in the workspace column', () => {
     const root = new URL('../../', import.meta.url);
     const load = path => readFileSync(new URL(path, root), 'utf8');
     const css = load('resources/css/pm-member-sidebar-restore.css');
@@ -121,8 +121,8 @@ test('authenticated sidebar grid keeps the footer outside the page body', () => 
     const app = load('resources/css/app.css');
     assert.match(css, /grid-template-columns: var\(--pm-member-sidebar-width\) minmax\(0, 1fr\)/);
     assert.match(css, /\.pm-member-sidebar-layout \.pm-dash-workspace/);
-    assert.match(css, /\.pm-member-sidebar-layout > \.pm-v2-site-footer/);
+    assert.match(css, /\.pm-member-content-frame > \.pm-member-footer/);
     assert.match(shell, /<div className="pm-member-content-frame">/);
-    assert.match(shell, /<SiteFooter \/>/);
+    assert.match(shell, /<SiteFooter member\/>/);
     assert.ok(app.includes("@import './pm-member-sidebar-restore.css';"));
 });

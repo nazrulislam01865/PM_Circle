@@ -1,8 +1,8 @@
 /* Member notifications: PM Circle tokens, no separate theme or header redesign. */
 .pm-notification-bell-root { position: relative; display: flex; align-items: center; }
 .pm-notification-bell-root .pm-dash-bell { border: 0; background: none; padding: var(--space-2); cursor: pointer; }
-.pm-notification-bell-root .pm-dash-bell .pm-notification-count { position: absolute; right: 0; top: 0; display: grid; place-items: center; min-width: 17px; height: 17px; padding: 0 3px; border-radius: 999px; background: var(--pm-tone-ef3154); border: 1px solid var(--surface); color: #fff; font-size: var(--text-xs); font-weight: var(--bold); line-height: var(--line-xs); }
-.pm-notification-dropdown { position: absolute; z-index: 100; top: calc(100% + 12px); right: 0; width: min(370px, calc(100vw - 26px)); background: var(--surface); border: 1px solid var(--pm-line); border-radius: var(--radius-card); box-shadow: 0 12px 32px rgba(17, 36, 67, .16); overflow: hidden; color: var(--text); }
+.pm-notification-bell-root .pm-dash-bell .pm-notification-count { position: absolute; right: 0; top: 0; display: grid; place-items: center; min-width: 17px; height: 17px; padding: 0 3px; border-radius: 999px; background: var(--pm-tone-ef3154); border: 1px solid var(--surface); color: var(--pm-tone-fff); font-size: var(--text-xs); font-weight: var(--bold); line-height: var(--line-xs); }
+.pm-notification-dropdown { position: absolute; z-index: 100; top: calc(100% + 12px); right: 0; width: min(370px, calc(100vw - 26px)); background: var(--surface); border: 1px solid var(--pm-line); border-radius: var(--radius-card); box-shadow: 0 12px 32px var(--pm-overlay-17-36-67-16); overflow: hidden; color: var(--text); }
 .pm-notification-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--pm-line); }
 .pm-notification-title strong { color: var(--pm-navy); font-size: var(--text-h4); }
 .pm-notification-title button { color: var(--pm-primary); border: 0; background: transparent; cursor: pointer; font-weight: var(--semibold); font-size: var(--text-sm); }

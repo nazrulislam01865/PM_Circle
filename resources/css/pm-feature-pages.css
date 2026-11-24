@@ -1,8 +1,8 @@
 /* Shared content surfaces use existing PM blue tokens and the single member shell. */
 .pm-feature-page { max-width: 1160px; padding-top: 28px; padding-bottom: 52px; min-height: 65vh; }
 .pm-feature-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 0 0 20px; }
-.pm-feature-heading h1 { font-size: clamp(var(--type-h2-mobile), var(--pm-font-size-3vw), var(--pm-font-size-32px)); font-weight: var(--pm-font-weight-800); letter-spacing: -0.7px; color: var(--pm-navy); }
-.pm-feature-heading p { color: var(--muted); font-size: var(--type-small); margin-top: 4px; }
+.pm-feature-heading h1 { font-size: var(--text-h1); font-weight: var(--pm-font-weight-800); letter-spacing: var(--pm-tracking-neg-0p7px); color: var(--pm-navy); }
+.pm-feature-heading p { color: var(--muted); font-size: var(--text-body); margin-top: 4px; }
 .pm-feature-heading > a { display: inline-flex; gap: 7px; align-items: center; }
 .pm-feature-empty { padding: 38px 22px; text-align: center; }
 .pm-feature-empty strong { display: block; font-weight: var(--pm-font-weight-800); font-size: var(--type-lead); color: var(--pm-navy); }

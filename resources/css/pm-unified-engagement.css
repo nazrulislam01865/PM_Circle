@@ -97,3 +97,26 @@
         height: 36px;
     }
 }
+
+/* Homepage posts, scenario articles and feed cards consume the same action-row roles. */
+:is(.pm-v2-post-actions, .pm-v2-scenario-actions, .pm-scenario-engagement) .pm-engagement-actions.pm-post-engagement-row {
+    display: flex; align-items: center; flex-wrap: wrap; gap: var(--s2); min-width: 0; width: 100%;
+}
+:is(.pm-v2-post-actions, .pm-v2-scenario-actions, .pm-scenario-engagement) .pm-engagement-actions.pm-post-engagement-row .pm-home-action {
+    display: inline-flex; align-items: center; justify-content: center; gap: var(--s2);
+    min-height: var(--control-touch); padding: var(--s2); border: 0; border-radius: var(--radius-control);
+    background: transparent; color: var(--muted); font: var(--regular) var(--text-ui)/var(--line-ui) var(--font-ui);
+}
+:is(.pm-v2-post-actions, .pm-v2-scenario-actions, .pm-scenario-engagement) .pm-engagement-actions.pm-post-engagement-row .pm-home-action:is(:hover,:focus-visible) { background: var(--blue-soft); color: var(--blue); }
+:is(.pm-v2-post-actions, .pm-v2-scenario-actions, .pm-scenario-engagement) .pm-engagement-actions.pm-post-engagement-row .pm-home-action svg { color: currentColor; width: var(--icon); height: var(--icon); }
+.pm-v2-post-actions .pm-post-reaction-summary { margin-inline-start: auto; }
+.pm-scenario-story-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s2); }
+.pm-scenario-story-heading .pm-scenario-detail-kicker { min-width: 0; }
+
+:is(.pm-v2-post-actions, .pm-v2-scenario-actions, .pm-scenario-engagement) .pm-engagement-actions.pm-post-engagement-row .pm-home-reaction-main.is-like[aria-pressed="true"] { color: var(--reaction-like); }
+:is(.pm-v2-post-actions, .pm-v2-scenario-actions, .pm-scenario-engagement) .pm-engagement-actions.pm-post-engagement-row .pm-home-reaction-main.is-love[aria-pressed="true"] { color: var(--reaction-love); }
+:is(.pm-v2-post-actions, .pm-v2-scenario-actions, .pm-scenario-engagement) .pm-engagement-actions.pm-post-engagement-row .pm-home-reaction-main.is-care[aria-pressed="true"] { color: var(--reaction-care); }
+:is(.pm-v2-post-actions, .pm-v2-scenario-actions, .pm-scenario-engagement) .pm-engagement-actions.pm-post-engagement-row .pm-home-reaction-main.is-haha[aria-pressed="true"] { color: var(--reaction-haha); }
+:is(.pm-v2-post-actions, .pm-v2-scenario-actions, .pm-scenario-engagement) .pm-engagement-actions.pm-post-engagement-row .pm-home-reaction-main.is-wow[aria-pressed="true"] { color: var(--reaction-wow); }
+:is(.pm-v2-post-actions, .pm-v2-scenario-actions, .pm-scenario-engagement) .pm-engagement-actions.pm-post-engagement-row .pm-home-reaction-main.is-sad[aria-pressed="true"] { color: var(--reaction-sad); }
+:is(.pm-v2-post-actions, .pm-v2-scenario-actions, .pm-scenario-engagement) .pm-engagement-actions.pm-post-engagement-row .pm-home-reaction-main.is-angry[aria-pressed="true"] { color: var(--reaction-angry); }

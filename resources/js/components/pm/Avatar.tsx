@@ -21,7 +21,7 @@ export function Avatar({ name, size = 42, src, disableDemoFallback = false }: { 
     const uploaded = portrait?.match(/^\/storage\/profile-avatars\/([a-zA-Z0-9._-]+)$/);
     const mediaUrl = uploaded ? `/profile-media/avatar/${encodeURIComponent(uploaded[1])}` : portrait;
     const displayed = failed === mediaUrl ? null : mediaUrl;
-    return <span aria-label={name} title={name} className="pm-avatar" style={{ width: size, height: size, background: swatches[index], fontSize: Math.max(11, size * 0.28) }}>
+    return <span aria-label={name} title={name} className="pm-avatar" style={{ width: size, height: size, background: swatches[index], fontSize: `max(var(--pm-avatar-initial-min), ${size * 0.28}px)` }}>
         {displayed ? <img src={displayed} onError={() => setFailed(displayed)} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }}/> : initials}
     </span>;
 }

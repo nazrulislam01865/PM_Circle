@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { PostAuthorLink } from './PostAuthorLinks';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Avatar } from '@/components/pm/Avatar';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -149,9 +149,9 @@ function PostReactionDialog({ postId, initialTotal, initialCounts, onClose, onRe
                     }
                 }}>
                 {users.map(user => <div key={user.id} className="pm-post-reactions-member">
-                    <Avatar name={user.name} size={36} src={user.avatar_url} disableDemoFallback/>
+                    <PostAuthorLink href={user.profile_url} name={user.name} avatar><Avatar name={user.name} size={36} src={user.avatar_url} disableDemoFallback/></PostAuthorLink>
                     <div className="pm-post-reactions-name">
-                        {user.profile_url ? <Link href={user.profile_url}>{user.name}</Link> : <span>{user.name}</span>}
+                        <PostAuthorLink href={user.profile_url} name={user.name}>{user.name}</PostAuthorLink>
                     </div>
                     <ReactionMark type={user.type} size={19}/>
                 </div>)}

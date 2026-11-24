@@ -47,6 +47,7 @@ final class MemberDashboardStats
         return [
             'learning' => [
                 'time' => intdiv($minutes, 60).'h '.($minutes % 60).'m',
+                'minutes' => $minutes, 'completedActivities' => (int) $activities,
                 'scenarios' => (int) $scenarios,
                 'level' => 1, // No issued level progression exists in the current learning model.
                 'lessonProgress' => $activities.' completed',

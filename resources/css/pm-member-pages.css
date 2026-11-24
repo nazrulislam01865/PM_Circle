@@ -29,9 +29,9 @@
 .pm-dashboard .pm-membership-comparison .pm-compare-intro h1 {
     font-family: var(--pm-member-font);
     font-size: var(--pm-member-page-heading-size);
-    line-height: var(--type-line-h2);
-    font-weight: var(--pm-font-weight-800);
-    letter-spacing: -.7px;
+    line-height: var(--line-h1);
+    font-weight: var(--pm-guide-static-h1-weight);
+    letter-spacing: var(--pm-tracking-neg-p7px);
     color: var(--pm-dash-deep);
 }
 .pm-dashboard .pm-member-public-content .pm-feature-heading p,
@@ -47,7 +47,7 @@
     border-radius: var(--pm-member-card-radius);
 }
 .pm-dashboard .pm-member-public-content .pm-feature-section {
-    padding: 20px 22px;
+    padding: var(--pm-guide-card-padding);
     margin-top: var(--pm-member-page-gap);
 }
 .pm-dashboard .pm-member-public-content .pm-feature-section h2 {
@@ -57,7 +57,7 @@
 }
 .pm-dashboard .pm-member-public-content .pm-feature-section > p {
     font-size: var(--pm-member-font-body);
-    line-height: var(--pm-line-height-1p55);
+    line-height: var(--line-body);
 }
 .pm-dashboard .pm-member-public-content .pm-feature-empty {
     padding: 28px 20px;
@@ -67,7 +67,7 @@
 }
 .pm-dashboard .pm-member-public-content .pm-feature-empty p {
     font-size: var(--pm-member-font-body);
-    line-height: var(--pm-line-height-1p55);
+    line-height: var(--line-body);
 }
 .pm-dashboard .pm-member-public-content .pm-feature-progress-grid {
     gap: var(--pm-member-page-gap);
@@ -97,7 +97,7 @@
 /* Use the same controls as the dashboard without changing button behavior. */
 .pm-dashboard .pm-member-public-content .pm-button.pm-button-sm,
 .pm-dashboard .pm-membership-comparison .pm-button.pm-button-sm {
-    min-height: var(--pm-control-dimension-40px);
+    min-height: var(--pm-guide-button-height);
     padding: var(--space-2) var(--pm-control-padding-15px);
     border-radius: var(--pm-member-control-radius);
     font-size: var(--pm-member-font-sm);
@@ -110,18 +110,18 @@
     font-size: var(--pm-member-font-xs);
 }
 .pm-dashboard .pm-member-public-content .pm-feed-hero {
-    padding: 22px 26px;
-    margin-bottom: var(--pm-member-page-gap);
-    gap: 18px;
-    border-color: var(--pm-dash-border);
-    border-radius: var(--pm-member-card-radius);
+    padding: var(--pm-guide-card-padding);
+    margin-bottom: var(--pm-guide-card-gap);
+    gap: var(--s6);
+    border-color: var(--border);
+    border-radius: var(--radius-card);
 }
 .pm-dashboard .pm-member-public-content .pm-feed-hero-content h1 {
     font-family: var(--pm-member-font);
-    color: var(--pm-dash-deep);
+    color: var(--ink);
     font-size: var(--text-h1);
     font-weight: var(--pm-guide-static-h1-weight);
-    letter-spacing: -.04em;
+    letter-spacing: var(--pm-guide-tracking-h1);
     line-height: var(--line-h1);
     margin-bottom: 8px;
 }
@@ -140,15 +140,15 @@
 }
 .pm-dashboard .pm-member-public-content .pm-feed-search-input,
 .pm-dashboard .pm-member-public-content .pm-sort-dropdown {
-    height: var(--pm-member-control-height);
-    border-color: var(--pm-dash-border);
-    border-radius: var(--pm-member-control-radius);
-    font-size: var(--pm-member-font-body);
+    height: var(--pm-guide-button-height);
+    border-color: var(--control-border);
+    border-radius: var(--radius-control);
+    font-size: var(--text-ui);
 }
 .pm-dashboard .pm-member-public-content .pm-feed-search-input:focus {
     box-shadow: none;
-    outline: 2px solid var(--pm-tone-8ab8ef);
-    outline-offset: 1px;
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
 }
 
 /* Authenticated pricing is a member screen; public pricing retains its layout. */
@@ -185,9 +185,6 @@
     .pm-dashboard .pm-membership-comparison .pm-compare-page {
         padding-top: 2px;
         padding-bottom: 22px;
-    }
-    .pm-dashboard .pm-member-public-content .pm-feed-hero {
-        padding: 18px;
     }
     .pm-dashboard .pm-member-public-content .pm-feature-heading {
         margin-bottom: 16px;

@@ -12,6 +12,7 @@ final class AiResumeDraftController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        $this->authorizeReview($request);
         $rows = DB::table('ai_resume_drafts')->where('user_id', $request->user()->id)
             ->orderByDesc('id')->limit(30)->get();
         return response()->json($rows->map(fn ($row) => [
@@ -24,6 +25,7 @@ final class AiResumeDraftController extends Controller
 
     public function approve(Request $request, int $draft): JsonResponse
     {
+        $this->authorizeReview($request);
         // Approving stores an editable private draft; NEVER overwrites a member's qualifications.
         $updated = DB::table('ai_resume_drafts')->where('id', $draft)
             ->where('user_id', $request->user()->id)->where('status', 'pending')->update([
@@ -41,6 +43,12 @@ final class AiResumeDraftController extends Controller
                 'suggested_text_encrypted' => Crypt::encryptString('[discarded]'), 'updated_at' => now()]);
         abort_unless($updated, 404);
         return response()->json(['status' => 'discarded']);
+    }
+
+    private function authorizeReview(Request $request): void
+    {
+        $plan = app(\App\Domain\Billing\Queries\CurrentMemberPlan::class)->code($request->user());
+        abort_unless(\App\Domain\Billing\Queries\MemberFeatureAccess::allows($plan, \App\Domain\AI\Services\AiFeatureCatalog::FEATURES['resume_rewrite']['min_plan']), 403);
     }
 
     public function revokeConsent(Request $request, int $resume): JsonResponse

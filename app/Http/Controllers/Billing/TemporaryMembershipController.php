@@ -16,6 +16,9 @@ final class TemporaryMembershipController extends Controller
 {
     public function index(Request $request, OnboardingController $onboarding, CurrentMemberPlan $current): Response
     {
+        if ($request->query('view') !== 'plans' && ! $request->session()->get('errors')?->has('plan')) {
+            return Inertia::render('billing/PlanUsage', app(\App\Domain\Billing\Queries\MemberPlanUsage::class)->forMember($request->user()));
+        }
         return Inertia::render('billing/Membership', [
             'plans' => $onboarding->catalog(),
             'currentPlan' => $current->code($request->user()),

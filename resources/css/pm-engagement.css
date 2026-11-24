@@ -143,14 +143,14 @@
 .pm-inline-comments-head select { min-height: var(--pm-control-dimension-40px); padding: var(--pm-control-padding-6px) var(--pm-control-padding-30px) var(--pm-control-padding-6px) var(--pm-control-padding-10px); border: 1px solid var(--divider); border-radius: var(--radius); background: var(--surface); font: inherit; font-size: var(--type-small); }
 .pm-inline-close { background: transparent; border: none; color: var(--muted); min-height: 44px; font-size: var(--type-small); }
 .pm-inline-comments-compose { display: flex; align-items: flex-start; gap: var(--space-3); margin-bottom: var(--space-4); }
-.pm-inline-comments-compose > .pm-avatar, .pm-inline-comment-item > .pm-avatar { flex: none; }
+.pm-inline-comments-compose > .pm-avatar, .pm-inline-comment-item > :is(.pm-avatar, .pm-post-avatar-link) { flex: none; }
 .pm-inline-compose-field { flex: 1; min-width: 0; border: 1px solid var(--border); background: var(--surface); border-radius: var(--card-radius); overflow: hidden; }
 .pm-inline-compose-field:focus-within { border-color: var(--primary); }
 .pm-inline-compose-field textarea { display: block; width: 100%; min-height: var(--pm-control-dimension-58px); resize: vertical; border: none; box-shadow: none; outline: none; padding: var(--space-3); font: inherit; font-size: var(--type-body); line-height: var(--type-line-body); background: transparent; color: var(--text); }
 .pm-inline-compose-field textarea:focus { outline: none; box-shadow: none; }
 .pm-inline-compose-actions { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); padding: 0 var(--space-2) var(--space-2) var(--space-3); }
 .pm-inline-compose-actions span { color: var(--muted); font-size: var(--type-caption); }
-.pm-inline-compose-actions .pm-button { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--pm-control-dimension-40px); font-size: var(--type-small); padding: var(--pm-control-padding-7px) var(--pm-control-padding-14px); }
+.pm-inline-compose-actions .pm-button { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--pm-guide-button-height); font-size: var(--type-small); padding: var(--pm-control-padding-7px) var(--pm-control-padding-14px); }
 .pm-inline-compose-actions .pm-button:disabled { background: var(--disabled-bg); border-color: var(--divider); color: var(--disabled-text); cursor: not-allowed; }
 .pm-inline-reply-note { background: var(--primary-soft); padding: var(--space-2) var(--space-3); color: var(--text); font-size: var(--type-small); }
 .pm-inline-reply-note button { color: var(--primary); margin-left: var(--space-2); text-decoration: underline; }
@@ -160,7 +160,7 @@
 .pm-inline-comment-bubble { background: var(--canvas); padding: var(--space-3); border-radius: var(--card-radius); }
 .pm-inline-comment-author { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); font-size: var(--type-small); }
 .pm-inline-comment-author span { color: var(--muted); font-size: var(--type-caption); }
-.pm-inline-comment-bubble p { margin: var(--space-1) 0 0; color: var(--text); font-size: var(--type-small); white-space: pre-wrap; overflow-wrap: anywhere; }
+.pm-inline-comment-bubble p { margin: var(--space-1) 0 0; color: var(--text); font-size: var(--text-body); white-space: pre-wrap; overflow-wrap: anywhere; }
 .pm-inline-comment-actions { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-1) var(--space-2); }
 .pm-inline-comment-actions button { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--muted); font-size: var(--type-caption); background: transparent; border: 0; min-height: var(--pm-control-dimension-32px); }
 .pm-inline-comment-actions button:hover, .pm-inline-comment-actions button[aria-pressed="true"] { color: var(--primary); }

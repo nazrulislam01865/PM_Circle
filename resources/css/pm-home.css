@@ -1,12 +1,5 @@
 /* Homepage-only prototype details. Shared typography, colours and actions use pm-circle.css. */
 .pm-app:has(.pm-home) {
-    --pm-font-family: var(--font);
-    --primary: var(--pm-system-primary);
-    --text: var(--pm-system-text);
-    --muted: var(--pm-system-muted);
-    --border: var(--pm-system-border);
-    --divider: var(--pm-system-divider);
-    --radius: var(--pm-system-radius);
     font-family: var(--font);
 }
 
@@ -32,7 +25,7 @@
 }
 
 .pm-app:has(.pm-home) .pm-button-sm {
-    min-height: var(--pm-control-dimension-40px);
+    min-height: var(--pm-guide-button-height);
 }
 
 .pm-home .pm-stat-panel {
@@ -232,7 +225,7 @@
 .pm-home .pm-pathway-step p {
     margin: 0;
     color: var(--muted);
-    font-size: var(--type-caption);
+    font-size: var(--text-body);
     line-height: var(--type-line-h4);
 }
 
@@ -252,7 +245,7 @@
     margin: 0 0 3px;
     font-size: var(--type-h2);
     line-height: var(--type-line-h1);
-    letter-spacing: -.8px;
+    letter-spacing: var(--pm-tracking-neg-p8px);
     font-weight: var(--type-weight-bold);
     color: var(--text);
 }
@@ -358,7 +351,7 @@
     font-size: var(--type-h3);
     line-height: var(--type-line-h1);
     font-weight: var(--type-weight-bold);
-    letter-spacing: -.5px;
+    letter-spacing: var(--pm-tracking-neg-p5px);
 }
 
 .pm-home .pm-pathway-exam-intro p {
@@ -477,7 +470,7 @@
     font-size: var(--type-h3);
     line-height: var(--type-line-h1);
     font-weight: var(--type-weight-bold);
-    letter-spacing: -.5px;
+    letter-spacing: var(--pm-tracking-neg-p5px);
 }
 
 .pm-home .pm-pathway-banner-copy p {
@@ -640,7 +633,7 @@
     }
 
     .pm-home .pm-pathway-exam-intro p {
-        font-size: var(--type-small);
+        font-size: var(--text-body);
     }
 
     .pm-home .pm-pathway-exam-pills span {
@@ -662,7 +655,7 @@
     }
 
     .pm-home .pm-pathway-banner-copy p {
-        font-size: var(--type-small);
+        font-size: var(--text-body);
     }
 
     .pm-home .pm-pathway-banner-button {
@@ -735,7 +728,7 @@
     margin: 0 0 var(--s1);
     color: var(--ink);
     font: var(--bold) var(--text-h2)/var(--line-h2) var(--font-ui);
-    letter-spacing: -.015em;
+    letter-spacing: var(--pm-tracking-neg-p015em);
     overflow-wrap: anywhere;
 }
 
@@ -826,7 +819,7 @@
 .pm-home .pm-home-response-main>p {
     margin: var(--s2) 0 var(--s1);
     color: var(--ink);
-    font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui);
+    font: var(--regular) var(--text-body)/var(--line-body) var(--font-ui);
     overflow-wrap: anywhere;
 }
 
@@ -885,7 +878,7 @@
     font-size: var(--type-h3);
     line-height: var(--pm-line-height-30px);
     font-weight: var(--type-weight-bold);
-    letter-spacing: -.5px;
+    letter-spacing: var(--pm-tracking-neg-p5px);
 }
 
 .pm-home .pm-home-community-card .pm-section-head a {
@@ -1032,7 +1025,7 @@
 }
 
 .pm-home .pm-home-join-strip .pm-button {
-    min-height: var(--pm-control-dimension-40px);
+    min-height: var(--pm-guide-button-height);
     padding: var(--space-2) var(--pm-control-padding-17px);
     font-size: var(--type-small);
     font-weight: var(--type-weight-bold);
@@ -1110,7 +1103,7 @@
 .pm-home .pm-hero h1 {
     font-size: var(--type-h1);
     line-height: var(--type-line-h1);
-    letter-spacing: -.6px;
+    letter-spacing: var(--pm-tracking-neg-p6px);
 }
 
 .pm-home .pm-hero-copy>p:not(.pm-kicker) {
@@ -1360,13 +1353,13 @@
 
 .pm-app:has(.pm-home) .pm-button-sm,
 .pm-home .pm-button-sm {
-    min-height: var(--pm-control-dimension-40px);
+    min-height: var(--pm-guide-button-height);
     font-size: var(--type-small);
 }
 
 .pm-home .pm-home-scenario-cta .pm-button,
 .pm-home .pm-home-join-strip .pm-button {
-    min-height: var(--pm-control-dimension-40px);
+    min-height: var(--pm-guide-button-height);
     font-size: var(--type-small);
     font-weight: var(--type-weight-bold);
 }
@@ -1402,7 +1395,7 @@
 }
 
 .pm-home .pm-bottom-cta p {
-    font-size: var(--type-small);
+    font-size: var(--text-body);
 }
 
 .pm-home .pm-sidebar-panel>small,

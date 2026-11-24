@@ -1,3 +1,5 @@
+import { Pagination } from '@/components/pm/Pagination';
+import { MobileFilterPanel } from '@/components/pm/MobileFilterPanel';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
@@ -160,13 +162,13 @@ export function PublicCourseCatalog({ courses }: { courses: DemoCourseData[] }) 
                 <StartingPoint courses={courses}/>
                 <nav className="pm-learn-v3-topics" aria-label="Filter by course topic">{topicLabels.map(label => <button type="button" key={label} aria-pressed={topic === label} className={`pm-learn-v3-chip${topic === label ? ' is-active' : ''}`} onClick={() => changeTopic(label)}>{label}</button>)}</nav>
                 <div className="pm-learn-v3-content">
-                    <aside className="pm-learn-v3-sidebar" aria-label="Course filters"><div className="pm-learn-v3-filter-heading"><h2>Filters</h2><button type="button" onClick={clear}>Clear all</button></div>
+                    <MobileFilterPanel className="pm-learn-v3-sidebar" label="Filters" activeCount={Number(level !== 'all') + Number(topic !== 'All topics') + Number(access !== 'all')}><div className="pm-learn-v3-filter-heading"><h2>Filters</h2><button type="button" onClick={clear}>Clear all</button></div>
                         <label className="pm-guide-field-label" htmlFor="pm-learn-level">Career level</label>
                         <select id="pm-learn-level" className="pm-guide-control" value={level} onChange={event => { setLevel(event.target.value); setPage(1); }}><option value="all">All levels</option>{levels.map(value => <option key={value} value={value}>{value}</option>)}</select>
                         <label className="pm-guide-field-label" htmlFor="pm-learn-topic">Topic</label>
                         <select id="pm-learn-topic" className="pm-guide-control" value={topic} onChange={event => changeTopic(event.target.value as Topic)}>{topicLabels.map(value => <option key={value} value={value}>{value}</option>)}</select>
                         <fieldset className="pm-learn-v3-access"><legend>Access</legend>{([['all', 'All courses'], ['free', 'Free'], ['paid', 'Paid']] as const).map(([value, title]) => <label key={value}><input type="radio" name="course-access" value={value} checked={access === value} onChange={() => { setAccess(value); setPage(1); }}/>{title}</label>)}</fieldset>
-                    </aside>
+                    </MobileFilterPanel>
                     <section className="pm-learn-v3-results" aria-label="Available learning courses">
                         <div className="pm-learn-v3-search-sort"><label className="pm-guide-field-label" htmlFor="pm-learn-search">Search courses
                             <input id="pm-learn-search" className="pm-guide-control" type="search" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} placeholder="e.g. Agile, risk or stakeholder" /></label>
@@ -176,9 +178,7 @@ export function PublicCourseCatalog({ courses }: { courses: DemoCourseData[] }) 
                         <p className="pm-learn-v3-data-note">Ratings and active learner counts are sample data.</p>
                         {shown.length ? <div className="pm-learn-v3-rows">{shown.map(course => <CourseRow key={course.slug} course={course}/>)}</div>
                             : <div className="pm-learn-v3-empty"><h3>No matching courses</h3><p>Try changing your search or filters.</p><button className="pm-guide-button is-outline" type="button" onClick={clear}>Clear filters</button></div>}
-                        {pageCount > 1 && <nav className="pm-learn-v3-pagination" aria-label="Course pages"><button type="button" className="pm-guide-button is-outline" onClick={() => setPage(value => Math.max(1, value - 1))} disabled={currentPage === 1}>Previous</button>
-                            {Array.from({ length: pageCount }, (_, index) => index + 1).map(value => <button key={value} type="button" className={`pm-guide-button is-outline${value === currentPage ? ' is-current' : ''}`} aria-current={value === currentPage ? 'page' : undefined} onClick={() => setPage(value)}>{value}</button>)}
-                            <button type="button" className="pm-guide-button is-outline" disabled={currentPage === pageCount} onClick={() => setPage(value => Math.min(pageCount, value + 1))}>Next</button></nav>}
+                        <Pagination current={currentPage} last={pageCount} label="Course pages" onPageChange={setPage}/>
                     </section>
                 </div>
             </div>

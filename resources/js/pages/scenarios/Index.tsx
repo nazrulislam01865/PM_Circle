@@ -1,5 +1,6 @@
+import { Pagination } from '@/components/pm/Pagination';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { ArrowRight, ChevronDown, Search } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { ScenarioLibraryCard, type LibraryScenario } from '@/components/scenarios/ScenarioLibraryCard';
 import { ScenarioLibraryFilters, type ChallengeFilters } from '@/components/scenarios/ScenarioLibraryFilters';
@@ -29,13 +30,6 @@ const tabs = [
     { id: 'discussed', label: 'Most discussed' },
     { id: 'mine', label: 'My participation' },
 ] as const;
-
-function visiblePages(current: number, last: number): (number | '…')[] {
-    if (last <= 7) return Array.from({ length: last }, (_, index) => index + 1);
-    if (current <= 3) return [1, 2, 3, 4, 5, '…', last];
-    if (current >= last - 2) return [1, '…', last - 4, last - 3, last - 2, last - 1, last];
-    return [1, '…', current - 1, current, current + 1, '…', last];
-}
 
 export default function Index({ scenarios, topics, statusCounts, todaySlug, filters, canInteract }: Props) {
     const page = usePage<{ auth: { user: { id: number } | null } }>();
@@ -96,12 +90,7 @@ export default function Index({ scenarios, topics, statusCounts, todaySlug, filt
                         </div>
                         <div className="pm-challenge-pagination">
                             <p>Showing {scenarios.from ?? 0}–{scenarios.to ?? 0} of {scenarios.total} scenarios</p>
-                            {scenarios.last_page > 1 && <nav className="pm-challenge-page-links" aria-label="Scenario pages">
-                                <button type="button" aria-label="Previous page" disabled={scenarios.current_page === 1} onClick={() => navigate({}, scenarios.current_page - 1)}><ChevronLeft size={19} /></button>
-                                {visiblePages(scenarios.current_page, scenarios.last_page).map((page, index) => page === '…' ? <span key={`gap-${index}`} className="pm-challenge-page-ellipsis">…</span> :
-                                    <button type="button" key={page} aria-label={`Page ${page}`} aria-current={scenarios.current_page === page ? 'page' : undefined} className={scenarios.current_page === page ? 'is-active' : ''} onClick={() => navigate({}, page)}>{page}</button>)}
-                                <button type="button" aria-label="Next page" disabled={scenarios.current_page === scenarios.last_page} onClick={() => navigate({}, scenarios.current_page + 1)}><ChevronRight size={19} /></button>
-                            </nav>}
+                            <Pagination current={scenarios.current_page} last={scenarios.last_page} label="Scenario pages" onPageChange={page => navigate({}, page)}/>
                         </div>
                     </section>
                 </div>

@@ -1,4 +1,7 @@
-import { Ellipsis, EyeOff, Flag, Link2, Pencil, BellOff, Bell, Trash2 } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { router } from '@inertiajs/react';
+import type { PostSecondaryActions } from './usePostSecondaryActions';
+import { Bookmark, Share2, ArrowRight, Ellipsis, EyeOff, Flag, Link2, Pencil, BellOff, Bell, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
@@ -25,9 +28,13 @@ type Props = {
     onMuteChange?: (muted: boolean) => void;
     onHiddenChange?: (hidden: boolean) => void;
     authorName?: string;
+    secondary?: PostSecondaryActions;
+    readHref?: string;
+    mobileOnly?: boolean;
 };
 
-export function PostActionMenu({ post, isOwner, muted = false, hidden = false, canInteract = true, onJoin, onRemoved, onUpdated, onMuteChange, onHiddenChange, authorName = 'a community member' }: Props) {
+export function PostActionMenu({ post, isOwner, muted = false, hidden = false, canInteract = true, onJoin, onRemoved, onUpdated, onMuteChange, onHiddenChange, authorName = 'a community member', secondary, readHref, mobileOnly = false }: Props) {
+    const isMobile = useIsMobile();
     const [reportOpen, setReportOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
@@ -63,10 +70,18 @@ export function PostActionMenu({ post, isOwner, muted = false, hidden = false, c
         if (!canInteract) onJoin?.(verb);
         else callback();
     };
-    return <div className="pm-post-actions-root">
+    if (mobileOnly && !isMobile) return null;
+    return <div className={`pm-post-actions-root${mobileOnly ? ' pm-post-mobile-menu' : ''}`}>
         <DropdownMenu>
             <DropdownMenuTrigger asChild><button type="button" className="pm-post-menu-trigger" aria-label={`More options for post by ${authorName}`}><Ellipsis size={21} aria-hidden="true"/></button></DropdownMenuTrigger>
             <DropdownMenuContent align="end" sideOffset={5} className="pm-post-menu-content">
+                {isMobile && secondary && <>
+                    <DropdownMenuItem className="pm-post-menu-item pm-post-mobile-item" onSelect={() => { void secondary.share(); }}><Share2 size={17}/>{secondary.copied ? 'Copied' : 'Share'}</DropdownMenuItem>
+                    <DropdownMenuItem className="pm-post-menu-item pm-post-mobile-item" disabled={secondary.saveBusy} onSelect={() => { void secondary.toggleSave(); }}><Bookmark size={17}/>{secondary.saved ? 'Saved' : 'Save'}</DropdownMenuItem>
+                    {readHref && <DropdownMenuItem className="pm-post-menu-item pm-post-mobile-item" onSelect={() => router.visit(readHref)}><ArrowRight size={17}/>Read discussion</DropdownMenuItem>}
+                    {!mobileOnly && <DropdownMenuSeparator className="pm-post-menu-separator pm-post-mobile-item"/>}
+                </>}
+                {!mobileOnly && <>
                 {isOwner && <DropdownMenuItem className="pm-post-menu-item" disabled={busy} onSelect={() => setEditOpen(true)}><Pencil size={17}/>Edit post</DropdownMenuItem>}
                 <DropdownMenuItem className="pm-post-menu-item" onSelect={() => { void copyLink(); }}><Link2 size={17}/>Copy link</DropdownMenuItem>
                 {isOwner ? <>
@@ -87,6 +102,7 @@ export function PostActionMenu({ post, isOwner, muted = false, hidden = false, c
                     })}><EyeOff size={17}/>{hidden ? 'Unhide post' : 'Hide post'}</DropdownMenuItem>
                     <DropdownMenuSeparator className="pm-post-menu-separator" />
                     <DropdownMenuItem className="pm-post-menu-item is-danger" disabled={busy} onSelect={() => checkAccess('report a post', () => { setError(''); setReportOpen(true); })}><Flag size={17}/>Report post</DropdownMenuItem>
+                </>}
                 </>}
             </DropdownMenuContent>
         </DropdownMenu>

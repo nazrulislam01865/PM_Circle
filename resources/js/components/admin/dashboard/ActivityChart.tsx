@@ -32,7 +32,7 @@ export function ActivityChart({ series, timezone }: { series: DashboardSeriesPoi
                 <defs><linearGradient id="pm-admin-overview-activity-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="var(--blue)" stopOpacity=".26"/><stop offset="100%" stopColor="var(--blue)" stopOpacity=".025"/></linearGradient></defs>
                 {[0, 1, 2, 3, 4].map(step => <g key={step}>
                     <line x1="44" x2="584" y1={204 - (step * 170 / 4)} y2={204 - (step * 170 / 4)} stroke="var(--border)" strokeDasharray="3 4"/>
-                    <text x="35" y={208 - (step * 170 / 4)} fill="var(--muted)" fontSize="12" textAnchor="end">{short((ceiling * step) / 4)}</text>
+                    <text x="35" y={208 - (step * 170 / 4)} fill="var(--muted)" style={{ fontSize: 'var(--text-metric-caption)' }} textAnchor="end">{short((ceiling * step) / 4)}</text>
                 </g>)}
                 <path d={area} fill="url(#pm-admin-overview-activity-fill)"/>
                 <polyline points={points} fill="none" stroke="var(--blue)" strokeWidth="2.8" strokeLinejoin="round" strokeLinecap="round"/>
@@ -40,7 +40,7 @@ export function ActivityChart({ series, timezone }: { series: DashboardSeriesPoi
                     <circle cx={x(index)} cy={y(value)} r="9" fill="transparent" onMouseEnter={() => setSelectedDate(series[index].date)} onClick={() => setSelectedDate(series[index].date)}>
                         <title>{`${prettyDate(series[index].date)}: ${fmt(value)}`}</title>
                     </circle>
-                    {(index % labelEvery === 0 || index === values.length - 1) && <text x={x(index)} y="230" fontSize="11" textAnchor="middle" fill="var(--muted)">{prettyDate(series[index].date)}</text>}
+                    {(index % labelEvery === 0 || index === values.length - 1) && <text x={x(index)} y="230" style={{ fontSize: 'var(--text-metric-caption)' }} textAnchor="middle" fill="var(--muted)">{prettyDate(series[index].date)}</text>}
                 </g>)}
                 <circle cx={x(chosenIndex)} cy={y(values[chosenIndex])} r="5.5" fill="var(--blue)" stroke="var(--surface)" strokeWidth="2"/>
             </svg>

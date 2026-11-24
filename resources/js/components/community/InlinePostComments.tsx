@@ -1,3 +1,4 @@
+import { PostAuthorLink } from './PostAuthorLinks';
 import { CommunityResponsiveImage } from './CommunityResponsiveImage';
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronDown } from 'lucide-react';
@@ -53,9 +54,9 @@ function CommentEntry({ comment, postId, rootId, nested = false, canInteract, on
         }
     };
     return <div className={`pm-inline-comment-item${nested ? ' pm-inline-comment-item--nested' : ''}`}>
-        <Avatar name={comment.author.name} src={comment.author.avatar_path} size={nested ? 32 : 36}/>
+        <PostAuthorLink href={comment.author.profile_url} name={comment.author.name} avatar><Avatar name={comment.author.name} src={comment.author.avatar_path} size={nested ? 32 : 36}/></PostAuthorLink>
         <div className="pm-inline-comment-content">
-            <div className="pm-inline-comment-author"><strong>{comment.author.name}</strong><span>{elapsedLabel(comment.created_at)}</span></div>
+            <div className="pm-inline-comment-author"><strong><PostAuthorLink href={comment.author.profile_url} name={comment.author.name}>{comment.author.name}</PostAuthorLink></strong><span>{elapsedLabel(comment.created_at)}</span></div>
             {comment.body && <p className="pm-inline-comment-text">{comment.body}</p>}
             {comment.media_url && <CommunityResponsiveImage className="pm-comment-attachment" src={comment.media_url} alt="Comment attachment" sizes="(max-width: 640px) 85vw, 480px"/>}
             <div className="pm-inline-comment-actions">

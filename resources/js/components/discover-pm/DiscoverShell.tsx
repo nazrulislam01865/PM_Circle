@@ -24,7 +24,9 @@ export function DiscoverShell({ stage, questionIndex, careerIndex = 0, children 
     careerIndex?: number;
     children: ReactNode;
 }) {
-    const isGuest = !usePage<{ auth?: { user?: unknown | null } }>().props.auth?.user;
+    const { auth } = usePage<{ auth?: { user?: { is_admin?: boolean; onboarding_step?: number } | null } }>().props;
+    const isGuest = !auth?.user;
+    const user = auth?.user;
     const isCareer = ['career', 'sample', 'review', 'platform', 'decision'].includes(stage);
     const active = stage === 'intro' || stage === 'about' ? 0 : stage === 'explore' ? 1 : stage === 'findings' || stage === 'practice' ? 2 : 3;
     const percentage = isCareer ? (stage === 'career' ? 61 + (careerIndex + 1) * 3 : stage === 'sample' ? 91 : stage === 'review' ? 94 : stage === 'platform' ? 97 : 100)
@@ -32,7 +34,7 @@ export function DiscoverShell({ stage, questionIndex, careerIndex = 0, children 
 
     return <div className={`pm-app pm-discover-page${isGuest ? ' pm-home-v2-shell' : ''}`}>
         {isGuest ? <HomeHeader /> : <SiteHeader />}
-        <div className="pm-discover">
+        <div className={`pm-discover${user && !user.is_admin && (user.onboarding_step ?? 0) >= 3 ? ' pm-discover-member-body' : ''}`}>
             <main className="pm-discover-main" id="main">
                 <nav className="pm-discover-steps" aria-label="Discover PM progress">
                     {reflectionSteps.map((name, index) => <span key={name} className={`pm-discover-step${index === active ? ' is-current' : ''}`} aria-current={index === active ? 'step' : undefined}>

@@ -1,7 +1,4 @@
 /* Learn & Practice catalog only. Other learning pages retain their existing styles. */
-@media (min-width: 1061px) {
-    .pm-learning-catalog-view .pm-dash-sidebar { display: none; }
-}
 .pm-learning-catalog-view .pm-learn-content { padding: 0; max-width: none; }
 .pm-learning-catalog-view .pm-dash-body { min-width: 0; }
 .pm-course-catalog {
@@ -36,7 +33,7 @@
     color: var(--surface);
     font-size: var(--type-h1-responsive);
     line-height: var(--type-line-h1);
-    letter-spacing: -.6px;
+    letter-spacing: var(--pm-tracking-neg-p6px);
     font-weight: var(--type-weight-bold);
     margin: 0 0 3px;
 }
@@ -154,25 +151,17 @@
 .pm-catalog-course.is-list .pm-catalog-course-cover { width: 235px; flex: 0 0 235px; height: auto; }
 .pm-catalog-course.is-list .pm-catalog-course-info { min-height: 0; }
 .pm-catalog-course.is-list .pm-catalog-course-copy { min-height: 0; }
-.pm-catalog-pagination { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; margin: 20px 0; }
-.pm-catalog-pagination button { min-width: 44px; min-height: var(--pm-control-dimension-44px); display: grid; place-items: center; border: 1px solid var(--catalog-line); background: var(--surface); color: var(--catalog-ink); border-radius: var(--radius); font-size: var(--type-button-compact); line-height: var(--type-line-button-compact); font-weight: var(--type-weight-bold); }
-.pm-catalog-pagination button.is-active { background: var(--catalog-blue); color: var(--surface); border-color: var(--catalog-blue); }
-.pm-catalog-pagination button:hover:not(:disabled):not(.is-active) { background: var(--primary-soft); }
-.pm-catalog-pagination button:disabled { opacity: .45; cursor: not-allowed; }
 .pm-catalog-empty { display: flex; flex-direction: column; gap: 10px; align-items: center; padding: 54px 22px; background: var(--surface); border: 1px solid var(--catalog-line); border-radius: var(--card-radius); color: var(--muted); text-align: center; }
 .pm-course-catalog .pm-catalog-empty h2 { font-size: var(--type-h2-responsive); line-height: var(--type-line-h2); font-weight: var(--type-weight-bold); margin: 0; }
 .pm-course-catalog .pm-catalog-empty p { margin: 0; }
 .pm-catalog-empty .pm-catalog-course-action { margin-top: 10px; flex: 0 0 auto; padding-inline: 20px; }
 .pm-course-catalog :where(button, a, input, select):focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 @media (max-width: 1220px) { .pm-catalog-course-grid { grid-template-columns: repeat(3,minmax(0,1fr)); } }
-@media (max-width: 1060px) { .pm-learning-catalog-view .pm-dash-sidebar { display: none; } .pm-catalog-course-grid { grid-template-columns: repeat(3,minmax(0,1fr)); } }
+@media (max-width: 1060px) { .pm-catalog-course-grid { grid-template-columns: repeat(3,minmax(0,1fr)); } }
 @media (max-width: 900px) { .pm-catalog-layout { grid-template-columns: 205px minmax(0,1fr); padding: 12px; gap: 12px; } .pm-catalog-course-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .pm-catalog-toolbar { flex-wrap: wrap; gap: 8px; } .pm-catalog-search { max-width: none; } }
 @media (max-width: 700px) { .pm-catalog-tabs { grid-template-columns: repeat(2,1fr); gap: 4px; padding: 9px; } .pm-catalog-tabs button { white-space: normal; font-size: var(--type-button-compact); } .pm-catalog-tabs button::before { display: none; } .pm-catalog-layout { grid-template-columns: minmax(0,1fr); } .pm-catalog-sidebar { align-self: auto; min-height: 0; } .pm-catalog-filter-section { display: inline-block; vertical-align: top; width: 33.33%; border-bottom: 0; padding-inline: 8px; } .pm-catalog-hero { min-height: 113px; } }
 @media (max-width: 480px) { .pm-catalog-course-grid { grid-template-columns: minmax(0,1fr); } .pm-catalog-course-cover { height: 160px; } .pm-catalog-filter-section { width: 100%; border-bottom: 1px solid var(--catalog-line); } .pm-catalog-toolbar-end { width: 100%; justify-content: space-between; } .pm-catalog-sort { flex: 1; } .pm-catalog-course.is-list .pm-catalog-course-cover { width: 112px; flex-basis: 112px; } .pm-catalog-course.is-list .pm-catalog-course-info { padding: 9px; } }
 @media (prefers-reduced-motion: reduce) { .pm-course-catalog * { transition: none !important; } }
-@media (max-width: 650px) {
-    .pm-learning-catalog-view .pm-dash-sidebar.is-open { display: flex; }
-}
 
 /* Shared public/demo catalog access states; keep existing catalog components intact. */
 .pm-learning-catalog-public { width: 100%; max-width: none; padding: 0; }

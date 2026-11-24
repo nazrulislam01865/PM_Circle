@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Auth\EmailVerificationCodeController;
-use App\Http\Controllers\Careers\CareerJobsController;
 use App\Http\Controllers\Community\PostController;
 use App\Http\Controllers\Community\PostManagementController;
 use App\Http\Controllers\Community\PostPollController;
@@ -55,6 +54,11 @@ Route::post('/admin/logout', [AuthenticatedSessionController::class, 'destroy'])
 // Administration is isolated from public/member areas and authorized on every request.
 Route::middleware(['auth', 'pm.admin', 'verified'])->prefix('admin')->name('admin.')->group(function (): void {
     Route::get('/', AdminDashboardController::class)->name('dashboard');
+    Route::get('/support-requests', [\App\Http\Controllers\Account\SupportController::class, 'adminIndex'])->name('support.index');
+    Route::get('/support-requests/{ticket}', [\App\Http\Controllers\Account\SupportController::class, 'adminShow'])->whereNumber('ticket')->name('support.show');
+    Route::post('/support-requests/{ticket}', [\App\Http\Controllers\Account\SupportController::class, 'reply'])->whereNumber('ticket')->middleware('throttle:30,1')->name('support.reply');
+    Route::get('/support-requests/{ticket}/screenshot', [\App\Http\Controllers\Account\SupportController::class, 'screenshot'])->whereNumber('ticket')->name('support.screenshot');
+
     Route::get('/post-reports', [PostModerationController::class, 'index'])->name('post-reports.index');
     Route::get('/reaction-icons', [ReactionIconController::class, 'index'])->name('reaction-icons.index');
     Route::post('/reaction-icons', [ReactionIconController::class, 'create'])->middleware('throttle:10,1')->name('reaction-icons.create');
@@ -161,7 +165,7 @@ Route::inertia('/about', 'public/About')->name('about');
 Route::inertia('/terms', 'public/Terms')->name('terms');
 Route::inertia('/privacy', 'public/Privacy')->name('privacy');
 // Static public support destinations for the PMP footer; no APIs or database queries.
-Route::inertia('/help-center', 'public/Support', ['mode' => 'help'])->name('help-center');
+Route::get('/help-center', [\App\Http\Controllers\Account\SupportController::class, 'entry'])->name('help-center');
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact', [ContactController::class, 'submit'])->middleware('throttle:5,10')->name('contact.submit');
 Route::get('/contact/confirm/{token}', [ContactController::class, 'confirm'])
@@ -175,10 +179,7 @@ Route::get('/events', [EventPreviewController::class, 'index'])->name('events.in
 Route::get('/events/{slug}', [EventPreviewController::class, 'show'])
     ->where('slug', '[a-z0-9-]+')->name('events.show');
 
-// Public career listings use the stored, auto-published JobSpy imports only.
-Route::get('/careers', [CareerJobsController::class, 'index'])->name('careers.index');
-Route::get('/careers/{job}', [CareerJobsController::class, 'show'])
-    ->where('job', 'job-[a-f0-9]{32}')->name('careers.show');
+// Career job listing and detail routes are temporarily disabled. Existing data and controller are retained.
 Route::get('/members', [MemberDirectoryController::class, 'index'])->name('members.index');
 Route::get('/members/{member}', [MemberDirectoryController::class, 'show'])->whereNumber('member')->name('members.show');
 
@@ -194,7 +195,7 @@ Route::inertia('/exam-simulator/pmp', 'exam/Browse')->name('exams.pmp.catalog');
 Route::get('/exam-simulator/pmp/details', PmpPublicPageController::class)->name('exams.pmp.public');
 // Public status pages only; actual simulator APIs remain member/entitlement protected.
 Route::inertia('/simulators/project', 'public/ComingSoon', ['title' => 'Project Simulator'])->name('simulators.project.public');
-Route::inertia('/simulators/scrum', 'public/ComingSoon', ['title' => 'Scrum / CSM Simulator'])->name('simulators.scrum.public');
+Route::get('/simulators/scrum', [\App\Http\Controllers\Exam\ScrumSimulatorController::class, 'preview'])->name('simulators.scrum.public');
 // Preview cards have accurate destinations without creating additional data queries.
 Route::inertia('/simulators/business-analysis', 'public/ComingSoon', ['title' => 'Business Analysis Exam Simulator'])->name('simulators.business-analysis.public');
 Route::inertia('/simulators/capm', 'public/ComingSoon', ['title' => 'CAPM Exam Simulator'])->name('simulators.capm.public');
@@ -228,6 +229,7 @@ Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded'])->group(func
     Route::get('/interview-preparation/results', [InterviewController::class, 'results'])->name('interview.results');
     Route::get('/interview-preparation/results/{session}', [InterviewController::class, 'results'])->whereNumber('session')->name('interview.results.show');
 
+    Route::get('/exams/scrum', \App\Http\Controllers\Exam\ScrumSimulatorController::class)->name('exams.scrum.index');
     Route::get('/exams/pmp/enter', [PmpExamController::class, 'entry'])->name('exams.pmp.entry');
     Route::get('/exams/pmp', [PmpExamController::class, 'index'])->name('exams.pmp.index');
     Route::get('/exams/pmp/ai-usage', \App\Http\Controllers\Exam\PmpAiUsageController::class)
@@ -260,7 +262,15 @@ Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded'])->group(func
     Route::post('/members/{member}/follow', [MemberDirectoryController::class, 'follow'])->middleware('throttle:30,1')->whereNumber('member')->name('members.follow');
     Route::delete('/members/{member}/follow', [MemberDirectoryController::class, 'unfollow'])->whereNumber('member')->name('members.unfollow');
     Route::get('/membership', [TemporaryMembershipController::class, 'index'])->name('membership.index');
-    Route::post('/membership/temporary', [TemporaryMembershipController::class, 'update'])->middleware('throttle:10,1')->name('membership.temporary');
+    Route::get('/dashboard/resume-assistant', \App\Http\Controllers\Account\ResumeAssistantController::class)->name('member.resume-assistant');
+    Route::get('/help-center/guides', [\App\Http\Controllers\Account\SupportController::class, 'guides'])->name('support.guides');
+    Route::get('/help-center/contact', [\App\Http\Controllers\Account\SupportController::class, 'create'])->name('support.create');
+    Route::post('/help-center/requests', [\App\Http\Controllers\Account\SupportController::class, 'store'])->middleware('throttle:support-submit')->name('support.store');
+    Route::get('/help-center/requests', [\App\Http\Controllers\Account\SupportController::class, 'index'])->name('support.index');
+    Route::get('/help-center/requests/{ticket}', [\App\Http\Controllers\Account\SupportController::class, 'show'])->whereNumber('ticket')->name('support.show');
+    Route::get('/help-center/requests/{ticket}/screenshot', [\App\Http\Controllers\Account\SupportController::class, 'screenshot'])->whereNumber('ticket')->name('support.screenshot');
+
+    Route::post('/membership/temporary', [TemporaryMembershipController::class, 'update'])->middleware('throttle:membership-switch')->name('membership.temporary');
     Route::post('/learning/courses/{course}/enroll', [DemoCourseController::class, 'enroll'])->middleware('throttle:20,1')->name('learning.courses.enroll');
     Route::post('/learning/courses/{course}/save', [DemoCourseController::class, 'save'])->middleware('throttle:30,1')->name('learning.courses.save');
     Route::delete('/learning/courses/{course}/save', [DemoCourseController::class, 'unsave'])->name('learning.courses.unsave');

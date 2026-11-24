@@ -36,7 +36,7 @@
 .pm-dropdown-trigger[data-state="open"] .pm-dropdown-chevron svg { transform: rotate(180deg); }
 
 .pm-dropdown-content {
-    z-index: 1000;
+    z-index: var(--pm-guide-floating-layer);
     box-sizing: border-box;
     width: var(--radix-select-trigger-width);
     max-height: min(20rem, var(--radix-select-content-available-height));
@@ -45,7 +45,7 @@
     border-radius: var(--radius-control);
     background: var(--surface);
     color: var(--ink);
-    box-shadow: 0 10px 30px rgb(23 40 66 / 15%);
+    box-shadow: 0 10px 30px var(--pm-overlay-23-40-66-15);
     font: var(--regular) var(--text-ui)/var(--line-ui) var(--font-ui);
 }
 .pm-dropdown-viewport {

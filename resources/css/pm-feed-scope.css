@@ -11,11 +11,12 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 44px;
+    min-height: var(--pm-guide-button-height);
     padding: 8px var(--space-4, 16px);
     color: var(--text);
-    font-size: var(--type-body, 16px);
-    font-weight: var(--type-weight-semibold);
+    font-size: var(--text-ui);
+    line-height: var(--line-ui);
+    font-weight: var(--pm-guide-weight-control);
     border-bottom: 2px solid transparent;
     text-decoration: none;
     white-space: nowrap;
@@ -44,7 +45,7 @@
 
     .pm-feed-scope-tab {
         padding-inline: var(--space-3, 12px);
-        font-size: var(--type-small);
+        font-size: var(--text-ui);
     }
 }
 

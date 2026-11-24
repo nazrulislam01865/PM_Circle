@@ -13,14 +13,12 @@ const destinations: Destination[] = [
     { label: 'Community Feed', href: '/community' },
     { label: 'Daily Challenge', href: '/daily-challenge' },
     { label: 'Members', href: '/members' },
-    { label: 'Careers', href: '/careers' },
 ];
 
 const searches = [
     { label: 'Community posts', href: '/community', parameter: 'search' },
     { label: 'Daily Challenge', href: '/daily-challenge', parameter: 'search' },
     { label: 'Members', href: '/members', parameter: 'search' },
-    { label: 'Jobs', href: '/careers', parameter: 'q' },
 ] as const;
 
 /** Compact, keyboard-accessible public-home search using existing application routes. */
@@ -89,7 +87,7 @@ export function HomeSearch({ onClose }: { onClose: () => void }) {
 
             <form onSubmit={submit} role="search" className="pm-v2-search-form">
                 <Search size={18} aria-hidden="true" className="pm-v2-search-form-icon" />
-                <label className="sr-only" htmlFor="pm-v2-site-search">Search discussions, courses, members and jobs</label>
+                <label className="sr-only" htmlFor="pm-v2-site-search">Search discussions, courses and members</label>
                 <input
                     id="pm-v2-site-search"
                     ref={inputRef}

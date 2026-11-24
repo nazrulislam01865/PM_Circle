@@ -22,7 +22,7 @@ test('public header contains all screenshot dropdown entries in the required ord
     }
     assert.match(header, /href="\/pm-trends"[^>]*>Trends<\/Link>/);
     assert.match(header, /href="\/events"[^>]*>Events<\/Link>/);
-    assert.match(header, /onMouseLeave=.*removeAttribute\('open'\)/);
+    assert.match(header,  /onPointerLeave=.*event.pointerType === 'mouse'.*removeAttribute\('open'\)/);
     assert.match(header, /event\.key === 'Escape'/);
 });
 
@@ -53,7 +53,8 @@ test('homepage footer retains the screenshot copy and existing admin visibility 
     }
     assert.match(footer, /Learn project management, practise for certification, and connect with peers\./);
     assert.match(footer, /Trademark notice\./);
-    assert.match(footer, /PMP®, CAPM®, PMI-ACP® and PMI-PBA®/);
+    assert.match(read('resources/js/components/pm/trademarkNotice.ts'), /PMP®, CAPM®, PMI-ACP® and PMI-PBA®/);
+    assert.match(footer, /\{trademarkNotice\}/);
     assert.match(footer, /© PM Circle by ITQAN/);
     assert.match(footer, /content\.show_legal !== false/);
     assert.doesNotMatch(footer, /pm-v2-footer-payments/);

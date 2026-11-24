@@ -14,7 +14,7 @@
     color: var(--surface);
     font-family: var(--font);
     font-size: var(--type-button);
-    font-weight: var(--type-weight-bold);
+    font-weight: var(--pm-guide-weight-control);
     line-height: var(--type-line-button);
     text-align: center;
     text-decoration: none;
@@ -61,7 +61,7 @@
 }
 
 .btn.small {
-    min-height: var(--pm-control-dimension-40px);
+    min-height: var(--pm-guide-button-height);
     padding: var(--pm-control-padding-9px) var(--pm-control-padding-14px);
     font-size: var(--type-button-compact);
     line-height: var(--type-line-button-compact);
@@ -210,13 +210,13 @@
 
 .pm-brand-copy strong {
     font-size: var(--pm-font-size-23px);
-    letter-spacing: -.7px;
+    letter-spacing: var(--pm-tracking-neg-p7px);
     font-weight: var(--pm-font-weight-750);
 }
 
 .pm-brand-copy small {
     font-size: var(--pm-font-size-10px);
-    letter-spacing: 1.5px;
+    letter-spacing: var(--pm-tracking-1p5px);
     font-weight: var(--type-weight-semibold);
     color: var(--pm-muted);
     margin-top: 3px;
@@ -265,16 +265,17 @@
 .pm-button {
     background: var(--pm-primary);
     color: var(--surface);
-    padding: var(--space-3) var(--pm-control-padding-20px);
-    min-height: var(--pm-control-dimension-44px);
+    padding: var(--pm-guide-s2) var(--pm-guide-button-pad-inline);
+    min-height: var(--pm-guide-button-height);
     border: 1px solid var(--pm-primary);
     border-radius: var(--pm-radius);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    font-size: var(--type-small);
-    font-weight: var(--type-weight-bold);
+    font-size: var(--type-button);
+    font-weight: var(--pm-guide-weight-control);
+    line-height: var(--type-line-button);
     transition: background .15s, box-shadow .15s;
 }
 
@@ -283,16 +284,23 @@
     color: var(--surface);
 }
 
+.pm-button:disabled {
+    background: var(--disabled-bg);
+    border-color: var(--border);
+    color: var(--disabled-text);
+    cursor: not-allowed;
+}
+
 .pm-button-sm {
-    min-height: var(--pm-control-dimension-37px);
-    padding: var(--space-2) var(--pm-control-padding-15px);
-    font-size: var(--pm-font-size-13px);
+    min-height: var(--pm-guide-button-height);
+    padding: var(--pm-guide-s2) var(--pm-guide-button-pad-inline);
+    font-size: var(--text-ui);
 }
 
 .pm-button-outline {
     background: var(--surface);
     color: var(--pm-primary);
-    border-color: var(--pm-tone-cbd8e9);
+    border-color: var(--blue);
 }
 
 .pm-button-outline:hover {
@@ -353,7 +361,7 @@
 .pm-section-head h2 {
     font-size: var(--pm-font-size-19px);
     font-weight: var(--pm-font-weight-750);
-    letter-spacing: -.4px;
+    letter-spacing: var(--pm-tracking-neg-p4px);
 }
 
 .pm-section-head a {
@@ -372,7 +380,7 @@
     border: 2px solid var(--surface);
     color: var(--pm-tone-344b67);
     font-weight: var(--pm-font-weight-800);
-    letter-spacing: -.5px;
+    letter-spacing: var(--pm-tracking-neg-p5px);
 }
 
 .pm-hero {
@@ -391,16 +399,16 @@
 .pm-kicker {
     color: var(--pm-tone-697e9b);
     font-size: var(--pm-font-size-11px);
-    letter-spacing: 2px;
+    letter-spacing: var(--pm-tracking-2px);
     text-transform: uppercase;
     font-weight: var(--pm-font-weight-750);
 }
 
 .pm-hero h1 {
-    font-size: clamp(var(--pm-font-size-32px), var(--pm-font-size-3p7vw), var(--pm-font-size-52px));
-    line-height: var(--pm-line-height-1p15);
+    font-size: var(--text-h1);
+    line-height: var(--line-h1);
     font-weight: var(--pm-font-weight-800);
-    letter-spacing: -1.6px;
+    letter-spacing: var(--pm-tracking-neg-1p6px);
     margin: 13px 0;
     max-width: 600px;
 }
@@ -547,7 +555,7 @@
 
 .pm-stat-panel h2 {
     font-size: var(--pm-font-size-21px);
-    letter-spacing: -.5px;
+    letter-spacing: var(--pm-tracking-neg-p5px);
     font-weight: var(--pm-font-weight-750);
 }
 
@@ -617,7 +625,7 @@
 .pm-upper-label {
     color: var(--pm-tone-7e8ca4);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: var(--pm-tracking-1px);
     font-size: var(--pm-font-size-11px);
     font-weight: var(--pm-font-weight-750);
 }
@@ -635,13 +643,13 @@
     font-size: var(--pm-font-size-23px);
     line-height: var(--pm-line-height-1p3);
     font-weight: var(--pm-font-weight-750);
-    letter-spacing: -.5px;
+    letter-spacing: var(--pm-tracking-neg-p5px);
     margin-top: 13px;
 }
 
 .pm-scenario-teaser>p {
     color: var(--pm-tone-596987);
-    font-size: var(--type-small);
+    font-size: var(--text-body);
     margin-top: 7px;
 }
 
@@ -877,7 +885,7 @@
 
 .pm-feature-section h2 {
     font-size: var(--pm-font-size-27px);
-    letter-spacing: -.7px;
+    letter-spacing: var(--pm-tracking-neg-p7px);
     font-weight: var(--pm-font-weight-800);
     margin-bottom: 20px;
 }
@@ -921,7 +929,7 @@
 
 .pm-feature p {
     color: var(--pm-muted);
-    font-size: var(--pm-font-size-11px);
+    font-size: var(--text-body);
     margin-top: 3px;
 }
 
@@ -965,7 +973,7 @@
 }
 
 .pm-bottom-cta p {
-    font-size: var(--pm-font-size-13px);
+    font-size: var(--text-body);
     color: var(--pm-tone-6a7d97);
 }
 
@@ -997,9 +1005,9 @@
 }
 
 .pm-content-panel h1 {
-    font-size: var(--pm-font-size-27px);
+    font-size: var(--text-h1);
     font-weight: var(--pm-font-weight-800);
-    letter-spacing: -.7px;
+    letter-spacing: var(--pm-tracking-neg-p7px);
     margin: 12px 0 3px;
 }
 
@@ -1016,7 +1024,7 @@
 
 .pm-content-panel p {
     color: var(--pm-copy);
-    font-size: var(--type-small);
+    font-size: var(--text-body);
     line-height: var(--pm-line-height-1p7);
 }
 
@@ -1055,7 +1063,7 @@
 }
 
 .pm-question-box p {
-    font-size: var(--pm-font-size-13px);
+    font-size: var(--text-body);
     margin: 3px 0;
 }
 
@@ -1115,7 +1123,7 @@
     color: var(--pm-copy);
     overflow-wrap: anywhere;
     margin-top: 13px;
-    font-size: var(--pm-font-size-13px);
+    font-size: var(--text-body);
 }
 
 .pm-replies {
@@ -1159,7 +1167,7 @@
 
 .pm-sidebar-detail p {
     color: var(--pm-copy);
-    font-size: var(--pm-font-size-13px);
+    font-size: var(--text-body);
     line-height: var(--pm-line-height-1p65);
 }
 
@@ -1302,10 +1310,10 @@
 }
 
 .pm-auth-intro h1 {
-    font-size: clamp(var(--pm-font-size-29px), var(--pm-font-size-3vw), var(--pm-font-size-40px));
-    line-height: var(--pm-line-height-1p15);
+    font-size: var(--text-h1);
+    line-height: var(--line-h1);
     font-weight: var(--pm-font-weight-800);
-    letter-spacing: -1.3px;
+    letter-spacing: var(--pm-tracking-neg-1p3px);
 }
 
 .pm-auth-intro p {
@@ -1330,12 +1338,12 @@
 
 .pm-field label {
     display: block;
-    font-size: var(--pm-font-size-15px);
-    font-weight: var(--type-weight-bold);
+    font-size: var(--type-label);
+    font-weight: var(--pm-guide-weight-control);
     margin-bottom: 7px;
 }
 
-.pm-field input,
+.pm-field input:not([type="checkbox"], [type="radio"], [type="file"], [type="range"], [type="color"], [type="hidden"]),
 .pm-field select {
     width: 100%;
     min-height: var(--control-height);
@@ -1345,7 +1353,7 @@
     padding: 0 var(--s3);
     color: var(--ink);
     font-size: var(--text-ui);
-    outline-color: var(--pm-tone-5199ee);
+    outline-color: var(--focus);
 }
 
 /* Keep browser-autofilled login and signup fields on the same form surface. */
@@ -1357,7 +1365,7 @@
 }
 
 .pm-field input::placeholder {
-    color: var(--pm-tone-9aa6ba);
+    color: var(--pm-guide-muted);
 }
 
 .pm-field small {
@@ -1821,7 +1829,7 @@
     .pm-header-actions .pm-button {
         font-size: var(--pm-font-size-11px);
         padding: var(--pm-control-padding-7px) var(--pm-control-padding-10px);
-        min-height: var(--pm-control-dimension-34px);
+        min-height: var(--pm-guide-button-height);
     }
 
     .pm-main-nav {
@@ -1858,7 +1866,7 @@
     }
 
     .pm-hero h1 {
-        font-size: var(--pm-font-size-38px);
+        font-size: var(--text-h1);
     }
 
     .pm-people-graphic {
@@ -1964,7 +1972,7 @@
     }
 
     .pm-auth-intro h1 {
-        font-size: var(--pm-font-size-30px);
+        font-size: var(--text-h1);
     }
 
     .pm-auth-intro p {
@@ -2031,7 +2039,7 @@
     }
 
     .pm-hero h1 {
-        font-size: var(--pm-font-size-34px);
+        font-size: var(--text-h1);
     }
 
     .pm-people-graphic {
@@ -2069,40 +2077,39 @@
     background: var(--surface);
     border: 1px solid var(--divider);
     border-radius: var(--card-radius);
-    padding: 32px 36px;
-    margin-bottom: 24px;
+    padding: var(--pm-guide-card-padding);
+    margin-bottom: var(--pm-guide-card-gap);
     display: grid;
     grid-template-columns: 1.4fr 1fr;
-    gap: 24px;
+    gap: var(--s6);
     align-items: center;
 }
 
-/* Community's actual H1 must use the approved heading role, not the
-   32px statistic role. Keep the existing hero geometry unchanged. */
+/* Community H1 uses the approved heading role. */
 .pm-feed-hero-content h1 {
     font-size: var(--text-h1);
     font-weight: var(--pm-guide-static-h1-weight);
     line-height: var(--line-h1);
-    color: var(--text);
-    margin: 0 0 12px;
-    letter-spacing: -.04em;
+    color: var(--ink);
+    margin: 0 0 var(--s3);
+    letter-spacing: var(--pm-guide-tracking-h1);
 }
 
 .pm-feed-hero-content p {
     font-size: var(--pm-guide-text-lead);
     color: var(--muted);
     line-height: var(--line-body);
-    margin: 0 0 16px;
+    margin: 0 0 var(--s4);
 }
 
 .pm-badge-public {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--s2);
     background: var(--primary-soft);
     color: var(--primary);
-    border-radius: var(--pm-radius-20px);
-    padding: 6px 14px;
+    border-radius: var(--pm-guide-radius-pill);
+    padding: var(--s1) var(--s2);
     font-size: var(--pm-guide-text-meta);
     font-weight: var(--pm-guide-weight-control);
     line-height: var(--pm-guide-line-control);
@@ -2117,9 +2124,9 @@
 /* Search and Sort Toolbar */
 .pm-feed-toolbar {
     display: flex;
-    gap: 16px;
+    gap: var(--s4);
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: var(--s4);
 }
 
 .pm-feed-search-wrap {
@@ -2138,15 +2145,17 @@
 
 .pm-feed-search-input {
     width: 100%;
-    height: var(--pm-control-dimension-48px);
-    border: 1px solid var(--divider);
-    border-radius: var(--radius);
+    height: var(--pm-guide-button-height);
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-control);
     padding: 0 var(--space-4) 0 var(--pm-control-padding-44px);
-    font-size: var(--text-body);
+    font-size: var(--text-ui);
     color: var(--text);
     background: var(--surface);
     outline: none;
     transition: border-color 0.15s;
+    line-height: var(--line-ui);
+    font-weight: var(--regular);
 }
 
 .pm-feed-search-input:focus {
@@ -2155,17 +2164,19 @@
 }
 
 .pm-sort-dropdown {
-    height: 48px;
+    height: var(--pm-guide-button-height);
     display: inline-flex;
     align-items: center;
     gap: 8px;
     padding: 0 16px;
-    border: 1px solid var(--divider);
-    border-radius: var(--radius);
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-control);
     background: var(--surface);
     color: var(--text);
-    font-size: var(--type-small);
-    font-weight: var(--type-weight-semibold);
+    font-size: var(--text-ui);
+    font-weight: var(--regular);
+    min-height: var(--pm-guide-button-height);
+    line-height: var(--line-ui);
 }
 
 /* Topic Pills */
@@ -2204,26 +2215,26 @@
 /* Guest callout banner */
 .pm-guest-banner-card {
     background: var(--primary-soft);
-    border: 1px solid var(--pm-tone-c2dbf3);
+    border: 1px solid var(--border);
     border-radius: var(--card-radius);
-    padding: 18px 24px;
+    padding: var(--pm-guide-card-padding);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 20px;
+    gap: var(--s4);
+    margin-bottom: var(--pm-guide-card-gap);
 }
 
 .pm-guest-banner-left {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: var(--s4);
 }
 
 .pm-guest-lock-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: var(--pm-radius-10px);
+    width: var(--control-touch);
+    height: var(--control-touch);
+    border-radius: var(--radius-control);
     background: var(--pm-tone-d4e7f9);
     color: var(--primary);
     display: grid;
@@ -2233,15 +2244,17 @@
 
 .pm-guest-banner-text strong {
     display: block;
-    font-size: var(--type-body);
-    font-weight: var(--type-weight-bold);
-    color: var(--text);
+    font-size: var(--text-h4);
+    font-weight: var(--pm-guide-weight-control);
+    line-height: var(--line-h4);
+    color: var(--ink);
 }
 
 .pm-guest-banner-text p {
     font-size: var(--text-body);
+    line-height: var(--line-body);
     color: var(--muted);
-    margin: 3px 0 0;
+    margin: var(--s1) 0 0;
 }
 
 /* Post Cards */
@@ -2249,8 +2262,8 @@
     background: var(--surface);
     border: 1px solid var(--divider);
     border-radius: var(--card-radius);
-    padding: 24px;
-    margin-bottom: 16px;
+    padding: var(--pm-guide-card-padding);
+    margin-bottom: var(--pm-guide-card-gap);
     transition: box-shadow 0.15s, border-color 0.15s;
 }
 
@@ -2281,16 +2294,18 @@
 
 .pm-author-meta strong {
     display: block;
-    font-size: var(--pm-font-size-15px);
-    font-weight: var(--type-weight-bold);
-    color: var(--text);
+    font-size: var(--text-ui);
+    font-weight: var(--semibold);
+    line-height: var(--line-ui);
+    color: var(--ink);
 }
 
 .pm-author-meta span {
     display: block;
-    font-size: var(--pm-font-size-13px);
+    font-size: var(--text-sm);
+    line-height: var(--line-sm);
     color: var(--muted);
-    margin-top: 2px;
+    margin-top: var(--s1);
 }
 
 .pm-category-badge {
@@ -2310,19 +2325,17 @@
     line-height: var(--type-line-h3);
 }
 
-.pm-card-title a {
-    color: var(--text);
-}
-
+.pm-card-title a,
 .pm-card-title a:hover {
-    color: var(--primary);
+    color: inherit;
+    text-decoration: none;
 }
 
 .pm-card-body {
-    font-size: var(--pm-font-size-15px);
+    font-size: var(--text-body);
     color: var(--text);
-    line-height: var(--pm-line-height-1p55);
-    margin-bottom: 14px;
+    line-height: var(--line-body);
+    margin-bottom: var(--s3);
 }
 
 .pm-tag-pills-row {
@@ -2395,43 +2408,47 @@
 /* Inline guest response box (under first card) */
 .pm-inline-guest-prompt {
     background: var(--primary-soft);
-    border: 1px solid var(--pm-tone-c8dff5);
+    border: 1px solid var(--border);
     border-radius: var(--card-radius);
-    padding: 20px;
-    margin-top: 16px;
+    padding: var(--pm-guide-card-padding);
+    margin: 0 0 var(--pm-guide-card-gap);
 }
 
 .pm-inline-guest-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: var(--type-small);
-    font-weight: var(--type-weight-bold);
+    gap: var(--s2);
+    font-size: var(--text-ui);
+    line-height: var(--line-ui);
+    font-weight: var(--pm-guide-weight-control);
     color: var(--text);
-    margin-bottom: 12px;
+    margin-bottom: var(--s3);
 }
 
 .pm-inline-guest-textarea {
     width: 100%;
-    min-height: var(--pm-control-dimension-48px);
+    min-height: var(--pm-guide-button-height);
     background: var(--surface);
-    border: 1px solid var(--divider);
-    border-radius: var(--radius);
-    padding: var(--space-3) var(--pm-control-padding-14px);
-    font-size: var(--type-small);
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-control);
+    padding: var(--s2) var(--pm-guide-field-pad-inline);
+    font-size: var(--text-ui);
     color: var(--text);
-    margin-bottom: 12px;
+    margin-bottom: var(--s3);
     resize: none;
+    line-height: var(--line-ui);
+    font-weight: var(--regular);
 }
 
 .pm-inline-guest-actions {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: var(--s3);
+    flex-wrap: wrap;
 }
 
 .pm-inline-guest-login {
-    font-size: var(--pm-font-size-13px);
+    font-size: var(--text-sm);
     color: var(--muted);
 }
 
@@ -2445,32 +2462,33 @@
     background: var(--surface);
     border: 1px solid var(--divider);
     border-radius: var(--card-radius);
-    padding: 24px;
-    margin-bottom: 20px;
+    padding: var(--pm-guide-card-padding);
+    margin-bottom: var(--pm-guide-card-gap);
 }
 
 .pm-sidebar-kicker {
-    font-size: var(--pm-font-size-11px);
-    letter-spacing: 1.2px;
-    font-weight: var(--pm-font-weight-800);
+    font-size: var(--pm-guide-text-meta);
+    letter-spacing: normal;
+    font-weight: var(--pm-guide-weight-control);
+    line-height: var(--line-ui);
     text-transform: uppercase;
     color: var(--primary);
-    margin-bottom: 8px;
+    margin-bottom: var(--s2);
 }
 
 .pm-sidebar-card h3 {
-    font-size: var(--pm-font-size-20px);
-    font-weight: var(--pm-font-weight-800);
-    color: var(--text);
-    line-height: var(--pm-line-height-1p3);
-    margin: 0 0 10px;
+    font-size: var(--text-h3);
+    font-weight: var(--bold);
+    color: var(--ink);
+    line-height: var(--line-h3);
+    margin: 0 0 var(--s3);
 }
 
 .pm-sidebar-card p {
-    font-size: var(--type-small);
+    font-size: var(--text-body);
     color: var(--muted);
-    line-height: var(--type-line-body);
-    margin: 0 0 16px;
+    line-height: var(--line-body);
+    margin: 0 0 var(--s4);
 }
 
 .pm-sidebar-doc-icon {
@@ -2487,40 +2505,24 @@
     justify-content: center;
 }
 
-/* Use the HTML guideline's H3/body/meta roles for the Community Feed.
-   Restrict to the discussions page so scenario-detail cards remain untouched. */
-.pm-community-discussions-page .pm-sidebar-kicker {
-    font-size: var(--pm-guide-text-meta);
-    font-weight: var(--pm-guide-weight-control);
-    line-height: var(--pm-guide-line-control);
-}
-.pm-community-discussions-page .pm-sidebar-card h3 {
-    font-size: var(--text-h3);
-    font-weight: var(--bold);
-    line-height: var(--line-h3);
-}
-.pm-community-discussions-page .pm-sidebar-card p {
-    font-size: var(--text-body);
-    line-height: var(--line-body);
-}
-
 /* Sidebar topics links */
 .pm-topics-nav-list {
     display: flex;
     flex-direction: column;
-    margin-top: 14px;
+    margin-top: var(--s3);
 }
 
 .pm-topic-nav-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 0;
+    padding: var(--s3) 0;
     border-bottom: 1px solid var(--divider);
     color: var(--text);
     text-decoration: none;
-    font-size: var(--type-small);
-    font-weight: var(--type-weight-semibold);
+    font-size: var(--text-ui);
+    line-height: var(--line-ui);
+    font-weight: var(--pm-guide-weight-control);
     transition: color 0.15s;
 }
 
@@ -2547,7 +2549,7 @@
     background: var(--surface);
     border: 1px solid var(--divider);
     border-radius: var(--card-radius);
-    padding: 24px;
+    padding: var(--pm-guide-card-padding);
     text-align: left;
 }
 
@@ -2559,9 +2561,10 @@
 .pm-cta-guest-login {
     display: block;
     text-align: center;
-    font-size: var(--pm-font-size-13px);
+    font-size: var(--text-sm);
+    line-height: var(--line-sm);
     color: var(--muted);
-    margin-top: 12px;
+    margin-top: var(--s3);
 }
 
 .pm-cta-guest-login a {
@@ -2577,23 +2580,26 @@
 }
 
 .pm-btn-load-more {
-    height: var(--pm-control-dimension-44px);
+
     padding: 0 var(--pm-control-padding-28px);
-    border: 1px solid var(--divider);
-    border-radius: var(--radius);
+    border: 1px solid var(--blue);
+    border-radius: var(--radius-control);
     background: var(--surface);
-    color: var(--text);
+    color: var(--blue);
     font-size: var(--type-small);
-    font-weight: var(--type-weight-semibold);
+    font-weight: var(--pm-guide-weight-control);
     display: inline-flex;
     align-items: center;
     gap: 8px;
     cursor: pointer;
+    min-height: var(--pm-guide-button-height);
+    line-height: var(--line-ui);
 }
 
 .pm-btn-load-more:hover {
     border-color: var(--primary);
     color: var(--primary);
+    background: var(--blue-soft);
 }
 
 /* Scenario Detail (pm2.png) Specifics */
@@ -2611,7 +2617,7 @@
     padding: 4px 10px;
     font-size: var(--pm-font-size-11px);
     font-weight: var(--type-weight-bold);
-    letter-spacing: 0.5px;
+    letter-spacing: var(--pm-tracking-0p5px);
     text-transform: uppercase;
 }
 
@@ -2723,27 +2729,31 @@
     background: var(--surface);
     border: 1px solid var(--divider);
     border-radius: var(--card-radius);
-    padding: 24px;
-    margin-bottom: 28px;
+    padding: var(--pm-guide-card-padding);
+    margin-bottom: var(--pm-guide-card-gap);
 }
 
 .pm-scenario-submit-card h3 {
-    font-size: var(--type-lead);
-    font-weight: var(--pm-font-weight-800);
-    margin: 0 0 14px;
+    font-size: var(--text-h3);
+    font-weight: var(--bold);
+    margin: 0 0 var(--s3);
+    line-height: var(--line-h3);
+    color: var(--ink);
 }
 
 .pm-response-textarea {
     width: 100%;
-    min-height: var(--pm-control-dimension-110px);
-    border: 1px solid var(--divider);
-    border-radius: var(--radius);
-    padding: var(--pm-control-padding-14px);
-    font-size: var(--pm-font-size-15px);
+    height: var(--pm-control-dimension-110px);
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-control);
+    padding: var(--s2) var(--pm-guide-field-pad-inline);
+    font-size: var(--text-ui);
     color: var(--text);
     background: var(--surface);
     outline: none;
     resize: vertical;
+    line-height: var(--line-body);
+    font-weight: var(--regular);
 }
 
 .pm-response-textarea:focus {
@@ -2754,10 +2764,11 @@
 .pm-submit-lock-notice {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: var(--pm-font-size-13px);
+    gap: var(--s2);
+    font-size: var(--text-sm);
+    line-height: var(--line-sm);
     color: var(--muted);
-    margin: 12px 0 16px;
+    margin: var(--s3) 0 0;
 }
 
 /* Community Responses List */
@@ -2765,13 +2776,15 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 18px;
+    margin-bottom: var(--pm-guide-card-gap);
 }
 
 .pm-community-responses-header h2 {
-    font-size: var(--type-h3);
-    font-weight: var(--pm-font-weight-800);
+    font-size: var(--text-h2);
+    font-weight: var(--pm-guide-weight-h2);
     margin: 0;
+    line-height: var(--line-h2);
+    color: var(--ink);
 }
 
 .pm-community-responses-count {
@@ -2783,8 +2796,8 @@
     background: var(--surface);
     border: 1px solid var(--divider);
     border-radius: var(--card-radius);
-    padding: 22px;
-    margin-bottom: 16px;
+    padding: var(--pm-guide-card-padding);
+    margin-bottom: var(--pm-guide-card-gap);
 }
 
 .pm-response-card-header {
@@ -2843,22 +2856,23 @@
 }
 
 .pm-ai-feedback-card {
-    background: var(--pm-tone-f8fafc);
+    background: var(--pm-guide-soft);
     border: 1px solid var(--divider);
-    border-radius: var(--radius);
-    padding: 16px 20px;
-    margin-top: 10px;
+    border-radius: var(--radius-card);
+    padding: var(--pm-guide-card-padding);
+    margin-top: var(--s3);
 }
 
 .pm-ai-feedback-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: var(--type-small);
-    font-weight: var(--pm-font-weight-750);
-    color: var(--text);
+    font-size: var(--text-h3);
+    font-weight: var(--bold);
+    color: var(--ink);
     margin-bottom: 10px;
     cursor: pointer;
+    line-height: var(--line-h3);
 }
 
 .pm-ai-rubric-list {
@@ -2868,9 +2882,9 @@
 }
 
 .pm-ai-rubric-list li {
-    font-size: var(--pm-font-size-13px);
+    font-size: var(--text-body);
     color: var(--text);
-    line-height: var(--type-line-body);
+    line-height: var(--line-body);
     margin-bottom: 6px;
     display: flex;
     align-items: flex-start;
@@ -2920,10 +2934,10 @@
     display: block;
     min-width: 0;
     min-height: 5rem;
-    padding: var(--s3);
+    padding: var(--s2) var(--pm-guide-field-pad-inline);
     background: var(--surface);
     border-color: var(--control-border);
-    font: var(--regular) var(--text-body)/var(--line-body) var(--font-ui);
+    font: var(--regular) var(--text-ui)/var(--line-ui) var(--font-ui);
 }
 
 .pm-scenario-reply-error {
@@ -3000,12 +3014,6 @@
 }
 
 /* Responsive typography is defined centrally, not repeated on each page. */
-@media (max-width: 640px) {
-    :root {
-        --type-h1-responsive: var(--type-h1-mobile);
-        --type-h2-responsive: var(--type-h2-mobile);
-    }
-}
 
 /* PM Circle shared design-system primitives. Keep typography, control sizing and
    visual states here; feature styles should only compose/layout these classes. */
@@ -3087,7 +3095,7 @@
     font-size: var(--text-h1);
     line-height: var(--line-h1);
     font-weight: var(--bold);
-    letter-spacing: -.025em;
+    letter-spacing: var(--pm-tracking-neg-p025em);
 }
 
 .pm-password-reset-card .pm-auth-intro p {
@@ -3307,3 +3315,8 @@
 .pm-auth-shell>.pm-v2-site-footer {
     width: 100%;
 }
+
+/* Shared community card roles; layout stays with the original components. */
+.pm-community-discussions-page .pm-sidebar-card .pm-community-topic-intro { margin: 0; }
+.pm-community-discussions-page .pm-community-cta-heading { margin: 0 0 var(--s2); font-size: var(--text-h3); line-height: var(--line-h3); font-weight: var(--bold); color: var(--ink); }
+.pm-community-discussions-page .pm-community-cta-copy { margin: 0 0 var(--s4); font-size: var(--text-body); line-height: var(--line-body); color: var(--muted); }

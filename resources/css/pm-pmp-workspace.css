@@ -3,7 +3,7 @@
 .pm-exam-page.pm-pmp-dashboard { padding:0 0 var(--s6); background:transparent; }
 .pm-pmp-workspace { color:var(--ink); font:var(--regular) var(--text-ui)/var(--line-ui) var(--font-ui); min-width:0; }
 .pm-pmp-workspace :is(h1,h2,h3,p) { margin:0; }
-.pm-pmp-workspace h1 { font-size:var(--text-h1); line-height:var(--line-h1); font-weight:var(--bold); letter-spacing:-.025em; }
+.pm-pmp-workspace h1 { font-size:var(--text-h1); line-height:var(--line-h1); font-weight:var(--bold); letter-spacing: var(--pm-tracking-neg-p025em); }
 .pm-pmp-workspace h2 { font-size:var(--text-h3); line-height:var(--line-h3); font-weight:var(--semibold); }
 .pm-pmp-workspace button { cursor:pointer; }
 .pm-pmp-workspace button:disabled { cursor:not-allowed; }
@@ -258,7 +258,7 @@
     font-size: var(--text-h2);
     line-height: var(--line-h2);
     font-weight: var(--bold);
-    letter-spacing: -.015em;
+    letter-spacing: var(--pm-tracking-neg-p015em);
 }
 
 @media (max-width: 540px) {
@@ -269,7 +269,7 @@
 /* Exam history and AI usage: prototype geometry, scoped to these two views. */
 .pm-pmp-history-surface { gap:var(--s5); padding:var(--s6); border-color:var(--border); }
 .pm-pmp-history-heading { align-items:flex-start; }
-.pm-pmp-history-heading h2 { font-size:var(--text-h1); line-height:var(--line-h1); font-weight:var(--bold); letter-spacing:-.025em; }
+
 .pm-pmp-history-heading p { font-size:var(--text-body); line-height:var(--line-body); }
 .pm-pmp-history-heading .pm-pmp-primary { min-height:var(--control-touch); padding-inline:var(--s5); }
 .pm-pmp-history-filters { gap:var(--s3); }
@@ -306,7 +306,7 @@
 .pm-pmp-ai-lead > .pm-pmp-icon-tile { width:var(--s10); height:var(--s10); }
 .pm-pmp-ai-lead > .pm-pmp-icon-tile svg { width:var(--s6); height:var(--s6); }
 .pm-pmp-ai-lead > div { min-width:0; flex:1; }
-.pm-pmp-ai-lead h2 { font-size:var(--text-h1); line-height:var(--line-h1); margin-bottom:var(--s1); }
+.pm-pmp-ai-lead h2 { margin-bottom:var(--s1); }
 .pm-pmp-ai-lead p { font-size:var(--text-body); line-height:var(--line-body); color:var(--muted); }
 .pm-pmp-ai-refresh { border:1px solid var(--border); border-radius:var(--radius-control); width:var(--control-compact); height:var(--control-compact); display:grid; place-items:center; flex:none; color:var(--blue); background:var(--surface); cursor:pointer; }
 .pm-pmp-ai-refresh:hover { background:var(--blue-soft); }
@@ -356,7 +356,6 @@
     .pm-pmp-history-filters select { max-width:none; }
     .pm-pmp-ai-surface { padding:var(--s3); }
     .pm-pmp-ai-stats { grid-template-columns:minmax(0,1fr); }
-    .pm-pmp-ai-lead h2 { font-size:var(--text-h2); line-height:var(--line-h2); }
     .pm-pmp-history-details { grid-template-columns:minmax(0,1fr); }
 }
 @media (prefers-reduced-motion:reduce) {

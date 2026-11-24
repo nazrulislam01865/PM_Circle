@@ -4,7 +4,7 @@ export type DashboardPlan = 'free' | 'premium' | 'pro';
 export type DashboardTab = 'all' | 'following' | 'mine' | 'saved' | 'hidden' | 'restricted';
 export type DashboardPost = {
     id: number; title: string | null; body: string; image_path?: string | null; topic: string;
-    is_anonymous?: boolean; visibility?: string; author: string; authorRole: string | null; authorAvatar?: string | null; publishedAt: string | null;
+    is_anonymous?: boolean; visibility?: string; author: string; authorId?: number | null; authorHasPublicProfile?: boolean; authorRole: string | null; authorAvatar?: string | null; publishedAt: string | null;
     comments: number; reactions: number; reactionBreakdown?: import('@/components/community/PostReactions').ReactionCounts;
     saved: boolean; hidden?: boolean; isOwner?: boolean; isMuted?: boolean; pollOptions?: { id: number; label: string; votes_count: number }[]; viewerVote?: number | null; reaction: import('@/components/home/HomeEngagement').ReactionType | null;
 };
@@ -28,4 +28,4 @@ export type DashboardData = {
 };
 
 /** Minimal authenticated chrome props for feature pages. */
-export type DashboardShellData = Pick<DashboardData, "plan" | "isDemo" | "member">;
+export type DashboardShellData = Pick<DashboardData, "plan" | "isDemo" | "member"> & { featureAccess?: { examSimulator: boolean; pmp: boolean; resume: boolean; resumeMinimum: string } };

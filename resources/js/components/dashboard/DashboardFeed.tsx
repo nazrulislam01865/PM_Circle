@@ -12,7 +12,7 @@ import { useEffect, useMemo, useState } from 'react';
 /** Adapt the existing dashboard feed projection; no additional API or database requests. */
 const samplePortraits: Record<string, string> = { 'Sara Ahmed': 'sara', 'Priya Nair': 'priya', 'Daniel Chen': 'daniel' };
 
-function FeedItem({ post, demo, onReactionChange, onCommentAdded, onSavedChange, onHiddenChange, onRemoved, onUpdated, onMuteChange }: { post: DashboardPost; demo: boolean; onHiddenChange: (hidden: boolean) => void; onRemoved: () => void; onUpdated: (updated: { body: string; image_path: string | null }) => void; onMuteChange: (muted: boolean) => void; onReactionChange: (reaction: DashboardPost['reaction'], count: number) => void; onCommentAdded: () => void; onSavedChange: (saved: boolean) => void }) {
+function FeedItem({ post, demo, onReactionChange, onCommentAdded, onSavedChange, onHiddenChange, onRemoved, onUpdated, onMuteChange }: { post: DashboardPost; demo: boolean; onHiddenChange: (hidden: boolean) => void; onRemoved: () => void; onUpdated: (updated: { body: string; image_path: string | null }) => void; onMuteChange: (muted: boolean) => void; onReactionChange: (reaction: DashboardPost['reaction'], count: number, counts: NonNullable<DashboardPost['reactionBreakdown']>) => void; onCommentAdded: () => void; onSavedChange: (saved: boolean) => void }) {
     const avatar = post.authorAvatar || (demo && samplePortraits[post.author]
         ? `/images/dashboard/${samplePortraits[post.author]}.webp` : null);
     const preview: PostPreview = {
@@ -23,7 +23,7 @@ function FeedItem({ post, demo, onReactionChange, onCommentAdded, onSavedChange,
         viewer_is_author: post.isOwner, viewer_muted: post.isMuted,
         is_anonymous: post.is_anonymous, visibility: post.visibility,
         poll_options: post.pollOptions, viewer_vote: post.viewerVote,
-        author: { name: post.author, profile: { avatar_path: avatar } },
+        author: { name: post.author, id: post.authorId ?? undefined, profile: post.authorHasPublicProfile || (demo && !post.authorId) ? { avatar_path: avatar, role: post.authorRole } : null },
     };
     return <PostCard post={preview} isGuest={false} onReactionChange={onReactionChange}
         onCommentAdded={onCommentAdded} onSavedChange={onSavedChange} onHiddenChange={onHiddenChange}
@@ -83,7 +83,7 @@ export function DashboardFeed({ dashboard, submittingPost = null }: { dashboard:
         {!restricted && feed.items.length ? <VirtualizedFeed items={feed.items} className="pm-dash-posts"
             estimateHeight={280} onNearEnd={feed.loadMore} enabled={dashboard.virtualFeedEnabled}
             renderItem={post => <FeedItem post={post} demo={dashboard.isDemo}
-                onReactionChange={(reaction, count) => feed.updateItem(post.id, { reaction, reactions: count })}
+                onReactionChange={(reaction, count, counts) => feed.updateItem(post.id, { reaction, reactions: count, reactionBreakdown: counts })}
                 onCommentAdded={() => feed.updateItem(post.id, { comments: post.comments + 1 })}
                 onSavedChange={saved => {
                     updateSaved(post.saved, saved, Boolean(post.hidden));

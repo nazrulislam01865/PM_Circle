@@ -27,7 +27,7 @@ test('guest hero H1/lead use semantic guideline instead of legacy statistic and 
     const lead = rule(main, '.pm-feed-hero-content p');
     assert.match(lead, /font-size: var\(--pm-guide-text-lead\)/);
     assert.match(rule(main, '.pm-badge-public'), /font-size: var\(--pm-guide-text-meta\)/);
-    assert.match(rule(main, '.pm-feed-search-input'), /font-size: var\(--text-body\)/);
+    assert.match(rule(main, '.pm-feed-search-input'), /font-size: var\(--text-ui\)/);
 });
 
 test('member layout uses exactly the same heading/lead roles', () => {
@@ -46,12 +46,12 @@ test('mobile selectors do not downgrade the discussion H1 or lead to H2/meta', (
 
 test('community sidebar heading, label, and descriptions use their actual H3/meta/body roles', () => {
     for (const [selector, property] of [
-        ['.pm-community-discussions-page .pm-sidebar-card h3', 'font-size: var(--text-h3)'],
-        ['.pm-community-discussions-page .pm-sidebar-card p', 'font-size: var(--text-body)'],
-        ['.pm-community-discussions-page .pm-sidebar-kicker', 'font-size: var(--pm-guide-text-meta)'],
+        ['.pm-sidebar-card h3', 'font-size: var(--text-h3)'],
+        ['.pm-sidebar-card p', 'font-size: var(--text-body)'],
+        ['.pm-sidebar-kicker', 'font-size: var(--pm-guide-text-meta)'],
     ]) assert.ok(rule(main, selector).includes(property), `${selector} missing ${property}`);
-    assert.match(page, /fontSize: 'var\(--text-body\)'/);
-    assert.match(page, /fontSize: 'var\(--text-h3\)'/);
+    assert.match(rule(main, '.pm-community-discussions-page .pm-community-cta-copy'), /font-size: var\(--text-body\)/);
+    assert.match(rule(main, '.pm-community-discussions-page .pm-community-cta-heading'), /font-size: var\(--text-h3\)/);
 });
 
 test('shared tokens follow uploaded Inter guideline; page business logic is untouched', () => {

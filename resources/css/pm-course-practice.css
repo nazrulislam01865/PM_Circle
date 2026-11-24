@@ -31,10 +31,9 @@
 .pm-course-quiz-numbers button.is-current{color:var(--surface);background:var(--blue);border-color:var(--blue)}
 .pm-course-quiz-finish{width:100%}
 .pm-course-quiz-error{color:var(--red);font-size:var(--text-sm)}
-.pm-course-quiz-dialog{position:fixed;inset:0;z-index:80;display:grid;place-items:center;background:color-mix(in srgb,var(--ink) 60%,transparent);padding:var(--s4)}
-.pm-course-quiz-dialog>.pm-system-card{display:grid;gap:var(--s4);padding:var(--s6);max-width:30rem}
+.pm-course-quiz-dialog[data-slot="dialog-content"]{display:grid;gap:var(--s4);padding:var(--s6);width:min(30rem,calc(100% - 2 * var(--s4)));max-width:none;background:var(--surface);border-radius:var(--radius-card);color:var(--ink)}
 .pm-course-quiz-dialog h2{font-size:var(--text-h2);font-weight:var(--bold)}
-.pm-course-quiz-dialog>div>div{display:flex;gap:var(--s3);justify-content:flex-end;flex-wrap:wrap}
+.pm-course-quiz-dialog>div{display:flex;gap:var(--s3);justify-content:flex-end;flex-wrap:wrap}
 .pm-course-quiz-results{display:grid;gap:var(--s4)}
 .pm-course-quiz-result-hero{display:flex;align-items:center;justify-content:space-between;gap:var(--s4);padding:var(--s5)}
 .pm-course-quiz-result-hero h1{font-size:var(--text-h2);font-weight:var(--bold)}

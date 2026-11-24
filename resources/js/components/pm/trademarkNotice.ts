@@ -1,0 +1,2 @@
+// Existing approved public-footer legal copy, also used by the member footer.
+export const trademarkNotice = 'PMP®, CAPM®, PMI-ACP® and PMI-PBA® are marks of Project Management Institute, Inc. Certified ScrumMaster® (CSM) is a certification of Scrum Alliance, Inc. Certification names identify the exams covered by our independent practice materials. PM Circle provides community learning and exam preparation and is not affiliated with, sponsored by, or endorsed by PMI or Scrum Alliance.';

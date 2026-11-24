@@ -32,7 +32,7 @@
     .pm-learn-path-grid, .pm-learn-side-col { grid-template-columns: minmax(0,1fr); }
     .pm-learn-continue-stats { grid-template-columns: repeat(3,1fr); }
     .pm-learn-continue-stats > div { padding-inline: 6px; }
-    .pm-learn-page-title p { font-size: var(--pm-font-size-13px); }
+    .pm-learn-page-title p { font-size: var(--text-body); }
     .pm-learn-tabs { gap: 0; justify-content: space-between; }
     .pm-learn-tabs button { padding: var(--pm-control-padding-9px) var(--pm-control-padding-7px); font-size: var(--type-caption); }
     .pm-learn-levels { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
@@ -51,7 +51,7 @@
     .pm-learn-reminder { flex-wrap: wrap; }
     .pm-learn-reminder a { margin-left: 72px; }
     .pm-learn-activity-nav .pm-dash-btn { min-width: 0; flex: 1; font-size: var(--pm-font-size-11px); padding: var(--space-2); }
-    .pm-learn-activity-title h1 { font-size: var(--type-h2); }
+    .pm-learn-activity-title h1 { font-size: var(--text-h1); }
     .pm-learn-save-exit { font-size: var(--pm-font-size-11px); }
     .pm-learn-save-exit svg { width: 19px; }
 }

@@ -19,19 +19,19 @@ export function EventBanner({ title, description, crumb }: { title: string; desc
 
 export function EventDateTile({ event }: { event: EventPreview }) {
     const date = eventDateParts(event.date);
-    return <div className={`pm-event-date-tile${event.sponsored ? ' is-sponsored' : ''}`} aria-hidden="true"><strong>{date.day}</strong><span>{date.month}</span></div>;
+    return <div className={`pm-event-date-tile pm-event-row-date${event.sponsored ? ' is-sponsored' : ''}`} aria-hidden="true"><strong>{date.day}</strong><span>{date.month}</span></div>;
 }
 
 export function EventListingRow({ event }: { event: EventPreview }) {
     const date = eventDateParts(event.date);
-    return <article className={`pm-event-listing-row${event.sponsored ? ' is-sponsored' : ''}`}>
+    return <article className={`pm-event-listing-row pm-event-row-layout${event.sponsored ? ' is-sponsored' : ''}`}>
         <EventDateTile event={event}/>
-        <div className="pm-event-listing-copy">
+        <div className="pm-event-listing-copy pm-event-row-copy">
             {event.sponsored && <div className="pm-event-sponsor-meta"><span>Sponsored event</span><strong>{event.host} · Open to everyone</strong></div>}
             <h3><Link href={eventHref(event.slug)}>{event.title}</Link></h3>
             <p className="pm-event-meta">{date.full} · {event.time} · {event.location === 'Online' ? 'Online' : `In person · ${event.location}`}</p>
             <p>{event.description}</p>
         </div>
-        <EventAction href={eventHref(event.slug)}>{event.sponsored ? 'View and register' : event.openToEveryone ? 'View event' : 'Join to view event'}</EventAction>
+        <EventAction href={eventHref(event.slug)} className="pm-event-row-action">{event.sponsored ? 'View and register' : event.openToEveryone ? 'View event' : 'Join to view event'}</EventAction>
     </article>;
 }

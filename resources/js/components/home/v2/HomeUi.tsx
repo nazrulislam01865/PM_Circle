@@ -2,11 +2,11 @@ import { Link } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ReactNode, RefObject } from 'react';
 
-export function HomeSectionTitle({ id, title, description, action, href }: {
-    id: string; title: string; description?: string; action?: string; href?: string;
+export function HomeSectionTitle({ id, title, description, action, href, actions }: {
+    id: string; title: string; description?: string; action?: string; href?: string; actions?: ReactNode;
 }) {
     return <div className="pm-v2-section-heading"><div><h2 id={id}>{title}</h2>{description && <p>{description}</p>}</div>
-        {action && href && <Link href={href} className="pm-v2-text-link">{action}</Link>}</div>;
+        {actions ?? (action && href && <Link href={href} className="pm-v2-text-link">{action}</Link>)}</div>;
 }
 
 export function HomeAction({ children, href, primary = false, className = '' }: {

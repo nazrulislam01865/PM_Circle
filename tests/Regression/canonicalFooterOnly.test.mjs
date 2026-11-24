@@ -40,5 +40,5 @@ test('footer styles are independent of old footer and align with page content ra
     assert.match(css, /\.pm-home-v2-shell \.pm-v2-site-footer \.pm-v2-container/);
     assert.match(css, /\.pm-v2-footer-grid \{[^}]*grid-template-columns: 1\.45fr repeat\(4/);
     assert.match(read('resources/css/pm-design-tokens.css'), /--pm-guide-footer: #0d223d;/);
-    assert.match(read('resources/css/pm-learning-public.css'), /\.pm-page-shell:has\(\.pm-learn-v3\)/);
+    assert.match(read('resources/css/pm-learning-public.css'), /\.pm-learn-v3-wrap\s*\{\s*width: var\(--pm-v2-container-width\)/);
 });

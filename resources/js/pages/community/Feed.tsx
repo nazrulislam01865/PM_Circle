@@ -60,7 +60,8 @@ export default function Feed({ posts, activeTopic, feedTab, feedScopeCounts, sea
             // Like the member dashboard: tall sidebars remain accessible using
             // the page scroll rather than introducing a second scrollbar.
             const spacing = parseFloat(getComputedStyle(sidebar).getPropertyValue('--space-4')) || 16;
-            const offset = Math.min(spacing, window.innerHeight - sidebar.getBoundingClientRect().height - spacing);
+            const headerBottom = isGuest ? 0 : (document.querySelector('.pm-member-compact-header')?.getBoundingClientRect().bottom ?? 0);
+            const offset = Math.min(Math.max(0, headerBottom) + spacing, window.innerHeight - sidebar.getBoundingClientRect().height - spacing);
             sidebar.style.setProperty('--pm-community-sidebar-sticky-top', `${Math.round(offset)}px`);
         };
 
@@ -73,7 +74,7 @@ export default function Feed({ posts, activeTopic, feedTab, feedScopeCounts, sea
             observer.disconnect();
             window.removeEventListener('resize', updateStickyOffset);
         };
-    }, []);
+    }, [isGuest]);
     const feed = useSlidingFeed(posts, { tab: feedTab, topic: activeTopic, search, context: 'community', viewerId: auth?.user?.id ?? 0 });
     const { counts, updateSaved, updateHidden } = useFeedScopeCounts(feedScopeCounts);
 
@@ -90,7 +91,8 @@ export default function Feed({ posts, activeTopic, feedTab, feedScopeCounts, sea
         <PublicLayout siteLayout={isGuest} active="/community" joinLabel="Join free">
             <Head title="Discussions · PM Circle" />
 
-            <div className="pm-container pm-page pm-community-discussions-page">
+            <div className={`pm-container pm-page pm-community-discussions-page${isGuest ? '' : ' pm-member-discussions'}`}>
+                {isGuest ? <>
                 {/* Breadcrumbs */}
                 <nav className="pm-crumbs" aria-label="Breadcrumb">
                     <Link href="/">Home</Link> &nbsp;/&nbsp; <span>Discussions</span>
@@ -130,6 +132,16 @@ export default function Feed({ posts, activeTopic, feedTab, feedScopeCounts, sea
                     </div>
                 </section>
 
+                </> : <>
+                    <header className="pm-member-workspace-heading">
+                        <h1>Discussions</h1>
+                        <p>Explore real project challenges, practical lessons and ideas from the PM community.</p>
+                    </header>
+                    <div className="pm-community-feed-tabs pm-member-workspace-tabs">
+                        <FeedScopeTabs active={feedTab} counts={counts} hrefFor={(tab) => `/community?${new URLSearchParams({ tab, ...(activeTopic !== 'All' ? { topic: activeTopic } : {}), ...(search ? { search } : {}) })}`} />
+                    </div>
+                </>}
+
                 {/* Main Two Column Grid */}
                 <div className="pm-two-column">
                     <div className="pm-feed-main-col">
@@ -151,15 +163,13 @@ export default function Feed({ posts, activeTopic, feedTab, feedScopeCounts, sea
                             </form>
                         </div>
 
-                        <div className="pm-community-feed-tabs">
-                            {isGuest ? (
-                                <nav className="pm-feed-scope-tabs" aria-label="Filter community posts">
-                                    <Link className="pm-feed-scope-tab active" href="/community" aria-current="page">All</Link>
-                                    <Link className="pm-feed-scope-tab" href="/login">Following</Link>
-                                    <Link className="pm-feed-scope-tab" href="/login">My posts</Link>
-                                </nav>
-                            ) : <FeedScopeTabs active={feedTab} counts={counts} hrefFor={(tab) => `/community?${new URLSearchParams({ tab, ...(activeTopic !== 'All' ? { topic: activeTopic } : {}), ...(search ? { search } : {}) })}`} />}
-                        </div>
+                        {isGuest && <div className="pm-community-feed-tabs">
+                            <nav className="pm-feed-scope-tabs" aria-label="Filter community posts">
+                                <Link className="pm-feed-scope-tab active" href="/community" aria-current="page">All</Link>
+                                <Link className="pm-feed-scope-tab" href="/login">Following</Link>
+                                <Link className="pm-feed-scope-tab" href="/login">My posts</Link>
+                            </nav>
+                        </div>}
 
                         {/* Guest Join Callout Banner */}
                         {isGuest && (
@@ -185,7 +195,7 @@ export default function Feed({ posts, activeTopic, feedTab, feedScopeCounts, sea
                                 className="pm-feed-posts-list" enabled={virtualFeedEnabled}
                                 renderItem={(post, index) => <>
                                     <PostCard post={post} isGuest={isGuest} onJoin={setJoinAction}
-                                        onReactionChange={(reaction, count) => feed.updateItem(post.id, { viewer_reaction: reaction, reactions_count: count })}
+                                        onReactionChange={(reaction, count, counts) => feed.updateItem(post.id, { viewer_reaction: reaction, reactions_count: count, reaction_breakdown: counts })}
                                         onCommentAdded={() => feed.updateItem(post.id, { comments_count: post.comments_count + 1 })}
                                         onSavedChange={saved => {
                                             updateSaved(Boolean(post.viewer_saved), saved, Boolean(post.viewer_hidden));
@@ -261,7 +271,7 @@ export default function Feed({ posts, activeTopic, feedTab, feedScopeCounts, sea
                         {/* 2. Find your next conversation */}
                         <section className="pm-sidebar-card">
                             <h3>Find your next conversation</h3>
-                            <p style={{ margin: 0, fontSize: 'var(--text-body)' }}>Explore popular topics from the community.</p>
+                            <p className="pm-community-topic-intro">Explore popular topics from the community.</p>
 
                             <nav className="pm-topics-nav-list" aria-label="Popular topics">
                                 <Link
@@ -311,23 +321,21 @@ export default function Feed({ posts, activeTopic, feedTab, feedScopeCounts, sea
                         </section>
 
                         {/* 3. Your experience can help someone */}
-                        <section className="pm-cta-guest-card">
+                        {isGuest && <section className="pm-cta-guest-card">
                             <Users size={32} className="pm-cta-guest-icon" />
-                            <h3 style={{ fontSize: 'var(--text-h3)', fontWeight: 'var(--bold)', margin: '0 0 8px' }}>
+                            <h3 className="pm-community-cta-heading">
                                 Your experience can help someone.
                             </h3>
-                            <p style={{ fontSize: 'var(--text-body)', color: 'var(--muted)', margin: '0 0 16px' }}>
+                            <p className="pm-community-cta-copy">
                                 Ask questions. Share lessons. Learn with project professionals.
                             </p>
                             <Link href="/register" className="pm-button pm-btn-full">
                                 Join PM Circle — free
                             </Link>
-                            {isGuest && (
-                                <span className="pm-cta-guest-login">
-                                    Already a member? <Link href="/login">Log in</Link>
-                                </span>
-                            )}
-                        </section>
+                            <span className="pm-cta-guest-login">
+                                Already a member? <Link href="/login">Log in</Link>
+                            </span>
+                        </section>}
                     </aside>
                 </div>
             </div>

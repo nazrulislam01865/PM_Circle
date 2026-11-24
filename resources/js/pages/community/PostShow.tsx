@@ -5,10 +5,11 @@ import { useState } from 'react';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
 import { CommunityComment, type CommunityCommentData } from '@/components/community/CommunityComment';
 import { CommentComposer, type SavedComment } from '@/components/community/CommentComposer';
+import { postAuthorHref, postAuthorUnavailable } from '@/components/community/PostAuthorLinks';
 import { PostSidebar } from '@/components/community/PostSidebar';
 import { PostCard, type PostPreview } from '@/components/community/PostCard';
 
-type Post = PostPreview & { reactions_count: number; likes_count: number; loves_count: number; author: { name: string; profile?: { role?: string; avatar_path?: string | null } | null } };
+type Post = PostPreview & { reactions_count: number; likes_count: number; loves_count: number; author: { name: string; id?: number; profile?: { role?: string; avatar_path?: string | null } | null } };
 type Related = { id: number; title?: string | null; body: string; comments_count: number };
 type Props = {
     post: Post;
@@ -22,7 +23,7 @@ export default function PostShow({ post, comments, viewerReaction, viewerSaved, 
     const [newComments, setNewComments] = useState<CommunityCommentData[]>([]);
     const [extraReplyCount, setExtraReplyCount] = useState(0);
     const viewer = { name: auth?.user?.name ?? 'Community member', avatar_path: auth?.user?.avatar_path };
-    const addComment = (saved: SavedComment) => setNewComments(previous => [{ ...saved, author: { name: saved.author.name, profile: { avatar_path: saved.author.avatar_path } }, replies: [] }, ...previous]);
+    const addComment = (saved: SavedComment) => setNewComments(previous => [{ ...saved, author: { name: saved.author.name, profile_url: saved.author.profile_url ?? null, profile: { avatar_path: saved.author.avatar_path } }, replies: [] }, ...previous]);
     const [sort, setSort] = useState('relevant');
     const [joinAction, setJoinAction] = useState<string | null>(null);
     const commentsShown = [...newComments, ...[...comments.data].sort((a, b) => sort === 'newest' ? b.id - a.id : a.id - b.id)];
@@ -46,7 +47,7 @@ export default function PostShow({ post, comments, viewerReaction, viewerSaved, 
                     {!commentsShown.length && <p className="pm-empty">No comments yet. Start the conversation.</p>}
                     {comments.next_page_url && <div className="pm-pager"><Link href={comments.next_page_url}>Load more comments⌄</Link></div>}
                 </section>
-            </div><PostSidebar name={post.author.name} memberId={post.is_anonymous || !post.author.profile ? null : post.author.id} avatar={post.author.profile?.avatar_path} role={post.author.profile?.role} demo={showDemoContent} loggedIn={canInteract} relatedPosts={relatedPosts}/></div>
+            </div><PostSidebar unavailable={postAuthorUnavailable(post)} name={post.author.name} authorHref={postAuthorHref(post)} avatar={post.author.profile?.avatar_path} role={post.author.profile?.role} demo={showDemoContent} loggedIn={canInteract} relatedPosts={relatedPosts}/></div>
             <div className="pm-post-bottom-banner"><Users size={42}/><div><strong>Your experience could help another project manager.</strong><p>Join PM Circle to share your ideas, ask questions and learn from a global community.</p></div><Link className="pm-button" href={canInteract ? '/community' : '/register'}>{canInteract ? 'Back to community' : 'Join the Circle — it’s free'} →</Link></div>
         </div>
         <JoinCommunityDialog action={joinAction} onClose={() => setJoinAction(null)} hasAccount={Boolean(auth?.user)} />

@@ -24,7 +24,7 @@
     font-size: var(--text-h2);
     line-height: var(--line-h2);
     font-weight: var(--bold);
-    letter-spacing: -.015em;
+    letter-spacing: var(--pm-tracking-neg-p015em);
 }
 
 /* Shared .pm-button owns font, color, height, radius, hover and focus. */

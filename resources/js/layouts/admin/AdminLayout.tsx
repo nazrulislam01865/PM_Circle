@@ -104,6 +104,7 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
                     <LayoutDashboard size={18} aria-hidden="true"/> <span>Overview</span>
                 </Link>
                 <Link href="/admin/post-reports" className={`pm-admin-nav-link ${active === "/admin/post-reports" ? "is-active" : ""}`} onClick={() => setMobileOpen(false)}><Flag size={18} aria-hidden="true"/><span>Community moderation</span></Link>
+                <Link href="/admin/support-requests" className={`pm-admin-nav-link ${active === '/admin/support-requests' ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}><MessageSquareMore size={18} aria-hidden="true"/><span>Support requests</span></Link>
                 <Link href="/admin/reaction-icons" aria-current={active === '/admin/reaction-icons' ? 'page' : undefined}
                     className={`pm-admin-nav-link ${active === '/admin/reaction-icons' ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
                     <Heart size={18} aria-hidden="true"/><span>Reaction icons</span>

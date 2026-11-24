@@ -12,10 +12,11 @@ type Props = {
     maxSelections: number;
     hint?: string;
     error?: string;
+    inlineTags?: boolean;
 };
 
 /** Central admin multi-choice, using existing Radix primitives and design tokens. */
-export function AdminMultiChoice({ id, label, options, value, onChange, maxSelections, hint, error }: Props) {
+export function AdminMultiChoice({ id, label, options, value, onChange, maxSelections, hint, error, inlineTags = false }: Props) {
     const toggle = (choice: string) => {
         if (value.includes(choice)) {
             onChange(value.filter(item => item !== choice));
@@ -24,11 +25,13 @@ export function AdminMultiChoice({ id, label, options, value, onChange, maxSelec
         }
     };
 
-    return <div className="pm-admin-field pm-admin-multi-choice">
-        <label id={`${id}-label`}>{label}</label>
-        <DropdownMenu.Root modal={false}>
+    const tags = value.length > 0 && <div className="pm-admin-multi-tags">{value.map(item => <span className="pm-admin-multi-tag" key={item}>
+        {options.find(option => option.value === item)?.label ?? item}
+        <button type="button" onClick={() => toggle(item)} aria-label={`Remove ${options.find(option => option.value === item)?.label ?? item}`}>×</button>
+    </span>)}</div>;
+    const dropdown = <DropdownMenu.Root modal={false}>
             <DropdownMenu.Trigger id={id} type="button" aria-labelledby={`${id}-label`} aria-invalid={!!error || undefined} className="pm-admin-choice-trigger">
-                <span>{value.length ? `${value.length} selected · ${value.map(item => options.find(option => option.value === item)?.label ?? item).join(', ')}` : 'Select one or more'}</span>
+                <span>{inlineTags && value.length ? null : value.length ? `${value.length} selected · ${value.map(item => options.find(option => option.value === item)?.label ?? item).join(', ')}` : 'Select one or more'}</span>
                 <ChevronDown size={17} aria-hidden="true" />
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal>
@@ -54,11 +57,10 @@ export function AdminMultiChoice({ id, label, options, value, onChange, maxSelec
                     </div>
                 </DropdownMenu.Content>
             </DropdownMenu.Portal>
-        </DropdownMenu.Root>
-        {value.length > 0 && <div className="pm-admin-multi-tags">{value.map(item => <span className="pm-admin-multi-tag" key={item}>
-            {options.find(option => option.value === item)?.label ?? item}
-            <button type="button" onClick={() => toggle(item)} aria-label={`Remove ${item}`}>×</button>
-        </span>)}</div>}
+        </DropdownMenu.Root>;
+    return <div className={`pm-admin-field pm-admin-multi-choice${inlineTags ? ' pm-admin-multi-inline' : ''}`}>
+        <label id={`${id}-label`}>{label}</label>
+        {inlineTags ? <div className="pm-admin-multi-inline-control">{tags}{dropdown}</div> : <>{dropdown}{tags}</>}
         {hint && <small className="pm-admin-hint">{hint}</small>}
         {error && <small className="pm-error" role="alert">{error}</small>}
     </div>;

@@ -112,7 +112,9 @@ final class AiExecutionService
             $useExternalModeration = (! $isPmpTutor || (bool) config('pm-ai.pmp_external_moderation'))
                 && ! $skipDailyGenerationModeration;
             $context['_ai_feature_code'] = $request->feature_code;
-            $result = $this->provider->generate($request->model, $instructions, $context,
+            $provider = $request->feature_code === 'trend_draft' && $request->provider === 'gemini'
+                ? app(\App\Domain\AI\Providers\GeminiTrendProvider::class) : $this->provider;
+            $result = $provider->generate($request->model, $instructions, $context,
                 $this->catalog->schema($request->feature_code), (int) $request->max_output_tokens,
                 $useExternalModeration);
             $rubric = $context['rubric'] ?? null;
@@ -204,7 +206,13 @@ final class AiExecutionService
                     'completed_at' => now(), 'lease_until' => null, 'updated_at' => now(),
                 ]);
             }, 3);
+            if ($request->feature_code === 'trend_draft') {
+                try { app(TrendAiConnection::class)->record($request->provider, $request->model, null); } catch (Throwable) { /* Diagnostics cannot interrupt settlement. */ }
+            }
         } catch (AiFailure $e) {
+            if (isset($request) && $request->feature_code === 'trend_draft' && ($request->subject_type === 'trend_connection_test' || str_starts_with($e->safeCode, 'PROVIDER_') || str_starts_with($e->safeCode, 'MODERATION_') || in_array($e->safeCode, ['INCOMPLETE_AI_RESPONSE', 'INVALID_AI_RESPONSE', 'INVALID_USAGE'], true))) {
+                try { app(TrendAiConnection::class)->record($request->provider, $request->model, $e->safeCode); } catch (Throwable) { /* Diagnostics cannot interrupt settlement. */ }
+            }
             if ($e->safeCode === 'PROVIDER_STATUS_UNKNOWN') {
                 DB::table('ai_requests')->where('id', $id)->where('status', 'running')->update([
                     'status' => 'provider_status_unknown', 'error_code' => 'RECONCILING',
@@ -244,6 +252,11 @@ final class AiExecutionService
                 'status' => 'failed', 'error_code' => mb_substr($code, 0, 80),
                 'lease_until' => null, 'completed_at' => now(), 'updated_at' => now(),
             ]);
+            if ($row->subject_type === 'trend_connection_test') {
+                DB::afterCommit(function () use ($row, $code): void {
+                    try { app(TrendAiConnection::class)->record($row->provider, $row->model, $code); } catch (Throwable) { /* Diagnostics cannot interrupt settlement. */ }
+                });
+            }
         }, 3);
     }
 

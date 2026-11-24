@@ -1,63 +1,134 @@
-import { Head, Link } from '@inertiajs/react';
-import { Bookmark, ChevronRight, Clock3, Home, Info, Link2, Share2 } from 'lucide-react';
-import { useState } from 'react';
-import { Brand } from '@/components/pm/Brand';
-import { TrendBadges } from '@/components/trends/TrendShared';
-import { trendArticles } from '@/data/pm-trends';
+import { Head, Link, usePage } from '@inertiajs/react';
+import { useState, type FormEvent } from 'react';
+import { HomePhoto } from '@/components/home/v2/HomePhoto';
+import { sampleTrendReports, trendArticles, trendArticleHref, type TrendArticle } from '@/data/pm-trends';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
+import '../../../css/pm-trends-public.css';
+import '../../../css/pm-trends-detail.css';
 
-export default function Show({ slug }: { slug: string }) {
-    const article = trendArticles.find(item => item.slug === slug);
+type ReportComment = { text: string };
+const commentsKey = (slug: string) => `pm-trend-comments-${slug}`;
+
+function readComments(slug: string): ReportComment[] {
+    try {
+        const raw: unknown = JSON.parse(window.localStorage.getItem(commentsKey(slug)) ?? '[]');
+        return Array.isArray(raw) ? raw.filter((item): item is ReportComment =>
+            item !== null && typeof item === 'object' && typeof item.text === 'string' && item.text.trim().length > 0 && item.text.length <= 2000).slice(-100) : [];
+    } catch { return []; }
+}
+
+function ReportDetail({ article }: { article: TrendArticle }) {
+    const { auth } = usePage().props;
+    const slug = article.slug;
+    const isSample = sampleTrendReports.some(report => report.slug === slug);
+    const title = article.articleTitle ?? article.title;
+    const lead = article.articleLead ?? article.summary;
     const [bookmarked, setBookmarked] = useState(() => {
-        try { return typeof window !== 'undefined' && window.localStorage.getItem(`pm-trend-bookmark-${slug}`) === 'true'; }
+        try { return window.localStorage.getItem(`pm-trend-bookmark-${slug}`) === 'true'; }
         catch { return false; }
     });
-    const [shareStatus, setShareStatus] = useState('');
+    const [actionStatus, setActionStatus] = useState('');
+    const [comments, setComments] = useState(() => readComments(slug));
+    const [draft, setDraft] = useState('');
+    const [commentError, setCommentError] = useState('');
+    const related = sampleTrendReports.filter(report => report.slug !== slug).slice(0, 2);
+    const fallback = article.category === 'Career Paths' ? 'stakeholder' : article.category === 'Skills' ? 'scrum' : 'tutor';
 
-    if (!article) return <PublicLayout siteLayout active="/pm-trends"><Head title="Article not found"/><div className="pm-trends pm-container pm-page pm-trends-not-found"><h1>Article not found</h1><Link className="btn secondary" href="/pm-trends">Back to PM Trends</Link></div></PublicLayout>;
-
-    const toggleBookmark = () => {
-        const next = !bookmarked;
-        try { window.localStorage.setItem(`pm-trend-bookmark-${slug}`, String(next)); } catch { /* Local preference is optional. */ }
-        setBookmarked(next);
-    };
-    const share = async () => {
+    function toggleBookmark() {
         try {
-            const url = window.location.href;
-            if (navigator.share) await navigator.share({ title: article.articleTitle ?? article.title, url });
-            else { await navigator.clipboard.writeText(url); setShareStatus('Link copied'); }
+            window.localStorage.setItem(`pm-trend-bookmark-${slug}`, String(!bookmarked));
+            setBookmarked(!bookmarked);
+            setActionStatus('');
+        } catch { setActionStatus('Could not update saved reports. Browser storage may be unavailable.'); }
+    }
+
+    async function share() {
+        setActionStatus('');
+        try {
+            const url = window.location.href.split('#')[0];
+            if (navigator.share) await navigator.share({ title, url });
+            else { await navigator.clipboard.writeText(url); setActionStatus('Link copied'); }
         } catch (error) {
             if (error instanceof DOMException && error.name === 'AbortError') return;
-            setShareStatus('Could not share this article');
+            setActionStatus('Could not share this report. You can copy the address from your browser.');
         }
-    };
+    }
 
-    return <PublicLayout siteLayout active="/pm-trends"><Head title={article.articleTitle ?? article.title}/>
-        <div className="pm-trends pm-container pm-page pm-trend-article-page">
-            <nav className="pm-crumbs pm-trend-breadcrumb" aria-label="Breadcrumb"><Link href="/"><Home size={17}/><span className="sr-only">Home</span></Link><ChevronRight size={15}/><Link href="/pm-trends">PM Trends</Link><ChevronRight size={15}/><span aria-current="page">Article</span></nav>
-            <article className="pm-trends-article pm-panel">
-                <TrendBadges article={article} articlePage/>
-                <h1>{article.articleTitle ?? article.title}</h1>
-                <p className="pm-trend-lead">{article.articleLead ?? article.summary}</p>
-                <div className="pm-trend-article-toolbar">
-                    <div className="pm-trend-article-byline"><Brand small/><strong>PM Circle Insights</strong><span className="pm-trend-separator"/>
-                        <span>{article.date}</span><span className="pm-trend-separator"/><span className="pm-trend-reading"><Clock3 size={17}/>{article.readMinutes} min read</span></div>
-                    <div className="pm-trend-social"><button className="pm-trend-icon-button" type="button" aria-label={bookmarked ? 'Remove bookmark' : 'Bookmark this article'} aria-pressed={bookmarked} title={bookmarked ? 'Remove bookmark' : 'Bookmark'} onClick={toggleBookmark}><Bookmark size={21} fill={bookmarked ? 'currentColor' : 'none'}/></button>
-                        <button className="pm-trend-icon-button" type="button" title="Share article" aria-label="Share article" onClick={() => void share()}><Share2 size={20}/></button></div>
+    function submitComment(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        if (!auth?.user) return;
+        const text = draft.trim();
+        if (!text || text.length > 2000) { setCommentError('Enter a comment of 1–2000 characters.'); return; }
+        const next = [...readComments(slug), { text }].slice(-100);
+        try {
+            window.localStorage.setItem(commentsKey(slug), JSON.stringify(next));
+            setComments(next);
+            setDraft('');
+            setCommentError('');
+        } catch { setCommentError('Could not save your comment in this browser.'); }
+    }
+
+    return <>
+        <Head title={title}><meta name="description" content={lead}/></Head>
+        <section className="pm-terms-banner" aria-labelledby="pm-report-title">
+            <div className="pm-public-trends-wrap">
+                <nav className="pm-terms-breadcrumb" aria-label="Breadcrumb"><Link href="/">Home</Link><span aria-hidden="true">/</span><Link href="/pm-trends">Trends</Link><span aria-hidden="true">/</span><span aria-current="page">Report</span></nav>
+                <h1 id="pm-report-title">{title}</h1>
+                <p>{lead}</p>
+            </div>
+        </section>
+        <div className="pm-public-trends-wrap pm-report-main">
+            <article className="pm-report-reading">
+                <p className="pm-public-trends-meta"><strong>{article.articleCategoryLabel ?? article.category}</strong> · {isSample ? 'Sample report' : article.classification} · {article.readMinutes} min read</p>
+                <p className="pm-public-trends-meta pm-report-publication">Published on PM Circle {article.date}{article.sources?.length ? <> · Source: {article.sources.map((source, index) => <span key={source.url}>{index ? ', ' : ''}<a href={source.url} target="_blank" rel="noopener noreferrer">{source.title}</a></span>)}</> : null}</p>
+                <div className="pm-report-actions">
+                    <button type="button" className="pm-guide-button is-outline" aria-pressed={bookmarked} onClick={toggleBookmark}>{bookmarked ? 'Saved report' : 'Save report'}</button>
+                    <button type="button" className="pm-guide-button is-outline" onClick={() => void share()}>Share</button>
+                    <a href="#report-comments">Comments ({comments.length})</a>
                 </div>
-                {shareStatus && <p className="pm-trend-share-status" role="status">{shareStatus}</p>}
-                <img className="pm-trend-cover" src={article.hero ?? article.thumbnail} alt="Project management trends and insights" width="745" height="196"/>
-                <div className="pm-trend-article-body"><p>{article.intro}</p>
-                    {article.sections.map((section, i) => <section key={`${i}-${section.title}`}>
+                {actionStatus && <p className="pm-public-trends-meta" role="status">{actionStatus}</p>}
+                <HomePhoto photo={fallback} source={article.hero ?? article.thumbnail} alt="Project management report illustration" className="pm-report-photo" eager/>
+                <div className="pm-report-body">
+                    {article.intro && <p>{article.intro}</p>}
+                    {article.sections.map((section, index) => <section className="pm-report-section" key={index}>
                         {section.title && <h2>{section.title}</h2>}
                         {section.text && <p>{section.text}</p>}
-                        {section.chart && <img className="pm-trend-article-chart" src={section.chart} alt="Illustration from the supplied prototype: PM job demand chart labelled 28 percent, 2024 to 2025" width="744" height="143"/>}
-                        {section.bullets && <ul>{section.bullets.map(item => <li key={item}>{item}</li>)}</ul>}
+                        {section.image && <HomePhoto photo={fallback} source={section.image} alt={section.imageAlt ?? ''} className="pm-report-photo"/>}
+                        {section.chart && <img className="pm-report-chart" src={section.chart} alt="Illustration from the supplied prototype: PM job demand chart labelled 28 percent, 2024 to 2025" loading="lazy"/>}
+                        {section.bullets && <ul>{section.bullets.map((item, i) => <li key={i}>{item}</li>)}</ul>}
                     </section>)}
+                    {article.sources?.length ? <section className="pm-report-section"><h2>Source</h2>{article.sources.map(source => <div key={source.url}><p><a href={source.url} target="_blank" rel="noopener noreferrer">{source.reportTitle ?? source.title}</a>{source.reportTitle && <> · {source.title}</>}</p>{source.description && <p>{source.description}</p>}</div>)}</section> : null}
                 </div>
-                {article.sources?.length ? <div className="pm-trend-sources"><Link2 size={19} aria-hidden="true"/><span>Source: {article.sources.map((source, i) => <span key={source.url}>{i ? ', ' : ''}<a href={source.url} target="_blank" rel="noopener noreferrer">{source.title}</a></span>)}</span></div> : null}
-                <aside className="pm-trend-disclaimer"><Info size={25} aria-hidden="true"/><p><strong>Note:</strong> This article is AI-generated for learning and information purposes. The content is based on publicly available sources and general industry insights, and may not be fully accurate or up to date. Please verify key information from the original sources before making any career or business decisions.</p></aside>
+                <aside className="pm-report-notice">
+                    <strong>{isSample ? 'AI-generated sample report' : 'Note'}</strong>
+                    <p>{isSample ? 'This article is illustrative. It may contain inaccuracies. Verify claims against current job listings, employer information and original sources before making career decisions.' : 'This article is AI-generated for learning and information purposes. The content is based on publicly available sources and general industry insights, and may not be fully accurate or up to date. Please verify key information from the original sources before making any career or business decisions.'}</p>
+                </aside>
+                <section className="pm-report-comments" id="report-comments" aria-labelledby="report-comments-title">
+                    <h2 id="report-comments-title">Comments</h2>
+                    <p className="pm-public-trends-meta">Comments you post in this prototype are visible only in this browser.</p>
+                    {auth?.user ? <form className="pm-report-comment-form" onSubmit={submitComment}>
+                        <label className="pm-guide-field-label" htmlFor="report-comment">Write a comment</label>
+                        <textarea id="report-comment" className="pm-guide-control" rows={3} maxLength={2000} required value={draft} onChange={event => setDraft(event.target.value)} aria-invalid={Boolean(commentError)} aria-describedby={commentError ? 'report-comment-error' : undefined}/>
+                        {commentError && <p className="pm-report-error" id="report-comment-error" role="alert">{commentError}</p>}
+                        <button className="pm-guide-button" type="submit">Post comment</button>
+                    </form> : <div className="pm-report-comment-login"><p>Log in to join the discussion.</p><Link href="/login" className="pm-guide-button is-outline">Log in to comment</Link></div>}
+                    {comments.length ? <ul className="pm-report-comment-list">{comments.map((comment, index) => <li key={index}>{comment.text}</li>)}</ul> : <p>No comments yet. Be the first to share a thought.</p>}
+                </section>
+                <nav className="pm-report-related" aria-labelledby="report-related-title">
+                    <h2 id="report-related-title">More from Trends</h2>
+                    <ul>{related.map(report => <li key={report.slug}><Link href={trendArticleHref(report.slug)}>{report.title}</Link></li>)}</ul>
+                    <Link href="/pm-trends">All career reports</Link>
+                </nav>
             </article>
+        </div>
+    </>;
+}
+
+export default function Show({ slug }: { slug: string }) {
+    const article = sampleTrendReports.find(item => item.slug === slug) ?? trendArticles.find(item => item.slug === slug);
+    return <PublicLayout siteLayout homePrototype guideLayout active="/pm-trends">
+        <div className="pm-public-trends-page pm-public-trends-detail pm-guide-public-shell">
+            {article ? <ReportDetail key={slug} article={article}/> : <><Head title="Article not found"/><div className="pm-public-trends-wrap pm-report-main"><h1>Article not found</h1><Link className="pm-guide-button is-outline" href="/pm-trends">Back to Trends</Link></div></>}
         </div>
     </PublicLayout>;
 }

@@ -6,6 +6,7 @@ import { HomeHero } from '@/components/home/v2/HomeHero';
 import { HomeCertification, HomeCourses } from '@/components/home/v2/HomeLearning';
 import { HomeCommunity } from '@/components/home/v2/HomeCommunity';
 import { HomeAiPractice, HomeResume } from '@/components/home/v2/HomeAiResume';
+import { HomeTrends } from '@/components/home/v2/HomeTrends';
 import { HomeEvents } from '@/components/home/v2/HomeEvents';
 import type { ScenarioSummary } from '@/components/home/ScenarioPreview';
 import type { HomePost } from '@/components/home/HomePostPreview';
@@ -40,7 +41,9 @@ export default function Home({ content, scenario, posts, members, rewardPromotio
                 canInteract={canInteract} onJoin={setJoinAction}
                 visibility={{ scenario: visible('scenario'), community: visible('community'), members: visible('members'), skills: visible('skills') }}/>}
             {visible('ai_features') && <HomeAiPractice content={content.ai_features}/>}
-            {visible('careers') && <><HomeResume content={content.careers}/><HomeEvents join={content.careers?.join}/></>}
+            {visible('careers') && <HomeResume content={content.careers}/>}
+            <HomeTrends/>
+            {visible('careers') && <HomeEvents join={content.careers?.join}/>}
             <JoinCommunityDialog action={joinAction} onClose={() => setJoinAction(null)} hasAccount={Boolean(user && !user.is_admin)}/>
         </div>
     </PublicLayout>;

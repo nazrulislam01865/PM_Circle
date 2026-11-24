@@ -141,9 +141,35 @@
     --pm-guide-container: 73.75rem;
     /* Legal reading rail sized to the approved Terms prototype. */
     --pm-guide-reading-width: 47.5rem;
+    /* Shared editorial report-list proportions from the approved Trends prototype. */
+    --pm-guide-report-list-width: 57.5rem;
+    /* Article reading roles, separate from the full-width Trends listing. */
+    --pm-guide-report-reading-width: var(--pm-guide-reading-width);
+    --pm-guide-report-banner-title-width: 53rem;
+    --pm-guide-report-section-heading: 1.375rem;
+    --pm-guide-report-section-tracking: -.025em;
+    --pm-guide-report-action-border: var(--pm-guide-control-line);
+    --pm-guide-report-image-width: 15rem;
+    --pm-guide-report-title-tracking: -.04em;
+    --pm-guide-report-row-inset: calc(var(--pm-guide-s4) + var(--pm-guide-s1) / 2);
     --pm-guide-terms-sidebar-width: 17rem;
     --pm-guide-terms-column-gap: calc(var(--pm-guide-s12) + var(--pm-guide-s3));
     --pm-guide-text-legal-section: 1.5rem;
+    /* Public editorial preview roles, sampled from the approved Resume Assistant
+       prototype. These opt-in tokens must not change the global guide palette. */
+    --pm-guide-editorial-font-optical-sizing: none; /* The supplied guide uses static optical-size Inter faces. */
+    --pm-guide-editorial-heading: 1.625rem;
+    --pm-guide-editorial-stat: 1.75rem;
+    --pm-guide-editorial-heading-tracking: -.025em;
+    --pm-guide-editorial-stat-tracking: -.015em;
+    --pm-guide-editorial-accent: #124d88;
+    --pm-guide-editorial-surface: var(--pm-tone-eff6ff);
+    --pm-guide-editorial-success-surface: #eaf7ee;
+    --pm-guide-editorial-success-border: #d6ecdd;
+    --pm-guide-editorial-section-inset: calc(var(--pm-guide-s12) - var(--pm-guide-s1));
+    --pm-guide-editorial-study-gap: var(--pm-guide-s4);
+    --pm-guide-editorial-study-inset: var(--pm-guide-s3);
+
     --pm-guide-gutter: 1.5rem;
     --pm-guide-gutter-mobile: var(--s4);
     --pm-guide-text-h1: clamp(2rem, 5vw, 3.1rem);
@@ -249,6 +275,14 @@
     --pm-v2-purple-soft: #eee6fc;
     --pm-v2-purple: #7044a7;
     --pm-v2-cta: #0d3566;
+    /* Homepage photo promotion: larger display heading and accessible on-dark overlay. */
+    --pm-v2-font-promo-heading: clamp(1.5rem, 3vw, 2.25rem);
+    --pm-v2-promo-overlay: linear-gradient(90deg, rgb(13 34 61 / 92%) 0%, rgb(13 34 61 / 74%) 48%, rgb(13 34 61 / 42%) 100%);
+    --pm-v2-promo-overlay-mobile: linear-gradient(90deg, rgb(13 34 61 / 94%), rgb(13 34 61 / 76%));
+    --pm-v2-promo-inset: var(--pm-guide-s12);
+    --pm-v2-promo-min-height: 12.25rem;
+    --pm-v2-promo-copy-width: 30rem;
+    --pm-v2-promo-photo-position: center 42%;
     --pm-v2-footer-lower: #0c223e;
     --pm-v2-footer-border: rgb(255 255 255 / 24%);
     --pm-v2-shadow: rgb(14 41 82 / 15%);
@@ -1172,4 +1206,15 @@
 /* Mobile header follows one shared height used by its shell and sticky content. */
 @media (max-width: 880px) {
     :root { --header-height: 4rem; }
+}
+
+/* Compact settings workspace roles; scoped consumers opt in, other pages unchanged. */
+:root {
+    --pm-admin-settings-title: var(--text-stat);
+    --pm-admin-settings-section-title: var(--pm-guide-text-legal-section);
+    --pm-admin-settings-control-text: var(--pm-guide-text-body);
+    --pm-admin-settings-control-height: 2.125rem;
+    --pm-admin-settings-action-height: 3rem;
+    --pm-admin-settings-provider-size: 4.25rem;
+    --pm-admin-settings-tag: #dce9ff;
 }

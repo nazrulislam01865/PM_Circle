@@ -104,6 +104,54 @@
 .pm-v2-resume-step-icon svg { width: 16px; height: 16px; }
 .pm-v2-resume-step strong { font-size: var(--pm-v2-font-ui); font-weight: var(--bold); }
 .pm-v2-resume-step p { font-size: var(--pm-v2-font-body); line-height: var(--pm-guide-line-body); color: var(--muted); margin-top: 2px; }
+/* Homepage Trends promotion: same rail as the adjacent sections. */
+.pm-home-v2 .pm-v2-trends-banner {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s6);
+    min-height: var(--pm-v2-promo-min-height);
+    padding: var(--pm-v2-promo-inset);
+    border-radius: var(--pm-guide-radius-card);
+    overflow: hidden;
+    background: var(--pm-guide-footer);
+    color: var(--pm-guide-white);
+}
+.pm-v2-trends-photo, .pm-v2-trends-banner::before {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+.pm-v2-trends-photo { z-index: -2; object-fit: cover; object-position: var(--pm-v2-promo-photo-position); }
+.pm-v2-trends-banner::before { content: ''; z-index: -1; background: var(--pm-v2-promo-overlay); }
+.pm-v2-trends-copy { min-width: 0; max-width: var(--pm-v2-promo-copy-width); }
+.pm-v2-trends-copy h2 {
+    margin: 0;
+    color: var(--pm-guide-white);
+    font-size: var(--pm-v2-font-promo-heading);
+    font-weight: var(--pm-guide-weight-h2);
+    line-height: var(--pm-guide-line-h1);
+    letter-spacing: var(--pm-guide-editorial-heading-tracking);
+}
+.pm-v2-trends-copy p {
+    margin: var(--s2) 0 0;
+    color: var(--pm-guide-white);
+    font-size: var(--pm-v2-font-body);
+    line-height: var(--pm-guide-line-body);
+}
+.pm-home-v2 .pm-v2-trends-banner .pm-v2-button {
+    align-self: center;
+    flex-shrink: 0;
+    min-height: var(--pm-guide-button-height);
+    padding-inline: var(--pm-guide-button-pad-inline);
+    border-color: var(--pm-guide-white);
+}
+.pm-home-v2 .pm-v2-trends-banner .pm-v2-button:focus-visible { outline-color: var(--pm-guide-white); }
+
 .pm-v2-events-section { padding-bottom: 2.75rem !important; }
 .pm-v2-create-event { position: absolute; right: 0; top: var(--s10); }
 .pm-v2-events-list { display: grid; gap: var(--s2); }

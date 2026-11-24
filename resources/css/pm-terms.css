@@ -1,4 +1,4 @@
-/* Public Terms & Conditions prototype. Scoped to /terms so other pages are unchanged.
+/* Shared public legal-page prototype styles for Terms & Conditions, Refund Policy and Privacy Policy.
    Typography, color and spacing use the approved centralized design-guide tokens. */
 .pm-terms-page {
     background: var(--pm-guide-white);
@@ -69,3 +69,59 @@
     .pm-terms-banner { padding-bottom: var(--pm-guide-s6); }
 }
 @media (prefers-reduced-motion: reduce) { .pm-terms-page { scroll-behavior: auto; } }
+
+/* Shared legal-document bullet list. Keep the approved paragraph typography. */
+.pm-terms-section .pm-terms-list {
+    list-style: disc outside;
+    margin-top: var(--pm-guide-s2);
+    padding-inline-start: var(--pm-guide-s10);
+    margin-bottom: var(--pm-guide-s3);
+    font-size: var(--pm-guide-text-body);
+    line-height: var(--pm-guide-line-body);
+    overflow-wrap: anywhere;
+}
+.pm-terms-list li + li { margin-top: var(--pm-guide-s2); }
+.pm-terms-list strong { color: var(--pm-guide-ink); font-weight: var(--pm-guide-weight-h2); }
+
+/* Privacy Policy prototype uses the same legal rail and a draft status line. */
+.pm-privacy-policy-page .pm-terms-main { padding-bottom: var(--pm-guide-s12); }
+.pm-privacy-policy-page .pm-terms-breadcrumb a { text-decoration: underline; }
+.pm-privacy-policy-page .pm-terms-toc { border-radius: var(--pm-guide-radius-card); }
+.pm-privacy-policy-page .pm-terms-article { padding-top: var(--pm-guide-s2); max-width: calc(var(--pm-guide-reading-width) - var(--pm-guide-s3)); }
+.pm-privacy-policy-page .pm-terms-updated { margin-bottom: var(--pm-guide-s4) !important; }
+.pm-privacy-policy-page .pm-terms-section:not(:first-of-type) { padding-top: var(--pm-guide-s4); }
+.pm-privacy-policy-page .pm-terms-section { scroll-margin-top: calc(var(--header-height) + var(--pm-guide-s12)); }
+.pm-member-public-content .pm-privacy-policy-page {
+    --pm-v2-container-width: min(var(--pm-guide-container), calc(100% - 2 * var(--pm-guide-gutter)));
+}
+@media (max-width: 40.625rem) {
+    .pm-privacy-policy-page .pm-terms-main { padding-block: var(--pm-guide-s6); }
+    .pm-privacy-policy-page .pm-terms-toc ul { columns: 1; }
+    .pm-privacy-policy-page .pm-terms-article { padding-top: 0; max-width: 100%; }
+}
+@media (max-width: 33.75rem) {
+    .pm-member-public-content .pm-privacy-policy-page {
+        --pm-v2-container-width: calc(100% - 2 * var(--pm-guide-gutter-mobile));
+    }
+}
+
+/* Refund Policy shares the legal-page design. Only the prototype's vertical
+   rhythm and member workspace fit differ; do not change Terms or shared chrome. */
+.pm-refund-page .pm-terms-main { padding-bottom: var(--pm-guide-s12); }
+.pm-refund-page .pm-terms-section:first-of-type { padding-top: var(--pm-guide-s5); }
+.pm-refund-page .pm-terms-breadcrumb a { text-decoration: underline; }
+.pm-refund-page .pm-terms-toc { border-radius: var(--pm-guide-radius-card); }
+.pm-refund-page .pm-terms-section { scroll-margin-top: calc(var(--header-height) + var(--pm-guide-s12)); }
+.pm-member-public-content .pm-refund-page {
+    --pm-v2-container-width: min(var(--pm-guide-container), calc(100% - 2 * var(--pm-guide-gutter)));
+}
+@media (max-width: 40.625rem) {
+    .pm-refund-page .pm-terms-section:first-of-type { padding-top: 0; }
+    .pm-refund-page .pm-terms-main { padding-block: var(--pm-guide-s6); }
+    .pm-refund-page .pm-terms-toc ul { columns: 1; }
+}
+@media (max-width: 33.75rem) {
+    .pm-member-public-content .pm-refund-page {
+        --pm-v2-container-width: calc(100% - 2 * var(--pm-guide-gutter-mobile));
+    }
+}

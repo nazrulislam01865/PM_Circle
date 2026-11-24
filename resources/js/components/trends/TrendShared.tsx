@@ -1,5 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { ArrowRight, CalendarDays, Clock3, ExternalLink, Sparkles } from 'lucide-react';
+import { HomePhoto } from '@/components/home/v2/HomePhoto';
+import type { ReferencePhotoKey } from '@/components/home/v2/reference';
 import { type TrendArticle, trendArticleHref } from '@/data/pm-trends';
 
 export function TrendBadges({ article, articlePage = false }: { article: TrendArticle; articlePage?: boolean }) {
@@ -29,5 +31,21 @@ export function TrendCard({ article }: { article: TrendArticle }) {
             </div>
         </div>
         <Link className="btn small pm-trend-read" href={trendArticleHref(article.slug)}>Read More <ArrowRight size={17}/></Link>
+    </article>;
+}
+
+/** Shared public report row, deliberately independent of the legacy detail/card styling. */
+export function TrendReportRow({ article }: { article: TrendArticle }) {
+    const fallback: ReferencePhotoKey = article.category === 'AI at Work' ? 'tutor' : article.category === 'Career Paths' ? 'stakeholder' : 'scrum';
+    return <article className="pm-public-trends-row">
+        <Link className="pm-public-trends-image" href={trendArticleHref(article.slug)} aria-label={`Read ${article.title}`}>
+            <HomePhoto photo={fallback} source={article.thumbnail} alt=""/>
+        </Link>
+        <div className="pm-public-trends-copy">
+            <p className="pm-public-trends-meta"><strong>{article.category}</strong><span> · Sample report</span></p>
+            <h2><Link href={trendArticleHref(article.slug)}>{article.title}</Link></h2>
+            <p className="pm-public-trends-summary">{article.summary}</p>
+            <p className="pm-public-trends-meta">Published on PM Circle {article.date}{article.sources?.length ? <> · Source: {article.sources.map((source, index) => <span key={source.url}>{index > 0 ? ', ' : ''}<a href={source.url} target="_blank" rel="noopener noreferrer">{source.title}</a></span>)}</> : null}</p>
+        </div>
     </article>;
 }

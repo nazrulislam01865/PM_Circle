@@ -7,6 +7,9 @@ return [
     'editorial_enabled' => (bool) env('PM_AI_EDITORIAL_ENABLED', false),
     'subscription_grants_enabled' => (bool) env('PM_AI_SUBSCRIPTION_GRANTS_ENABLED', false),
     'api_key' => env('OPENAI_API_KEY'),
+    // Optional Career Trends provider; other features remain on OpenAI.
+    'gemini_api_key' => env('GEMINI_API_KEY'),
+    'gemini_trend_model' => env('PM_AI_GEMINI_TREND_MODEL'),
     // Dedicated restricted key for Daily Challenge only. Never expose it through an admin response.
     'daily_challenge_api_key' => env('OPENAI_DAILY_CHALLENGE_API_KEY'),
     // Post Check Omni moderation key; also used ONLY for Daily Challenge input/output moderation.

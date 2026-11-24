@@ -38,6 +38,9 @@
     .pm-v2-scenario-card .pm-v2-post-content > p { display: block; overflow: visible; -webkit-line-clamp: unset; line-clamp: unset; }
     .pm-v2-community-sidebar { grid-template-columns: repeat(2, minmax(0,1fr)); }
     .pm-v2-resume-grid { grid-template-columns: minmax(0, 1fr); }
+    .pm-home-v2 .pm-v2-trends-banner { flex-direction: column; align-items: flex-start; padding: var(--s6); gap: var(--s4); }
+    .pm-v2-trends-banner::before { background: var(--pm-v2-promo-overlay-mobile); }
+    .pm-home-v2 .pm-v2-trends-banner .pm-v2-button { align-self: flex-start; max-width: 100%; }
     .pm-v2-resume-panel .pm-v2-button { margin-top: var(--s3); }
     .pm-v2-create-event { top: var(--s8); }
     .pm-v2-join-banner { flex-wrap: wrap; }

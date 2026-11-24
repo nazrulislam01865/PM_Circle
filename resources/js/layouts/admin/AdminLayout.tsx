@@ -1,6 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useEffect, useState, type ReactNode } from 'react';
-import { ChevronDown, ChevronRight, Database, ExternalLink, Flag, House, LayoutDashboard, LogOut, Menu, PanelTop, ClipboardCheck, Gift, Route, Gauge, CalendarDays, X, BookOpen, Heart, MessageSquareMore, Search, Bell } from 'lucide-react';
+import { ChevronDown, ChevronRight, Database, ExternalLink, Flag, House, LayoutDashboard, LogOut, Menu, PanelTop, ClipboardCheck, Gift, Route, Gauge, CalendarDays, X, BookOpen, Heart, MessageSquareMore, Search, Bell, ChartColumn } from 'lucide-react';
 import { Brand } from '@/components/pm/Brand';
 import { homepageSections, type HomepageSection, type HomepageSectionVisibility } from '@/components/admin/homepage-sections';
 import { pmpPublicSections } from '@/components/admin/pmp-public-sections';
@@ -20,10 +20,11 @@ type Props = {
     onSelectPmpSection?: (section: PmpPublicSection) => void;
     pmpVisibility?: Record<PmpPublicSection, boolean>;
     headingAction?: ReactNode;
+    breadcrumb?: string[];
     dashboardHeader?: { pendingReviews: number };
 };
 
-export function AdminLayout({ title, subtitle, children, active, selectedHomeSection, onSelectHomeSection, homepageVisibility, selectedCatalogCategory, selectedPmpSection, onSelectPmpSection, pmpVisibility, headingAction, dashboardHeader }: Props) {
+export function AdminLayout({ title, subtitle, children, active, selectedHomeSection, onSelectHomeSection, homepageVisibility, selectedCatalogCategory, selectedPmpSection, onSelectPmpSection, pmpVisibility, headingAction, breadcrumb, dashboardHeader }: Props) {
     const { auth } = usePage<{ auth?: { user?: { name?: string } | null } }>().props;
     const [searchOpen, setSearchOpen] = useState(false);
     const [searchValue, setSearchValue] = useState('');
@@ -33,6 +34,7 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
         { title: 'Interview preparation', href: '/admin/interview-preparation' },
         { title: 'Course library', href: '/admin/learning/courses' },
         { title: 'Manage rewards', href: '/admin/profile-rewards' },
+        { title: 'Career Trends', href: '/admin/ai/career-trends' },
         { title: 'Daily Challenge AI', href: '/admin/ai/daily-challenge' },
         { title: 'Homepage control', href: '/admin/homepage' },
         { title: 'PMP questions', href: '/admin/exam-simulator/pmp/questions' },
@@ -109,6 +111,10 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
                 <Link href="/admin/profile-rewards" aria-current={active === '/admin/profile-rewards' ? 'page' : undefined}
                     className={`pm-admin-nav-link ${active === '/admin/profile-rewards' ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
                     <Gift size={18} aria-hidden="true"/><span>Profile rewards</span>
+                </Link>
+                <Link href="/admin/ai/career-trends" aria-current={active === '/admin/ai/career-trends' ? 'page' : undefined}
+                    className={`pm-admin-nav-link ${active === '/admin/ai/career-trends' ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
+                    <ChartColumn size={18} aria-hidden="true"/><span>Career Trends</span>
                 </Link>
                 <Link href="/admin/ai/daily-challenge" aria-current={active === '/admin/ai/daily-challenge' ? 'page' : undefined}
                     className={`pm-admin-nav-link ${active === '/admin/ai/daily-challenge' ? 'is-active' : ''}`}
@@ -188,7 +194,7 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
         </aside>
         <div className="pm-admin-body">
             <header className="pm-admin-topbar">
-                <div className="pm-admin-breadcrumb"><span>PM Circle</span><span aria-hidden="true">/</span><span>Administration</span><span aria-hidden="true">/</span><strong>{title}</strong>
+                <div className="pm-admin-breadcrumb">{breadcrumb ? breadcrumb.map((item, index) => <span key={item}>{index > 0 && <span aria-hidden="true"> / </span>}{index === breadcrumb.length - 1 ? <strong>{item}</strong> : item}</span>) : <><span>PM Circle</span><span aria-hidden="true">/</span><span>Administration</span><span aria-hidden="true">/</span><strong>{title}</strong></>}
                     {(sectionLabel || catalogLabel || pmpLabel) && <><span aria-hidden="true">/</span><span>{sectionLabel || catalogLabel || pmpLabel}</span></>}
                 </div>
                 {dashboardHeader ? <div className="pm-admin-overview-top-actions">

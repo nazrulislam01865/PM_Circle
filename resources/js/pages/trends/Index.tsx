@@ -1,43 +1,64 @@
-import { Head, usePage } from '@inertiajs/react';
-import { BriefcaseBusiness, ChartNoAxesColumnIncreasing, Lightbulb, Newspaper, Target } from 'lucide-react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
-import { TrendCard } from '@/components/trends/TrendShared';
-import { trendArticles, trendCategories, type TrendCategory } from '@/data/pm-trends';
+import { TrendReportRow } from '@/components/trends/TrendShared';
+import { filterTrendReports, reportTopics, type ReportTopic } from '@/data/pm-trends';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
+import '../../../css/pm-trends-public.css';
 
-const icons = [null, BriefcaseBusiness, ChartNoAxesColumnIncreasing, Target, Lightbulb, Newspaper] as const;
+const description = 'Weekly reports on project management, business analysis, technology, AI and other topics shaping how we work.';
+
+function isSaved(slug: string): boolean {
+    try {
+        return typeof window !== 'undefined' && window.localStorage.getItem(`pm-trend-bookmark-${slug}`) === 'true';
+    } catch {
+        return false;
+    }
+}
+
+function ReportListing({ initialSearch }: { initialSearch: string }) {
+    const [search, setSearch] = useState(initialSearch);
+    const [topic, setTopic] = useState<'All' | ReportTopic>('All');
+    const [savedOnly, setSavedOnly] = useState(false);
+    const visible = filterTrendReports(search, topic, savedOnly, isSaved);
+
+    return <div className="pm-public-trends-wrap pm-public-trends-list">
+        <p className="pm-public-trends-note">AI-generated sample reports for the PM Circle prototype.</p>
+        <div className="pm-public-trends-filters" role="group" aria-label="Filter reports">
+            <label className="pm-guide-field-label">Search reports
+                <input className="pm-guide-control" type="search" placeholder="Search titles or topics" value={search} onChange={event => setSearch(event.target.value)}/>
+            </label>
+            <label className="pm-guide-field-label">Topic
+                <select className="pm-guide-control" value={topic} onChange={event => setTopic(event.target.value as 'All' | ReportTopic)}>
+                    <option value="All">All topics</option>
+                    {reportTopics.map(item => <option key={item} value={item}>{item}</option>)}
+                </select>
+            </label>
+        </div>
+        <label className="pm-public-trends-saved pm-guide-field-label">
+            <input type="checkbox" checked={savedOnly} onChange={event => setSavedOnly(event.target.checked)}/>
+            Saved reports only
+        </label>
+        <p className="pm-public-trends-count" role="status">{visible.length} {visible.length === 1 ? 'report' : 'reports'}</p>
+        <div className="pm-public-trends-rows">
+            {visible.length ? visible.map(report => <TrendReportRow key={report.slug} article={report}/>) :
+                <p className="pm-public-trends-empty">{savedOnly ? 'No saved reports match your filters.' : 'No reports match your filters.'}</p>}
+        </div>
+    </div>;
+}
 
 export default function Index() {
-    const [category, setCategory] = useState<'All' | TrendCategory>('All');
-    const search = new URLSearchParams(usePage().url.split('?')[1] ?? '').get('search')?.trim().toLocaleLowerCase() ?? '';
-    const visible = trendArticles.filter(article =>
-        (category === 'All' || article.category === category) &&
-        (!search || `${article.title} ${article.summary} ${article.category}`.toLocaleLowerCase().includes(search))
-    );
-
-    return <PublicLayout siteLayout active="/pm-trends"><Head title="PM Trends & Insights"/>
-        <div className="pm-trends pm-container pm-page">
-            <section className="pm-trends-hero"><div className="pm-trends-hero-content"><div className="pm-trends-hero-text">
-                <h1>PM Trends &amp; Insights</h1>
-                <p>Latest job trends, industry updates, challenges, and practical insights for Project Management professionals.</p>
-            </div></div></section>
-            <div className="pm-trends-listing">
-                <nav className="pm-trends-filters" aria-label="Filter PM Trends">
-                    {trendCategories.map((item, i) => {
-                        const Icon = icons[i];
-                        return <button key={item} className={`pm-trend-filter${category === item ? ' is-selected' : ''}`} type="button"
-                            aria-pressed={category === item} onClick={() => setCategory(item)}>
-                            {Icon && <Icon size={21} strokeWidth={1.7} aria-hidden="true"/>}
-                            {item}{item === 'All' ? ` (${trendArticles.length})` : ''}
-                        </button>;
-                    })}
-                </nav>
-                {search && <p className="pm-trend-search-caption">Search results for “{search}”</p>}
-                <div className="pm-trend-cards">
-                    {visible.length ? visible.map(article => <TrendCard key={article.slug} article={article}/>)
-                        : <div className="pm-trend-empty">No articles in this category yet.</div>}
+    const initialSearch = new URLSearchParams(usePage().url.split('?')[1] ?? '').get('search') ?? '';
+    return <PublicLayout siteLayout homePrototype guideLayout active="/pm-trends">
+        <Head title="Trends"><meta name="description" content={description}/></Head>
+        <div className="pm-public-trends-page pm-guide-public-shell">
+            <section className="pm-terms-banner" aria-labelledby="pm-public-trends-title">
+                <div className="pm-public-trends-wrap">
+                    <nav className="pm-terms-breadcrumb" aria-label="Breadcrumb"><Link href="/">Home</Link><span aria-hidden="true">/</span><span aria-current="page">Trends</span></nav>
+                    <h1 id="pm-public-trends-title">Trends</h1>
+                    <p>{description}</p>
                 </div>
-            </div>
+            </section>
+            <ReportListing key={initialSearch} initialSearch={initialSearch}/>
         </div>
     </PublicLayout>;
 }

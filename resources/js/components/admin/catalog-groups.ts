@@ -8,6 +8,8 @@ export const navigationGroups = [
 export const dropdownGroups = [
     { key: 'careers_location', label: 'Job locations' },
     { key: 'careers_type', label: 'Employment types' },
+    { key: 'career_trend_topic', label: 'Career Trends topics' },
+    { key: 'career_trend_target_level', label: 'Career Trends target levels' },
     { key: 'signup_role', label: 'Signup roles' },
     { key: 'signup_experience', label: 'Signup experience' },
     { key: 'signup_certification', label: 'Signup certifications' },

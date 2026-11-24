@@ -247,6 +247,13 @@ final class AiGateway
             throw new AiFailure('FEATURE_DISABLED', 503);
         }
         $settings = $this->catalog->get($feature);
+        $provider = 'openai';
+        if ($feature === 'trend_draft') {
+            $provider = app(\App\Domain\Careers\Services\CareerTrendSettings::class)->get()['ai_provider'];
+            $connection = app(TrendAiConnection::class);
+            $settings->model = $connection->model($provider, $settings->model);
+            $connection->assertConfigured($provider, $settings->model);
+        }
         $prompt = DB::table('ai_prompt_versions')->where('feature_code', $feature)
             ->where('version', $settings->prompt_version)->whereNotNull('published_at')->first();
         $price = DB::table('ai_model_prices')->where('model', $settings->model)
@@ -254,8 +261,7 @@ final class AiGateway
         if ($feature === 'scenario_generate' && $settings->model !== 'gpt-5-nano') {
             throw new AiFailure('INVALID_FEATURE_CONFIGURATION', 503);
         }
-        if (! $prompt || ! $price || ! config($feature === 'scenario_generate'
-            ? 'pm-ai.daily_challenge_api_key' : 'pm-ai.api_key')) {
+        if (! $prompt || ! $price || ($feature === 'scenario_generate' && ! config('pm-ai.daily_challenge_api_key'))) {
             throw new AiFailure('EDITORIAL_NOT_CONFIGURED', 503);
         }
         $instructions = $prompt->template;
@@ -269,11 +275,11 @@ final class AiGateway
                 ."Never fabricate references to real current events or personal data. Do not simply repeat "
                 ."recent_titles_to_avoid. Make the challenge specific, actionable and assessable.";
         }
-        return DB::transaction(function () use ($feature, $draftId, $context, $settings, $instructions, $price): array {
+        return DB::transaction(function () use ($feature, $draftId, $context, $settings, $instructions, $price, $provider): array {
             $requestId = DB::table('ai_requests')->insertGetId([
                 'request_uuid' => (string) Str::uuid(), 'feature_code' => $feature,
             'subject_type' => 'editorial_draft', 'subject_id' => $draftId,
-            'status' => 'queued', 'model' => $settings->model,
+            'status' => 'queued', 'model' => $settings->model, 'provider' => $provider,
             'prompt_version' => $settings->prompt_version,
             'max_output_tokens' => $settings->max_output_tokens, 'estimated_hold' => 0,
             'payload_encrypted' => Crypt::encryptString(json_encode([

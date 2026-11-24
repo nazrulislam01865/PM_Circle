@@ -102,7 +102,7 @@ final class HomepageController extends Controller
             $item['plans_url'] ??= '/pricing';
         }
         unset($item);
-        $content['careers']['resume']['button_url'] ??= '/careers';
+        $content['careers']['resume']['button_url'] ??= '/ai-resume-assistant';
         $content['careers']['join']['button_url'] ??= '/register';
         $content['scenario']['empty_message'] ??= 'Practical scenarios are being prepared for the community.';
         $content['scenario']['empty_responses_message'] ??= 'Be the first to share your approach.';

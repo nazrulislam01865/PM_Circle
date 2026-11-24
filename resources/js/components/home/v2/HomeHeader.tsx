@@ -54,7 +54,7 @@ export function HomeHeader({ eventsVisible = true }: { eventsVisible?: boolean }
                     { href: '/daily-challenge', label: 'Daily Challenge' },
                     { href: '/events', label: 'Community events' },
                 ]}/>
-                <Link href="/pm-trends" onClick={close}>Trends</Link>
+                <Link href="/pm-trends" onClick={close} aria-current={page.url.split('?')[0] === '/pm-trends' ? 'page' : undefined}>Trends</Link>
                 {eventsVisible && <Link href="/events" onClick={close}>Events</Link>}
             </nav>
             <div className="pm-v2-header-utilities">

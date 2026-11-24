@@ -16,10 +16,11 @@ type Props = {
     clearable?: boolean;
     error?: string;
     contentClassName?: string;
+    portalContainer?: HTMLElement | null;
 };
 
 /** Shared PM Circle admin dropdown: keyboard accessible, consistently sized, and not OS-native. */
-export function AdminChoice({ id, label, value, options, onChange, placeholder = 'Select an option', disabled = false, required = false, invalid = false, clearable = false, error, contentClassName }: Props) {
+export function AdminChoice({ id, label, value, options, onChange, placeholder = 'Select an option', disabled = false, required = false, invalid = false, clearable = false, error, contentClassName, portalContainer }: Props) {
     const clearValue = '__pm_admin_choice_clear__';
     return <div className="pm-admin-field pm-admin-choice-field">
         <label htmlFor={id}>{label}</label>
@@ -28,7 +29,7 @@ export function AdminChoice({ id, label, value, options, onChange, placeholder =
                 <SelectPrimitive.Value placeholder={options.length ? placeholder : 'No active options available'}/>
                 <SelectPrimitive.Icon asChild><ChevronDown size={17}/></SelectPrimitive.Icon>
             </SelectPrimitive.Trigger>
-            <SelectPrimitive.Portal>
+            <SelectPrimitive.Portal container={portalContainer ?? undefined}>
                 <SelectPrimitive.Content position="popper" sideOffset={4} align="start" className={['pm-admin-choice-content', contentClassName].filter(Boolean).join(' ')}>
                     <SelectPrimitive.ScrollUpButton className="pm-admin-choice-scroll"><ChevronUp size={16}/></SelectPrimitive.ScrollUpButton>
                     <SelectPrimitive.Viewport className="pm-admin-choice-viewport">

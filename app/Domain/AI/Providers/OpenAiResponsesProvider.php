@@ -4,6 +4,7 @@ namespace App\Domain\AI\Providers;
 
 use App\Domain\AI\Contracts\AiProvider;
 use App\Domain\AI\Support\AiFailure;
+use App\Domain\AI\Support\ProviderHttpFailure;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
@@ -44,7 +45,8 @@ final class OpenAiResponsesProvider implements AiProvider
             ->timeout((int) config('pm-ai.timeout_seconds'));
         // Daily Challenge generation and scoring keep their own Responses key.
         // Only their mandatory input/output safety checks reuse the Post Check Omni key.
-        $moderationClient = $client;
+        $moderationClient = $feature === 'trend_draft'
+            ? Http::withToken($key)->acceptJson()->connectTimeout(4)->timeout(8) : $client;
         if ($daily && $useExternalModeration) {
             $postCheckKey = config('pm-ai.post_check_api_key');
             if (! is_string($postCheckKey) || trim($postCheckKey) === '') {
@@ -66,7 +68,8 @@ final class OpenAiResponsesProvider implements AiProvider
                 throw new AiFailure('MODERATION_UNAVAILABLE', 503);
             }
             if (! $moderation->successful()) {
-                throw new AiFailure('MODERATION_UNAVAILABLE', 503);
+                $code = $moderation->json('error.code');
+                throw new AiFailure($feature === 'trend_draft' ? ProviderHttpFailure::moderationCode($moderation->status(), is_string($code) ? $code : null) : 'MODERATION_UNAVAILABLE', 503);
             }
             $flagged = $moderation->json('results.0.flagged');
             if (! is_bool($flagged)) {
@@ -99,6 +102,10 @@ final class OpenAiResponsesProvider implements AiProvider
             throw new AiFailure('PROVIDER_STATUS_UNKNOWN', 503);
         }
         if (! $response->successful()) {
+            if ($feature === 'trend_draft') {
+                $code = $response->json('error.code');
+                throw new AiFailure(ProviderHttpFailure::code($response->status(), is_string($code) ? $code : null), 503);
+            }
             throw new AiFailure(in_array($response->status(), [408, 429, 500, 502, 503, 504])
                 ? 'PROVIDER_UNAVAILABLE' : 'PROVIDER_REJECTED', 503);
         }
@@ -139,7 +146,8 @@ final class OpenAiResponsesProvider implements AiProvider
                 throw new AiFailure('MODERATION_UNAVAILABLE', 503);
             }
             if (! $outputModeration->successful()) {
-                throw new AiFailure('MODERATION_UNAVAILABLE', 503);
+                $code = $outputModeration->json('error.code');
+                throw new AiFailure($feature === 'trend_draft' ? ProviderHttpFailure::moderationCode($outputModeration->status(), is_string($code) ? $code : null) : 'MODERATION_UNAVAILABLE', 503);
             }
             $flagged = $outputModeration->json('results.0.flagged');
             if (! is_bool($flagged)) {

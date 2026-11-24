@@ -46,7 +46,7 @@ export function HomeResume({ content }: { content?: HomeContent['careers'] }) {
         <div className="pm-v2-resume-panel"><div className="pm-v2-resume-icon">{content?.resume?.icon_image ? <img src={content.resume.icon_image} alt=""/> : <FileText aria-hidden="true"/>}</div>
             <h2 id="pm-v2-resume-title">{title}</h2><p>{description}</p>
             <span>One starter AI review with free tokens</span>
-            <HomeAction href={content?.resume?.button_url || '/register'} primary>{referenceText(content?.resume?.button_label, 'Explore AI resume assistant', 'Explore Resume Assistant')}</HomeAction>
+            <HomeAction href={content?.resume?.button_url || '/ai-resume-assistant'} primary>{referenceText(content?.resume?.button_label, 'Explore AI resume assistant', 'Explore Resume Assistant')}</HomeAction>
         </div>
         <div className="pm-v2-resume-flow"><h3>How it works</h3><div className="pm-v2-resume-steps">
             {steps.map(({ title: stepTitle, description: stepDescription, Icon }) => <div className="pm-v2-resume-step" key={stepTitle}>

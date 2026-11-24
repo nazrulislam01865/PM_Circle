@@ -24,12 +24,17 @@ final class HomepageMasterData
         'careers_type' => 'Employment types',
     ];
 
+    public const CAREER_TREND_GROUPS = [
+        'career_trend_topic' => 'Career Trends topics',
+        'career_trend_target_level' => 'Career Trends target levels',
+    ];
+
     public const GROUPS = self::NAVIGATION_GROUPS + self::DROPDOWN_GROUPS;
 
     /** Signup choices share the existing admin master-data editor, not the homepage editor. */
     public static function editableDropdownGroups(): array
     {
-        return self::DROPDOWN_GROUPS + SignupMasterData::GROUPS + CourseMasterData::GROUPS + InterviewMasterData::GROUPS + DailyChallengeMasterData::GROUPS;
+        return self::DROPDOWN_GROUPS + self::CAREER_TREND_GROUPS + SignupMasterData::GROUPS + CourseMasterData::GROUPS + InterviewMasterData::GROUPS + DailyChallengeMasterData::GROUPS;
     }
 
     // Icons are implemented in the existing frontend and require a code release to add a new kind.
@@ -76,7 +81,7 @@ final class HomepageMasterData
 
     public static function isAllowedNewValue(string $category, string $value): bool
     {
-        if (! array_key_exists($category, self::GROUPS) && ! array_key_exists($category, SignupMasterData::GROUPS) && ! array_key_exists($category, CourseMasterData::GROUPS) && ! array_key_exists($category, InterviewMasterData::GROUPS) && ! array_key_exists($category, DailyChallengeMasterData::GROUPS)) {
+        if (! array_key_exists($category, self::GROUPS) && ! array_key_exists($category, self::CAREER_TREND_GROUPS) && ! array_key_exists($category, SignupMasterData::GROUPS) && ! array_key_exists($category, CourseMasterData::GROUPS) && ! array_key_exists($category, InterviewMasterData::GROUPS) && ! array_key_exists($category, DailyChallengeMasterData::GROUPS)) {
             return false;
         }
         if (isset(self::ICON_VALUES[$category])) {
@@ -110,6 +115,9 @@ final class HomepageMasterData
         if (in_array($category, ['course_category', 'course_level'], true)) {
             return mb_strlen($value) <= ($category === 'course_level' ? 20 : 100)
                 && preg_match('/^[^\p{C}<>]*[\p{L}\p{N}][^\p{C}<>]*$/uD', $value) === 1;
+        }
+        if (in_array($category, ['career_trend_topic', 'career_trend_target_level'], true)) {
+            return mb_strlen($value) <= 160 && preg_match('/^[^\p{C}<>]*[\p{L}\p{N}][^\p{C}<>]*$/uD', $value) === 1;
         }
         if (in_array($category, ['careers_location', 'careers_type'], true)) {
             return preg_match('/^[\p{L}\p{N} .,&()\/-]{1,100}$/uD', $value) === 1;

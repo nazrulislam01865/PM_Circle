@@ -1,6 +1,8 @@
 /** Static prototype content. No network calls or database access. */
 export const trendCategories = ['All', 'Job Trends', 'Market Insights', 'Challenges', 'How to Adapt', 'Industry News'] as const;
-export type TrendCategory = Exclude<(typeof trendCategories)[number], 'All'>;
+export const reportTopics = ['AI at Work', 'Career Paths', 'Skills'] as const;
+export type ReportTopic = (typeof reportTopics)[number];
+export type TrendCategory = Exclude<(typeof trendCategories)[number], 'All'> | ReportTopic;
 
 export type TrendArticle = {
     slug: string;
@@ -17,9 +19,9 @@ export type TrendArticle = {
     thumbnail: string;
     hero?: string;
     attribution: string;
-    sources?: { title: string; url: string }[];
+    sources?: { title: string; url: string; reportTitle?: string; description?: string }[];
     intro: string;
-    sections: { title: string; text?: string; bullets?: string[]; chart?: string }[];
+    sections: { title: string; text?: string; bullets?: string[]; chart?: string; image?: string; imageAlt?: string }[];
 };
 
 const imageBase = '/images/trends/';
@@ -98,5 +100,54 @@ export const trendArticles: TrendArticle[] = [
         ],
     },
 ];
+
+/** The three explicitly labelled public prototype reports. Older article URLs remain valid. */
+export const sampleTrendReports: (TrendArticle & { category: ReportTopic })[] = [
+    {
+        slug: 'using-ai-for-project-updates-without-losing-the-facts',
+        title: 'Using AI for project updates without losing the facts',
+        summary: 'Where an AI draft can save time, and what a project manager still needs to verify before sharing it.',
+        date: '22 Nov 2026', readMinutes: 1, category: 'AI at Work', classification: 'AI Analysis',
+        thumbnail: `${imageBase}sample-ai-at-work.webp`, hero: `${imageBase}sample-ai-report-cover.webp`, attribution: 'Source: PMI',
+        sources: [{ title: 'PMI', url: 'https://www.pmi.org/', reportTitle: 'Apply AI for Project Management', description: 'Background on AI-assisted planning, reporting and communication.' }],
+        intro: '',
+        sections: [
+            { title: 'Start with the project record', text: 'A weekly update is a sensible place to try AI-assisted drafting. Begin with approved inputs such as the action log, decision register and the current schedule. Ask the tool to separate open decisions from completed work, and tell it to mark missing information.' },
+            { title: 'Keep accountability with the project team', text: 'Check each proposed owner, date and status against the source. If someone’s update is ambiguous, confirm it with them before sharing the draft. Follow your organisation’s rules on what project information can be entered into AI tools.' },
+            { title: '', image: `${imageBase}sample-ai-report-workspace.webp`, imageAlt: 'A desk with a computer, keyboard and handwritten project notes' },
+            { title: 'Build an example for your portfolio', text: 'Save an anonymised before-and-after example. Describe how you verified dates and numbers and how the final update helped someone make a decision.' },
+        ],
+    },
+    {
+        slug: 'project-coordinator-role-in-bangladesh',
+        title: 'What to look for in a project coordinator role in Bangladesh',
+        summary: 'A practical guide to reading role descriptions and showing evidence of coordination skills.',
+        date: '22 Nov 2026', readMinutes: 2, category: 'Career Paths', classification: 'AI Analysis',
+        thumbnail: `${imageBase}sample-career-paths.webp`, attribution: 'Source: ActionAid Bangladesh via Bdjobs',
+        sources: [{ title: 'ActionAid Bangladesh via Bdjobs', url: 'https://www.bdjobs.com/' }],
+        intro: 'Read each role description carefully and identify the coordination responsibilities that you can demonstrate with your own experience.',
+        sections: [{ title: 'Evidence of coordination', bullets: ['Describe how you tracked actions and deadlines.', 'Explain how you coordinated stakeholders and communicated progress.', 'Use examples of issues you helped resolve, without inventing results.'] }],
+    },
+    {
+        slug: 'agile-delivery-skills-in-an-interview',
+        title: 'Agile delivery skills you can demonstrate in an interview',
+        summary: 'How to talk about planning, feedback and team delivery with examples from your own work.',
+        date: '22 Nov 2026', readMinutes: 2, category: 'Skills', classification: 'AI Analysis',
+        thumbnail: `${imageBase}sample-skills.webp`, attribution: 'Source: Scrum Guides',
+        sources: [{ title: 'Scrum Guides', url: 'https://scrumguides.org/' }],
+        intro: 'Use examples from your own work to explain how you supported planning, feedback and team delivery.',
+        sections: [{ title: 'Prepare practical examples', bullets: ['Explain how the team planned work and adjusted to new information.', 'Describe how feedback influenced the next steps.', 'Discuss your contribution to delivery and what you learned.'] }],
+    },
+];
+
+/** The public list filters its small static dataset locally; no API or database query. */
+export function filterTrendReports(search: string, topic: 'All' | ReportTopic, savedOnly: boolean, isSaved: (slug: string) => boolean) {
+    const query = search.trim().toLocaleLowerCase();
+    return sampleTrendReports.filter(report =>
+        (topic === 'All' || report.category === topic) &&
+        (!query || `${report.title} ${report.category} ${report.summary}`.toLocaleLowerCase().includes(query)) &&
+        (!savedOnly || isSaved(report.slug)),
+    );
+}
 
 export const trendArticleHref = (slug: string) => `/pm-trends/${encodeURIComponent(slug)}`;

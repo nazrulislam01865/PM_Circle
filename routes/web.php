@@ -167,6 +167,8 @@ Route::post('/contact', [ContactController::class, 'submit'])->middleware('throt
 Route::get('/contact/confirm/{token}', [ContactController::class, 'confirm'])
     ->middleware(['signed', 'throttle:10,1'])->where('token', '[A-Za-z0-9]{64}')->name('contact.confirm');
 Route::inertia('/refund-policy', 'public/PolicyNotice')->name('refund-policy');
+// Static public resume preview; no AI request or resume data access.
+Route::inertia('/ai-resume-assistant', 'public/AiResumeAssistant')->name('ai-resume-assistant');
 
 // Public prototype event catalog. No booking endpoint or event database queries.
 Route::get('/events', [EventPreviewController::class, 'index'])->name('events.index');
@@ -359,6 +361,13 @@ Route::middleware(['auth', 'pm.admin', 'verified', 'throttle:60,1'])
         Route::post('/chat-limits/overrides/{override}/revoke', [$limits, 'revokeOverride'])
             ->whereNumber('override')->name('chat-limits.overrides.revoke');
         Route::post('/allowances', [$limits, 'publishAllowance'])->name('allowances');
+        $trends = \App\Http\Controllers\Admin\AI\CareerTrendSettingsController::class;
+        Route::get('/career-trends', [$trends, 'index'])->name('career-trends.index');
+        Route::put('/career-trends', [$trends, 'update'])->name('career-trends.update');
+        Route::post('/career-trends/connection-test', [$trends, 'testConnection'])
+            ->middleware('throttle:5,1')->name('career-trends.connection-test');
+        Route::get('/career-trends/connection-test/{uuid}', [$trends, 'connectionTestStatus'])
+            ->whereUuid('uuid')->middleware('throttle:60,1')->name('career-trends.connection-test.status');
         $daily = \App\Http\Controllers\Admin\DailyChallenge\DailyChallengeController::class;
         Route::get('/daily-challenge', [$daily, 'index'])->name('daily-challenge.index');
         Route::put('/daily-challenge', [$daily, 'update'])->name('daily-challenge.update');

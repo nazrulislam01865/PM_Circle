@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Members;
 
 use App\Domain\Billing\Actions\SetTemporaryMembership;
 use App\Http\Controllers\Controller;
-use App\Domain\Community\Services\EngagementStats;
+use App\Domain\Community\Queries\FeedQuery;
+use App\Domain\Identity\Services\MemberProfileOverview;
+use App\Domain\Identity\Services\MemberProfileAccess;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use App\Domain\Identity\Services\ProfileFieldPrivacy;
 use App\Models\Profile;
 use App\Models\User;
@@ -149,19 +152,22 @@ final class MemberDirectoryController extends Controller
         return app()->environment('testing') ? $getOptions() : Cache::remember('pm_circle_public_member_filter_options_v1', 60, $getOptions);
     }
 
-    public function show(Request $request, User $member): Response
+    public function show(Request $request, string $member, FeedQuery $feed, MemberProfileOverview $overview): Response|HttpResponse
     {
-        abort_unless($member->is_admin !== true && $member->status === 'active', 404);
-        if (config('pm-circle.email_verification_required')) {
-            abort_unless($member->email_verified_at !== null, 404);
-        }
+        // Resolve inside the controller so even a missing account receives the shared Inertia layout.
+        $id = filter_var($member, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        $member = $id === false ? null : User::query()->find($id);
         $viewer = $request->user()?->is_admin === true ? null : $request->user();
-        $isOwnProfile = $viewer?->id === $member->id;
-        $profileQuery = $member->profile();
-        if (! $isOwnProfile) {
-            $profileQuery->where('visibility', 'public');
+        $member?->load(['profile:id,user_id,role,headline,bio,about,field_visibility,visibility,industry,country,city,skills,avatar_path,cover_photo_path,open_to_opportunities,languages,linkedin_url,editor_details']);
+        if (! MemberProfileAccess::allows($member, $viewer)) {
+            abort_if($request->expectsJson(), 404);
+
+            return Inertia::render('members/Unavailable')->toResponse($request)->setStatusCode(404);
         }
-        $profile = $profileQuery->firstOrFail(['id', 'user_id', 'role', 'headline', 'bio', 'field_visibility', 'visibility']);
+        $isOwnProfile = $viewer?->id === $member->id;
+        $profile = $member->profile;
+        $filters = $request->validate(['tab' => ['nullable', 'in:overview,posts'], 'cursor' => ['nullable', 'string', 'max:4096']]);
+        $tab = $filters['tab'] ?? 'overview';
 
         if ($viewer && ! $isOwnProfile && $viewer->status === 'active' && ! $viewer->is_admin) {
             // Single indexed write per viewer/day. Guest and self views are never counted.
@@ -185,17 +191,11 @@ final class MemberDirectoryController extends Controller
             ],
             'isOwnProfile' => $isOwnProfile,
             'following' => $viewer ? DB::table('member_follows')->where('follower_id', $viewer->id)->where('followed_id', $member->id)->exists() : false,
-            'posts' => $member->posts()->where('status', 'published')->where('visibility', 'public')->where('is_anonymous', false)
-                ->when($viewer, fn ($query) => $query->whereNotExists(fn ($hidden) => $hidden->selectRaw('1')
-                    ->from('post_hides')->whereColumn('post_hides.post_id', 'posts.id')
-                    ->where('post_hides.user_id', $viewer->id)))
-                ->when(EngagementStats::readsEnabled(), fn ($query) => $query
-                    ->leftJoin('post_engagement_stats as profile_stats', 'profile_stats.post_id', '=', 'posts.id')
-                    ->select('posts.id', 'posts.author_id', 'posts.title', 'posts.body', 'posts.image_path', 'posts.topic', 'posts.published_at', 'posts.ai_generated')
-                    ->selectRaw('COALESCE(profile_stats.comments_count, 0) AS comments_count')
-                    ->selectRaw('COALESCE(profile_stats.reactions_count, 0) AS reactions_count'))
-                ->when(! EngagementStats::readsEnabled(), fn ($query) => $query->withCount(['comments' => fn ($query) => $query->visible(), 'reactions']))
-                ->latest('posts.published_at')->limit(8)->get(['posts.id', 'posts.author_id', 'posts.title', 'posts.body', 'posts.image_path', 'posts.topic', 'posts.published_at', 'posts.ai_generated']),
+            'overview' => $overview->forMember($member, $profile, $viewer, $tab === 'overview'),
+            'activeTab' => $tab,
+            'canFollow' => $profile->visibility === 'public',
+            'canInteract' => in_array('members_only', ProfileFieldPrivacy::profileAudiences($viewer), true),
+            'posts' => $feed->page('all', 'All', null, $viewer, $tab === 'posts' ? ($filters['cursor'] ?? null) : null, false, $member->id),
         ]);
     }
 

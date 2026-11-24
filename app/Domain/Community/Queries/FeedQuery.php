@@ -3,6 +3,8 @@
 namespace App\Domain\Community\Queries;
 
 use App\Models\Post;
+use App\Domain\Identity\Services\ProfileFieldPrivacy;
+use App\Domain\Identity\Services\MemberProfileAccess;
 use App\Domain\Community\Services\EngagementStats;
 use App\Models\User;
 use Illuminate\Pagination\Cursor;
@@ -16,10 +18,14 @@ final class FeedQuery
     public const INITIAL_SIZE = 20;
     public const NEXT_SIZE = 12;
 
-    public function page(string $tab, string $topic, ?string $search, ?User $viewer, ?string $token = null, bool $includeSaved = false): array
+    public function page(string $tab, string $topic, ?string $search, ?User $viewer, ?string $token = null, bool $includeSaved = false, ?int $authorId = null): array
     {
         $search = trim($search ?? '');
-        $key = hash('sha256', json_encode([$viewer?->getKey(), $tab, $topic, $search]));
+        $scope = [$viewer?->getKey(), $tab, $topic, $search];
+        if ($authorId !== null) {
+            $scope[] = $authorId;
+        }
+        $key = hash('sha256', json_encode($scope));
         $anchor = null;
         $cursor = null;
 
@@ -46,6 +52,7 @@ final class FeedQuery
         $query = Post::query()->forFeed($tab, $viewer && $viewer->status === 'active' && ! $viewer->is_admin
                 && $viewer->onboarding_step >= 3 && $viewer->hasVerifiedEmail() ? $viewer->getKey() : null)
             ->whereNotNull('posts.published_at')
+            ->when($authorId !== null, fn ($query) => $query->where('posts.author_id', $authorId)->where('posts.is_anonymous', false))
             ->when($tab === 'restricted', fn ($query) => $query->whereRaw('1 = 0'))
             ->when($topic !== 'All', function ($query) use ($topic): void {
                 if ($topic === 'Questions') {
@@ -66,9 +73,8 @@ final class FeedQuery
                 ->orWhere(fn ($same) => $same->where('posts.published_at', '=', $anchor['time'])
                     ->where('posts.id', '<=', $anchor['id']))))
             ->with([
-                'author:id,name',
-                'author.profile' => fn ($query) => $query->where('visibility', 'public')
-                    ->select('id', 'user_id', 'role', 'avatar_path'),
+                'author:id,name,status,is_admin,email_verified_at',
+                'author.profile:id,user_id,role,avatar_path,visibility,field_visibility',
             ])
             ->orderByDesc('posts.published_at')->orderByDesc('posts.id');
 
@@ -141,6 +147,11 @@ final class FeedQuery
             $post->setAttribute('viewer_is_author', (bool) ($viewer && $post->author_id === $viewer->id));
             $post->setAttribute('viewer_muted', (bool) ($viewer && $post->author_id === $viewer->id && $post->notifications_muted_at));
             $post->makeHidden('notifications_muted_at');
+            MemberProfileAccess::decorateAuthor($post->author, $viewer);
+            if ($authorId !== null && $post->author?->profile
+                && ! ProfileFieldPrivacy::visible($post->author->profile, 'full_name', $viewer, $post->author->id)) {
+                $post->author->name = 'PM Circle member';
+            }
             $post->anonymizeForPublic();
         }
 
@@ -173,6 +184,7 @@ final class FeedQuery
                 'author' => $author['name'] ?? 'Member',
                 'authorId' => ! empty($post['is_anonymous']) ? null : ($author['id'] ?? null),
                 'authorHasPublicProfile' => empty($post['is_anonymous']) && ! empty($author['profile']),
+                'authorProfileUrl' => empty($post['is_anonymous']) ? ($author['profile_url'] ?? null) : null,
                 'authorRole' => $profile['role'] ?? null,
                 'authorAvatar' => $profile['avatar_path'] ?? null,
                 'publishedAt' => $post['published_at'] ?? null,

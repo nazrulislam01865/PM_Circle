@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Community;
 
 use App\Http\Controllers\Controller;
+use App\Domain\Identity\Services\MemberProfileAccess;
+use App\Domain\Identity\Services\ProfileFieldPrivacy;
 use App\Domain\Community\Actions\ReactToPost;
 use App\Domain\Community\Actions\ReactToComment;
 use App\Domain\Community\Services\EngagementStats;
@@ -51,10 +53,10 @@ class PostInteractionController extends Controller
         $this->ensurePublic($post, $request);
         $sort = $request->query('sort') === 'newest' ? 'newest' : 'relevant';
         $query = $post->comments()->visible()->whereNull('parent_id')
-            ->with(['author:id,name,status,is_admin,email_verified_at', 'author.profile:id,user_id,avatar_path,visibility'])
+            ->with(['author:id,name,status,is_admin,email_verified_at', 'author.profile:id,user_id,avatar_path,visibility,field_visibility'])
             ->withCount(['likes', 'replies' => fn ($query) => $query->visible()])
             ->with(['replies' => fn ($replies) => $replies->visible()->orderBy('created_at')->orderBy('id')->limit(2)
-                ->with(['author:id,name,status,is_admin,email_verified_at', 'author.profile:id,user_id,avatar_path,visibility'])->withCount('likes')]);
+                ->with(['author:id,name,status,is_admin,email_verified_at', 'author.profile:id,user_id,avatar_path,visibility,field_visibility'])->withCount('likes')]);
         if ($sort === 'relevant') {
             $query->orderByDesc('likes_count');
         }
@@ -68,8 +70,8 @@ class PostInteractionController extends Controller
                 ->whereIn('comment_id', $visibleIds)->pluck('type', 'comment_id')->all()
             : [];
         $liked = $likedIds;
-        $viewerId = $request->user()?->id;
-        $serialize = function (Comment $comment) use (&$serialize, $liked, $viewerId): array {
+        $viewer = $request->user();
+        $serialize = function (Comment $comment) use (&$serialize, $liked, $viewer): array {
             return [
                 'id' => $comment->id,
                 'body' => $comment->body,
@@ -81,10 +83,8 @@ class PostInteractionController extends Controller
                 'viewer_reaction' => $liked[$comment->id] ?? null,
                 'author' => [
                     'name' => $comment->author?->name ?? 'Member',
-                    'profile_url' => $this->commentProfileUrl($comment->author),
-                    'avatar_path' => $comment->author && (
-                        $comment->author->id === $viewerId || $comment->author->profile?->visibility === 'public'
-                    ) ? $comment->author->profile?->avatar_path : null,
+                    'profile_url' => MemberProfileAccess::url($comment->author, $viewer),
+                    'avatar_path' => $this->commentAvatar($comment->author, $viewer),
                 ],
                 'replies' => $comment->relationLoaded('replies')
                     ? $comment->replies->map($serialize)->values()->all() : [],
@@ -199,12 +199,12 @@ class PostInteractionController extends Controller
         return response()->json(['status' => 'pending_check'], 202);
     }
 
-    /** Call only with the existing eagerly loaded profile; no additional query. */
-    private function commentProfileUrl(?User $author): ?string
+    /** Use the already loaded profile; never expose a field outside its audience. */
+    private function commentAvatar(?User $author, ?User $viewer): ?string
     {
-        return $author && $author->status === 'active' && ! $author->is_admin
-            && $author->hasVerifiedEmail() && $author->profile?->visibility === 'public'
-            ? '/members/'.$author->id : null;
+        return MemberProfileAccess::allows($author, $viewer)
+            && ProfileFieldPrivacy::visible($author->profile, 'profile_photo_url', $viewer, $author->id)
+            ? $author->profile->avatar_path : null;
     }
 
     /** Shared serializer for ordinary and newly approved comments. */
@@ -219,7 +219,7 @@ class PostInteractionController extends Controller
             'author' => [
                 'name' => $request->user()->name,
                 'avatar_path' => $request->user()->loadMissing('profile')->profile?->avatar_path,
-                'profile_url' => $this->commentProfileUrl($request->user()),
+                'profile_url' => MemberProfileAccess::url($request->user(), $request->user()),
             ], 'replies' => [],
         ];
     }
@@ -324,17 +324,18 @@ class PostInteractionController extends Controller
         return response()->json([
             'total' => array_sum($counts),
             'counts' => $counts,
-            'data' => $page->map(static function ($row): array {
-                $publicProfile = $row->visibility === 'public' && $row->status === 'active'
-                    && ! $row->is_admin && (! config('pm-circle.email_verification_required')
-                        || $row->email_verified_at !== null);
+            'data' => $page->map(static function ($row) use ($request): array {
+                $accessible = MemberProfileAccess::allowsIdentity((int) $row->user_id, $row->status, (bool) $row->is_admin,
+                    ! config('pm-circle.email_verification_required') || $row->email_verified_at !== null,
+                    $row->visibility, $request->user());
+                $publicProfile = $accessible && $row->visibility === 'public';
 
                 return [
                     'id' => (int) $row->id,
                     'type' => $row->type,
                     'name' => $row->name,
                     'avatar_url' => $publicProfile ? ProfileMediaUrl::for($row->avatar_path, 'avatar') : null,
-                    'profile_url' => $publicProfile ? '/members/'.$row->user_id : null,
+                    'profile_url' => $accessible ? route('members.show', ['member' => $row->user_id], false) : null,
                 ];
             })->values()->all(),
             'next_cursor' => $hasMore ? (int) $page->last()->id : null,
@@ -354,7 +355,7 @@ class PostInteractionController extends Controller
         }
 
         $query = $comment->replies()->visible()->with([
-            'author:id,name,status,is_admin,email_verified_at', 'author.profile:id,user_id,avatar_path,visibility',
+            'author:id,name,status,is_admin,email_verified_at', 'author.profile:id,user_id,avatar_path,visibility,field_visibility',
         ])->withCount('likes');
         if ($after) {
             $query->where(fn ($builder) => $builder->where('created_at', '>', $after->created_at)
@@ -368,7 +369,7 @@ class PostInteractionController extends Controller
             ? DB::table('comment_likes')->where('user_id', $request->user()->id)
                 ->whereIn('comment_id', $rows->pluck('id'))->pluck('type', 'comment_id')
             : collect();
-        $viewerId = $request->user()?->id;
+        $viewer = $request->user();
 
         return response()->json([
             'data' => $rows->map(fn (Comment $reply) => [
@@ -379,10 +380,8 @@ class PostInteractionController extends Controller
                 'viewer_reaction' => $reactions->get($reply->id),
                 'author' => [
                     'name' => $reply->author?->name ?? 'Member',
-                    'profile_url' => $this->commentProfileUrl($reply->author),
-                    'avatar_path' => $reply->author && ($reply->author->id === $viewerId
-                        || $reply->author->profile?->visibility === 'public')
-                        ? $reply->author->profile?->avatar_path : null,
+                    'profile_url' => MemberProfileAccess::url($reply->author, $viewer),
+                    'avatar_path' => $this->commentAvatar($reply->author, $viewer),
                 ],
                 'replies' => [],
             ])->values()->all(),

@@ -55,6 +55,28 @@ final class ProfileFieldPrivacy
         return $choices;
     }
 
+    /** The same eligibility as the member community feed. */
+    public static function profileAudiences(?User $viewer): array
+    {
+        return $viewer && ! $viewer->is_admin && $viewer->status === 'active'
+            && $viewer->onboarding_step >= 3 && $viewer->hasVerifiedEmail()
+            ? ['public', 'members_only'] : ['public'];
+    }
+
+    /** Preserve the post's published identity, but apply privacy to its profile preview. */
+    public static function protectPostAuthor(?User $author, ?User $viewer): void
+    {
+        if (! $author?->profile) {
+            return;
+        }
+        $profile = $author->profile;
+        $profile->role = self::visible($profile, 'current_job_title', $viewer, $author->id) ? $profile->role : null;
+        if (! self::visible($profile, 'profile_photo_url', $viewer, $author->id)) {
+            $profile->avatar_path = null;
+        }
+        $profile->makeHidden(['visibility', 'field_visibility']);
+    }
+
     public static function visible(Profile $profile, string $key, ?User $viewer, int $ownerId): bool
     {
         if ($viewer?->id === $ownerId) {

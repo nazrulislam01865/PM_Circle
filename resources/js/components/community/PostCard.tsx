@@ -29,6 +29,7 @@ export type PostPreview = {
     author: {
         name: string;
         id?: number;
+        profile_url?: string | null;
         profile?: {
             role?: string | null;
             avatar_path?: string | null;

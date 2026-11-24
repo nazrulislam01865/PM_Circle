@@ -29,7 +29,7 @@ $assert(str_contains($controller, '$this->ensurePublic($post, $request)')
     && str_contains($controller, "->where('r.id', '<', \$input['after'])"), 'Existing post visibility, keyset pagination and bounded data');
 $assert(str_contains($controller, "->join('users as users'")
     && str_contains($controller, "->leftJoin('profiles as profile'")
-    && str_contains($controller, "'profile_url' => \$publicProfile ?")
+    && str_contains($controller, "'profile_url' => \$accessible ?")
     && str_contains($controller, "'avatar_url' => \$publicProfile ?"), 'Real reactor names, privacy-safe avatars and profile links');
 $assert(str_contains($postController, "foreach (['comments', 'reactions', 'likes', 'loves'] as \$label)")
     && str_contains($postController, "'comments' => 'comments_count'")

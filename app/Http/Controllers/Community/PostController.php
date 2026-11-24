@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Community;
 
+use App\Domain\Identity\Services\MemberProfileAccess;
 use App\Http\Controllers\Controller;
 use App\Domain\Community\Actions\PublishPost;
 use App\Domain\Community\Services\EngagementStats;
@@ -80,8 +81,8 @@ class PostController extends Controller
             abort(404);
         }
         $post->load([
-            'author:id,name',
-            'author.profile' => fn ($q) => $q->where('visibility', 'public')->select('id', 'user_id', 'role', 'avatar_path')
+            'author:id,name,status,is_admin,email_verified_at',
+            'author.profile:id,user_id,role,avatar_path,visibility,field_visibility'
         ]);
         if (EngagementStats::readsEnabled()) {
             $stats = \Illuminate\Support\Facades\DB::table('post_engagement_stats')
@@ -111,10 +112,10 @@ class PostController extends Controller
 
         $comments = $post->comments()
             ->visible()->whereNull('parent_id')
-            ->with(['author:id,name', 'author.profile' => fn ($q) => $q->where('visibility', 'public')->select('id', 'user_id', 'avatar_path')])
+            ->with(['author:id,name,status,is_admin,email_verified_at', 'author.profile:id,user_id,role,avatar_path,visibility,field_visibility'])
             ->withCount(['likes', 'replies' => fn ($query) => $query->visible()])
             ->with(['replies' => fn ($query) => $query->visible()->orderBy('created_at')->orderBy('id')->limit(2)
-                ->with(['author:id,name', 'author.profile' => fn ($q) => $q->where('visibility', 'public')->select('id', 'user_id', 'avatar_path')])->withCount('likes')])
+                ->with(['author:id,name,status,is_admin,email_verified_at', 'author.profile:id,user_id,role,avatar_path,visibility,field_visibility'])->withCount('likes')])
             ->oldest()
             ->paginate(12);
 
@@ -124,7 +125,15 @@ class PostController extends Controller
                 ->where('user_id', $request->user()->id)->value('option_id') ?? 0) : null);
         $post->setAttribute('viewer_is_author', (bool) ($request->user() && $post->author_id === $request->user()->id));
         $post->setAttribute('viewer_muted', (bool) ($post->viewer_is_author && $post->notifications_muted_at));
+        MemberProfileAccess::decorateAuthor($post->author, $request->user());
         $post->anonymizeForPublic();
+
+        foreach ($comments->getCollection() as $comment) {
+            MemberProfileAccess::decorateAuthor($comment->author, $request->user());
+            foreach ($comment->replies as $reply) {
+                MemberProfileAccess::decorateAuthor($reply->author, $request->user());
+            }
+        }
 
         $visibleCommentIds = $comments->getCollection()->flatMap(fn ($root) =>
             $root->replies->pluck('id')->push($root->id))->all();

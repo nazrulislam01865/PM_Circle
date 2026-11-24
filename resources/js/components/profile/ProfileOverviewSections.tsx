@@ -12,7 +12,8 @@ import {
 type Props = {
     profile: ProfileData;
     featuredProjectId?: number;
-    onEdit: () => void;
+    visibleFields?: string[];
+    onEdit?: () => void;
 };
 
 const headings: Array<{ key: CollectionKey; icon: typeof Briefcase }> = [
@@ -78,16 +79,16 @@ function ReadOnlyFields({ fields, record, omit = [] }: {
 function OverviewCard({ title, icon: Icon, onEdit, children }: {
     title: string;
     icon: typeof Briefcase;
-    onEdit: () => void;
+    onEdit?: () => void;
     children: ReactNode;
 }) {
     return <section className="pm-card" aria-label={title}>
         <div className="pm-card-body">
             <div className="pm-card-header-row">
                 <h3 className="pm-card-title"><Icon size={20} aria-hidden="true" /> {title}</h3>
-                <button type="button" className="pm-btn-ghost" onClick={onEdit} aria-label={`Edit ${title}`}>
+                {onEdit && <button type="button" className="pm-btn-ghost" onClick={onEdit} aria-label={`Edit ${title}`}>
                     <Pencil size={14} aria-hidden="true" /> Edit
-                </button>
+                </button>}
             </div>
             {children}
         </div>
@@ -100,7 +101,7 @@ function CollectionCard({ type, icon, rows, featuredProjectId, originalProjects,
     rows: RowData[];
     featuredProjectId?: number;
     originalProjects: RowData[];
-    onEdit: () => void;
+    onEdit?: () => void;
 }) {
     const definition = definitions[type];
     const ordered = type === 'projects' && featuredProjectId
@@ -146,7 +147,13 @@ function CollectionCard({ type, icon, rows, featuredProjectId, originalProjects,
 }
 
 /** The signed-in owner's overview: it mirrors the editor's persisted fields, without new reads. */
-export function ProfileOverviewSections({ profile, featuredProjectId, onEdit }: Props) {
+export function ProfileOverviewSections({ profile, featuredProjectId, onEdit, visibleFields }: Props) {
+    const canSee = (field: string) => visibleFields === undefined || visibleFields.includes(field);
+    const collectionPrivacy: Record<CollectionKey, string> = {
+        experiences: 'experience', projects: 'selected_projects', educations: 'education', certifications: 'certifications_and_licences',
+        courses: 'courses_and_professional_development', awards: 'awards_and_honours', publications: 'publications_and_speaking',
+        volunteering: 'volunteering', languages: 'languages', links: 'portfolio_and_links',
+    };
     const details = profile.editor_details;
     const records = initialRecords(profile);
     const basic: RowData = {
@@ -167,36 +174,40 @@ export function ProfileOverviewSections({ profile, featuredProjectId, onEdit }: 
         { key: 'profile_photo_url', label: 'Profile photo URL', type: 'url' },
         { key: 'cover_photo_url', label: 'Cover photo URL', type: 'url' },
     ];
+    const basicPrivacy: Record<string, string> = { name: 'full_name', headline: 'professional_headline', role: 'current_job_title', current_organization: 'current_organisation', industry: 'industry', country: 'country', city: 'city', profile_photo_url: 'profile_photo_url', cover_photo_url: 'cover_photo_url' };
+    const careerPrivacy: Record<string, string> = { availability: 'availability', target_roles: 'target_roles', seniority: 'seniority', locations: 'preferred_work_locations', work_arrangement: 'preferred_work_arrangement', employment_type: 'preferred_employment_type', notice_period: 'notice_period_or_earliest_start', relocation: 'open_to_relocation' };
+    const shownBasic = basicFields.filter(field => canSee(basicPrivacy[field.key]));
+    const shownCareer = careerFields.filter(field => canSee(careerPrivacy[field.key]));
     const career: RowData = {
-        availability: profile.open_to_opportunities ? 'open' : 'not_looking',
-        relocation: false,
+        availability: canSee('availability') ? (profile.open_to_opportunities ? 'open' : 'not_looking') : undefined,
+        ...(visibleFields === undefined ? { relocation: false } : {}),
         ...details?.career,
     };
 
     return <>
-        <OverviewCard title="Basic details" icon={UserCheck} onEdit={onEdit}>
-            <ReadOnlyFields fields={basicFields} record={basic} />
-        </OverviewCard>
-        <OverviewCard title="Contact details" icon={MapPin} onEdit={onEdit}>
+        {shownBasic.length > 0 && <OverviewCard title="Basic details" icon={UserCheck} onEdit={onEdit}>
+            <ReadOnlyFields fields={shownBasic} record={basic} />
+        </OverviewCard>}
+        {visibleFields === undefined && <OverviewCard title="Contact details" icon={MapPin} onEdit={onEdit}>
             <p className="pm-overview-private-note">Only you can see these contact details on this page.</p>
             <ReadOnlyFields fields={[{ key: 'email', label: 'Contact email' }, { key: 'phone', label: 'Contact phone with country code' }]}
                 record={{ email: profile.email, phone: profile.phone }} />
-        </OverviewCard>
-        <OverviewCard title="About & skills" icon={Sparkles} onEdit={onEdit}>
-            {profile.about
+        </OverviewCard>}
+        {['professional_summary', 'core_skills', 'tools_and_software', 'delivery_methods'].some(canSee) && <OverviewCard title="About & skills" icon={Sparkles} onEdit={onEdit}>
+            {canSee('professional_summary') && (profile.about
                 ? <p className="pm-overview-about">{profile.about}</p>
-                : <p className="pm-profile-empty">No professional summary added yet.</p>}
-            <div className="pm-overview-skills-title">Core skills</div>
+                : <p className="pm-profile-empty">No professional summary added yet.</p>)}
+            {canSee('core_skills') && <><div className="pm-overview-skills-title">Core skills</div>
             {profile.skills.length
                 ? <div className="pm-skills-list">{profile.skills.map(skill => <span className="pm-skill-tag" key={skill}>{skill}</span>)}</div>
-                : <p className="pm-profile-empty">No skills added yet.</p>}
+                : <p className="pm-profile-empty">No skills added yet.</p>}</>}
             <ReadOnlyFields fields={[{ key: 'tools_software', label: 'Tools and software' }, { key: 'delivery_methods', label: 'Delivery methods' }]}
                 record={{ tools_software: details?.tools_software, delivery_methods: details?.delivery_methods }} />
-        </OverviewCard>
-        {headings.map(({ key, icon }) => <CollectionCard key={key} type={key} icon={icon} rows={records[key]}
+        </OverviewCard>}
+        {headings.filter(({ key }) => canSee(collectionPrivacy[key])).map(({ key, icon }) => <CollectionCard key={key} type={key} icon={icon} rows={records[key]}
             featuredProjectId={featuredProjectId} originalProjects={profile.projects} onEdit={onEdit} />)}
-        <OverviewCard title="Career preferences" icon={Briefcase} onEdit={onEdit}>
-            <ReadOnlyFields fields={careerFields} record={career} />
-        </OverviewCard>
+        {shownCareer.length > 0 && <OverviewCard title="Career preferences" icon={Briefcase} onEdit={onEdit}>
+            <ReadOnlyFields fields={shownCareer} record={career} />
+        </OverviewCard>}
     </>;
 }

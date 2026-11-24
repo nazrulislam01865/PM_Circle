@@ -5,8 +5,8 @@ import type { PostPreview } from './PostCard';
 
 /** Use the existing public member route; never reveal an anonymous author's identity. */
 export function postAuthorHref(post: Pick<PostPreview, 'author' | 'is_anonymous' | 'viewer_is_author'>, sample = false): string | undefined {
-    if (sample || post.is_anonymous || !post.author.id || (!post.author.profile && !post.viewer_is_author)) return undefined;
-    return `/members/${post.author.id}`;
+    if (sample || post.is_anonymous) return undefined;
+    return post.author.profile_url ?? undefined;
 }
 
 export type ProfileUnavailable = 'anonymous' | 'private';

@@ -23,7 +23,7 @@ function FeedItem({ post, demo, onReactionChange, onCommentAdded, onSavedChange,
         viewer_is_author: post.isOwner, viewer_muted: post.isMuted,
         is_anonymous: post.is_anonymous, visibility: post.visibility,
         poll_options: post.pollOptions, viewer_vote: post.viewerVote,
-        author: { name: post.author, id: post.authorId ?? undefined, profile: post.authorHasPublicProfile || (demo && !post.authorId) ? { avatar_path: avatar, role: post.authorRole } : null },
+        author: { name: post.author, id: post.authorId ?? undefined, profile_url: post.authorProfileUrl ?? null, profile: post.authorHasPublicProfile || (demo && !post.authorId) ? { avatar_path: avatar, role: post.authorRole } : null },
     };
     return <PostCard post={preview} isGuest={false} onReactionChange={onReactionChange}
         onCommentAdded={onCommentAdded} onSavedChange={onSavedChange} onHiddenChange={onHiddenChange}

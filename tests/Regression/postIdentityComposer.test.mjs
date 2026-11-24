@@ -6,8 +6,9 @@ const component = name => read(`resources/js/components/community/${name}.tsx`);
 
 test('named post identities use one privacy-aware member link and dashboard retains the existing author ID', () => {
     const identity = component('PostAuthorLinks');
-    assert.match(identity, /sample \|\| post\.is_anonymous \|\| !post\.author\.id \|\| \(!post\.author\.profile && !post\.viewer_is_author\)/);
-    assert.match(identity, /`\/members\/\$\{post\.author\.id\}`/);
+    assert.match(identity, /sample \|\| post\.is_anonymous/);
+    assert.match(identity, /return post\.author\.profile_url \?\? undefined/);
+    assert.doesNotMatch(identity, /`\/members\/\$\{/);
     for (const name of ['PostCard', 'PostCardV2']) {
         const card = component(name);
         assert.match(card, /<PostAuthorLink href=\{authorHref\} name=\{post\.author\.name\} avatar unavailable=\{authorUnavailable\}>/);

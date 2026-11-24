@@ -36,8 +36,8 @@ test('public member links in reaction and comment lists reuse the existing profi
     assert.match(components('InlinePostComments'), /<PostAuthorLink href=\{comment\.author\.profile_url\} name=\{comment\.author\.name\} avatar>/);
     assert.match(components('CommunityComment'), /<PostAuthorLink href=\{authorHref\} name=\{comment\.author\.name\} avatar>/);
     const controller = read('app/Http/Controllers/Community/PostInteractionController.php');
-    assert.match(controller, /private function commentProfileUrl\(\?User \$author\): \?string[\s\S]*?\$author->profile\?->visibility === 'public'/);
-    assert.equal((controller.match(/'profile_url' => \$this->commentProfileUrl\(/g) ?? []).length, 3);
+    assert.match(controller, /MemberProfileAccess::url\(\$comment->author, \$viewer\)/);
+    assert.equal((controller.match(/'profile_url' => MemberProfileAccess::url\(/g) ?? []).length, 3);
 });
 
 test('activity groups and entries use H4, not page or section-sized headings, on every breakpoint', () => {

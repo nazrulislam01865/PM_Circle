@@ -1,20 +1,67 @@
-import { Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, BookOpen, ShieldCheck, UserRoundCheck } from 'lucide-react';
-import { Avatar } from '@/components/pm/Avatar';
-import { PostContent } from '@/components/community/PostContent';
-import { ContentPage, FeatureEmpty } from '@/components/pm/ContentPage';
+import { Head, Link, router } from '@inertiajs/react';
+import { ArrowLeft, Briefcase, MapPin, UserRoundCheck } from 'lucide-react';
+import { PublicLayout } from '@/layouts/pm/PublicLayout';
+import { ProfileHeroPhoto } from '@/components/profile/ProfileHeroPhoto';
+import { ProfileOverviewSections } from '@/components/profile/ProfileOverviewSections';
+import type { ProfileData } from '@/components/profile/ProfileEditorPrototype';
+import { PostCard, type PostPreview } from '@/components/community/PostCard';
+import { AdjacentPagination } from '@/components/pm/Pagination';
+import { FeatureEmpty } from '@/components/pm/ContentPage';
 
-type Member = { id: number; name: string; profile: { role?: string | null; headline?: string | null; bio?: string | null } };
-type Post = { id: number; title: string | null; body: string; image_path?: string | null; topic: string; comments_count: number };
-export default function Show({ member, posts, following, isOwnProfile }: { member: Member; posts: Post[]; following: boolean; isOwnProfile: boolean }) {
-    const viewer = usePage<{ auth: { user: unknown | null } }>().props.auth?.user;
-    const follow = () => !viewer ? router.visit('/login') : router.visit(`/members/${member.id}/follow`, { method: following ? 'delete' : 'post', preserveScroll: true });
-    return <ContentPage title="Member profile" action={<Link href="/members" className="pm-text-link"><ArrowLeft size={16}/> All members</Link>}>
-        <div className="pm-feature-profile pm-panel"><Avatar name={member.name} size={80}/><div><h2>{member.name}</h2><p>{member.profile.role || 'PM Circle member'}</p>{member.profile.headline && <p>{member.profile.headline}</p>}</div>
-            {isOwnProfile ? <Link href="/settings/profile" className="pm-button pm-button-outline pm-button-sm">Edit profile</Link> : <button type="button" className={`pm-button pm-button-sm ${following ? 'pm-button-outline' : ''}`} onClick={follow}><UserRoundCheck size={17}/>{following ? 'Following' : viewer ? 'Follow member' : 'Log in to follow'}</button>}
-        </div>
-        {member.profile.bio && <section className="pm-panel pm-feature-section"><h2>About</h2><p>{member.profile.bio}</p></section>}
-        <section className="pm-panel pm-feature-section"><h2>Public discussions</h2>{posts.length ? posts.map(post => <Link href={`/posts/${post.id}`} className="pm-feature-post" key={post.id}><BookOpen size={18}/><div><strong>{post.title || post.topic}</strong><PostContent body={post.body.slice(0, 200)} image={post.image_path} /><small>{post.comments_count} comments</small></div></Link>) : <FeatureEmpty title="No public posts yet" description="This member has not published any public posts."/>}</section>
-        <p className="pm-feature-privacy"><ShieldCheck size={17}/> This profile displays public information only.</p>
-    </ContentPage>;
+type Props = {
+    member: { id: number; name: string };
+    overview: { profile: Omit<ProfileData, 'email' | 'phone'>; visibleFields: string[]; featuredProjectId?: number | null };
+    posts: { data: PostPreview[]; next_cursor: string | null; previous_cursor: string | null; has_more: boolean };
+    activeTab: 'overview' | 'posts';
+    following: boolean;
+    isOwnProfile: boolean;
+    canFollow: boolean;
+    canInteract: boolean;
+};
+
+export default function Show({ member, overview, posts, activeTab, following, isOwnProfile, canFollow, canInteract }: Props) {
+    const profile = { ...overview.profile, email: '', phone: '' };
+    const href = `/members/${member.id}`;
+    const postsHref = (cursor?: string | null) => `${href}?tab=posts${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`;
+    const location = [profile.city, profile.country].filter(Boolean).join(', ');
+    const refreshPosts = () => router.reload({ only: ['posts'] });
+    const follow = () => !canInteract ? router.visit('/login') : router.visit(`${href}/follow`, { method: following ? 'delete' : 'post', preserveScroll: true });
+    return <PublicLayout active="/members">
+        <Head title={`${member.name} - PM Circle`} />
+        <div className="pm-container pm-page"><div className="pm-profile-page">
+            <header className="pm-profile-top-bar">
+                <div className="pm-profile-top-actions ml-auto flex-wrap">
+                    <Link href="/members" className="pm-btn pm-btn-secondary"><ArrowLeft size={16}/> All members</Link>
+                    {isOwnProfile ? <Link href="/settings/profile" className="pm-btn pm-btn-primary">Edit profile</Link>
+                        : canFollow && <button type="button" className={`pm-btn ${following ? 'pm-btn-secondary' : 'pm-btn-primary'}`} onClick={follow}><UserRoundCheck size={17}/>{following ? 'Following' : canInteract ? 'Follow member' : 'Log in to follow'}</button>}
+                </div>
+            </header>
+            <nav className="pm-profile-nav-tabs pm-member-tertiary-sticky" aria-label="Member profile tabs">
+                <Link href={href} className={`pm-profile-tab-item ${activeTab === 'overview' ? 'is-active' : ''}`} aria-current={activeTab === 'overview' ? 'page' : undefined}>Overview</Link>
+                <Link href={postsHref()} className={`pm-profile-tab-item ${activeTab === 'posts' ? 'is-active' : ''}`} aria-current={activeTab === 'posts' ? 'page' : undefined}>Posts</Link>
+            </nav>
+            <div className="pm-profile-main-col min-w-0 w-full">
+                <div className="pm-hero-card">
+                    <div className="pm-hero-cover" style={profile.cover_photo_path ? { backgroundImage: `url(${profile.cover_photo_path})` } : undefined}/>
+                    <div className="pm-hero-body">
+                        <div className="pm-hero-avatar-wrap"><ProfileHeroPhoto name={profile.name} src={profile.avatar_path}/></div>
+                        <div className="pm-hero-name-row"><h1 className="pm-hero-name">{profile.name}</h1></div>
+                        {(profile.headline || profile.role) && <p className="pm-hero-headline">{profile.headline || profile.role}</p>}
+                        <div className="pm-hero-meta">
+                            {location && <span className="pm-hero-location"><MapPin size={20}/><span>{location}</span></span>}
+                            {profile.open_to_opportunities && <span className="pm-status-pill"><Briefcase size={13}/> Open to opportunities</span>}
+                        </div>
+                    </div>
+                </div>
+                {activeTab === 'overview' ? <ProfileOverviewSections profile={profile} visibleFields={overview.visibleFields} featuredProjectId={overview.featuredProjectId ?? undefined}/>
+                    : <section className="pm-profile-main-col" aria-label="Member posts">
+                        <h2 className="pm-card-title">Posts</h2>
+                        {posts.data.length ? posts.data.map(post => <PostCard key={post.id} post={post} isGuest={!canInteract}
+                            onJoin={() => router.visit('/login')} onHiddenChange={refreshPosts} onRemoved={refreshPosts} onUpdated={refreshPosts}/>)
+                            : <FeatureEmpty title="No posts yet" description="There are no published posts available to you on this page."/>}
+                        <AdjacentPagination previous={posts.previous_cursor ? postsHref(posts.previous_cursor) : null} next={posts.next_cursor ? postsHref(posts.next_cursor) : null} label="Member post pages" nextLabel="Older posts"/>
+                    </section>}
+            </div>
+        </div></div>
+    </PublicLayout>;
 }

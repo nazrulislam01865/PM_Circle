@@ -78,10 +78,8 @@ export function CommunityComment({ comment, postId, postAuthor, canInteract, lik
         onCommentAdded?.();
     };
 
-    // Detail responses already include the public-only author.profile relation;
-    // newly posted and paginated replies carry a server-filtered profile URL.
-    const authorHref = 'profile_url' in comment.author ? comment.author.profile_url
-        : comment.author.id && comment.author.profile ? `/members/${comment.author.id}` : undefined;
+    // Both initial and paginated comments receive a server-authorized URL.
+    const authorHref = comment.author.profile_url;
     return <div className={nested ? 'pm-thread-reply' : 'pm-thread-comment'}>
         <div className="pm-thread-portrait"><PostAuthorLink href={authorHref} name={comment.author.name} avatar><Avatar name={comment.author.name} src={comment.author.profile?.avatar_path} size={nested ? 32 : 38}/></PostAuthorLink></div>
         <div className="pm-thread-body">

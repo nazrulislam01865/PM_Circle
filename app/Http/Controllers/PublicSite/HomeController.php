@@ -8,6 +8,7 @@ use App\Models\HomePageContent;
 use App\Support\Home\HomeAiFeaturesContent;
 use App\Domain\Community\Services\EngagementStats;
 use App\Domain\Identity\Services\ProfileFieldPrivacy;
+use App\Domain\Identity\Services\MemberProfileAccess;
 use App\Domain\Community\Queries\PostReactionSummary;
 use App\Models\LearningCourse;
 use App\Models\Post;
@@ -68,9 +69,8 @@ class HomeController extends Controller
                 ->where('post_hides.user_id', $viewerId)))
             ->select(['posts.id', 'posts.author_id', 'posts.title', 'posts.body', 'posts.image_path', 'posts.is_anonymous', 'posts.topic', 'posts.ai_generated', 'posts.published_at'])
             ->with([
-                'author:id,name',
-                'author.profile' => fn ($query) => $query->where('visibility', 'public')
-                    ->select('id', 'user_id', 'role', 'avatar_path'),
+                'author:id,name,status,is_admin,email_verified_at',
+                'author.profile:id,user_id,role,avatar_path,visibility,field_visibility',
             ])
             ->when(EngagementStats::readsEnabled(), fn ($query) => PostReactionSummary::selectStats($query
                 ->leftJoin('post_engagement_stats as home_stats', 'home_stats.post_id', '=', 'posts.id')
@@ -88,7 +88,11 @@ class HomeController extends Controller
             ]))
             ->latest('posts.published_at')->limit(2)->get() : collect();
         PostReactionSummary::attach($posts);
-        $posts->each(fn (Post $post) => $post->anonymizeForPublic());
+        $posts->each(function (Post $post) use ($viewerId): void {
+            $post->setAttribute('viewer_is_author', $viewerId !== null && $post->author_id === $viewerId);
+            MemberProfileAccess::decorateAuthor($post->author, request()->user());
+            $post->anonymizeForPublic();
+        });
 
         $members = $visible('members') ? User::query()
             ->where('is_admin', false)

@@ -1,0 +1,23 @@
+export const medalPaths: Record<string, string> = {
+    "courses": "M3 5h5l4 2 4-2h5v13h-5l-4 2-4-2H3z M12 7v13",
+    "scenarios": "M4 19V5m0 1 6-2 5 3 5-1v11l-5 1-5-3-6 2m6-13v11m5-8v11",
+    "exams": "M5 4h14v17H5z M8 9l1 1 2-2m2 2h3m-8 5 1 1 2-2m2 2h3",
+    "challenges": "m13 3-8 11h6l-1 7 9-11h-6z",
+    "posts": "M5 18 3 21l5-1h10a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v9a3 3 0 0 0 2 3z M7 9h10m-10 4h7",
+    "replies": "M9 7 3 12l6 5v-3h4c4 0 6 2 7 4 0-6-3-9-7-9H9z",
+    "interviews": "M9 11V7a3 3 0 0 1 6 0v4a3 3 0 0 1-6 0z M6 11a6 6 0 0 0 12 0m-6 6v4m-3 0h6",
+    "profile": "M16 8a4 4 0 1 1-8 0 4 4 0 0 1 8 0z M5 21v-2a7 7 0 0 1 14 0v2",
+    "resumes": "M6 3h8l4 4v14H6z M14 3v5h4 M9 12h6m-6 4h6",
+    "events": "M4 6h16v15H4z M8 3v6m8-6v6M4 11h16m-11 5h6",
+    "hosted": "M4 5h16v11H4z M8 21l4-5 4 5M8 9h8",
+    "articles": "M4 19h16M6 16l5-5 3 2 5-7m-5 0h5v5",
+    "minutes": "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z M12 7v5l4 2",
+    "certificates": "M4 4h16v12H4z M9 8h6m-5 8-1 5 3-2 3 2-1-5",
+    "pmpExams": "m12 3 3 6 6 1-5 4 1 7-5-3-5 3 1-7-5-4 6-1z",
+    "scrumExams": "M5 9a8 8 0 0 1 14-3l2 3m0-5v5h-5m3 6a8 8 0 0 1-14 3l-2-3m0 5v-5h5",
+    "reviews": "M10 4a6 6 0 1 1 0 12 6 6 0 0 1 0-12z m5 11 5 5 M8 10l2 2 3-4",
+    "projects": "M3 7h18v13H3z M8 7V4h8v3 M3 12h18m-11 0v2h4v-2",
+    "shares": "M8 12l8-5m-8 5 8 5 M8 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0z M20 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0z M20 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0z",
+    "interviewReviews": "M5 4h14v12H9l-4 4z M8 9l2 2 5-4",
+    "challengeReviews": "M4 5h16v14H4z M8 9h8m-8 4h5m2 4 2 2 4-4"
+};

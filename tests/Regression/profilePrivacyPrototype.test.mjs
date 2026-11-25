@@ -28,8 +28,8 @@ test('privacy stays inside the existing profile page, member header and footer',
   assert.match(page, /<MemberDashboardLayout/);
   assert.match(layout, /<MemberCompactHeader/);
   assert.match(layout, /<SiteFooter/);
-  assert.match(page, /'Manage your professional profile and who can see it\.'/);
-  assert.match(page, /Resume & imports/);
+  assert.match(read('resources/js/components/profile/ProfileWorkspaceHeader.tsx'), /'Manage your professional profile and who can see it\.'/);
+  assert.match(read('resources/js/components/profile/ProfileWorkspaceHeader.tsx'), /Resume & imports/);
 });
 test('design controls exclusively reuse approved guide tokens', () => {
   for (const value of ['--s3','--s4','--s5','--border','--radius-control','--radius-card','--control-height','--control-touch','--text-h2','--text-h3','--text-ui','--line-ui','--font-ui','--ink','--muted']) {

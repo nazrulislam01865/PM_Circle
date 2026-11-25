@@ -29,12 +29,13 @@ test('achievements and saved posts retain dynamic data, links and an accessible 
     const achievements = read('resources/js/pages/account/Achievements.tsx');
     const saved = read('resources/js/pages/community/SavedPosts.tsx');
     const component = read('resources/js/components/pm/ContentPage.tsx');
-    assert.match(achievements, /paths\.map/);
-    assert.match(achievements, /badges\.map/);
+    const cards = read('resources/js/components/achievements/AchievementCards.tsx');
+    assert.match(cards, /paths\.map/);
+    assert.match(cards, /badges\.map/);
     assert.match(saved, /posts\.data\.map/);
     assert.match(saved, /href="\/community"/);
     assert.match(component, /aria-hidden="true"/);
-    assert.match(achievements, /className="pm-achievements-page"/);
+    assert.match(achievements, /className="pm-achievements-page pm-ach-workspace"/);
     assert.match(saved, /className="pm-saved-posts-page"/);
 });
 
@@ -62,6 +63,6 @@ test('authenticated mobile content uses only the shell gutter on both sides', ()
         'resources/js/pages/community/Feed.tsx',
         'resources/js/pages/community/SavedPosts.tsx',
     ]) {
-        assert.match(read(page), /pm-container|ContentPage/);
+        assert.match(read(page), /pm-container|ContentPage|pm-ach-workspace/);
     }
 });

@@ -99,8 +99,8 @@ final class RecoverDailyChallengeDraft extends Command
             ->where('version', $feature->prompt_version)->whereNotNull('published_at')->exists();
         $priceReady = DB::table('ai_model_prices')->where('model', 'gpt-5-nano')
             ->where('effective_from', '<=', now())->exists();
-        if (! $promptReady || ! $priceReady || (float) config('pm-ai.global_daily_budget_usd') <= 0
-            || (float) config('pm-ai.editorial_budget_usd') <= 0) {
+        if (! $promptReady || ! $priceReady || (float) app(\App\Domain\AI\Services\AiRuntimeSettings::class)->budget('global_daily_budget_usd') <= 0
+            || (float) app(\App\Domain\AI\Services\AiRuntimeSettings::class)->budget('editorial_budget_usd') <= 0) {
             $this->error('Generation feature, published prompt, model price, or budget is not ready.');
             return self::FAILURE;
         }

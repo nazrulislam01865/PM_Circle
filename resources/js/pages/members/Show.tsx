@@ -1,3 +1,4 @@
+import { usePublicPageBanner } from '@/components/pm/PublicPageBanner';
 import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeft, Briefcase, MapPin, UserRoundCheck } from 'lucide-react';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
@@ -26,7 +27,7 @@ export default function Show({ member, overview, posts, activeTab, following, is
     const location = [profile.city, profile.country].filter(Boolean).join(', ');
     const refreshPosts = () => router.reload({ only: ['posts'] });
     const follow = () => !canInteract ? router.visit('/login') : router.visit(`${href}/follow`, { method: following ? 'delete' : 'post', preserveScroll: true });
-    return <PublicLayout active="/members">
+    return <PublicLayout active="/members" banner={{title: 'Member profile', currentLabel: member.name, parents: [{label: 'Members', href: '/members'}]}}>
         <Head title={`${member.name} - PM Circle`} />
         <div className="pm-container pm-page"><div className="pm-profile-page">
             <header className="pm-profile-top-bar">
@@ -45,7 +46,7 @@ export default function Show({ member, overview, posts, activeTab, following, is
                     <div className="pm-hero-cover" style={profile.cover_photo_path ? { backgroundImage: `url(${profile.cover_photo_path})` } : undefined}/>
                     <div className="pm-hero-body">
                         <div className="pm-hero-avatar-wrap"><ProfileHeroPhoto name={profile.name} src={profile.avatar_path}/></div>
-                        <div className="pm-hero-name-row"><h1 className="pm-hero-name">{profile.name}</h1></div>
+                        <div className="pm-hero-name-row"><MemberProfileName name={profile.name}/></div>
                         {(profile.headline || profile.role) && <p className="pm-hero-headline">{profile.headline || profile.role}</p>}
                         <div className="pm-hero-meta">
                             {location && <span className="pm-hero-location"><MapPin size={20}/><span>{location}</span></span>}
@@ -64,4 +65,9 @@ export default function Show({ member, overview, posts, activeTab, following, is
             </div>
         </div></div>
     </PublicLayout>;
+}
+
+function MemberProfileName({ name }: { name: string }) {
+    const Heading = usePublicPageBanner() ? 'h2' : 'h1';
+    return <Heading className="pm-hero-name">{name}</Heading>;
 }

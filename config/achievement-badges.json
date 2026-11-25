@@ -1,0 +1,422 @@
+[
+  {
+    "id": "courses-1",
+    "name": "First Course",
+    "category": "Courses & certificates",
+    "metric": "courses",
+    "unit": "courses completed",
+    "target": 1,
+    "tier": 1,
+    "newBadge": false
+  },
+  {
+    "id": "courses-3",
+    "name": "Course Collector",
+    "category": "Courses & certificates",
+    "metric": "courses",
+    "unit": "courses completed",
+    "target": 3,
+    "tier": 2,
+    "newBadge": false
+  },
+  {
+    "id": "courses-5",
+    "name": "Learning Milestone",
+    "category": "Courses & certificates",
+    "metric": "courses",
+    "unit": "courses completed",
+    "target": 5,
+    "tier": 3,
+    "newBadge": false
+  },
+  {
+    "id": "sim-1",
+    "name": "First Scenario",
+    "category": "Project Simulator",
+    "metric": "scenarios",
+    "unit": "scenarios completed",
+    "target": 1,
+    "tier": 1,
+    "newBadge": false
+  },
+  {
+    "id": "sim-5",
+    "name": "Scenario Practitioner",
+    "category": "Project Simulator",
+    "metric": "scenarios",
+    "unit": "scenarios completed",
+    "target": 5,
+    "tier": 2,
+    "newBadge": false
+  },
+  {
+    "id": "sim-15",
+    "name": "Delivery Decision Maker",
+    "category": "Project Simulator",
+    "metric": "scenarios",
+    "unit": "scenarios completed",
+    "target": 15,
+    "tier": 3,
+    "newBadge": false
+  },
+  {
+    "id": "exam-1",
+    "name": "First Mock Exam",
+    "category": "Exam Simulator",
+    "metric": "exams",
+    "unit": "mock exams completed",
+    "target": 1,
+    "tier": 1,
+    "newBadge": false
+  },
+  {
+    "id": "exam-3",
+    "name": "Exam Routine",
+    "category": "Exam Simulator",
+    "metric": "exams",
+    "unit": "mock exams completed",
+    "target": 3,
+    "tier": 2,
+    "newBadge": false
+  },
+  {
+    "id": "exam-10",
+    "name": "Mock Exam Milestone",
+    "category": "Exam Simulator",
+    "metric": "exams",
+    "unit": "mock exams completed",
+    "target": 10,
+    "tier": 3,
+    "newBadge": false
+  },
+  {
+    "id": "challenge-1",
+    "name": "First Challenge",
+    "category": "Daily Challenge",
+    "metric": "challenges",
+    "unit": "challenges completed",
+    "target": 1,
+    "tier": 1,
+    "newBadge": false
+  },
+  {
+    "id": "challenge-5",
+    "name": "Challenge Habit",
+    "category": "Daily Challenge",
+    "metric": "challenges",
+    "unit": "challenges completed",
+    "target": 5,
+    "tier": 2,
+    "newBadge": false
+  },
+  {
+    "id": "challenge-20",
+    "name": "Challenge Regular",
+    "category": "Daily Challenge",
+    "metric": "challenges",
+    "unit": "challenges completed",
+    "target": 20,
+    "tier": 3,
+    "newBadge": false
+  },
+  {
+    "id": "community-1",
+    "name": "First Post",
+    "category": "Community",
+    "metric": "posts",
+    "unit": "approved posts published",
+    "target": 1,
+    "tier": 1,
+    "newBadge": false
+  },
+  {
+    "id": "community-5",
+    "name": "Community Contributor",
+    "category": "Community",
+    "metric": "posts",
+    "unit": "approved posts published",
+    "target": 5,
+    "tier": 2,
+    "newBadge": false
+  },
+  {
+    "id": "community-15",
+    "name": "Community Voice",
+    "category": "Community",
+    "metric": "posts",
+    "unit": "approved posts published",
+    "target": 15,
+    "tier": 3,
+    "newBadge": false
+  },
+  {
+    "id": "replies-1",
+    "name": "First Reply",
+    "category": "Community",
+    "metric": "replies",
+    "unit": "approved replies published",
+    "target": 1,
+    "tier": 1,
+    "newBadge": false
+  },
+  {
+    "id": "replies-10",
+    "name": "Helpful Participant",
+    "category": "Community",
+    "metric": "replies",
+    "unit": "approved replies published",
+    "target": 10,
+    "tier": 2,
+    "newBadge": false
+  },
+  {
+    "id": "replies-25",
+    "name": "Discussion Regular",
+    "category": "Community",
+    "metric": "replies",
+    "unit": "approved replies published",
+    "target": 25,
+    "tier": 3,
+    "newBadge": false
+  },
+  {
+    "id": "interview-1",
+    "name": "First Mock Interview",
+    "category": "Interview Preparation",
+    "metric": "interviews",
+    "unit": "mock interviews completed",
+    "target": 1,
+    "tier": 1,
+    "newBadge": false
+  },
+  {
+    "id": "interview-3",
+    "name": "Interview Practitioner",
+    "category": "Interview Preparation",
+    "metric": "interviews",
+    "unit": "mock interviews completed",
+    "target": 3,
+    "tier": 2,
+    "newBadge": false
+  },
+  {
+    "id": "interview-8",
+    "name": "Interview Routine",
+    "category": "Interview Preparation",
+    "metric": "interviews",
+    "unit": "mock interviews completed",
+    "target": 8,
+    "tier": 3,
+    "newBadge": false
+  },
+  {
+    "id": "profile-50",
+    "name": "Profile Halfway",
+    "category": "Profile & Résumé",
+    "metric": "profile",
+    "unit": "% profile completion",
+    "target": 50,
+    "tier": 1,
+    "newBadge": false
+  },
+  {
+    "id": "profile-100",
+    "name": "Profile Complete",
+    "category": "Profile & Résumé",
+    "metric": "profile",
+    "unit": "% profile completion",
+    "target": 100,
+    "tier": 2,
+    "newBadge": false
+  },
+  {
+    "id": "resume-1",
+    "name": "Résumé Ready",
+    "category": "Profile & Résumé",
+    "metric": "resumes",
+    "unit": "résumés exported",
+    "target": 1,
+    "tier": 1,
+    "newBadge": false
+  },
+  {
+    "id": "event-1",
+    "name": "First Event",
+    "category": "Events",
+    "metric": "events",
+    "unit": "events attended",
+    "target": 1,
+    "tier": 1,
+    "newBadge": false
+  },
+  {
+    "id": "event-3",
+    "name": "Community Learner",
+    "category": "Events",
+    "metric": "events",
+    "unit": "events attended",
+    "target": 3,
+    "tier": 2,
+    "newBadge": false
+  },
+  {
+    "id": "host-1",
+    "name": "First Event Host",
+    "category": "Events",
+    "metric": "hosted",
+    "unit": "events hosted",
+    "target": 1,
+    "tier": 1,
+    "newBadge": false
+  },
+  {
+    "id": "career-1",
+    "name": "Career Explorer",
+    "category": "Career Trends",
+    "metric": "articles",
+    "unit": "Career Trends articles saved",
+    "target": 1,
+    "tier": 1,
+    "newBadge": false
+  },
+  {
+    "id": "career-5",
+    "name": "Trend Tracker",
+    "category": "Career Trends",
+    "metric": "articles",
+    "unit": "Career Trends articles saved",
+    "target": 5,
+    "tier": 2,
+    "newBadge": true
+  },
+  {
+    "id": "hours-60",
+    "name": "First Learning Hour",
+    "category": "Courses & certificates",
+    "metric": "minutes",
+    "unit": "learning minutes recorded",
+    "target": 60,
+    "tier": 1,
+    "newBadge": false
+  },
+  {
+    "id": "hours-300",
+    "name": "Five Learning Hours",
+    "category": "Courses & certificates",
+    "metric": "minutes",
+    "unit": "learning minutes recorded",
+    "target": 300,
+    "tier": 2,
+    "newBadge": false
+  },
+  {
+    "id": "hours-600",
+    "name": "Ten Learning Hours",
+    "category": "Courses & certificates",
+    "metric": "minutes",
+    "unit": "learning minutes recorded",
+    "target": 600,
+    "tier": 3,
+    "newBadge": false
+  },
+  {
+    "id": "cert-1",
+    "name": "First Course Certificate",
+    "category": "Courses & certificates",
+    "metric": "certificates",
+    "unit": "course certificates earned",
+    "target": 1,
+    "tier": 1,
+    "newBadge": false
+  },
+  {
+    "id": "cert-3",
+    "name": "Certificate Milestone",
+    "category": "Courses & certificates",
+    "metric": "certificates",
+    "unit": "course certificates earned",
+    "target": 3,
+    "tier": 2,
+    "newBadge": false
+  },
+  {
+    "id": "pmp-1",
+    "name": "PMP Practice Started",
+    "category": "Exam Simulator",
+    "metric": "pmpExams",
+    "unit": "PMP mock exams completed",
+    "target": 1,
+    "tier": 1,
+    "newBadge": false
+  },
+  {
+    "id": "scrum-1",
+    "name": "Scrum Practice Started",
+    "category": "Exam Simulator",
+    "metric": "scrumExams",
+    "unit": "Scrum mock exams completed",
+    "target": 1,
+    "tier": 1,
+    "newBadge": false
+  },
+  {
+    "id": "review-1",
+    "name": "First Exam Review",
+    "category": "Exam Simulator",
+    "metric": "reviews",
+    "unit": "mock exam reviews completed",
+    "target": 1,
+    "tier": 1,
+    "newBadge": false
+  },
+  {
+    "id": "review-5",
+    "name": "Review Routine",
+    "category": "Exam Simulator",
+    "metric": "reviews",
+    "unit": "mock exam reviews completed",
+    "target": 5,
+    "tier": 2,
+    "newBadge": true
+  },
+  {
+    "id": "project-1",
+    "name": "Project Simulation Finisher",
+    "category": "Project Simulator",
+    "metric": "projects",
+    "unit": "full project simulations completed",
+    "target": 1,
+    "tier": 1,
+    "newBadge": false
+  },
+  {
+    "id": "share-3",
+    "name": "Discussion Sharer",
+    "category": "Community",
+    "metric": "shares",
+    "unit": "community discussions shared",
+    "target": 3,
+    "tier": 1,
+    "newBadge": false
+  },
+  {
+    "id": "ai-1",
+    "name": "Feedback in Action",
+    "category": "Interview Preparation",
+    "metric": "interviewReviews",
+    "unit": "interview feedback reviews completed",
+    "target": 1,
+    "tier": 1,
+    "newBadge": false
+  },
+  {
+    "id": "saving-3",
+    "name": "Reflective Challenger",
+    "category": "Daily Challenge",
+    "metric": "challengeReviews",
+    "unit": "challenge explanations reviewed",
+    "target": 3,
+    "tier": 1,
+    "newBadge": true
+  }
+]

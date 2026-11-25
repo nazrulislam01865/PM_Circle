@@ -40,7 +40,7 @@ test('logged-in public pages use the shared sidebar shell and exams keep the foc
 });
 
 test('homepage dropdown menu and links are the original shared source', () => {
-    for (const label of ['Browse simulators', 'Compare Plans', 'Browse courses', 'AI learning tools',
+    for (const label of ['Browse simulators', 'Compare Plans', 'Browse courses',
         'Community feed', 'Daily Challenge', 'Community events', 'Trends', 'Events']) {
         assert.ok(header.includes(label), `${label} missing`);
     }

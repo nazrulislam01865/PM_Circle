@@ -40,6 +40,12 @@ final class SaveLearningCourseRequest extends FormRequest
             'lessons' => ['required', 'array', 'min:1', 'max:100'],
             'lessons.*.title' => ['required', 'string', 'max:200'],
             'lessons.*.body' => ['required', 'string', 'max:20000'],
+            'lessons.*.video_url' => ['nullable', 'url:https', 'max:2000'],
+            'lessons.*.takeaway' => ['nullable', 'string', 'max:5000'],
+            'lessons.*.when_to_apply' => ['nullable', 'string', 'max:5000'],
+            'lessons.*.example' => ['nullable', 'string', 'max:5000'],
+            'lessons.*.application' => ['nullable', 'string', 'max:5000'],
+            'lessons.*.references' => ['nullable', 'string', 'max:5000'],
             'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
         ];
     }

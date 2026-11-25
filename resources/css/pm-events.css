@@ -39,7 +39,7 @@
 .pm-event-ad-copy h2 { margin-top: var(--pm-guide-s1); color: var(--pm-guide-white); font-size: var(--pm-guide-text-h2); font-weight: var(--pm-guide-weight-h2); line-height: var(--pm-guide-line-h2); }
 .pm-event-ad-copy .pm-guide-button { margin-top: var(--pm-guide-s3); border-color: var(--pm-guide-white); }
 .pm-event-list-section h2 { margin-bottom: var(--pm-guide-s3); font-size: var(--pm-guide-text-h2); font-weight: var(--pm-guide-weight-h2); line-height: var(--pm-guide-line-h2); }
-.pm-event-filters { display: grid; grid-template-columns: minmax(0,2fr) repeat(2,minmax(0,1fr)); gap: var(--pm-guide-s3); margin-bottom: var(--pm-guide-s2); }
+.pm-event-filters { display: grid; grid-template-columns: minmax(0,2fr) repeat(2,minmax(0,1fr)) auto; gap: var(--pm-guide-s3); margin-bottom: var(--pm-guide-s2); }
 .pm-event-filters label { display: grid; gap: var(--pm-guide-s1); min-width: 0; }
 .pm-event-count { color: var(--pm-guide-muted); font-size: var(--pm-guide-text-meta); }
 .pm-event-note { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--pm-guide-s2); margin: var(--pm-guide-s1) 0 var(--pm-guide-s4); color: var(--pm-guide-muted); font-size: var(--pm-guide-text-meta); }
@@ -137,3 +137,31 @@
     .pm-event-organizers { grid-template-columns: minmax(0, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) { .pm-events-page { scroll-behavior: auto; } }
+
+/* Editor layout only; controls inherit existing guide/admin typography and tokens. */
+.pm-event-editor { display: grid; gap: var(--pm-guide-s3); min-width: 0; }
+.pm-event-editor h2 { font-size: var(--pm-guide-text-h3); font-weight: var(--pm-guide-weight-h2); line-height: var(--pm-guide-line-h3); }
+.pm-event-editor-field { display: grid; gap: var(--pm-guide-s1); min-width: 0; }
+.pm-event-editor-field textarea { resize: vertical; }
+.pm-event-editor-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--pm-guide-s3); }
+.pm-event-editor-repeat { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) auto; align-items: end; gap: var(--pm-guide-s2); }
+.pm-event-editor-check, .pm-event-editor-actions, .pm-event-section-heading { display: flex; align-items: center; flex-wrap: wrap; gap: var(--pm-guide-s2); }
+.pm-event-editor-check { font-size: var(--pm-guide-text-control); }
+.pm-event-section-heading { justify-content: space-between; margin-bottom: var(--pm-guide-s2); }
+.pm-event-section-heading h2 { margin-bottom: 0; }
+.pm-event-filters > button { align-self: end; justify-self: start; }
+.pm-event-description, .pm-event-comment-body { white-space: pre-wrap; overflow-wrap: anywhere; }
+.pm-event-editor-actions > button, .pm-event-editor-actions > a { max-width: 100%; }
+.pm-event-editor .pm-guide-button:disabled { opacity: .6; cursor: not-allowed; }
+@media(max-width: 40.625rem) {
+    .pm-event-editor-grid, .pm-event-editor-repeat { grid-template-columns: minmax(0, 1fr); }
+}
+
+.pm-event-editor > .pm-event-map-preview { display: block; width: 100%; max-height: 16rem; object-fit: contain; }
+.pm-event-detail-main > .pm-event-form-result { margin: 0 0 var(--pm-guide-s3); }
+.pm-event-editor .pm-guide-button, .pm-event-editor .pm-admin-button { justify-self: start; }
+
+/* Shared controls keep their own design tokens; event CSS only sets layout. */
+.pm-event-editor-hint { color: var(--pm-guide-muted); font-size: var(--pm-guide-text-meta); overflow-wrap: anywhere; }
+.pm-event-editor .pm-guide-button svg, .pm-event-editor .pm-admin-button svg { width: var(--icon); height: var(--icon); flex-shrink: 0; }
+.pm-event-filters > div { display: grid; gap: var(--pm-guide-s1); min-width: 0; }

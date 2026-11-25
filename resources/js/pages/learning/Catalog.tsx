@@ -1,3 +1,4 @@
+import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { Pagination } from '@/components/pm/Pagination';
 import { MobileFilterPanel } from '@/components/pm/MobileFilterPanel';
 import { Head, router, usePage } from '@inertiajs/react';
@@ -55,7 +56,7 @@ function LegacyCatalog({ shell, paths, courses, practiceModules, isMember, membe
     const catalogRoot = memberView ? '/dashboard/learning' : '/learning';
     const query = new URLSearchParams(pageUrl.split('?')[1] || '');
     const initialTab = query.get('tab');
-    const [tab, setTab] = useState<CatalogTab>(initialTab === 'paths' || initialTab === 'my-learning' ? 'paths' : initialTab === 'practice' ? 'practice' : initialTab === 'exams' ? 'exams' : 'courses');
+    const [tab, setTab] = useState<CatalogTab>(initialTab === 'paths' ? 'paths' : initialTab === 'practice' ? 'practice' : initialTab === 'exams' ? 'exams' : 'courses');
     const [search, setSearch] = useState(query.get('search') || '');
     const [sort, setSort] = useState('recommended');
     const [display, setDisplay] = useState<DisplayMode>('grid');
@@ -112,7 +113,10 @@ function LegacyCatalog({ shell, paths, courses, practiceModules, isMember, membe
     const activePage = Math.min(page, Math.max(1, pageCount));
     const shown = filtered.slice((activePage - 1) * perPage, activePage * perPage);
 
-    const chooseTab = (next: CatalogTab) => { setTab(next); setPage(1); setSelected({ categories: [], levels: [], durations: [] }); };
+    const chooseTab = (next: CatalogTab) => {
+        if (next === 'courses') { router.visit(`${catalogRoot}?tab=courses`); return; }
+        setTab(next); setPage(1); setSelected({ categories: [], levels: [], durations: [] });
+    };
     const choose = (key: FilterKey, value: string) => {
         setSelected(previous => ({ ...previous, [key]: previous[key].includes(value) ? previous[key].filter(option => option !== value) : [...previous[key], value] }));
         setPage(1);
@@ -147,10 +151,10 @@ function LegacyCatalog({ shell, paths, courses, practiceModules, isMember, membe
 
     const pageContent = <><Head title="Learn & Practice" />
         <div className="pm-course-catalog">
-            <section className="pm-catalog-hero" aria-labelledby="learning-catalog-heading">
+            <LegacyPageHeading><section className="pm-catalog-hero" aria-labelledby="learning-catalog-heading">
                 <h1 id="learning-catalog-heading">Learn &amp; Practice</h1>
                 <p>Project management courses, practice, and learning paths to grow your skills and career.</p>
-            </section>
+            </section></LegacyPageHeading>
             <nav className="pm-catalog-tabs" aria-label="Learning catalog sections">
                 {([
                     ['courses', Layers3, 'All Courses', courseItems.length],
@@ -189,13 +193,16 @@ function LegacyCatalog({ shell, paths, courses, practiceModules, isMember, membe
             </div>
         </div>
     </>;
-    return <PublicLayout siteLayout={!memberView} active="/learning">
+    return <PublicLayout siteLayout={!memberView} active="/learning" banner={{title: 'Learn & Practice', description: 'Project management courses, practice, and learning paths to grow your skills and career.', titleId: 'learning-catalog-heading'}}>
         <div className="pm-learning-catalog-public pm-learn-content">{pageContent}</div>
     </PublicLayout>;
 }
 
-/** Public listing follows the approved homepage prototype; member workspace remains untouched. */
+/** Browse courses shares one prototype; explicit member path, practice and exam tabs keep their existing workspace. */
 export default function Catalog(props: CatalogProps) {
-    const memberView = usePage().url.split('?')[0] === '/dashboard/learning';
-    return memberView ? <LegacyCatalog {...props} /> : <PublicCourseCatalog courses={props.courses} />;
+    const url = usePage().url;
+    const memberView = url.split('?')[0] === '/dashboard/learning';
+    const tab = new URLSearchParams(url.split('?')[1] || '').get('tab');
+    const legacyTab = memberView && (tab === 'paths' || tab === 'practice' || tab === 'exams');
+    return legacyTab ? <LegacyCatalog key={tab} {...props} /> : <PublicCourseCatalog courses={props.courses} memberView={memberView} />;
 }

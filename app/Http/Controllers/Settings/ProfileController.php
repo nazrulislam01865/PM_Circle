@@ -40,10 +40,17 @@ class ProfileController extends Controller
      * - imports (p2.png)
      * - privacy
      */
-    public function edit(Request $request): Response
+    public function edit(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
         $activeTab = $request->query('tab', 'overview');
+        if ($activeTab === 'assistant') {
+            // Preserve the verification and onboarding middleware on the original assistant route.
+            if (! $user->hasVerifiedEmail() || $user->onboarding_step < 3) {
+                return redirect()->route('member.resume-assistant');
+            }
+            return app(\App\Http\Controllers\Account\ResumeAssistantController::class)($request, app(CurrentMemberPlan::class), app(\App\Domain\Identity\Services\ResumeAssistantProfile::class));
+        }
         if (! in_array($activeTab, ['overview', 'edit', 'imports', 'privacy'], true)) {
             $activeTab = 'overview';
         }
@@ -88,7 +95,7 @@ class ProfileController extends Controller
             : collect();
         $activeImport = $activeTab === 'imports'
             ? app(ProfileImportPresenter::class)->present($user, $recentImports->first(), $recentImports)
-            : ['id' => null, 'status' => 'empty', 'step' => 1, 'filename' => null, 'comparisons' => [], 'warnings' => [], 'history' => [], 'ai_enabled' => (bool) config('pm-ai.resume_extract_enabled')];
+            : ['id' => null, 'status' => 'empty', 'step' => 1, 'filename' => null, 'comparisons' => [], 'warnings' => [], 'history' => [], 'ai_enabled' => (bool) app(\App\Domain\AI\Services\ResumeExtractionSettings::class)->enabled()];
 
         // The dashboard and profile must use the exact same server-side criteria.
         $completenessScore = app(ProfileCompleteness::class)->percentage($user);
@@ -100,6 +107,7 @@ class ProfileController extends Controller
             'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
             'activeTab' => $activeTab,
+            'canUseAssistant' => $user->hasVerifiedEmail() && $user->onboarding_step >= 3 && \App\Domain\Billing\Queries\MemberFeatureAccess::allows($plan, \App\Domain\AI\Services\AiFeatureCatalog::FEATURES['resume_analyze']['min_plan']),
             'privacyFieldGroups' => $activeTab === 'privacy' ? ProfileFieldPrivacy::groups() : [],
             'profileReward' => app(ProfileCompletionRewardService::class)->forMember($user, $completenessScore),
             'profileData' => [
@@ -136,8 +144,9 @@ class ProfileController extends Controller
                 'learning_stats' => [
                     'activities' => ($stats['learning']['completedActivities'] ?? 0) + ($stats['learning']['scenarios'] ?? 0),
                     'hours' => round(($stats['learning']['minutes'] ?? 0) / 60, 1),
-                    'achievements' => count($stats['overview']['badges'] ?? []),
+                    'achievements' => $stats['overview']['badgeCount'] ?? 0,
                 ],
+                'latest_badges' => $stats['overview']['badges'] ?? [],
                 'experiences' => $experiences,
                 'featured_project' => $featuredProject,
                 'projects' => $projects,
@@ -282,22 +291,37 @@ class ProfileController extends Controller
     public function uploadCover(Request $request): RedirectResponse
     {
         $request->validate([
-            'cover_photo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'cover_photo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:max_width=6000,max_height=6000'],
         ]);
 
         $user = $request->user();
-        $path = $request->file('cover_photo')->store('profile-covers', 'public');
-        abort_unless(is_string($path) && $path !== '', 500, 'Cover image could not be stored.');
+        try {
+            $path = $request->file('cover_photo')->store('profile-covers', 'public');
+        } catch (\Throwable $exception) {
+            report($exception);
+            throw ValidationException::withMessages(['cover_photo' => 'Cover image could not be stored. Please try again.']);
+        }
+        if (! is_string($path) || $path === '') {
+            throw ValidationException::withMessages(['cover_photo' => 'Cover image could not be stored. Please try again.']);
+        }
 
         $profile = $user->profile ?? new Profile(['user_id' => $user->id]);
         $previous = $profile->getRawOriginal('cover_photo_path');
         $profile->user_id = $user->id;
         $profile->cover_photo_path = '/storage/'.$path;
+        // An uploaded cover replaces the old external URL, including the editor copy.
+        // Otherwise a later unrelated profile edit could silently restore the old image.
+        $details = $profile->editor_details ?? [];
+        if (! empty($details['cover_photo_url'])) {
+            $details['cover_photo_url'] = '';
+            $profile->editor_details = $details;
+        }
         try {
             $profile->save();
         } catch (\Throwable $exception) {
             Storage::disk('public')->delete($path);
-            throw $exception;
+            report($exception);
+            throw ValidationException::withMessages(['cover_photo' => 'Cover image could not be saved. Please try again.']);
         }
         // Keep an already-loaded member profile in sync for Inertia shared props.
         // No additional read query is necessary after the successful save.
@@ -391,7 +415,7 @@ class ProfileController extends Controller
         abort_unless(is_string($path) && $path !== '', 500, 'Resume could not be stored.');
 
         $consented = $request->boolean('ai_consent');
-        if (config('pm-ai.resume_extract_enabled') && ! $consented) {
+        if (app(\App\Domain\AI\Services\ResumeExtractionSettings::class)->enabled() && ! $consented) {
             Storage::disk('local')->delete($path);
             throw ValidationException::withMessages(['ai_consent' => 'Please consent to AI processing before uploading a CV.']);
         }
@@ -429,7 +453,7 @@ class ProfileController extends Controller
 
         try {
             AnalyzeProfileResume::dispatch($import->id)
-                ->onQueue(config('pm-ai.resume_extract_enabled') ? config('pm-ai.resume_extract_queue') : 'default');
+                ->onQueue(app(\App\Domain\AI\Services\ResumeExtractionSettings::class)->enabled() ? config('pm-ai.resume_extract_queue') : 'default');
         } catch (\Throwable $error) {
             Log::warning('Resume analysis dispatch failed.', [
                 'import_id' => $import->id,
@@ -498,7 +522,7 @@ class ProfileController extends Controller
     public function startImport(Request $request): RedirectResponse
     {
         $validated = $request->validate(['resume_id' => ['required', 'integer'], 'ai_consent' => ['sometimes', 'boolean']]);
-        if (config('pm-ai.resume_extract_enabled') && ! $request->boolean('ai_consent')) {
+        if (app(\App\Domain\AI\Services\ResumeExtractionSettings::class)->enabled() && ! $request->boolean('ai_consent')) {
             throw ValidationException::withMessages(['ai_consent' => 'Please consent to AI processing before importing a CV.']);
         }
         $resume = $request->user()->resumes()->findOrFail($validated['resume_id']);
@@ -510,7 +534,7 @@ class ProfileController extends Controller
             'status' => 'processing',
         ]);
         AnalyzeProfileResume::dispatch($import->id)
-            ->onQueue(config('pm-ai.resume_extract_enabled') ? config('pm-ai.resume_extract_queue') : 'default');
+            ->onQueue(app(\App\Domain\AI\Services\ResumeExtractionSettings::class)->enabled() ? config('pm-ai.resume_extract_queue') : 'default');
         return redirect()->route('profile.edit', ['tab' => 'imports']);
     }
 
@@ -553,7 +577,7 @@ class ProfileController extends Controller
             }
 
             $consented = $request->boolean('ai_consent') || ($original->extracted_data['ai_consent'] ?? false) === true;
-            if (config('pm-ai.resume_extract_enabled') && ! $consented) {
+            if (app(\App\Domain\AI\Services\ResumeExtractionSettings::class)->enabled() && ! $consented) {
                 throw ValidationException::withMessages(['ai_consent' => 'Please consent to AI processing before retrying this CV.']);
             }
 
@@ -571,7 +595,7 @@ class ProfileController extends Controller
 
         try {
             AnalyzeProfileResume::dispatch($replacement->id)
-                ->onQueue(config('pm-ai.resume_extract_enabled') ? config('pm-ai.resume_extract_queue') : 'default');
+                ->onQueue(app(\App\Domain\AI\Services\ResumeExtractionSettings::class)->enabled() ? config('pm-ai.resume_extract_queue') : 'default');
         } catch (\Throwable $error) {
             Log::warning('Resume analysis retry dispatch failed.', [
                 'import_id' => $replacement->id,
@@ -617,18 +641,19 @@ class ProfileController extends Controller
     {
         $format = $request->validate(['format' => ['required', 'in:pdf,word']])['format'];
         $user = $request->user();
-        $user->loadMissing(['profile', 'experiences', 'educations', 'certifications']);
-        $html = view('profile.resume-export', ['member' => $user, 'format' => $format])->render();
-        if ($format === 'word') {
-            return response($html)->header('Content-Type', 'application/msword; charset=UTF-8')
-                ->header('Content-Disposition', 'attachment; filename="pm-circle-resume.doc"')
-                ->header('X-Content-Type-Options', 'nosniff');
+        $user->loadMissing(['profile']);
+        $document = $user->profile?->private_resume_document;
+        if ($document === null) {
+            $user->loadMissing(['experiences', 'educations', 'certifications', 'profileProjects']);
+            $document = \App\Domain\Identity\Services\ResumeDocument::fromProfile($user);
         }
-
-        // The browser's print dialog supports Save as PDF without a heavy PDF dependency.
-        return response($html)->header('Content-Type', 'text/html; charset=UTF-8')
-            ->header('Cache-Control', 'no-store, private')
-            ->header('X-Frame-Options', 'DENY');
+        $fields = [
+            'name' => $user->name, 'email' => $user->email,
+            'role' => $user->profile?->role ?? '',
+            'location' => implode(', ', array_filter([$user->profile?->city, $user->profile?->country])),
+            'summary' => $user->profile?->about ?? '',
+        ];
+        return app(\App\Domain\Identity\Services\ResumeExport::class)->render($fields, $document, $format);
     }
 
     /**

@@ -65,7 +65,7 @@ final class ProfileImportPresenter
             'filename' => $active?->source_filename,
             'comparisons' => $active?->status === 'ready' ? $comparisons : [],
             'warnings' => $active?->extracted_data['warnings'] ?? [],
-            'ai_enabled' => (bool) config('pm-ai.resume_extract_enabled'),
+            'ai_enabled' => (bool) app(\App\Domain\AI\Services\ResumeExtractionSettings::class)->enabled(),
             'history' => $history->map(fn ($record) => [
                 'id' => $record->id, 'date' => $record->updated_at?->format('d M Y, g:i A'),
                 'filename' => $record->source_filename,

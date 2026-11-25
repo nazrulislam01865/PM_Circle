@@ -1,0 +1,7 @@
+# Owner profile Overview: compact identity and cover upload
+
+Baseline: PM_Circle_Profile_Overview_Prototype_Full_Project.zip. The comparison screenshot shows a larger name and location and taller identity block than the prototype. Retain the approved Inter design system; use a centralized 24–28px profile heading within its 24–32px H2 range, 16px headline, 14px metadata and compact status chips. Preserve real availability and membership labels, even when the sample screenshot does not show them.
+
+The owner-only Overview exposes the existing cover upload route and existing crop dialog. The crop output is 1590 × 300 JPEG (5.3:1), matching the desktop banner. Small cards retain a minimum banner height for usability, so the cover may center-crop further on narrow screens. Supported inputs: JPEG, PNG, WebP, up to 5 MB and 6000 × 6000 pixels. Existing cover remains intact on failed validation/storage. The editor's stale external cover URL is cleared when a new file replaces it. No new database schema, dependency, or route. Existing public profile media visibility and serving policy are unchanged.
+
+Verification: five targeted source tests passed; 399/400 Node regression tests passed with the pre-existing full mock counter failure. PHP syntax, TSX transpilation, CSS parsing and Chromium layout fixtures at 1600, 1440, 1024, 768, 390, 320 widths passed. Fixtures are not authenticated app testing. Two Laravel feature tests are included but unexecuted (vendor unavailable). Production build and full TypeScript check not executed (dependencies unavailable).

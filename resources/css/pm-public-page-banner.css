@@ -1,0 +1,15 @@
+/* Shared public banner uses the existing simulator banner and central tokens. */
+.pm-app .pm-public-page-banner {
+    font-family: var(--pm-guide-font);
+    color: var(--pm-guide-body-color);
+    font-size: var(--pm-guide-text-body);
+    line-height: var(--pm-guide-line-body);
+    width: 100%;
+}
+.pm-app .pm-public-page-banner > .pm-v2-container { width: var(--pm-v2-container-width); max-width: 100%; margin-inline: auto; min-width: 0; }
+.pm-app .pm-public-page-banner h1 { margin: var(--pm-guide-s3) 0 0; color: var(--pm-guide-ink); font-size: var(--pm-guide-text-h1); font-weight: var(--pm-guide-static-h1-weight); line-height: var(--pm-guide-line-h1); letter-spacing: var(--pm-guide-tracking-h1); overflow-wrap: anywhere; }
+.pm-app .pm-public-page-banner p { margin: var(--pm-guide-s2) 0 0; max-width: 65ch; overflow-wrap: anywhere; }
+.pm-public-page-banner .pm-sim-breadcrumb { overflow-wrap: anywhere; }
+.pm-public-breadcrumb-parent { display: inline-flex; flex-wrap: wrap; gap: var(--pm-guide-s2); min-width: 0; }
+.pm-guest-public-shell .pm-public-help-content { padding-block: var(--pm-guide-s8) var(--pm-guide-s12); }
+.pm-guest-public-shell .pm-challenge-heading-row { justify-content: flex-end; }

@@ -1,12 +1,12 @@
-/* Pricing prototype: component-only overrides reuse the centralized PM Circle tokens. */
+/* Pricing prototype: legacy chrome rules must never style the shared HomeHeader or HomeFooter. */
 .pm-pricing-shell{background:var(--pm-tone-f7f7f6)}
 .pm-app.pm-pricing-shell .pm-container{width:min(1480px,calc(100% - 64px))}
 .pm-pricing-shell .pm-header{border-bottom:1px solid var(--pm-tone-edf0f2)}
 .pm-pricing-shell .pm-header-inner{min-height:59px;gap:37px}
-.pm-pricing-shell .pm-brand-icon-monogram{width:42px;height:42px;display:grid;place-items:center;color:var(--surface);font-weight:var(--pm-font-weight-800);font-size:var(--type-body);letter-spacing: var(--pm-tracking-neg-p8px);background:linear-gradient(140deg,var(--pm-tone-0783de),var(--pm-tone-0755aa))}
-.pm-pricing-shell .pm-brand-icon-monogram::before{content:none}
+.pm-pricing-shell :is(.pm-header,.pm-footer) .pm-brand-icon-monogram{width:42px;height:42px;display:grid;place-items:center;color:var(--surface);font-weight:var(--pm-font-weight-800);font-size:var(--type-body);letter-spacing: var(--pm-tracking-neg-p8px);background:linear-gradient(140deg,var(--pm-tone-0783de),var(--pm-tone-0755aa))}
+.pm-pricing-shell :is(.pm-header,.pm-footer) .pm-brand-icon-monogram::before{content:none}
 .pm-pricing-shell .pm-header .pm-brand-copy strong,.pm-pricing-shell .pm-footer .pm-brand-copy strong{font-size:var(--type-lead);font-weight:var(--pm-font-weight-800);letter-spacing: var(--pm-tracking-neg-p45px)}
-.pm-pricing-shell .pm-brand-copy small{font-size:var(--pm-font-size-10px);letter-spacing:0;margin-top:2px;font-weight:var(--pm-font-weight-500);color:var(--pm-tone-737b88)}
+.pm-pricing-shell :is(.pm-header,.pm-footer) .pm-brand-copy small{font-size:var(--pm-font-size-10px);letter-spacing:0;margin-top:2px;font-weight:var(--pm-font-weight-500);color:var(--pm-tone-737b88)}
 .pm-pricing-shell .pm-main-nav{gap:18px}
 .pm-pricing-shell .pm-main-nav a{font-size:var(--type-caption);font-weight:var(--type-weight-semibold)}
 .pm-pricing-shell .pm-header-actions{gap:9px}

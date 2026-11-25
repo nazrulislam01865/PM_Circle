@@ -1,14 +1,30 @@
+import type { ReactNode } from 'react';
 import { Link } from '@inertiajs/react';
-import { ArrowRight, Check, Crown, Eye, Flag, LockKeyhole, MessageCircle, Star } from 'lucide-react';
+import { ArrowRight, Check, ClipboardList, Crown, Eye, LockKeyhole, Wallet } from 'lucide-react';
 import { ProfileCompletionReward } from '@/components/rewards/ProfileCompletionReward';
 import { DashboardAvatar } from '@/components/dashboard/DashboardAvatar';
 import type { DashboardData } from '@/types/dashboard';
 
-const badgeIcons = { 'first-post': Star, 'first-reply': MessageCircle, 'first-scenario': Flag } as const;
+import { BadgeMedal } from '@/components/achievements/AchievementCards';
+
+/** Compact summary cards share the member overview typography, border and link styles. */
+function OverviewSummaryCard({ title, icon, status, children, href, action }: {
+    title: string; icon: ReactNode; status?: ReactNode; children: ReactNode; href: string; action: string;
+}) {
+    return <section className="pm-dash-card pm-member-overview-card pm-member-overview-summary">
+        <div className="pm-member-overview-summary-heading">
+            <h2><span className="pm-member-overview-summary-icon">{icon}</span>{title}</h2>
+            {status}
+        </div>
+        {children}
+        <Link href={href} className="pm-member-overview-link">{action} <ArrowRight size={17} aria-hidden="true" /></Link>
+    </section>;
+}
 
 /** One compact, data-backed sidebar for the logged-in homepage. */
 export function MemberHomeOverview({ dashboard }: { dashboard: DashboardData }) {
-    const { member, learning, overview } = dashboard;
+    const { member, learning, overview, planUsage } = dashboard;
+    const planLabel = { free: 'Free plan', plus: 'Plus plan', pro: 'Pro plan' }[planUsage.plan];
     const memberType = dashboard.plan === 'premium' ? 'Plus member' : dashboard.plan === 'pro' ? 'Pro member' : 'Free member';
 
     return <>
@@ -31,9 +47,28 @@ export function MemberHomeOverview({ dashboard }: { dashboard: DashboardData }) 
         <section className="pm-dash-card pm-member-overview-card pm-member-home-badges">
             <div className="pm-member-overview-heading"><h2>Earned badges</h2><Link href="/dashboard/features/achievements" className="pm-member-overview-heading-link">View all <ArrowRight size={17} aria-hidden="true" /></Link></div>
             {overview.badges.length > 0 ? <div className="pm-member-overview-badges">
-                {overview.badges.map(badge => { const Icon = badgeIcons[badge.key]; return <div className="pm-member-overview-badge" key={badge.key}><span className={`pm-member-overview-badge-icon is-${badge.key}`}><Icon size={22} aria-hidden="true" /></span><span>{badge.label}</span></div>; })}
+                {overview.badges.map(badge => <div className="pm-member-overview-badge pm-ach-home-badge" key={badge.id}><BadgeMedal badge={badge}/><span>{badge.name}</span></div>)}
             </div> : <p className="pm-member-overview-empty">No activity badges earned yet.</p>}
         </section>
+
+        <OverviewSummaryCard title="Plan & usage" icon={<Wallet aria-hidden="true" />}
+            status={<span className="pm-member-overview-summary-pill">{planLabel}</span>}
+            href="/membership" action="View usage">
+            <p className="pm-member-overview-summary-copy">{planUsage.tokensRemaining !== null
+                ? `${planUsage.tokensRemaining.toLocaleString('en-US')} AI tokens remaining`
+                : planUsage.examAccess ? 'No active PMP AI token allowance' : 'PMP AI tokens not included'}</p>
+        </OverviewSummaryCard>
+
+        <OverviewSummaryCard title="Practice & results" icon={<ClipboardList aria-hidden="true" />}
+            href="/exams/pmp/enter" action="View simulator access">
+            <div className="pm-member-overview-summary-row">
+                <span className="pm-member-overview-summary-copy">PMP Exam Simulator</span>
+                <span className="pm-member-overview-summary-pill">
+                    {planUsage.examAccess ? <Check aria-hidden="true" /> : <LockKeyhole aria-hidden="true" />}
+                    {planUsage.examAccess ? 'Included' : 'Premium access'}
+                </span>
+            </div>
+        </OverviewSummaryCard>
 
         <section className="pm-dash-card pm-member-overview-card pm-member-home-insights">
             <h2>Profile insights</h2>

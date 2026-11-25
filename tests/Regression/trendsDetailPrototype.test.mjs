@@ -21,7 +21,7 @@ test('first report retains the approved title, content order, date, metadata and
 });
 
 test('report details use homepage layout, shared banner, controls, photos and the shared full-width article rail', () => {
-    assert.match(page, /<PublicLayout siteLayout homePrototype guideLayout active="\/pm-trends">/);
+    assert.match(page, /<PublicLayout siteLayout homePrototype guideLayout active="\/pm-trends" banner=\{\{[^\n]*\}\}>/);
     assert.match(page, /pm-terms-banner/);
     assert.match(page, /pm-public-trends-wrap pm-report-main/);
     assert.match(page, /pm-guide-button is-outline/);

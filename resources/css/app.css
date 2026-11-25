@@ -21,6 +21,7 @@
 @import './pm-member-plans.css';
 @import './pm-comparison.css';
 @import './pm-feature-pages.css';
+@import "./pm-achievements.css";
 @import './pm-profile.css';
 @import './pm-profile-ux.css';
 @import './pm-profile-editor-prototype.css';
@@ -44,6 +45,9 @@
 @import './pm-admin-overview.css';
 @import './pm-interview-admin.css';
 @import './pm-admin-ai-usage.css';
+/* Shared AI settings and native dialogs must be available on direct workspace loads. */
+@import './pm-career-trend-settings.css';
+@import './pm-ai-workspace.css';
 @import './pm-member-home.css';
 @import './pm-member-directory.css';
 @import './pm-member-shell.css';
@@ -68,7 +72,9 @@
 @import './pm-home-v2-responsive.css';
 @import './pm-simulator-catalog.css';
 @import './pm-events.css';
+@import './pm-image-upload.css';
 @import './pm-learning-public.css';
+@import './pm-course-workspace.css';
 @import './pm-terms.css';
 @import './pm-about.css';
 @import './pm-reward-offer-dialog.css';
@@ -199,3 +205,5 @@
 
 @import "./pm-pagination.css";
 @import './pm-member-body.css';
+
+@import './pm-public-page-banner.css';

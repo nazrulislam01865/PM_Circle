@@ -31,6 +31,7 @@ final class PostAiCheckerTest extends TestCase
         config()->set('pm-ai.post_check_enabled', true);
         config()->set('pm-ai.post_check_provider', 'responses');
         config()->set('pm-ai.post_check_api_key', 'test-post-check-only');
+        config()->set('pm-ai.global_daily_budget_usd', 20);
         config()->set('pm-ai.post_check_daily_budget_usd', 2);
         config()->set('pm-ai.allowed_models', ['gpt-5-nano']);
     }

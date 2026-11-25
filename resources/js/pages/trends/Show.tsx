@@ -1,3 +1,4 @@
+import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 import { HomePhoto } from '@/components/home/v2/HomePhoto';
@@ -70,13 +71,13 @@ function ReportDetail({ article }: { article: TrendArticle }) {
 
     return <>
         <Head title={title}><meta name="description" content={lead}/></Head>
-        <section className="pm-terms-banner" aria-labelledby="pm-report-title">
+        <LegacyPageHeading><section className="pm-terms-banner" aria-labelledby="pm-report-title">
             <div className="pm-public-trends-wrap">
                 <nav className="pm-terms-breadcrumb" aria-label="Breadcrumb"><Link href="/">Home</Link><span aria-hidden="true">/</span><Link href="/pm-trends">Trends</Link><span aria-hidden="true">/</span><span aria-current="page">Report</span></nav>
                 <h1 id="pm-report-title">{title}</h1>
                 <p>{lead}</p>
             </div>
-        </section>
+        </section></LegacyPageHeading>
         <div className="pm-public-trends-wrap pm-report-main">
             <article className="pm-report-reading">
                 <p className="pm-public-trends-meta"><strong>{article.articleCategoryLabel ?? article.category}</strong> · {isSample ? 'Sample report' : article.classification} · {article.readMinutes} min read</p>
@@ -126,9 +127,9 @@ function ReportDetail({ article }: { article: TrendArticle }) {
 
 export default function Show({ slug }: { slug: string }) {
     const article = sampleTrendReports.find(item => item.slug === slug) ?? trendArticles.find(item => item.slug === slug);
-    return <PublicLayout siteLayout homePrototype guideLayout active="/pm-trends">
+    return <PublicLayout siteLayout homePrototype guideLayout active="/pm-trends" banner={{title: article ? article.articleTitle ?? article.title : 'Article not found', description: article ? article.articleLead ?? article.summary : undefined, parents: [{label: 'Trends', href: '/pm-trends'}], currentLabel: article ? 'Report' : 'Article not found', titleId: 'pm-report-title'}}>
         <div className="pm-public-trends-page pm-public-trends-detail pm-guide-public-shell">
-            {article ? <ReportDetail key={slug} article={article}/> : <><Head title="Article not found"/><div className="pm-public-trends-wrap pm-report-main"><h1>Article not found</h1><Link className="pm-guide-button is-outline" href="/pm-trends">Back to Trends</Link></div></>}
+            {article ? <ReportDetail key={slug} article={article}/> : <><Head title="Article not found"/><div className="pm-public-trends-wrap pm-report-main"><LegacyPageHeading><h1>Article not found</h1></LegacyPageHeading><Link className="pm-guide-button is-outline" href="/pm-trends">Back to Trends</Link></div></>}
         </div>
     </PublicLayout>;
 }

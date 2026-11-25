@@ -11,7 +11,7 @@ $check = static function (bool $condition, string $message): void {
     echo "PASS: {$message}\n";
 };
 
-$result = $read('resources/js/pages/exam/Result.tsx');
+$result = $read('resources/js/pages/exam/Result.tsx') . $read('resources/js/components/exam/PmpExamResultReport.tsx');
 $css = $read('resources/css/pm-exam-simulator.css');
 $progress = $read('resources/js/components/exam/ExamTimeProgress.tsx');
 $math = $read('resources/js/components/exam/examCountdownMath.ts');
@@ -27,7 +27,7 @@ $check(str_contains($result, 'className="pm-exam-result-page"')
 $check(str_contains($css, '.pm-exam-page.pm-exam-result-page')
     && preg_match('/\.pm-exam-page\.pm-exam-result-page\s*\{[^}]*width:\s*100%;[^}]*min-height:\s*0;/s', $css) === 1
     && ! preg_match('/\.pm-exam-page\.pm-exam-result-page\s*\{[^}]*var\(--content-width\)/s', $css)
-    && str_contains($css, 'var(--text-h1)')
+    && str_contains($css, 'var(--pm-member-workspace-title)')
     && str_contains($css, 'var(--text-h4)'),
     'Result fills the existing member content container with shared typography and normal footer flow');
 $check(preg_match('/\.pm-exam-report-scale\s*\{[^}]*padding-top:var\(--s10\)/s', $css) === 1
@@ -46,6 +46,7 @@ $check(str_contains($progress, "from './examCountdownMath'")
     && str_contains($progress, 'export function ExamTimeProgress')
     && str_contains($math, 'export function remainingTimePercentage')
     && str_contains($take, "from '@/components/exam/examCountdownMath'")
-    && str_contains($sample, "from './ExamTimeProgress'")
+    && str_contains($sample, "from './PmpExamTakingView'")
+    && str_contains($read('resources/js/components/exam/PmpExamTakingView.tsx'), "from './ExamTimeProgress'")
     && str_contains($nodeTest, 'examCountdownMath.ts'),
     'Every exam import and countdown regression points to the correct module');

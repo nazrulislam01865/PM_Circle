@@ -1,3 +1,5 @@
+import { LatestBadgeCards } from '@/components/achievements/AchievementCards';
+import type { AchievementBadge } from '@/components/achievements/types';
 import { useState, useRef } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
@@ -8,16 +10,17 @@ import { ProfileImageCropDialog } from '@/components/profile/ProfileImageCropDia
 import { ProfileHeroPhoto } from '@/components/profile/ProfileHeroPhoto';
 import { ProfilePrivacyTab, type ProfilePrivacyAudience, type ProfilePrivacyFieldGroup } from '@/components/profile/ProfilePrivacyTab';
 import {
-    Briefcase,
     Camera,
     ChevronRight,
-    Eye,
     FileText,
     MapPin,
-    Pencil,
+    ImagePlus,
+    Sparkle,
     Plus,
     Sparkles,
+    UserRound,
 } from 'lucide-react';
+import { ProfileWorkspaceHeader, type ProfileTab } from '@/components/profile/ProfileWorkspaceHeader';
 import { MemberDashboardLayout } from '@/layouts/pm/MemberDashboardLayout';
 import type { DashboardShellData } from '@/types/dashboard';
 import type { ProfileRewardData } from '@/types/reward';
@@ -47,6 +50,7 @@ type ProjectItem = {
 };
 
 type ProfilePageProps = {
+    canUseAssistant: boolean;
     activeTab: 'overview' | 'edit' | 'imports' | 'privacy';
     profileReward: ProfileRewardData | null;
     privacyFieldGroups: ProfilePrivacyFieldGroup[];
@@ -82,6 +86,7 @@ type ProfilePageProps = {
             change: string;
             period: string;
         };
+        latest_badges: AchievementBadge[];
         learning_stats: {
             activities: number;
             hours: number;
@@ -97,7 +102,7 @@ type ProfilePageProps = {
     };
 };
 
-export default function Profile({ activeTab: initialTab = 'overview', profileData, profileReward, privacyFieldGroups = [] }: ProfilePageProps) {
+export default function Profile({ activeTab: initialTab = 'overview', profileData, profileReward, privacyFieldGroups = [], canUseAssistant }: ProfilePageProps) {
     const { memberShell } = usePage<{ memberShell?: DashboardShellData }>().props;
 
     const dashboardShell: DashboardShellData = memberShell || {
@@ -149,8 +154,8 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
     const coverInputRef = useRef<HTMLInputElement>(null);
     const resumeUploadRef = useRef<HTMLInputElement>(null);
 
-    const changeTab = (tab: 'overview' | 'edit' | 'imports' | 'privacy') => {
-        setCurrentTab(tab);
+    const changeTab = (tab: ProfileTab) => {
+        if (tab !== 'assistant') setCurrentTab(tab);
         router.visit(ProfileController.edit.url({ query: { tab } }), {
             preserveState: false,
             preserveScroll: true,
@@ -161,7 +166,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
     const prepareImage = (event: React.ChangeEvent<HTMLInputElement>, kind: 'avatar' | 'cover') => {
         const file = event.target.files?.[0];
         event.target.value = '';
-        if (!file) return;
+        if (!file || photoSaving) return;
         if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
             setPhotoError('Choose a JPG, PNG or WebP image.');
             return;
@@ -200,7 +205,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
         <MemberDashboardLayout dashboard={dashboardShell}>
             <Head title="My profile - PM Circle" />
 
-            <div className={`pm-profile-page ${currentTab === 'edit' ? 'pm-profile-page--editor' : ''}`}>
+            <div className={`pm-profile-page ${currentTab === 'edit' ? 'pm-profile-page--editor' : currentTab === 'overview' ? 'pm-profile-page--overview' : ''}`}>
                 {/* Hidden File Inputs */}
                 <input type="file" ref={coverInputRef} onChange={(event) => prepareImage(event, 'cover')} accept="image/jpeg,image/png,image/webp" className="hidden" aria-hidden="true" />
                 <input type="file" ref={fileInputRef} onChange={(event) => prepareImage(event, 'avatar')} accept="image/jpeg,image/png,image/webp" className="hidden" aria-hidden="true" />
@@ -211,64 +216,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                 {photoError && <div className="pm-profile-upload-alert" role="alert">{photoError}</div>}
                 {photoSaving && <p className="pm-profile-upload-status" role="status">Uploading image...</p>}
 
-                {/* Top Action Header */}
-                <header className="pm-profile-top-bar">
-                    <div className="pm-profile-top-titles">
-                        <h1>My profile</h1>
-                        <p>
-                            {currentTab === 'overview' && 'Showcase your experience, skills and achievements to the PM Circle community.'}
-                            {currentTab === 'edit' && 'Manage your professional profile and who can see it.'}
-                            {currentTab === 'imports' && 'Manage your information, skills and preferences to get the most out of PM Circle.'}
-                            {currentTab === 'privacy' && 'Manage your professional profile and who can see it.'}
-                        </p>
-                    </div>
-
-                    <div className="pm-profile-top-actions">
-                        {currentTab === 'overview' && (
-                            <>
-                                <Link href={`/members/${profileData.id}`} className="pm-btn pm-btn-secondary" title="Preview your public profile">
-                                    <Eye size={17} /> Preview public profile
-                                </Link>
-                                <button type="button" className="pm-btn pm-btn-primary" onClick={() => changeTab('edit')}>
-                                    <Pencil size={17} /> Edit profile
-                                </button>
-                            </>
-                        )}
-
-                    </div>
-                </header>
-
-                {/* Horizontal Nav Tabs */}
-                <nav className="pm-profile-nav-tabs pm-member-tertiary-sticky" aria-label="Profile tabs">
-                    <button
-                        type="button"
-                        onClick={() => changeTab('overview')}
-                        className={`pm-profile-tab-item ${currentTab === 'overview' ? 'is-active' : ''}`}
-                    >
-                        Overview
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => changeTab('edit')}
-                        className={`pm-profile-tab-item ${currentTab === 'edit' ? 'is-active' : ''}`}
-                    >
-                        Edit profile
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => changeTab('imports')}
-                        className={`pm-profile-tab-item ${currentTab === 'imports' ? 'is-active' : ''}`}
-                    >
-                        Resume & imports
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => changeTab('privacy')}
-                        className={`pm-profile-tab-item ${currentTab === 'privacy' ? 'is-active' : ''}`}
-                    >
-                        Privacy
-                    </button>
-                </nav>
+                <ProfileWorkspaceHeader tab={currentTab} memberId={profileData.id} canUseAssistant={canUseAssistant} onTab={changeTab}/>
 
                 {/* ==============================================================
                     TAB 1: OVERVIEW (p3.png)
@@ -278,16 +226,21 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                         {/* Main Left Column */}
                         <div className="pm-profile-main-col">
                             {/* Hero Card */}
-                            <div className="pm-hero-card">
+                            <div className="pm-hero-card pm-profile-overview-hero">
                                 <div
                                     className="pm-hero-cover"
                                     style={
                                         profileData?.cover_photo_path
-                                            ? { backgroundImage: `url(${profileData.cover_photo_path})` }
+                                            ? { backgroundImage: `url(${profileData.cover_photo_path}), url(/images/pm-profile-overview-cover.webp)` }
                                             : undefined
                                     }
                                 >
-
+                                    <button type="button" className="pm-btn pm-btn-secondary pm-hero-cover-action"
+                                        disabled={photoSaving} onClick={() => coverInputRef.current?.click()}
+                                        aria-label={profileData.cover_photo_path ? 'Change cover photo' : 'Upload cover photo'}>
+                                        <ImagePlus size={16} aria-hidden="true" />
+                                        <span>{profileData.cover_photo_path ? 'Change cover photo' : 'Upload cover photo'}</span>
+                                    </button>
                                 </div>
 
                                 <div className="pm-hero-body">
@@ -297,6 +250,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                             type="button"
                                             className="pm-hero-avatar-camera"
                                             onClick={() => fileInputRef.current?.click()}
+                                            disabled={photoSaving}
                                             aria-label="Update profile picture"
                                         >
                                             <Camera size={16} />
@@ -305,20 +259,17 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
 
                                     <div className="pm-hero-name-row">
                                         <h2 className="pm-hero-name">{profileData.name}</h2>
-                                        <span className="pm-member-plan-badge">{dashboardShell.plan === 'free' ? 'Free member' : dashboardShell.plan === 'pro' ? '♛ Pro member' : '♛ Plus member'}</span>
+                                        <span className="pm-member-plan-badge">{dashboardShell.plan !== 'free' && <Sparkle size={14} fill="currentColor" aria-hidden="true" />}{dashboardShell.plan === 'free' ? 'Free member' : dashboardShell.plan === 'pro' ? 'Pro member' : 'Plus member'}</span>
                                     </div>
 
                                     {overviewHeadline && <p className="pm-hero-headline">{overviewHeadline}</p>}
-                                    <div className="pm-hero-meta">
-                                        {overviewLocation && <span className="pm-hero-location">
-                                            <MapPin size={20} aria-hidden="true" /><span>{overviewLocation}</span>
-                                        </span>}
-                                        {profileData.open_to_opportunities && (
-                                            <span className="pm-status-pill">
-                                                <Briefcase size={13} /> {profileData.status_label}
+                                    {overviewLocation && (
+                                        <div className="pm-hero-meta">
+                                            <span className="pm-hero-location">
+                                                <MapPin size={16} aria-hidden="true" /><span>{overviewLocation}</span>
                                             </span>
-                                        )}
-                                    </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -331,12 +282,12 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                 <div className="pm-card-body">
                                     <div className="pm-card-header-row">
                                         <h3 id="learning-head" className="pm-card-title">Learning & Contributions</h3>
-                                        <Link href="/learning" className="pm-btn-ghost inline-flex items-center gap-1">
+                                        <Link href="/dashboard/features/achievements?view=record" className="pm-btn-ghost inline-flex items-center gap-1">
                                             View learning record <ChevronRight size={14} />
                                         </Link>
                                     </div>
 
-                                    <p className="text-(length:--pm-font-size-13p5px) text-(color:--pm-tone-475569) m-0">
+                                    <p className="text-(length:--text-body) text-(color:--muted) m-0">
                                         Track completed learning activities, scenarios and measured PMP practice time.
                                     </p>
 
@@ -360,47 +311,29 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
 
                         {/* Right Sidebar */}
                         <aside className="pm-profile-side-col">
-                            {/* Completeness Ring */}
-                            <div className="pm-card">
+                            {/* The percentage remains the existing server-calculated profile score. */}
+                            <section className="pm-card pm-profile-completeness" aria-labelledby="profile-completeness-title">
                                 <div className="pm-card-body">
-                                    <div className="pm-card-header-row mb-3">
-                                        <h4 className="pm-card-title text-(length:--type-body)">Profile completeness</h4>
+                                    <div className="pm-profile-completeness-heading">
+                                        <h3 id="profile-completeness-title" className="pm-card-title"><UserRound size={20} aria-hidden="true" /> Profile completeness</h3>
+                                        <strong className="pm-profile-completeness-score">{profileData.completeness}%</strong>
                                     </div>
-
-                                    <div className="pm-progress-widget">
-                                        <div className="pm-ring-circle">
-                                            <svg viewBox="0 0 36 36">
-                                                <path
-                                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                                    fill="none"
-                                                    stroke="var(--pm-tone-e2e8f0)"
-                                                    strokeWidth="3.5"
-                                                />
-                                                <path
-                                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                                    fill="none"
-                                                    stroke="var(--primary)"
-                                                    strokeWidth="3.5"
-                                                    strokeDasharray={`${profileData.completeness}, 100`}
-                                                />
-                                            </svg>
-                                            <div className="pm-ring-val">{profileData.completeness}%</div>
-                                        </div>
-
-                                        <div className="pm-progress-text">
-                                            {profileData.completeness === 100 ? 'Your profile is complete.' : <><strong>Great progress!</strong> Add a work sample to make your profile stand out.</>}
-                                        </div>
+                                    <div className="pm-profile-completeness-track" role="progressbar" aria-labelledby="profile-completeness-title" aria-valuemin={0} aria-valuemax={100} aria-valuenow={profileData.completeness}>
+                                        <span style={{ width: `${Math.min(100, Math.max(0, profileData.completeness))}%` }} />
                                     </div>
-
+                                    <p>{profileData.completeness === 100 ? 'Your profile is complete.' : 'Add your experience, skills and education to complete your profile.'}</p>
                                     {profileData.completeness < 100 && <button
                                         type="button"
-                                        className="pm-btn pm-btn-secondary pm-btn-sm w-full"
-                                        onClick={() => changeTab('edit')}
+                                        className="pm-btn pm-btn-primary pm-profile-completeness-action"
+                                        onClick={() => changeTab(canUseAssistant ? 'assistant' : 'edit')}
                                     >
-                                        Add a work sample →
+                                        {canUseAssistant && <Sparkles size={20} aria-hidden="true" />}
+                                        {canUseAssistant ? 'Complete profile with AI' : 'Complete profile'}
                                     </button>}
                                 </div>
-                            </div>
+                            </section>
+
+                            <LatestBadgeCards badges={profileData.latest_badges ?? []} variant="profile-rail"/>
 
                             <ProfileCompletionReward reward={profileReward} variant="profile" />
 
@@ -408,16 +341,16 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                             <div className="pm-card">
                                 <div className="pm-card-body">
                                     <div className="pm-card-header-row mb-3">
-                                        <h4 className="pm-card-title text-(length:--type-body)">Profile visibility</h4>
+                                        <h4 className="pm-card-title">Profile visibility</h4>
                                     </div>
 
                                     <div className="space-y-4">
                                         <div>
-                                            <label className="text-(length:--type-caption) font-semibold text-(color:--disabled-text) uppercase block mb-1">
+                                            <label className="text-(length:--text-ui) font-semibold text-(color:--muted) uppercase block mb-1">
                                                 Who can see your profile
                                             </label>
                                             <select
-                                                className="pm-select text-(length:--pm-font-size-13p5px) py-2"
+                                                className="pm-select py-2"
                                                 value={formData.visibility}
                                                 onChange={(e) => {
                                                     setFormData({ ...formData, visibility: e.target.value });
@@ -433,7 +366,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                         </div>
 
                                         <div className="flex items-center justify-between pt-2 border-t border-(color:--pm-tone-f1f5f9)">
-                                            <span className="text-(length:--pm-font-size-13p5px) font-medium text-(color:--pm-tone-1e293b)">
+                                            <span className="text-(length:--text-body) text-(color:--ink)">
                                                 Show resume to employers
                                             </span>
                                             <label className="pm-switch">
@@ -452,13 +385,13 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                         </div>
 
                                         <div className="flex items-center justify-between pt-2 border-t border-(color:--pm-tone-f1f5f9)">
-                                            <span className="text-(length:--pm-font-size-13p5px) font-medium text-(color:--pm-tone-1e293b)">Contact details</span>
-                                            <span className="text-(length:--pm-font-size-13px) text-(color:--disabled-text) font-semibold">Private</span>
+                                            <span className="text-(length:--text-body) text-(color:--ink)">Contact details</span>
+                                            <span className="text-(length:--text-sm) text-(color:--muted) font-semibold">Private</span>
                                         </div>
 
                                         <button
                                             type="button"
-                                            className="text-(length:--pm-font-size-13px) text-(color:--primary) font-semibold hover:underline block pt-1"
+                                            className="text-(length:--text-ui) text-(color:--blue) font-semibold hover:underline block pt-1"
                                             onClick={() => changeTab('privacy')}
                                         >
                                             Manage granular privacy settings →
@@ -471,7 +404,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                             <div className="pm-card">
                                 <div className="pm-card-body">
                                     <div className="pm-card-header-row mb-3">
-                                        <h4 className="pm-card-title text-(length:--type-body)">Resume</h4>
+                                        <h4 className="pm-card-title">Resume</h4>
                                     </div>
 
                                     <div className="pm-resume-card-inner">
@@ -507,25 +440,25 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                             <div className="pm-card">
                                 <div className="pm-card-body">
                                     <div className="pm-card-header-row mb-2">
-                                        <h4 className="pm-card-title text-(length:--type-body)">Profile insights</h4>
+                                        <h4 className="pm-card-title">Profile insights</h4>
                                     </div>
 
                                     <div className="flex items-baseline gap-2 mb-2">
-                                        <span className="text-(length:--type-h2) font-bold text-(color:--pm-tone-0f172a)">{profileData.insights.views}</span>
+                                        <span className="text-(length:--text-stat) font-bold text-(color:--ink)">{profileData.insights.views}</span>
                                         <span className="text-(length:--pm-guide-text-meta) text-(color:--pm-guide-muted) font-semibold">
                                             {profileData.insights.change} {profileData.insights.period}
                                         </span>
                                     </div>
 
-                                    <p className="text-(length:--pm-font-size-13px) text-(color:--disabled-text) mb-3">
+                                    <p className="text-(length:--text-body) text-(color:--muted) mb-3">
                                         Recorded profile views in the last 30 days.
                                     </p>
 
                                     <div className="p-3 bg-(color:--pm-tone-eff6ff) border border-(color:--pm-tone-bfdbfe) rounded-lg">
-                                        <div className="text-(length:--pm-font-size-12p5px) font-semibold text-(color:--pm-tone-1e40af) mb-1 flex items-center gap-1.5">
+                                        <div className="text-(length:--text-ui) font-semibold text-(color:--pm-tone-1e40af) mb-1 flex items-center gap-1.5">
                                             <Sparkles size={14} /> Pro member insight
                                         </div>
-                                        <p className="text-(length:--type-caption) text-(color:--pm-tone-1e3a8a) m-0">
+                                        <p className="text-(length:--text-body) text-(color:--pm-tone-1e3a8a) m-0">
                                             Upgrade to Pro to see the companies, hiring leads, and roles looking at your profile.
                                         </p>
                                     </div>

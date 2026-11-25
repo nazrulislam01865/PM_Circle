@@ -1,0 +1,20 @@
+# Member AI Resume Assistant — prototype implementation
+
+Scope: `/dashboard/resume-assistant`. Public marketing page, existing profile import/review, AI gateway, account settings, payments and exam simulator are unchanged. Shared authenticated member shell provides existing sidebar, header, promotional bar and footer. The supplied HTML guideline matches the archive's guideline byte-for-byte. No separately attached CV template was available; the live preview implements the provided screenshot's single-column A4 presentation with a blue top rule, contact heading and section labels. It is not an exact reproduction of a separate Oxford document.
+
+## Workflow
+- Six prototype sections with jump links, private profile defaults, quality score (local completeness rubric, not an ATS or AI score), responsive two-column editor, live A4 preview and My resume preview tab.
+- Sample CV is fictional and in memory only; it cannot be saved to the profile through the sample UI. Returning to manual mode restores the previous draft.
+- Upload uses existing private PDF/DOCX upload (5 MB limit), consent and asynchronous extraction; the existing import-review screen remains the next step. Nothing is auto-applied to profile fields.
+- Suggest with AI reuses existing uploaded-resume AI analysis/rewrite request, polling, credit tariff, idempotency and consent. An explicit action copies the suggestion into the draft. No AI calls on input changes. AI reads the uploaded CV, not unsaved draft text.
+- Save draft uses an encrypted, member-keyed session value (not permanent storage); no migration. Submit requires explicit confirmation, existing Pro entitlement, server validation, a matching profile version and a transaction. It does not modify login email or privacy settings. Existing certification names cannot be changed here; use Edit profile to manage credentials. The compact prototype edits the leading experience dates/responsibilities, leading education and current role/company, preserving additional records. Existing experience job titles and organisations are not overwritten by current profile headline fields. Period input accepts YYYY-MM – YYYY-MM or YYYY-MM – Present. Skills accept comma or newline separated values. No existing records are deleted.
+- The quality score and preview run locally. The page loads profile relations once; additional entries are included in preview. AI allowed model settings are resolved once per page, and existing API feature checks remain unchanged. Long content expands rather than being clipped; the live preview flags multi-page drafts, not a paginated PDF. Existing export is unchanged.
+
+## Verification
+- Node regression suite with `--experimental-strip-types`: 386/387 passed; same unrelated `AI Tokens` assertion failed in the original archive (382/383). Four new static regression tests passed.
+- Changed PHP files linted, TSX transpilation syntax checked. Added Laravel integration tests for draft isolation, submit, entitlement, version conflict and record preservation; not executed (vendor dependencies unavailable).
+- Offline Chromium fixture rendered from actual TSX presentation with stubbed React/Inertia shell/hooks and shared CSS. 1440, 1024, 768 and 390px: no document overflow, 44px input controls, A4 aspect ratio and aligned desktop input rows. This is not live authenticated browser verification.
+- `npm ci --offline` blocked by unavailable yuku-parser package; installed Node 22.16 is below project's Vite Plus requirement. Production build/full type check remain unverified.
+
+## Deployment
+Apply changed-files patch to the existing project; preserve environment, keys, existing storage and database. With supported Node 22.18+ and installed dependencies, run `npm ci`, `npm run types:check`, `npm run build`, `php artisan optimize:clear`, and `php artisan test --filter=ResumeAssistantBuilderTest` against an isolated test database. No migration, seeding or new dependency. Test as a Pro member before deploying. Full source archive excludes stale compiled frontend and runtime session/cache/devtools data.

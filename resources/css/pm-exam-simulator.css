@@ -320,9 +320,11 @@
 .pm-exam-result-page .pm-exam-report-breadcrumb { margin-bottom: var(--s4); }
 .pm-exam-result-page .pm-exam-report-heading { margin-bottom: var(--s4); }
 .pm-exam-result-page .pm-exam-report-heading h1 {
-    font-size: var(--text-h1);
-    line-height: var(--line-h1);
-    font-weight: var(--bold);
+    font-size: var(--pm-member-workspace-title);
+    line-height: var(--pm-member-workspace-title-line);
+    font-weight: var(--pm-guide-weight-h2);
+    letter-spacing: var(--pm-guide-tracking-h2);
+    overflow-wrap: anywhere;
 }
 .pm-exam-result-page .pm-exam-report-card > h2,
 .pm-exam-result-page .pm-exam-report-domain-section > h2,
@@ -339,10 +341,6 @@
 .pm-exam-result-page .pm-exam-report-summary { max-width: 100%; }
 @media (max-width: 42rem) {
     .pm-exam-page.pm-exam-result-page { padding-bottom: var(--s6); }
-    .pm-exam-result-page .pm-exam-report-heading h1 {
-        font-size: var(--text-h1);
-        line-height: var(--line-h1);
-    }
     .pm-exam-result-page .pm-exam-report-heading { align-items: flex-start; }
     .pm-exam-result-page .pm-exam-report-label { white-space: nowrap; }
 }

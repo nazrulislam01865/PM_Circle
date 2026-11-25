@@ -32,6 +32,7 @@ final class CommunitySafetyPolicyTest extends TestCase
         config()->set('pm-ai.post_check_external_moderation', false);
         config()->set('pm-ai.post_check_provider', 'responses');
         config()->set('pm-ai.post_check_api_key', 'post-check-test-key');
+        config()->set('pm-ai.global_daily_budget_usd', 20);
         config()->set('pm-ai.post_check_daily_budget_usd', 5);
         config()->set('pm-ai.allowed_models', ['gpt-5-nano']);
     }
@@ -152,6 +153,40 @@ final class CommunitySafetyPolicyTest extends TestCase
         $this->assertSame(1, DB::table('comment_check_violations')->where('user_id', $author->id)->count());
         $this->actingAs($author)->getJson('/posts/'.$post->id.'/comments/'.$response->json('comment.id').'/check-status')
             ->assertOk()->assertJsonPath('status', 'restricted');
+    }
+
+    public function test_uncertain_reply_is_hidden_without_review_or_strike(): void
+    {
+        $author = $this->member();
+        $post = $this->approvedPost($author);
+        $parent = $post->comments()->create(['author_id' => $author->id, 'body' => 'A published parent comment.']);
+        $response = $this->actingAs($author)->postJson('/posts/'.$post->id.'/comments', [
+            'body' => 'An ambiguous reply for this test.', 'parent_id' => $parent->id,
+        ])->assertAccepted();
+        $this->fakeResult(false, true);
+        $id = $response->json('comment.id');
+        (new CheckCommunityComment($id))->handle(app(PostContentCheckService::class), app(PostCheckPolicy::class));
+        $this->assertSame('restricted', Comment::findOrFail($id)->check_status);
+        $this->assertFalse(Comment::query()->visible()->whereKey($id)->exists());
+        $this->assertSame(0, DB::table('comment_check_violations')->where('comment_id', $id)->count());
+        $this->actingAs($author)->getJson('/posts/'.$post->id.'/comments/'.$id.'/check-status')
+            ->assertOk()->assertJsonPath('status', 'restricted')->assertJsonPath('comment', null);
+    }
+
+    public function test_clean_comment_publishes_even_when_clean_posts_require_review(): void
+    {
+        DB::table('feed_moderation_settings')->where('id', 1)->update(['hold_clean_content' => true]);
+        $author = $this->member();
+        $post = $this->approvedPost($author);
+        $response = $this->actingAs($author)->postJson('/posts/'.$post->id.'/comments', [
+            'body' => 'Let us review the project schedule together.',
+        ])->assertAccepted();
+        $this->fakeResult(false);
+        $id = $response->json('comment.id');
+        (new CheckCommunityComment($id))->handle(app(PostContentCheckService::class), app(PostCheckPolicy::class));
+        $this->assertSame('approved', Comment::findOrFail($id)->check_status);
+        $this->assertTrue(Comment::query()->visible()->whereKey($id)->exists());
+        $this->assertSame(0, DB::table('comment_check_violations')->where('comment_id', $id)->count());
     }
 
     public function test_uncertain_post_requires_human_review_without_recording_strike(): void

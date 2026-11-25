@@ -23,8 +23,9 @@ $assert(str_contains($controller, "'serverNow' => now()->toIso8601String()")
     'Exam timer and progress bar use server-synchronized seconds, accounting for device clock skew');
 $math = $read('resources/js/components/exam/examCountdownMath.ts');
 $policy = $read('resources/js/components/pm/siteFooterVisibility.ts');
-$assert(str_contains($paid, '<ExamTimeProgress secondsRemaining={seconds} durationSeconds={duration}/>')
-    && str_contains($sample, '<ExamTimeProgress secondsRemaining={seconds} durationSeconds={duration}'),
+$view = $read('resources/js/components/exam/PmpExamTakingView.tsx');
+$assert(str_contains($paid, '<PmpExamTakingView') && str_contains($sample, '<PmpExamTakingView')
+    && str_contains($view, '<ExamTimeProgress secondsRemaining={seconds} durationSeconds={duration}'),
     'Paid and public exams use one time-remaining progress component');
 $assert(str_contains($paid, 'Math.abs(attempt.durationSeconds)'),
     'Paid exam normalizes legacy negative duration before computing time remaining percentage');

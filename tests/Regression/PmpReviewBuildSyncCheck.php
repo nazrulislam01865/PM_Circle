@@ -29,6 +29,20 @@ foreach ($keys as $label => $entry) {
     $files[$label] = [$path, (string) file_get_contents($full)];
 }
 [$reviewPath, $review] = $files['review'];
+$visited = [$keys['review'] => true];
+$queue = $manifest[$keys['review']]['imports'] ?? [];
+while ($queue) {
+    $entry = array_pop($queue);
+    if (isset($visited[$entry])) continue;
+    $visited[$entry] = true;
+    $asset = $manifest[$entry]['file'] ?? null;
+    if (! is_string($asset) || ! preg_match('~^assets/[a-zA-Z0-9_.-]+\.js$~', $asset) || ! is_file($root.'/public/build/'.$asset)) {
+        fwrite(STDERR, "FAIL: Missing shared review dependency.\n");
+        exit(1);
+    }
+    $review .= "\n" . file_get_contents($root.'/public/build/'.$asset);
+    array_push($queue, ...($manifest[$entry]['imports'] ?? []));
+}
 [$appPath, $app] = $files['app'];
 [$cssPath, $css] = $files['css'];
 $checks = [

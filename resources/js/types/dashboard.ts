@@ -12,10 +12,12 @@ export type DashboardData = {
     plan: DashboardPlan; isDemo: boolean; isPreview: boolean;
     member: { id: number; name: string; role: string | null; avatar_path?: string | null; completion: number };
     reward: ProfileRewardData | null;
+    planUsage: { plan: 'free' | 'plus' | 'pro'; examAccess: boolean; tokensRemaining: number | null };
     scenario: { id: number; slug: string; title: string; summary: string } | null;
     learning: { time: string; scenarios: number; level: number; lessonProgress: string };
     overview: {
-        badges: { key: 'first-post' | 'first-reply' | 'first-scenario'; label: string }[];
+        badges: import('@/components/achievements/types').AchievementBadge[];
+        badgeCount: number;
         insights: { last30: number; thisWeek: number };
         contribution: { posts: number; replies: number; responses: number };
         syllabus: { name: string; status: string };

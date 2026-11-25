@@ -1,3 +1,4 @@
+import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { Lightbulb, Sparkles } from 'lucide-react';
 import { HomePhoto } from '@/components/home/v2/HomePhoto';
@@ -43,13 +44,13 @@ function ReviewExample({ example }: { example: typeof examples[number] }) {
 export default function AiResumeAssistant() {
     const { auth, memberShell } = usePage<{ auth?: { user?: { is_admin?: boolean } | null }; memberShell?: { featureAccess?: { resume: boolean } } }>().props;
     const isMember = Boolean(auth?.user && !auth.user.is_admin);
-    return <PublicLayout siteLayout homePrototype guideLayout>
+    return <PublicLayout siteLayout homePrototype guideLayout banner={{title: 'AI Resume Assistant', description, parents: [{label: 'AI Tools', href: '/#pm-v2-ai'}], titleId: 'pm-public-resume-title'}}>
         <Head title="AI Resume Assistant"><meta name="description" content={description}/></Head>
         <div className="pm-public-resume-page">
-            <section className="pm-terms-banner" aria-labelledby="pm-public-resume-title"><div className="pm-public-resume-wrap">
+            <LegacyPageHeading><section className="pm-terms-banner" aria-labelledby="pm-public-resume-title"><div className="pm-public-resume-wrap">
                 <nav className="pm-terms-breadcrumb" aria-label="Breadcrumb"><Link href="/">Home</Link><span aria-hidden="true">/</span><a href="/#pm-v2-ai">AI Tools</a><span aria-hidden="true">/</span><span aria-current="page">AI Resume Assistant</span></nav>
                 <h1 id="pm-public-resume-title">AI Resume Assistant</h1><p>{description}</p>
-            </div></section>
+            </div></section></LegacyPageHeading>
             <div className="pm-public-resume-wrap pm-public-resume-main">
                 <section className="pm-public-resume-split pm-public-resume-feature" aria-labelledby="pm-public-resume-experience"><div className="pm-public-resume-copy">
                     <h2 id="pm-public-resume-experience">Make your experience easier to spot</h2><p>Clear headings help a reader find the right section. Specific achievements help them understand your contribution.</p>

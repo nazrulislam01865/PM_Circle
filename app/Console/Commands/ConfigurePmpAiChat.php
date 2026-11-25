@@ -50,7 +50,7 @@ final class ConfigurePmpAiChat extends Command
             'question-limit' => '10', 'concurrent-limit' => '1',
             'cycle-tokens' => '50000',
         ] : [];
-        if (! in_array($model, config('pm-ai.allowed_models', []), true)) {
+        if (! in_array($model, app(\App\Domain\AI\Services\AiRuntimeSettings::class)->allowedModels(), true)) {
             $this->error('Model is not listed in PM_AI_ALLOWED_MODELS.');
             return self::FAILURE;
         }

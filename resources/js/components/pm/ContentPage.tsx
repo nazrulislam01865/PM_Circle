@@ -1,11 +1,12 @@
+import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { type ReactNode } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
 
 /** Standard page frame used for additional public and member screens; not a second dashboard shell. */
 export function ContentPage({ title, subtitle, children, action, className }: { title: string; subtitle?: string; children: ReactNode; action?: ReactNode; className?: string }) {
-    return <PublicLayout><Head title={title}/><div className={`pm-container pm-page pm-feature-page${className ? ` ${className}` : ''}`}>
-        <div className="pm-feature-heading"><div><h1>{title}</h1>{subtitle && <p>{subtitle}</p>}</div>{action}</div>
+    return <PublicLayout banner={{title, description: subtitle}}><Head title={title}/><div className={`pm-container pm-page pm-feature-page${className ? ` ${className}` : ''}`}>
+        <div className="pm-feature-heading"><LegacyPageHeading><div><h1>{title}</h1>{subtitle && <p>{subtitle}</p>}</div></LegacyPageHeading>{action}</div>
         {children}
     </div></PublicLayout>;
 }

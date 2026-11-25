@@ -64,8 +64,8 @@ final class AiGateway
         if ($feature->credit_tariff > $max) {
             throw new AiFailure('PRICE_CHANGED', 409);
         }
-        if (! config($featureCode === 'daily_challenge_review'
-            ? 'pm-ai.daily_challenge_api_key' : 'pm-ai.api_key')) {
+        if (! app(AiFeatureRouting::class)->configured($featureCode, $featureCode === 'daily_challenge_review'
+            ? 'daily_challenge_api_key' : 'api_key')) {
             throw new AiFailure('PROVIDER_NOT_CONFIGURED', 503);
         }
         if ($featureCode === 'daily_challenge_review'
@@ -153,7 +153,7 @@ final class AiGateway
             if (in_array($featureCode, ['resume_analyze', 'resume_rewrite'], true)) {
                 DB::table('ai_resume_consents')->insert([
                     'user_id' => $user->id, 'resume_id' => $context['subject_id'],
-                    'request_id' => $requestId, 'consent_version' => 'ai-resume-v1',
+                    'request_id' => $requestId, 'consent_version' => $context['subject_type'] === 'resume_editor_draft' ? 'ai-resume-draft-v1' : 'ai-resume-v1',
                     'granted_at' => now(),
                 ]);
             }
@@ -262,7 +262,7 @@ final class AiGateway
         if ($feature === 'scenario_generate' && $settings->model !== 'gpt-5-nano') {
             throw new AiFailure('INVALID_FEATURE_CONFIGURATION', 503);
         }
-        if (! $prompt || ! $price || ($feature === 'scenario_generate' && ! config('pm-ai.daily_challenge_api_key'))) {
+        if (! $prompt || ! $price || ($feature === 'scenario_generate' && ! app(AiFeatureRouting::class)->configured($feature, 'daily_challenge_api_key'))) {
             throw new AiFailure('EDITORIAL_NOT_CONFIGURED', 503);
         }
         $instructions = $prompt->template;

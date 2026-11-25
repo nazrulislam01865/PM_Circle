@@ -1,6 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useEffect, useState, type ReactNode } from 'react';
-import { ChevronDown, ChevronRight, Database, ExternalLink, Flag, House, LayoutDashboard, LogOut, Menu, PanelTop, ClipboardCheck, Gift, Route, Gauge, CalendarDays, X, BookOpen, Heart, MessageSquareMore, Search, Bell, ChartColumn } from 'lucide-react';
+import { ChevronDown, ChevronRight, Database, ExternalLink, Flag, House, LayoutDashboard, LogOut, Menu, PanelTop, ClipboardCheck, Gift, Route, Settings2, CalendarDays, X, BookOpen, Heart, MessageSquareMore, Search, Bell } from 'lucide-react';
+import { aiWorkspaceLinks } from '@/components/admin/ai/workspace-navigation';
 import { Brand } from '@/components/pm/Brand';
 import { homepageSections, type HomepageSection, type HomepageSectionVisibility } from '@/components/admin/homepage-sections';
 import { pmpPublicSections } from '@/components/admin/pmp-public-sections';
@@ -24,6 +25,14 @@ type Props = {
     dashboardHeader?: { pendingReviews: number };
 };
 
+const aiSettingsLinks = [
+    { title: 'Career Trends', href: '/admin/ai/career-trends' },
+    { title: 'Daily Challenge AI', href: '/admin/ai/daily-challenge' },
+    { title: 'PMP Exam Simulator AI', href: '/admin/ai/pmp-settings' },
+    { title: 'Feed Moderation AI', href: '/admin/ai/feed-moderation' },
+    { title: 'AI usage management', href: '/admin/ai/usage-management' },
+];
+
 export function AdminLayout({ title, subtitle, children, active, selectedHomeSection, onSelectHomeSection, homepageVisibility, selectedCatalogCategory, selectedPmpSection, onSelectPmpSection, pmpVisibility, headingAction, breadcrumb, dashboardHeader }: Props) {
     const { auth } = usePage<{ auth?: { user?: { name?: string } | null } }>().props;
     const [searchOpen, setSearchOpen] = useState(false);
@@ -31,11 +40,12 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
     const [profileOpen, setProfileOpen] = useState(false);
     const quickLinks = [
         { title: 'Community moderation', href: '/admin/post-reports' },
+        ...aiSettingsLinks,
+        ...aiWorkspaceLinks,
         { title: 'Interview preparation', href: '/admin/interview-preparation' },
         { title: 'Course library', href: '/admin/learning/courses' },
+        { title: 'Community events', href: '/admin/events' },
         { title: 'Manage rewards', href: '/admin/profile-rewards' },
-        { title: 'Career Trends', href: '/admin/ai/career-trends' },
-        { title: 'Daily Challenge AI', href: '/admin/ai/daily-challenge' },
         { title: 'Homepage control', href: '/admin/homepage' },
         { title: 'PMP questions', href: '/admin/exam-simulator/pmp/questions' },
         { title: 'Master data', href: '/admin/master-data' },
@@ -45,7 +55,11 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
     const isNavigation = active === '/admin/navigation' || active === '/admin/footer';
     const isPmp = active === '/admin/exam-simulator/pmp';
     const isPmpBank = active === '/admin/exam-simulator/pmp/questions';
+    const isAi = aiSettingsLinks.some(item => item.href === active);
+    const isAiWorkspace = active.startsWith('/admin/ai/workspace/');
+    const [workspaceOpen, setWorkspaceOpen] = useState(isAiWorkspace);
     const isLearning = active.startsWith('/admin/learning/courses');
+    const [aiOpen, setAiOpen] = useState(isAi);
     const [homeOpen, setHomeOpen] = useState(isHomepage);
     const [masterOpen, setMasterOpen] = useState(isMaster);
     const [navOpen, setNavOpen] = useState(isNavigation);
@@ -53,11 +67,13 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
     const [mobileOpen, setMobileOpen] = useState(false);
     // Both catalog areas reuse one Inertia page; expand the matching group on route changes.
     useEffect(() => {
+        if (isAi) setAiOpen(true);
+        if (isAiWorkspace) setWorkspaceOpen(true);
         if (isHomepage) setHomeOpen(true);
         if (isMaster) setMasterOpen(true);
         if (isNavigation) setNavOpen(true);
         if (isPmp) setPmpOpen(true);
-    }, [active, isHomepage, isMaster, isNavigation, isPmp]);
+    }, [active, isAi, isAiWorkspace, isHomepage, isMaster, isNavigation, isPmp]);
     const sectionLabel = homepageSections.find(section => section.key === selectedHomeSection)?.name;
     const catalogLabel = [...dropdownGroups, ...navigationGroups].find(group => group.key === selectedCatalogCategory)?.label;
     const pmpLabel = isPmp ? pmpPublicSections.find(section => section.key === selectedPmpSection)?.title : undefined;
@@ -103,7 +119,7 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
                 <Link href="/admin" aria-current={active === '/admin' ? 'page' : undefined} className={`pm-admin-nav-link ${active === '/admin' ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
                     <LayoutDashboard size={18} aria-hidden="true"/> <span>Overview</span>
                 </Link>
-                <Link href="/admin/post-reports" className={`pm-admin-nav-link ${active === "/admin/post-reports" ? "is-active" : ""}`} onClick={() => setMobileOpen(false)}><Flag size={18} aria-hidden="true"/><span>Community moderation</span></Link>
+                <Link href="/admin/post-reports" className={`pm-admin-nav-link ${(active === "/admin/post-reports") ? "is-active" : ""}`} onClick={() => setMobileOpen(false)}><Flag size={18} aria-hidden="true"/><span>Community moderation</span></Link>
                 <Link href="/admin/support-requests" className={`pm-admin-nav-link ${active === '/admin/support-requests' ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}><MessageSquareMore size={18} aria-hidden="true"/><span>Support requests</span></Link>
                 <Link href="/admin/reaction-icons" aria-current={active === '/admin/reaction-icons' ? 'page' : undefined}
                     className={`pm-admin-nav-link ${active === '/admin/reaction-icons' ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
@@ -113,20 +129,29 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
                     className={`pm-admin-nav-link ${active === '/admin/profile-rewards' ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
                     <Gift size={18} aria-hidden="true"/><span>Profile rewards</span>
                 </Link>
-                <Link href="/admin/ai/career-trends" aria-current={active === '/admin/ai/career-trends' ? 'page' : undefined}
-                    className={`pm-admin-nav-link ${active === '/admin/ai/career-trends' ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
-                    <ChartColumn size={18} aria-hidden="true"/><span>Career Trends</span>
-                </Link>
-                <Link href="/admin/ai/daily-challenge" aria-current={active === '/admin/ai/daily-challenge' ? 'page' : undefined}
-                    className={`pm-admin-nav-link ${active === '/admin/ai/daily-challenge' ? 'is-active' : ''}`}
-                    onClick={() => setMobileOpen(false)}>
-                    <CalendarDays size={18} aria-hidden="true"/><span>Daily Challenge AI</span>
-                </Link>
-                <Link href="/admin/ai/usage-management" aria-current={active === '/admin/ai/usage-management' ? 'page' : undefined}
-                    className={`pm-admin-nav-link ${active === '/admin/ai/usage-management' ? 'is-active' : ''}`}
-                    onClick={() => setMobileOpen(false)}>
-                    <Gauge size={18} aria-hidden="true"/><span>AI usage management</span>
-                </Link>
+                <button type="button" className={`pm-admin-nav-link pm-admin-nav-group-button ${isAiWorkspace ? 'is-active' : ''}`}
+                    aria-expanded={workspaceOpen} aria-controls="pm-admin-ai-workspace-submenu" onClick={() => setWorkspaceOpen(open => !open)}>
+                    <LayoutDashboard size={18} aria-hidden="true"/><span>AI Workspace</span>
+                    {workspaceOpen ? <ChevronDown size={17} aria-hidden="true"/> : <ChevronRight size={17} aria-hidden="true"/>}
+                </button>
+                {workspaceOpen && <div id="pm-admin-ai-workspace-submenu" className="pm-admin-submenu pm-ai-workspace-nav" aria-label="AI Workspace">
+                    {aiWorkspaceLinks.map(item => <Link key={item.href} href={item.href} aria-current={active === item.href ? 'page' : undefined}
+                        className={`pm-admin-submenu-link ${active === item.href ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
+                        <item.icon size={18} aria-hidden="true"/><span>{item.title}</span>
+                    </Link>)}
+                </div>}
+                <button type="button" className={`pm-admin-nav-link pm-admin-nav-group-button ${isAi ? 'is-active' : ''}`}
+                    aria-expanded={aiOpen} aria-controls="pm-admin-ai-submenu" onClick={() => setAiOpen(open => !open)}>
+                    <Settings2 size={18} aria-hidden="true"/><span>AI settings</span>
+                    {aiOpen ? <ChevronDown size={17} aria-hidden="true"/> : <ChevronRight size={17} aria-hidden="true"/>}
+                </button>
+                {aiOpen && <div id="pm-admin-ai-submenu" className="pm-admin-submenu" aria-label="AI settings sections">
+                    {aiSettingsLinks.map(item => <Link key={item.href} href={item.href}
+                        aria-current={active === item.href ? 'page' : undefined}
+                        className={`pm-admin-submenu-link ${active === item.href ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
+                        <span className="pm-admin-submenu-marker" aria-hidden="true"/><span>{item.title}</span>
+                    </Link>)}
+                </div>}
                 <div className={`pm-admin-nav-parent ${isHomepage ? 'is-current-group' : ''}`}>
                     <Link href="/admin/homepage" className={`pm-admin-nav-link pm-admin-nav-parent-link ${isHomepage ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
                         <PanelTop size={18} aria-hidden="true"/><span className="pm-admin-nav-text">Homepage control</span>
@@ -186,6 +211,7 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
                     className={`pm-admin-nav-link ${isLearning ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
                     <BookOpen size={18} aria-hidden="true"/><span>Course library</span>
                 </Link>
+                <Link href="/admin/events" aria-current={active === '/admin/events' ? 'page' : undefined} className={`pm-admin-nav-link ${active === '/admin/events' ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}><CalendarDays size={18} aria-hidden="true"/><span>Community events</span></Link>
                 {adminGroup(<Route size={18} aria-hidden="true"/>, 'Navigation control', '/admin/navigation', navOpen, () => setNavOpen(value => !value), navigationGroups)}
                 {adminGroup(<Database size={18} aria-hidden="true"/>, 'Master data', '/admin/master-data', masterOpen, () => setMasterOpen(value => !value), dropdownGroups)}
                 <span className="pm-admin-nav-label pm-admin-nav-label-separate">QUICK LINKS</span>

@@ -38,27 +38,16 @@ final class AccountFeatureController extends Controller
             return Inertia::render('account/Notifications');
         }
         if ($feature === 'achievements') {
-            $completed = DB::table('learning_activity_completions')->where('user_id', $user->id)->count();
-            $paths = DB::table('learning_paths')->where('is_published', true)->select('id', 'title', 'slug')->get();
-            $counts = DB::table('learning_activity_completions as lac')
-                ->join('learning_activities as la', 'lac.learning_activity_id', '=', 'la.id')
-                ->join('learning_modules as lm', 'la.learning_module_id', '=', 'lm.id')
-                ->where('lac.user_id', $user->id)
-                ->groupBy('lm.learning_path_id')
-                ->select('lm.learning_path_id', DB::raw('COUNT(*) as total'))->pluck('total', 'learning_path_id');
-            $pathSummaries = $paths->map(fn ($path) => ['id' => $path->id, 'title' => $path->title,
-                'slug' => $path->slug, 'completedActivities' => (int) ($counts[$path->id] ?? 0)])->values();
-            $badges = [];
-            if (DB::table('posts')->where('author_id', $user->id)->where('status', 'published')->whereNull('deleted_at')->exists()) {
-                $badges[] = ['key' => 'first-post', 'label' => 'First post'];
+            if ($user->onboarding_step < 3) {
+                return to_route('join.profile');
             }
-            if (DB::table('comments')->where('author_id', $user->id)->whereNull('deleted_at')->exists()) {
-                $badges[] = ['key' => 'first-reply', 'label' => 'First reply'];
-            }
-            if (DB::table('scenario_responses')->where('user_id', $user->id)->exists()) {
-                $badges[] = ['key' => 'first-scenario', 'label' => 'First scenario'];
-            }
-            return Inertia::render('account/Achievements', ['completedActivities' => $completed, 'paths' => $pathSummaries, 'badges' => $badges]);
+            $snapshot = app(\App\Domain\Achievements\Queries\MemberAchievements::class)->snapshot($user);
+            return Inertia::render('account/Achievements', [
+                'snapshot' => $snapshot,
+                'member' => ['name' => $user->name, 'role' => $user->profile?->role,
+                    'location' => implode(', ', array_filter([$user->profile?->city, $user->profile?->country])),
+                    'avatar' => $user->profile?->avatar_path],
+            ]);
         }
         if ($feature === 'insights') {
             $profileViews = DB::table('member_profile_views')->where('profile_user_id', $user->id)

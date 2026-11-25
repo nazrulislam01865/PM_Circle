@@ -96,12 +96,12 @@
 .pm-v2-preview-note a { color: var(--blue); }
 .pm-v2-empty { padding: var(--s5); color: var(--muted); font-size: var(--pm-v2-font-ui); }
 /* Homepage guest header: matches the prototype without altering member navigation. */
-.pm-v2-header { position: sticky; top: 0; z-index: 60; background: var(--surface); border-bottom: 1px solid var(--border); }
+.pm-v2-header { font-family: var(--font-ui); position: sticky; top: 0; z-index: 60; background: var(--surface); border-bottom: 1px solid var(--border); }
 .pm-home-v2-shell .pm-v2-header-inner { display: flex; align-items: center; justify-content: space-between; gap: var(--s4); width: var(--pm-v2-container-width); min-height: clamp(65px, 4.2vw, 86px); margin-inline: auto; }
 .pm-v2-header .pm-brand { flex: none; text-decoration: none; }
 .pm-v2-header .pm-brand-copy strong { font-size: var(--pm-v2-font-brand-title); line-height: var(--pm-guide-line-h1); }
 .pm-v2-header .pm-brand-copy small { font-size: var(--pm-v2-font-caption); line-height: var(--pm-guide-line-control); text-transform: uppercase; }
-/* The global logo draws a white crossbar. Only the homepage prototype uses a clean ring. */
+/* The approved public HomeHeader uses a clean ring on every guest page. */
 .pm-home-v2-shell .pm-v2-header .pm-brand-icon { position: relative; width: var(--pm-v2-brand-size); height: var(--pm-v2-brand-size); }
 .pm-home-v2-shell .pm-v2-header .pm-brand-icon::before { top: 50%; left: 50%; width: 58%; height: 58%; transform: translate(-50%, -50%); }
 .pm-home-v2-shell .pm-v2-header .pm-brand-icon span { display: none; }
@@ -109,6 +109,7 @@
 .pm-v2-header-nav, .pm-v2-header-utilities { display: flex; gap: var(--s3); align-items: center; }
 .pm-v2-header-nav { flex: 1; justify-content: center; }
 .pm-v2-header-nav > a, .pm-v2-header-nav summary, .pm-v2-header-utilities .pm-v2-login { color: var(--ink); font-size: var(--pm-v2-font-header-nav); line-height: var(--pm-guide-line-body); text-decoration: none; cursor: pointer; }
+.pm-v2-header-nav > a[aria-current="page"] { color: var(--pm-guide-blue); text-decoration: underline; text-underline-offset: .3em; }
 .pm-v2-header-nav summary { display: flex; gap: var(--s1); align-items: center; list-style: none; }
 .pm-v2-header-nav summary::-webkit-details-marker { display: none; }
 .pm-v2-header-nav summary svg { width: 12px; height: 12px; }

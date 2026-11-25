@@ -38,7 +38,7 @@ final class AiManagementController extends Controller
             'code' => ['required', Rule::in(array_keys(AiFeatureCatalog::FEATURES))],
             'enabled' => ['required', 'boolean'],
             'min_plan' => ['required', Rule::in(['free', 'plus', 'pro', 'staff'])],
-            'model' => ['required', Rule::in(config('pm-ai.allowed_models'))],
+            'model' => ['required', Rule::in(array_values(array_filter(app(\App\Domain\AI\Services\AiRuntimeSettings::class)->allowedModels(), fn ($model) => preg_match('/^(?:gpt-|o[1-9])/', $model))))],
             'max_input_chars' => ['required', 'integer', 'between:100,20000'],
             'max_output_tokens' => ['required', 'integer', 'between:50,5000'],
             'credit_tariff' => ['required', 'integer', 'between:0,100000'],
@@ -122,7 +122,7 @@ final class AiManagementController extends Controller
     {
         $access->authorize($request->user(), 'ai.manage_prices');
         $data = $request->validate([
-            'model' => ['required', Rule::in(config('pm-ai.allowed_models'))],
+            'model' => ['required', Rule::in(app(\App\Domain\AI\Services\AiRuntimeSettings::class)->allowedModels())],
             'input_usd_per_m' => ['required', 'numeric', 'min:0', 'max:10000'],
             'cached_input_usd_per_m' => ['required', 'numeric', 'min:0', 'max:10000'],
             'output_usd_per_m' => ['required', 'numeric', 'min:0', 'max:10000'],

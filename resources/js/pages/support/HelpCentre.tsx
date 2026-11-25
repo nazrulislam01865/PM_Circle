@@ -1,4 +1,7 @@
-import { Link } from '@inertiajs/react';
+import type { ReactNode } from 'react';
+import { PublicLayout } from '@/layouts/pm/PublicLayout';
+import { Head, Link } from '@inertiajs/react';
+import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { useState } from 'react';
 import { ArrowLeft, ChevronRight, Search, UserRound, BookOpen, ClipboardCheck, Sparkles, UsersRound, CreditCard } from 'lucide-react';
 import { AccountPage } from '@/components/account/AccountPage';
@@ -7,17 +10,24 @@ import { helpGuides, searchHelpGuides } from '@/components/account/helpGuides';
 
 const icons = [UserRound, BookOpen, ClipboardCheck, Sparkles, UsersRound, CreditCard];
 
-function SupportPanel() {
+function SupportPanel({ publicView }: { publicView: boolean }) {
     return <section className="pm-account-card pm-account-hero pm-account-row">
         <div><h2 className="pm-account-card-title">Still need help?</h2><p>Send us a message about your issue.</p></div>
         <div className="pm-account-actions">
-            <Link className="pm-button" href="/help-center/contact">Contact support</Link>
-            <Link className="pm-button pm-button-outline" href="/help-center/requests">My support requests</Link>
+            <Link className="pm-button" href={publicView ? '/contact' : '/help-center/contact'}>Contact support</Link>
+            {publicView ? <Link className="pm-button pm-button-outline" href="/login">Log in to view support requests</Link> : <Link className="pm-button pm-button-outline" href="/help-center/requests">My support requests</Link>}
         </div>
     </section>;
 }
 
-export default function HelpCentre() {
+function HelpPage({ publicView, title, description, children }: { publicView: boolean; title: string; description?: string; children: ReactNode }) {
+    if (!publicView) return <AccountPage title={title} description={description}>{children}</AccountPage>;
+    return <PublicLayout siteLayout guideLayout banner={{title, description, parents: title === 'Help Centre' ? [] : [{label: 'Help Centre', href: '/help-center'}]}}>
+        <Head title={title}/><div className="pm-container pm-public-help-content pm-account-page"><LegacyPageHeading><h1>{title}</h1>{description && <p className="pm-account-lead">{description}</p>}</LegacyPageHeading>{children}</div>
+    </PublicLayout>;
+}
+
+export default function HelpCentre({ publicView = false }: { publicView?: boolean }) {
     const [query, setQuery] = useState('');
     const [selected, setSelected] = useState<{topic: string; article: string} | null>(null);
     const topic = helpGuides.find(g => g.id === selected?.topic);
@@ -28,7 +38,8 @@ export default function HelpCentre() {
         setSelected({topic, article});
         window.scrollTo({top: 0});
     };
-    return <AccountPage title={article?.title ?? 'Help Centre'} description={article ? topic?.name : 'Find answers and step-by-step guides for your PM Circle account.'}>
+    return <HelpPage publicView={publicView} title={article?.title ?? 'Help Centre'} description={article ? topic?.name : 'Find answers and step-by-step guides for your PM Circle account.'}>
+        {publicView && <p className="pm-account-meta">You can browse these guides without an account. Log in to use member features or view your support requests.</p>}
         {article && topic ? <>
             <button type="button" className="pm-account-link pm-account-back" onClick={() => { setSelected(null); window.scrollTo({top: 0}); }}><ArrowLeft aria-hidden="true"/> Help Centre</button>
             <article className="pm-account-card">
@@ -59,6 +70,6 @@ export default function HelpCentre() {
             })}</div>
             {!matches.length && <section className="pm-account-card"><h3>No guides found</h3><p>Try another search or contact support.</p><button type="button" className="pm-button pm-button-outline" onClick={() => setQuery('')}>Clear search</button></section>}
         </>}
-        <SupportPanel/>
-    </AccountPage>;
+        <SupportPanel publicView={publicView}/>
+    </HelpPage>;
 }

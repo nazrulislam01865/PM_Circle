@@ -40,6 +40,6 @@ test('stale member URLs render the shared layout with HTTP 404 without replacing
     assert.match(controller, /abort_if\(\$request->expectsJson\(\), 404\)/);
     assert.match(controller, /Inertia::render\('members\/Unavailable'\)->toResponse\(\$request\)->setStatusCode\(404\)/);
     const page = read('resources/js/pages/members/Unavailable.tsx');
-    assert.match(page, /<PublicLayout active="\/members">/);
+    assert.match(page, /<PublicLayout active="\/members" banner=\{\{[^\n]*\}\}>/);
     assert.match(page, /<FeatureEmpty title="Profile unavailable"/);
 });

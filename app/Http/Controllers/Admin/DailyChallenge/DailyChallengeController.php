@@ -35,11 +35,12 @@ final class DailyChallengeController extends Controller
         }
         return Inertia::render('admin/DailyChallenge', [
             'settings' => $settings,
+            'connection' => app(\App\Domain\AI\Services\FeatureConnectionStatus::class)->status('daily-challenge', $features->get('scenario_generate')?->model, (bool) $features->get('scenario_generate')?->enabled),
             'generationOptions' => DailyChallengeMasterData::options(),
             'readiness' => [
                 'gateway' => (bool) config('pm-ai.enabled'),
                 'editorial' => (bool) config('pm-ai.editorial_enabled'),
-                'separate_key' => filled(config('pm-ai.daily_challenge_api_key')),
+                'separate_key' => app(\App\Domain\AI\Services\AiFeatureRouting::class)->primaryConfigured('scenario_generate', 'daily_challenge_api_key'),
                 'model' => 'gpt-5-nano',
                 'generation_feature' => (bool) ($features->get('scenario_generate')?->enabled)
                     && $features->get('scenario_generate')?->model === 'gpt-5-nano'
@@ -50,8 +51,8 @@ final class DailyChallengeController extends Controller
                     && ($promptReady['daily_challenge_review'] ?? false),
                 'pricing' => DB::table('ai_model_prices')->where('model', 'gpt-5-nano')
                     ->where('effective_from', '<=', now())->exists(),
-                'global_budget' => (float) config('pm-ai.global_daily_budget_usd') > 0,
-                'editorial_budget' => (float) config('pm-ai.editorial_budget_usd') > 0,
+                'global_budget' => (float) app(\App\Domain\AI\Services\AiRuntimeSettings::class)->budget('global_daily_budget_usd') > 0,
+                'editorial_budget' => (float) app(\App\Domain\AI\Services\AiRuntimeSettings::class)->budget('editorial_budget_usd') > 0,
             ],
             'recent' => DB::table('scenarios')->where('ai_generated', true)
                 ->whereNotNull('daily_slot')->orderByDesc('id')->limit(20)
@@ -92,7 +93,7 @@ final class DailyChallengeController extends Controller
         }
         if ($data['enabled'] && ! $policy->isReady()) {
             throw ValidationException::withMessages(['enabled' =>
-                'The centralized AI gateway, editorial switch and dedicated API key must be configured on the server.']);
+                'Enable the AI gateway and editorial workflow, then assign a tested Daily Challenge credential in AI Workspace.']);
         }
         DB::transaction(function () use ($request, $data, $access): void {
             $before = DB::table('daily_challenge_settings')->where('id', 1)->lockForUpdate()->first();

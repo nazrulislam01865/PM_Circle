@@ -5,6 +5,7 @@ namespace App\Http\Controllers\PublicSite;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Onboarding\OnboardingController;
 use App\Models\HomePageContent;
+use App\Models\CommunityEvent;
 use App\Support\Home\HomeAiFeaturesContent;
 use App\Domain\Community\Services\EngagementStats;
 use App\Domain\Identity\Services\ProfileFieldPrivacy;
@@ -123,6 +124,7 @@ class HomeController extends Controller
 
         return Inertia::render('public/Home', [
             'courses' => $courses,
+            'events' => $visible('careers') ? CommunityEvent::query()->published()->upcoming()->orderBy('starts_at')->orderBy('id')->limit(3)->get(CommunityEvent::listingColumns())->map(fn (CommunityEvent $event) => $event->listingData()) : [],
             'content' => $content,
             'isDemo' => $demo,
             'scenario' => $scenario,

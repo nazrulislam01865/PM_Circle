@@ -3,7 +3,7 @@
 // Dependency-free guard for one question, one explanation component and one active tab.
 $root = dirname(__DIR__, 2);
 $read = static fn (string $path): string => (string) file_get_contents($root.'/'.$path);
-$page = $read('resources/js/pages/exam/Review.tsx');
+$page = $read('resources/js/components/exam/PmpExamReviewView.tsx');
 $component = $read('resources/js/components/exam/PmpReviewExplanation.tsx');
 $content = $read('resources/js/components/exam/pmpReviewContent.ts');
 $shared = $read('resources/js/components/exam/ExamShared.tsx');

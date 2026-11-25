@@ -59,8 +59,23 @@
 @media(max-width:650px){.pm-post-check-dialog > [data-slot='dialog-title']{padding:var(--s4)}.pm-post-check-edit-body{padding:0 var(--s4) var(--s4)}.pm-post-check-edit-footer{padding:var(--s4)}.pm-post-check-restricted-actions{justify-content:flex-start}.pm-post-check-restricted-actions small{text-align:left}}
 
 /* Reuse approved Community typography and colors for private moderation notices. */
-.pm-inline-comment-info {display:flex;align-items:center;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s2);color:var(--pm-primary);font:var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui)}
-.pm-inline-comment-info .pm-button {min-height:30px}
+/* Inset feedback inside the shared comment/reply editor; never touch the field border. */
+.pm-comment-feedback-stack { display: grid; gap: var(--s2); margin: 0 var(--s3) var(--s3); min-width: 0; }
+.pm-comment-feedback {
+    display: flex; align-items: flex-start; gap: var(--s2); min-width: 0;
+    padding: var(--s3); border: 1px solid var(--border); border-radius: var(--radius-control);
+    background: var(--blue-soft); color: var(--blue);
+    font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui);
+}
+.pm-comment-feedback.is-warning { color: var(--warning); background: var(--warning-soft); border-color: currentColor; }
+.pm-comment-feedback.is-error { color: var(--danger); background: var(--danger-soft); border-color: currentColor; }
+.pm-comment-feedback-icon { flex: none; width: var(--icon); height: var(--icon); }
+.pm-comment-feedback-content { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.pm-comment-feedback-actions { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s2); }
+.pm-comment-feedback-actions .pm-button { min-height: var(--control-height); max-width: 100%; white-space: normal; }
+.pm-comment-feedback.is-checking .pm-comment-feedback-icon { animation: pm-comment-check-spin 1s linear infinite; }
+@keyframes pm-comment-check-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .pm-comment-feedback.is-checking .pm-comment-feedback-icon { animation: none; } }
 .pm-admin-review-image {display:block;max-width:min(100%,240px);max-height:160px;object-fit:contain;margin-top:var(--s2);border:1px solid var(--border);border-radius:var(--radius-control)}
 
 .pm-post-check-expiry {font-weight:var(--semibold)!important;color:var(--red)!important}

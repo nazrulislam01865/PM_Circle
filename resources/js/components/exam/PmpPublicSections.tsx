@@ -1,3 +1,5 @@
+import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
+import type { Thresholds } from '@/components/exam/PmpExamResultReport';
 import { Link } from '@inertiajs/react';
 import {
     Check, ChevronDown, ChevronLeft, ChevronRight, ClipboardCheck, ExternalLink,
@@ -23,12 +25,12 @@ function FeatureCards({ cards }: { cards: PmpFeature[] }) {
 
 export function PmpPublicHero({ content }: { content: PmpPublicContent['hero'] }) {
     return <>
-        <nav className="pm-pmp-public-breadcrumb" aria-label="Breadcrumb"><Link href="/">Home</Link><span aria-hidden="true">/</span><Link href="/exam-simulator/pmp">Exam Simulator</Link><span aria-hidden="true">/</span><span aria-current="page">PMP</span></nav>
+        <LegacyPageHeading><nav className="pm-pmp-public-breadcrumb" aria-label="Breadcrumb"><Link href="/">Home</Link><span aria-hidden="true">/</span><Link href="/exam-simulator/pmp">Exam Simulator</Link><span aria-hidden="true">/</span><span aria-current="page">PMP</span></nav></LegacyPageHeading>
         <section className="pm-pmp-public-hero" aria-labelledby="pm-pmp-public-title">
             {content.image && <img className="pm-pmp-public-hero-image" src={content.image} width="947" height="432" alt="A learner preparing for an exam and a professional celebrating a result" decoding="async" fetchPriority="high"/>}
             <div className="pm-pmp-public-hero-copy">
-                <h1 id="pm-pmp-public-title">{content.title.split('®').map((part, index) => <Fragment key={index}>{index > 0 && <sup>®</sup>}{part}</Fragment>)}</h1>
-                <p>{content.description}</p>
+                <LegacyPageHeading><h1 id="pm-pmp-public-title">{content.title.split('®').map((part, index) => <Fragment key={index}>{index > 0 && <sup>®</sup>}{part}</Fragment>)}</h1>
+                <p>{content.description}</p></LegacyPageHeading>
                 <div className="pm-pmp-public-actions">
                     <Link className="pm-pmp-public-button is-primary" href="/pricing">{content.primary_label}</Link>
                     <a className="pm-pmp-public-button is-outline" href="#sample-question">{content.secondary_label}</a>
@@ -45,13 +47,13 @@ export function PmpPublicBenefits({ content }: { content: PmpPublicContent['bene
     </section>;
 }
 
-export function PmpPublicSampleStudy({ sample, ai, sampleQuestion, sampleQuestions, sampleDurationSeconds }: { sample: PmpPublicContent['sample'] | null; ai: PmpPublicContent['ai'] | null; sampleQuestion: ExamQuestion | null; sampleQuestions: ExamQuestion[]; sampleDurationSeconds: number }) {
+export function PmpPublicSampleStudy({ sample, ai, sampleQuestion, sampleQuestions, sampleDurationSeconds, readinessThresholds }: { sample: PmpPublicContent['sample'] | null; ai: PmpPublicContent['ai'] | null; sampleQuestion: ExamQuestion | null; sampleQuestions: ExamQuestion[]; sampleDurationSeconds: number; readinessThresholds: Thresholds }) {
     return <>
         {sample && <SectionCard id="sample-question" className="pm-pmp-public-study-card">
             <div className="pm-pmp-public-study-column">
                 <h2>{sample.icon_image ? <img className="pm-pmp-public-icon-image" width="32" height="32" src={sample.icon_image} alt="" aria-hidden="true"/> : <ClipboardCheck aria-hidden="true"/>}{sample.heading}</h2>
                 <p className="pm-pmp-public-section-note">{sample.description}</p>
-                <PmpPublicSampleExam sampleQuestion={sampleQuestion} sampleQuestions={sampleQuestions} sampleDurationSeconds={sampleDurationSeconds}/>
+                <PmpPublicSampleExam sampleQuestion={sampleQuestion} sampleQuestions={sampleQuestions} sampleDurationSeconds={sampleDurationSeconds} readinessThresholds={readinessThresholds}/>
             </div>
         </SectionCard>}
         {ai && <SectionCard id="ai-study-help" className="pm-pmp-public-study-card pm-pmp-public-ai-cards">

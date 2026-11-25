@@ -1,0 +1,102 @@
+/* Achievement workspace: layout only. Shared typography, control and surface tokens
+   remain authoritative; medal art is the exact approved feature-specific palette. */
+.pm-ach-workspace {
+    width: min(100%, var(--pm-member-page-max-width));
+    margin-inline: auto;
+    min-width: 0;
+    font-family: var(--font-ui);
+    color: var(--pm-guide-body-color);
+    font-size: var(--text-body);
+    line-height: var(--line-body);
+    container-type: inline-size;
+}
+.pm-ach-workspace :where(h1,h2,h3,p), .pm-ach-panel :where(h2,h3,p), .pm-ach-dialog :where(h2,h3,p) { margin: 0; }
+.pm-ach-heading { margin-bottom: var(--s3); }
+.pm-ach-crumb { display: flex; flex-wrap: wrap; gap: var(--s1); margin-bottom: var(--s2); font-size: var(--text-sm); color: var(--muted); }
+.pm-ach-crumb a { color: var(--blue); }
+.pm-ach-heading h1 { font: var(--pm-guide-weight-h1) var(--text-h1)/var(--line-h1) var(--font-ui); letter-spacing: var(--pm-guide-tracking-h1); color: var(--ink); overflow-wrap: anywhere; }
+.pm-ach-heading p { color: var(--muted); margin-top: var(--s1); }
+.pm-ach-tabs { display: flex; align-items: center; gap: var(--s2); flex-wrap: nowrap; overflow-x: auto; position: sticky; top: calc(var(--header-height) + var(--pm-member-offer-top, 0rem)); z-index: 3; background: var(--canvas); padding-block: var(--s2); margin-block: var(--s3) var(--s4); }
+.pm-ach-tabs .pm-button { flex: none; white-space: nowrap; }
+.pm-ach-metrics, .pm-ach-badge-grid, .pm-ach-path-grid { display: grid; gap: var(--s3); min-width: 0; }
+.pm-ach-metrics { grid-template-columns: repeat(4,minmax(0,1fr)); margin-bottom: var(--s3); }
+.pm-ach-panel, .pm-ach-card, .pm-ach-metric, .pm-ach-path { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); min-width: 0; }
+.pm-ach-panel { padding: var(--s4); margin-bottom: var(--s3); }
+.pm-ach-panel h2, .pm-ach-dialog h2, .pm-ach-profile-cover h2 { font: var(--bold) var(--text-h2)/var(--line-h2) var(--font-ui); color: var(--ink); overflow-wrap: anywhere; }
+/* Nested section headings use the guide's card heading role, not a custom size. */
+.pm-ach-panel h2 { font-size: var(--text-h3); line-height: var(--line-h3); }
+.pm-ach-panel h3, .pm-ach-dialog h3 { font: var(--pm-guide-weight-control) var(--text-h4)/var(--line-h4) var(--font-ui); color: var(--ink); overflow-wrap: anywhere; }
+.pm-ach-metric { padding: var(--s3) var(--s4); }
+.pm-ach-metric strong { display: block; color: var(--blue); font-size: var(--text-stat); font-weight: var(--bold); line-height: var(--line-stat); font-variant-numeric: tabular-nums; }
+.pm-ach-meta { color: var(--muted); font-size: var(--text-sm); line-height: var(--line-sm); overflow-wrap: anywhere; }
+.pm-ach-between { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); flex-wrap: wrap; min-width: 0; }
+.pm-ach-between > * { min-width: 0; }
+.pm-ach-badge-grid { grid-template-columns: repeat(3,minmax(0,1fr)); margin-top: var(--s3); }
+.pm-ach-path-grid { grid-template-columns: repeat(5,minmax(0,1fr)); margin-top: var(--s3); }
+.pm-ach-path { padding: var(--s3); display: flex; flex-direction: column; gap: var(--s1); border-radius: var(--radius-control); }
+.pm-ach-path h3 a { color: inherit; text-decoration: none; }
+.pm-ach-path h3 a:hover { color: var(--blue); text-decoration: underline; }
+.pm-ach-path .pm-ach-progress { margin-top: auto; }
+.pm-ach-card { padding: var(--s4); display: flex; flex-direction: column; align-items: flex-start; gap: var(--s2); }
+.pm-ach-card.is-earned { background: linear-gradient(135deg,var(--achievement-earned-tint) 0,var(--surface) 56%); }
+.pm-ach-card-top { width: 100%; align-items: flex-start; flex-wrap: nowrap; }
+.pm-ach-card > .pm-button { margin-top: auto; }
+.pm-ach-card > .pm-ach-progress { margin-top: auto; }
+.pm-ach-card .pm-ach-progress + p { margin-bottom: var(--s1); }
+.pm-ach-tags { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--s1); }
+.pm-ach-tag { display: inline-flex; align-items: center; gap: var(--s1); padding: var(--s1) var(--s2); border-radius: var(--radius-control); font-size: var(--text-sm); line-height: var(--line-ui); font-weight: var(--pm-guide-weight-control); background: var(--achievement-status-locked-bg); color: var(--achievement-status-locked-ink); white-space: nowrap; }
+.pm-ach-tag svg { width: .75rem; height: .75rem; flex: none; }
+.pm-ach-tag.is-earned { background: var(--green-soft); color: var(--green); }
+.pm-ach-tag.is-progress { background: var(--blue-soft); color: var(--achievement-status-progress-ink); }
+.pm-ach-tag.is-new { background: var(--pm-guide-amber-bg); color: var(--pm-guide-amber); }
+.pm-ach-progress-copy { color: var(--ink); font-size: var(--text-sm); line-height: var(--line-sm); font-variant-numeric: tabular-nums; }
+.pm-ach-progress { display: block; width: 100%; height: .25rem; appearance: none; border: 1px solid var(--achievement-progress-outline); border-radius: var(--radius-pill); overflow: hidden; background: var(--achievement-progress-track); color: var(--blue); accent-color: var(--blue); }
+.pm-ach-progress::-webkit-progress-bar { background: var(--achievement-progress-track); }
+.pm-ach-progress::-webkit-progress-value { background: var(--blue); }
+.pm-ach-progress::-moz-progress-bar { background: var(--blue); }
+.pm-ach-progress.is-earned { border-color: var(--achievement-progress-green); accent-color: var(--achievement-progress-green); }
+.pm-ach-progress.is-earned::-webkit-progress-value { background: var(--achievement-progress-green); }
+.pm-ach-progress.is-earned::-moz-progress-bar { background: var(--achievement-progress-green); }
+/* Exact artwork geometry and tier shapes from the supplied prototype. */
+.pm-ach-medal { --medal-size: 4.0625rem; --medal-width: 4.5625rem; --medal-height: 4.8125rem; --medal-icon: 1.8125rem; width: var(--medal-width); height: var(--medal-height); flex: none; display: grid; place-items: start center; position: relative; isolation: isolate; color: var(--surface); }
+.pm-ach-medal-face { width: var(--medal-size); height: var(--medal-size); display: grid; place-items: center; background: linear-gradient(145deg,var(--medal-light),var(--medal-dark) 82%); border: 2px solid var(--medal-edge); border-radius: 50%; box-shadow: inset 0 0 0 4px var(--achievement-medal-highlight),0 2px 5px var(--achievement-medal-shadow); }
+.pm-ach-medal-face svg { width: var(--medal-icon); height: var(--medal-icon); }
+.pm-ach-medal-tier { position: absolute; bottom: 1px; min-width: 1.5rem; text-align: center; font-size: var(--text-metric-caption); font-weight: var(--bold); line-height: var(--line-metric-caption); padding-inline: var(--s1); background: var(--medal-dark); border: 1px solid var(--medal-edge); border-radius: var(--s1); }
+.pm-ach-medal.tier-2 .pm-ach-medal-face { border-radius: .9375rem .9375rem 1.5625rem 1.5625rem; }
+.pm-ach-medal.tier-3 .pm-ach-medal-face { clip-path: polygon(50% 0,94% 24%,94% 76%,50% 100%,6% 76%,6% 24%); border: 0; box-shadow: inset 0 0 0 6px var(--achievement-medal-hex-highlight); }
+.pm-ach-medal.is-locked { filter: saturate(.2); opacity: .68; }
+.pm-ach-home-badge .pm-ach-medal { --medal-size: 2.75rem; --medal-width: 3.125rem; --medal-height: 3.375rem; --medal-icon: 1.25rem; }
+.pm-ach-home-badge { min-width: 0; overflow-wrap: anywhere; }
+.pm-ach-home-badge .pm-ach-medal-tier { min-width: 1.125rem; }
+.pm-ach-filters { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,2fr); gap: var(--s3); margin-top: var(--s3); }
+.pm-ach-field { display: grid; gap: var(--s1); min-width: 0; color: var(--ink); font-size: var(--text-ui); font-weight: var(--pm-guide-weight-control); }
+.pm-ach-field :is(input,select) { width: 100%; min-width: 0; border: 1px solid var(--control-border); border-radius: var(--radius-control); padding: var(--s2); min-height: var(--pm-guide-button-height); background: var(--surface); font-size: var(--text-ui); font-weight: var(--regular); }
+.pm-ach-result-count { margin-top: var(--s2); }
+.pm-ach-record { padding-block: var(--s3); border-bottom: 1px solid var(--border); }
+.pm-ach-record:last-child { border-bottom: 0; }
+.pm-ach-record > div { flex: 1 1 12rem; }
+.pm-ach-record time { flex: none; }
+.pm-ach-record-note { padding-top: var(--s2); }
+.pm-ach-record-filter { width: min(100%,12rem); }
+.pm-ach-profile-cover { display: flex; align-items: center; gap: var(--s3); padding: var(--s5); margin-bottom: var(--s3); border-radius: var(--radius-card); color: var(--surface); background: linear-gradient(112deg,var(--achievement-cover-start),var(--achievement-cover-end)); }
+.pm-ach-profile-cover h2 { color: var(--surface); font-size: var(--text-h3); }
+.pm-ach-profile-cover p { color: inherit; }
+.pm-ach-profile-card { background: var(--surface); }
+.pm-ach-foot { border-top: 1px solid var(--border); padding-top: var(--s3); font-size: var(--text-sm); color: var(--muted); }
+.pm-ach-empty { padding-block: var(--s3); color: var(--muted); font-size: var(--text-sm); }
+.pm-ach-sample, .pm-ach-notice { margin-bottom: var(--s3); padding: var(--s3); border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--blue-soft); color: var(--ink); }
+.pm-ach-dialog { width: min(30rem,calc(100% - 1.5rem)); max-height: calc(100dvh - 1.5rem); overflow: auto; margin: auto; padding: var(--s5); border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--surface); color: var(--ink); font-family: var(--font-ui); font-size: var(--text-body); line-height: var(--line-body); }
+.pm-ach-dialog::backdrop { background: var(--pm-guide-dialog-backdrop); }
+.pm-ach-dialog h2 { font-size: var(--pm-guide-text-dialog-title); }
+.pm-ach-dialog p, .pm-ach-dialog h3 { margin-block: var(--s2); }
+.pm-ach-dialog ol { list-style: decimal; padding-inline-start: var(--s5); }
+.pm-ach-dialog-title { display: flex; gap: var(--s3); align-items: center; }
+.pm-ach-dialog-actions { display: flex; justify-content: flex-end; margin-top: var(--s3); padding-top: var(--s3); border-top: 1px solid var(--border); }
+.pm-profile-main-col > .pm-ach-panel { margin-bottom: var(--s4); }
+@container (max-width: 62rem) { .pm-ach-path-grid { grid-template-columns: repeat(3,minmax(0,1fr)); } }
+@container (max-width: 44rem) { .pm-ach-badge-grid, .pm-ach-metrics, .pm-ach-path-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .pm-ach-filters { grid-template-columns: repeat(2,minmax(0,1fr)); } .pm-ach-filters > :last-child { grid-column: 1/-1; } }
+@container (max-width: 28rem) { .pm-ach-badge-grid, .pm-ach-path-grid, .pm-ach-filters { grid-template-columns: minmax(0,1fr); } .pm-ach-panel, .pm-ach-card { padding: var(--s3); } .pm-ach-tabs { flex-wrap: nowrap; overflow-x: auto; padding-block: var(--s1); } }
+@media (max-width: 40.625rem) { .pm-profile-main-col .pm-ach-badge-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .pm-ach-medal { --medal-size: 3.25rem; --medal-width: 3.5rem; --medal-height: 3.8125rem; --medal-icon: 1.4375rem; } }
+@media (max-width: 28rem) { .pm-profile-main-col .pm-ach-badge-grid { grid-template-columns: minmax(0,1fr); } }
+
+.pm-profile-main-col > .pm-ach-panel { container-type: inline-size; }

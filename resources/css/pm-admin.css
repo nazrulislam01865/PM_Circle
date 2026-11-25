@@ -664,3 +664,8 @@
 .pm-pmp-sample-dialog-footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--s3); padding: var(--s3) var(--s4); }
 .pm-pmp-sample-dialog-footer > span { color: var(--muted); font-size: var(--text-xs); }
 @media (max-width: 42rem) { .pm-pmp-sample-selector-row > button { width: 100%; justify-content: center; } .pm-pmp-sample-selected > li { grid-template-columns: 1.7rem minmax(0,1fr); } .pm-pmp-sample-order-actions { grid-column: 2; } .pm-pmp-sample-dialog { width: min(96vw, 740px); max-height: 94dvh; } .pm-pmp-sample-dialog-heading, .pm-pmp-sample-dialog-footer { padding: var(--s3); } .pm-pmp-sample-filter-row { grid-template-columns: minmax(0,1fr); margin-inline: var(--s3); } .pm-pmp-sample-result { padding-inline: var(--s3); } }
+
+/* Route groups without a landing page use the same navigation tokens. */
+.pm-admin-nav-group-button{width:100%;border:0;background:transparent;text-align:left;cursor:pointer}
+.pm-admin-nav-group-button>svg{flex:none}
+.pm-admin-nav-group-button:focus-visible{outline:3px solid var(--focus);outline-offset:2px}

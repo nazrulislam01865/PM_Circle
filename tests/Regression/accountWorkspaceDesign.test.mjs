@@ -47,12 +47,14 @@ test('member help pages share the full member content rail in every support view
     for (const file of ['HelpCentre', 'ContactSupport', 'Requests', 'RequestDetails']) {
         const view = read(`resources/js/pages/support/${file}.tsx`);
         assert.match(view, /<AccountPage\b/);
-        assert.doesNotMatch(view, /pm-account-reading|max-width|min-width|<MemberDashboardLayout|<PublicLayout/);
+        assert.doesNotMatch(view, /pm-account-reading|max-width|min-width|<MemberDashboardLayout/);
+        if (file !== 'HelpCentre') assert.doesNotMatch(view, /<PublicLayout/);
+        else assert.match(view, /if \(!publicView\) return <AccountPage/);
     }
     const help = read('resources/js/pages/support/HelpCentre.tsx');
     assert.match(help, /<article className="pm-account-card">/);
     assert.match(help, /<section className="pm-account-card">\s*<h2 className="pm-account-card-title">Related guides/);
-    assert.match(help, /<SupportPanel\/>/);
+    assert.match(help, /<SupportPanel publicView=\{publicView\}\/>/);
     const shell = read('resources/css/pm-member-sidebar-restore.css');
     assert.match(shell, /\.pm-app\.pm-member-sidebar-layout:not\(\.pm-member-full-width\) \.pm-dash-body \{\s*width: min\(var\(--pm-v2-container-width\)/);
 });

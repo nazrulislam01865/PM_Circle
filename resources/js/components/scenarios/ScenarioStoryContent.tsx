@@ -1,3 +1,4 @@
+import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import type { ReactNode } from 'react';
 import { MessageCircle } from 'lucide-react';
 
@@ -24,7 +25,7 @@ export function ScenarioStoryContent({ scenario, actions }: { scenario: Scenario
 
     return <>
         <div className="pm-scenario-story-heading"><p className="pm-scenario-detail-kicker">{isToday ? "TODAY'S SCENARIO" : 'DAILY CHALLENGE'}</p>{actions}</div>
-        <h1 className="pm-scenario-detail-title">{scenario.title}</h1>
+        <LegacyPageHeading><h1 className="pm-scenario-detail-title">{scenario.title}</h1></LegacyPageHeading>
         <div className="pm-scenario-detail-meta">
             <span>PM Circle Editorial</span>
             <span aria-hidden="true">·</span>

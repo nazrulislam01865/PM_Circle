@@ -19,7 +19,7 @@ test('guest Community, Learn, and Exams retain their dropdowns and existing link
     assert.match(header, /\(community \|\| members\) && <details[^>]+onKeyDown=\{closeOnEscape\}[^>]+onMouseLeave=\{closeDropdownOnMouseLeave\}/);
     assert.match(header, /\{learning && <details[^>]+onKeyDown=\{closeOnEscape\}/);
     assert.match(header, /<details className="pm-member-home-nav-group pm-member-home-exam-group"/);
-    for (const link of ['Feed', 'Members', 'Course Library', 'Project Simulator', 'PMP Exam Simulator', 'Scrum Simulator']) {
+    for (const link of ['Feed', 'Members', 'Course Library', 'PMP Exam Simulator', 'Scrum Simulator']) {
         assert.match(header, new RegExp(`>${link}<\\/Link>`));
     }
     assert.match(read('resources/css/pm-header-prototype.css'), /\.pm-member-home-nav-home \.pm-nav-icon \{ margin-inline: 0; \}/);

@@ -12,17 +12,16 @@ final class CareerTrendSettingsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_only_editorial_admin_can_read_and_change_settings(): void
+    public function test_administrator_can_read_and_change_settings_without_extra_permission(): void
     {
-        $member = User::factory()->create();
+        $this->withoutVite();
+        $member = User::factory()->create(['is_admin' => false]);
         $admin = User::factory()->create(['is_admin' => true]);
         $url = '/admin/ai/career-trends';
         $this->actingAs($member)->get($url)->assertForbidden();
-        $this->actingAs($admin)->get($url)->assertForbidden();
-        $this->actingAs($admin)->put($url, CareerTrendSettings::defaults())->assertForbidden();
-        DB::table('ai_admin_permissions')->insert([
-            'user_id' => $admin->id, 'permission' => 'ai.manage_editorial', 'created_at' => now(),
-        ]);
+        $this->actingAs($member)->put($url, CareerTrendSettings::defaults())->assertForbidden();
+        $this->assertDatabaseMissing('ai_admin_permissions', ['user_id' => $admin->id]);
+        $this->actingAs($admin)->get($url)->assertOk();
         $values = array_replace(CareerTrendSettings::defaults(), ['publish_day' => '3', 'publish_time' => '10:30']);
         $this->actingAs($admin)->from($url)->put($url, $values)->assertRedirect($url);
         $this->assertSame($values, app(CareerTrendSettings::class)->get());

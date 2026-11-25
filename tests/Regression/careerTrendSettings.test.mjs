@@ -63,7 +63,9 @@ test('provider is pinned for queued Trends requests, test is metered and never p
     assert.match(gateway, /CareerTrendSettings::class\)->get\(\)\['ai_provider'\]/);
     assert.match(gateway, /'provider' => \$provider/);
     const execution = read('app/Domain/AI/Services/AiExecutionService.php');
-    assert.match(execution, /\$request->feature_code === 'trend_draft' && \$request->provider === 'gemini'/);
+    assert.match(execution, /\$route\['provider'\] === 'gemini' && \$request->feature_code !== 'trend_draft'/);
+    assert.match(execution, /'gemini' => app\(.*GeminiTrendProvider::class\)/);
+    assert.match(execution, /routing_snapshot/);
     const connection = read('app/Domain/AI/Services/TrendAiConnection.php');
     assert.match(connection, /'subject_type' => 'trend_connection_test'/);
     assert.match(connection, /AiBudgetService::class\)->reserve/);
@@ -72,6 +74,7 @@ test('provider is pinned for queued Trends requests, test is metered and never p
     assert.match(connection, /where\('subject_id', \$actorId\)/);
     const page = read('resources/js/pages/admin/CareerTrendSettings.tsx');
     assert.match(page, /while \(result.pending/);
-    assert.match(page, /'Connected' : 'Disconnected'/);
+    assert.match(page, /<ConnectionDialogContent/);
+    assert.match(read('resources/js/components/admin/ai/ConnectionControls.tsx'), /'Connected'\) : connection.code === 'NOT_TESTED' \? 'Not tested'/);
     assert.match(read('routes/web.php'), /career-trends\/connection-test\/\{uuid\}/);
 });

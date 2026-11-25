@@ -1,5 +1,5 @@
 import { LinkedPagination } from '@/components/pm/Pagination';
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { AdminLayout } from '@/layouts/admin/AdminLayout';
 
 type Report = { id: number; post_id: number; post_body: string; reporter_name: string; reason: string; details: string | null; status: string; created_at: string };
@@ -11,7 +11,7 @@ export default function PostModeration({ reports, pendingPosts, pendingComments 
     const busy = (postId: number, decision: 'approve' | 'reject') => {
         router.post(`/admin/post-reviews/${postId}`, { decision }, { preserveScroll: true });
     };
-    return <AdminLayout title="Community moderation" subtitle="Review reported posts and uncertain community content." active="/admin/post-reports">
+    return <AdminLayout title="Community moderation" subtitle="Review reported posts and uncertain community content." active="/admin/post-reports" headingAction={<Link href="/admin/ai/feed-moderation" className="pm-admin-button pm-admin-button-quiet">AI settings</Link>}>
         <Head title="Community moderation" />
         <section className="pm-admin-moderation-section"><h2>Posts awaiting publication ({pendingPosts.length})</h2>
             {pendingPosts.length === 0 && <p className="muted">No posts awaiting review.</p>}

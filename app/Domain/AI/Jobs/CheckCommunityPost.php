@@ -41,10 +41,12 @@ final class CheckCommunityPost implements ShouldQueue
                 ->where('post_id', $post->id)->orderBy('position')->pluck('label')->all() : [];
             $reviewText = $post->body.($pollOptions ? "\nPoll choices: ".implode(' | ', $pollOptions) : '');
             $signals = app(CommunitySafetySignals::class)->forText($reviewText, $post->author_id, $post->id);
-            $result = $checker->inspect($reviewText, $bytes, $mime, ['signals' => $signals]);
+            $result = $checker->inspect($reviewText, $bytes, $mime, ['signals' => $signals, 'run_table' => 'post_check_runs', 'run_id' => $run->id]);
+            $holdClean = ! $result['violates'] && ! $result['needs_review']
+                && app(\App\Domain\AI\Services\FeedModerationSettings::class)->holdCleanContent();
             $cost = round(($result['input_tokens'] * 0.05 + $result['output_tokens'] * 0.40) / 1000000, 8);
             $oldUrl = null;
-            $applied = DB::transaction(function () use ($post, $media, $policy, $result, $run, $cost, &$oldUrl): bool {
+            $applied = DB::transaction(function () use ($post, $media, $policy, $result, $run, $cost, $holdClean, &$oldUrl): bool {
                 $locked = Post::query()->whereKey($post->id)->lockForUpdate()->first();
                 if (! $locked || $locked->status !== 'pending_check' || $locked->check_version !== $this->version) return false;
                 if ($result['violates']) {
@@ -54,11 +56,11 @@ final class CheckCommunityPost implements ShouldQueue
                         'check_reason' => $result['reason'], 'checked_at' => now(), 'restricted_at' => now(),
                     ])->save();
                     $policy->recordViolation($locked->id, $this->version, $locked->author_id, $result['category']);
-                } elseif ($result['needs_review']) {
+                } elseif ($result['needs_review'] || $holdClean) {
                     $locked->forceFill([
                         'status' => 'pending_review', 'published_at' => null,
-                        'check_category' => $result['category'], 'check_target' => $result['target'],
-                        'check_reason' => $result['reason'], 'checked_at' => now(), 'restricted_at' => null,
+                        'check_category' => $holdClean ? null : $result['category'], 'check_target' => $holdClean ? null : $result['target'],
+                        'check_reason' => $holdClean ? 'Awaiting administrator approval.' : $result['reason'], 'checked_at' => now(), 'restricted_at' => null,
                     ])->save();
                 } else {
                     $oldUrl = $locked->getRawOriginal('image_path');
@@ -82,6 +84,7 @@ final class CheckCommunityPost implements ShouldQueue
             DB::table('post_check_runs')->where('id', $run->id)->update([
                 'status' => 'failed', 'error_code' => mb_substr($exception->getMessage(), 0, 40), 'updated_at' => now(),
             ]);
+            if (in_array($exception->getMessage(), ['POST_CHECK_OUTCOME_UNKNOWN', 'PROVIDER_STATUS_UNKNOWN', 'POST_CHECK_INVALID_RESULT', 'POST_CHECK_REVIEW_INCOMPLETE'], true)) { $this->fail($exception); return; }
             throw $exception;
         }
     }

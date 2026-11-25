@@ -28,12 +28,16 @@ export function ProfileCompletionReward({ reward, variant = 'dashboard' }: { rew
         <div className="pm-profile-reward-content">
             <span className="pm-profile-reward-icon" aria-hidden="true"><Gift size={20} strokeWidth={1.7} /></span>
             <div className="pm-profile-reward-main">
-                <h2>{title}</h2>
+                {variant === 'profile' ? <div className="pm-profile-reward-heading">
+                    <h2>{title}</h2>
+                    {reward.status === 'pending' && <span className="pm-profile-reward-locked">Locked</span>}
+                </div> : <h2>{title}</h2>}
                 <p>{ready ? `Use your code for ${reward.discountLabel} your next eligible purchase.`
-                    : reward.status === 'pending' ? `Complete your profile to get ${reward.discountLabel} your next eligible purchase.`
+                    : reward.status === 'pending' ? (variant === 'profile' ? `Get ${reward.discountLabel} an eligible Exam Simulator when your profile reaches 100%.` : `Complete your profile to get ${reward.discountLabel} your next eligible purchase.`)
                     : reward.status === 'redeemed' ? 'Your one-time reward has already been redeemed.'
                     : 'Your one-time reward is no longer valid.'}</p>
-                {reward.status === 'pending' && <Link className="pm-profile-reward-complete" href="/settings/profile?tab=edit">Complete profile <ArrowRight size={15} aria-hidden="true" /></Link>}
+                {variant === 'profile' && reward.status === 'pending' && <p className="pm-profile-reward-availability">Available at 100%</p>}
+                {variant === 'dashboard' && reward.status === 'pending' && <Link className="pm-profile-reward-complete" href="/settings/profile?tab=edit">Complete profile <ArrowRight size={15} aria-hidden="true" /></Link>}
                 {ready && <>
                     <div className="pm-profile-reward-code-row"><span className="pm-profile-reward-code" aria-label="Coupon code">{reward.code}</span><button type="button" className="pm-profile-reward-copy" onClick={copyCode} aria-label={copied ? 'Coupon code copied' : 'Copy coupon code'}>{copied ? <Check size={15} aria-hidden="true"/> : <Copy size={15} aria-hidden="true"/>}{copied ? 'Copied' : 'Copy code'}</button></div>
                     {copyError && <p className="pm-profile-reward-error" role="alert">{copyError}</p>}

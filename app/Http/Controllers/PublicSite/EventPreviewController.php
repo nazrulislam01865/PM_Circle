@@ -2,28 +2,130 @@
 
 namespace App\Http\Controllers\PublicSite;
 
+use App\Domain\Events\EventPageContent;
+use App\Domain\Events\EventWriter;
 use App\Http\Controllers\Controller;
-use App\Support\Events\PrototypeEventCatalog;
+use App\Http\Requests\Events\SaveEventRequest;
+use App\Models\CommunityEvent;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
 final class EventPreviewController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        return Inertia::render('events/Index', [
-            'events' => PrototypeEventCatalog::all(),
+        $filters = $request->validate(['search' => ['nullable', 'string', 'max:120'], 'format' => ['nullable', 'in:all,online,in-person'], 'sort' => ['nullable', 'in:soonest,latest']]);
+        $search = trim($filters['search'] ?? '');
+        $format = $filters['format'] ?? 'all';
+        $sort = $filters['sort'] ?? 'soonest';
+        $direction = $sort === 'latest' ? 'desc' : 'asc';
+        $events = CommunityEvent::query()->published()->upcoming()
+            ->when($search !== '', function ($query) use ($search): void {
+                $pattern = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], mb_strtolower($search)).'%';
+                $query->where(function ($query) use ($pattern): void {
+                    foreach (['title', 'description', 'category', 'location', 'host'] as $column) {
+                        $query->orWhereRaw("LOWER($column) LIKE ? ESCAPE '!'", [$pattern]);
+                    }
+                });
+            })
+            ->when($format !== 'all', fn ($query) => $query->where('format', $format))
+            ->orderBy('starts_at', $direction)->orderBy('id', $direction)
+            ->paginate(10, CommunityEvent::listingColumns())->withQueryString()->through(fn (CommunityEvent $event) => $event->listingData());
+
+        return Inertia::render('events/Index', ['events' => $events, 'filters' => compact('search', 'format', 'sort'), 'content' => EventPageContent::load()]);
+    }
+
+    public function show(Request $request, string $slug): Response
+    {
+        $event = CommunityEvent::query()->published()->where('slug', $slug)->firstOrFail();
+        $related = CommunityEvent::query()->published()->upcoming()->where('id', '!=', $event->id)
+            ->where('category', $event->category)->orderBy('starts_at')->orderBy('id')->limit(2)->get(CommunityEvent::listingColumns());
+        $comments = DB::table('community_event_comments')->where('event_id', $event->id)->where('status', 'approved')
+            ->orderByDesc('id')->paginate(15, ['id', 'name', 'message'], 'comments_page')->withQueryString();
+        $member = $this->eligibleMember($request);
+        $registered = $member && DB::table('community_event_registrations')->where('event_id', $event->id)->where('user_id', $request->user()->id)->exists();
+
+        return Inertia::render('events/Show', [
+            'event' => $event->detailData(), 'relatedEvents' => $related->map(fn (CommunityEvent $item) => $item->listingData()),
+            'comments' => $comments, 'registered' => $registered, 'canRegister' => $member || ($event->open_to_everyone && ! $request->user()),
+            'canComment' => $member || ! $request->user(), 'notice' => $request->session()->get('event_notice'),
         ]);
     }
 
-    public function show(string $slug): Response
+    public function create(Request $request): Response
     {
-        $event = PrototypeEventCatalog::find($slug);
-        abort_if($event === null, 404);
+        return Inertia::render('events/Create', ['notice' => $request->session()->get('event_notice'), 'submissions' => CommunityEvent::query()
+            ->where('creator_id', $request->user()->id)->latest('id')->paginate(10, ['id', 'title', 'slug', 'status'])]);
+    }
 
-        return Inertia::render('events/Show', [
-            'event' => $event,
-            'relatedEvents' => PrototypeEventCatalog::relatedTo($event),
+    public function store(SaveEventRequest $request, EventWriter $writer): RedirectResponse
+    {
+        $writer->save($request);
+        return to_route('events.create')->with('event_notice', 'Your event has been submitted for administrator review.');
+    }
+
+    public function register(Request $request, string $slug): RedirectResponse
+    {
+        $member = $this->eligibleMember($request);
+        abort_unless($member || ! $request->user(), 403);
+        $data = $request->validate([
+            'name' => [$member ? 'nullable' : 'required', 'string', 'max:120'],
+            'email' => [$member ? 'nullable' : 'required', 'email:rfc', 'max:254'],
+            'phone' => ['required', 'string', 'max:20', 'regex:/^\+?[0-9() -]{7,20}$/'],
+            'role' => ['nullable', 'string', 'max:120'],
         ]);
+        $digits = strlen(preg_replace('/\D/', '', $data['phone']));
+        if ($digits < 7 || $digits > 15) throw ValidationException::withMessages(['phone' => 'Enter a valid phone number with 7 to 15 digits.']);
+        DB::transaction(function () use ($request, $slug, $member, $data): void {
+            $event = CommunityEvent::query()->published()->where('slug', $slug)->lockForUpdate()->firstOrFail();
+            abort_unless($member || $event->open_to_everyone, 403);
+            if (! $event->registration_open || ! $event->starts_at->isFuture()) {
+                throw ValidationException::withMessages(['phone' => 'Registration is closed for this event.']);
+            }
+            $email = mb_strtolower($member ? $request->user()->email : $data['email']);
+            // Unique event/email and event/user constraints make retries safe. Do not disclose another person's registration.
+            $registration = [
+                'event_id' => $event->id, 'user_id' => $member ? $request->user()->id : null,
+                'name' => $member ? mb_substr($request->user()->name, 0, 120) : $data['name'], 'email' => $email,
+                'phone' => $data['phone'], 'role' => $data['role'] ?? null, 'created_at' => now(), 'updated_at' => now(),
+            ];
+            $inserted = DB::table('community_event_registrations')->insertOrIgnore($registration);
+            if (! $inserted && $member && $request->user()->email_verified_at !== null) {
+                // The verified owner can replace an earlier guest registration for this email.
+                $claimed = DB::table('community_event_registrations')->where('event_id', $event->id)->where('email', $email)->whereNull('user_id')
+                    ->whereNotExists(fn ($query) => $query->selectRaw('1')->from('community_event_registrations as existing')->where('existing.event_id', $event->id)->where('existing.user_id', $request->user()->id))
+                    ->update(['user_id' => $request->user()->id, 'name' => $registration['name'], 'phone' => $registration['phone'], 'role' => $registration['role'], 'updated_at' => now()]);
+                if ($claimed) return;
+            }
+        });
+        return to_route('events.show', $slug)->with('event_notice', 'Registration received. If already registered, no duplicate registration was created.');
+    }
+
+    public function comment(Request $request, string $slug): RedirectResponse
+    {
+        $member = $this->eligibleMember($request);
+        abort_unless($member || ! $request->user(), 403);
+        $data = $request->validate(['name' => [$member ? 'nullable' : 'required', 'string', 'max:80'], 'message' => ['required', 'string', 'max:1500']]);
+        DB::transaction(function () use ($request, $slug, $member, $data): void {
+            $event = CommunityEvent::query()->published()->where('slug', $slug)->lockForUpdate()->firstOrFail();
+            if (! $event->discussion_open) throw ValidationException::withMessages(['message' => 'Discussion is closed for this event.']);
+            DB::table('community_event_comments')->insert([
+                'event_id' => $event->id, 'user_id' => $member ? $request->user()->id : null,
+                'name' => $member ? mb_substr($request->user()->name, 0, 80) : $data['name'], 'message' => $data['message'],
+                'status' => 'pending', 'created_at' => now(), 'updated_at' => now(),
+            ]);
+        });
+        return to_route('events.show', $slug)->with('event_notice', 'Your comment was submitted for review. It will appear after approval.');
+    }
+
+    private function eligibleMember(Request $request): bool
+    {
+        $user = $request->user();
+        return $user && ! $user->is_admin && $user->status === 'active' && $user->onboarding_step >= 3
+            && (! config('pm-circle.email_verification_required') || $user->email_verified_at !== null);
     }
 }

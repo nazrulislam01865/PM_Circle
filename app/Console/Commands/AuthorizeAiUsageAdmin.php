@@ -11,7 +11,7 @@ final class AuthorizeAiUsageAdmin extends Command
 {
     protected $signature = 'pm-ai:authorize-usage-admin
         {email : Existing verified administrator email}
-        {--permissions=reports,quotas : Comma-separated reports,quotas,credits}
+        {--permissions=reports,quotas : Comma-separated reports,quotas,credits,features,editorial,prices}
         {--revoke : Revoke rather than grant the selected permissions}
         {--confirm : Required confirmation for permission changes}';
 
@@ -24,10 +24,10 @@ final class AuthorizeAiUsageAdmin extends Command
             return self::FAILURE;
         }
         $maps = ['reports' => 'ai.view_reports', 'quotas' => 'ai.manage_quotas',
-            'credits' => 'ai.manage_credits'];
+            'credits' => 'ai.manage_credits', 'features' => 'ai.manage_features', 'editorial' => 'ai.manage_editorial', 'prices' => 'ai.manage_prices'];
         $codes = array_values(array_unique(array_map('trim', explode(',', (string) $this->option('permissions')))));
         if (! $codes || array_diff($codes, array_keys($maps))) {
-            $this->error('Use only reports, quotas, credits in --permissions.');
+            $this->error('Use only reports, quotas, credits, features, editorial, prices in --permissions.');
             return self::FAILURE;
         }
         $email = trim((string) $this->argument('email'));

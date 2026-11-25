@@ -5,7 +5,7 @@ import { AdminLayout } from '@/layouts/admin/AdminLayout';
 import { AdminChoice } from '@/components/admin/AdminChoice';
 
 type Section = { title: string; topics: string[] };
-type Lesson = { title: string; body: string };
+type Lesson = { title: string; body: string; video_url?: string; takeaway?: string; when_to_apply?: string; example?: string; application?: string; references?: string };
 type ExistingCourse = {
     id: number; title: string; summary: string; overview: string; category: string;
     level: string; minutes: number;
@@ -121,6 +121,8 @@ export default function LearningCourseEditor({ course, dropdowns }: { course: Ex
                     <div className="pm-course-admin-repeat-card-head"><strong>Study note {index + 1}</strong><button type="button" className="pm-course-admin-remove" disabled={value.lessons.length === 1} onClick={() => update('lessons', value.lessons.filter((_, i) => i !== index))}><Trash2 size={16}/> Remove note</button></div>
                     <label className="pm-admin-field"><span>Lesson title</span><input required maxLength={200} value={lesson.title} onChange={e => setLesson(index, { title: e.target.value })}/>{fieldError(`lessons.${index}.title`)}</label>
                     <label className="pm-admin-field"><span>Study material</span><textarea required rows={5} maxLength={20000} value={lesson.body} onChange={e => setLesson(index, { body: e.target.value })}/>{fieldError(`lessons.${index}.body`)}</label>
+                    <label className="pm-admin-field"><span>Video URL (optional HTTPS direct video link)</span><input type="url" maxLength={2000} value={lesson.video_url ?? ''} onChange={e => setLesson(index, { video_url: e.target.value })}/>{fieldError(`lessons.${index}.video_url`)}</label>
+                    {([['takeaway', 'Key takeaway'], ['when_to_apply', 'When to apply it'], ['example', 'Example scenario'], ['references', 'Learning references'], ['application', 'Apply what you learned']] as const).map(([field, label]) => <label className="pm-admin-field" key={field}><span>{label} (optional)</span><textarea rows={2} maxLength={5000} value={lesson[field] ?? ''} onChange={e => setLesson(index, { [field]: e.target.value })}/>{fieldError(`lessons.${index}.${field}`)}</label>)}
                 </div>)}</div>
                 {fieldError('lessons')}
                 <button type="button" className="pm-admin-button pm-admin-button-quiet" disabled={value.lessons.length >= 100} onClick={() => update('lessons', [...value.lessons, { title: '', body: '' }])}><Plus size={16}/> Add study note</button>

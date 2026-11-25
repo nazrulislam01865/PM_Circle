@@ -1,3 +1,4 @@
+import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { LinkedPagination } from '@/components/pm/Pagination';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Check, Crown, Search, UsersRound, Zap, Plus } from 'lucide-react';
@@ -74,13 +75,13 @@ export default function Directory({ members, search, filters, filterOptions }: P
     const displayed = filters.tab === 'following' ? members.data.filter(member => (followStates[member.id]?.following ?? member.is_following)) : members.data;
     const visibleTotal = filters.tab === 'following' ? Math.max(0, members.total - members.data.filter(member => member.is_following && followStates[member.id]?.following === false).length) : members.total;
 
-    return <PublicLayout>
+    return <PublicLayout banner={{title: 'Members', description: 'Find and follow project professionals in PM Circle.'}}>
         <Head title="Members" />
         <div className="pm-container pm-members-page" id="members-directory">
-            <header className="pm-members-intro">
+            <LegacyPageHeading><header className="pm-members-intro">
                 <h1>Members</h1>
                 <p>Find and follow project professionals in PM Circle.</p>
-            </header>
+            </header></LegacyPageHeading>
 
             <div className="pm-members-toolbar">
                 <form role="search" className="pm-members-search" onSubmit={submitSearch}>

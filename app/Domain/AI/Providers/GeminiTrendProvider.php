@@ -18,9 +18,9 @@ final class GeminiTrendProvider implements AiProvider
             throw new AiFailure('FEATURE_UNAVAILABLE', 503);
         }
         unset($context['_ai_feature_code']);
-        $key = config('pm-ai.gemini_api_key');
+        $key = app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential('gemini_api_key');
         if (! is_string($key) || trim($key) === '') {
-            throw new AiFailure('PROVIDER_NOT_CONFIGURED', 503);
+            throw new AiFailure('PROVIDER_NOT_CONFIGURED', 503, retrySafe: true);
         }
         if (! preg_match('/^gemini-[a-zA-Z0-9.-]{1,70}$/D', $model)) {
             throw new AiFailure('MODEL_NOT_ALLOWLISTED', 503);
@@ -43,13 +43,11 @@ final class GeminiTrendProvider implements AiProvider
             throw new AiFailure('PROVIDER_STATUS_UNKNOWN', 503);
         }
         if (! $response->successful()) {
+            if ($response->status() >= 500 || $response->status() === 408) throw new AiFailure('PROVIDER_STATUS_UNKNOWN', 503);
             $reason = collect($response->json('error.details', []))->pluck('reason')->first(fn ($item) => is_string($item));
-            throw new AiFailure(ProviderHttpFailure::code($response->status(), $reason), 503);
+            throw new AiFailure(ProviderHttpFailure::code($response->status(), $reason), 503, retrySafe: in_array($response->status(), [401, 402, 403, 404, 429], true));
         }
         $data = $response->json();
-        if (data_get($data, 'candidates.0.finishReason') !== 'STOP') {
-            throw new AiFailure('INCOMPLETE_AI_RESPONSE', 503);
-        }
         $answer = collect(data_get($data, 'candidates.0.content.parts', []))
             ->reject(fn ($part) => ! is_array($part) || ($part['thought'] ?? false))
             ->pluck('text')->filter(fn ($text) => is_string($text))->implode('');
@@ -58,11 +56,11 @@ final class GeminiTrendProvider implements AiProvider
         $out = data_get($data, 'usageMetadata.candidatesTokenCount');
         $thoughts = data_get($data, 'usageMetadata.thoughtsTokenCount', 0);
         $cached = data_get($data, 'usageMetadata.cachedContentTokenCount', 0);
-        if (! is_array($decoded) || ! is_int($in) || ! is_int($out) || ! is_int($thoughts) || ! is_int($cached)
-            || $in < 1 || $out < 1 || $thoughts < 0 || $cached < 0 || $cached > $in) {
-            throw new AiFailure('INVALID_AI_RESPONSE', 503);
-        }
-        $this->moderate($answer);
+        if (! is_int($in) || ! is_int($out) || ! is_int($thoughts) || ! is_int($cached) || $in < 0 || $out < 0 || $thoughts < 0 || $cached < 0 || $cached > $in) throw new AiFailure('PROVIDER_STATUS_UNKNOWN', 503);
+        $metered = ['input_tokens' => $in, 'cached_tokens' => $cached, 'output_tokens' => $out + $thoughts];
+        if (data_get($data, 'candidates.0.finishReason') !== 'STOP') throw new AiFailure('INCOMPLETE_AI_RESPONSE', 503, usage: $metered);
+        if (! is_array($decoded) || $in < 1 || $out < 1) throw new AiFailure('INVALID_AI_RESPONSE', 503, usage: $metered);
+        try { $this->moderate($answer); } catch (AiFailure $e) { throw new AiFailure($e->safeCode, $e->httpStatus, usage: $metered); }
 
         return ['id' => (string) ($data['responseId'] ?? ''), 'model' => (string) ($data['modelVersion'] ?? $model),
             'result' => $decoded, 'input_tokens' => $in, 'cached_tokens' => $cached, 'output_tokens' => $out + $thoughts];
@@ -70,7 +68,7 @@ final class GeminiTrendProvider implements AiProvider
 
     private function moderate(string $text): void
     {
-        $key = config('pm-ai.post_check_api_key') ?: config('pm-ai.api_key');
+        $key = app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential('post_check_api_key') ?: app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential('api_key');
         if (! is_string($key) || trim($key) === '') {
             throw new AiFailure('MODERATION_UNAVAILABLE', 503);
         }

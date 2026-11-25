@@ -57,13 +57,6 @@ export const homeAiCards = [
     { title: 'Support community moderation', description: 'Flag posts for review so moderators can make informed decisions.', photo: 'moderation', href: '/community' },
 ] as const;
 
-export type HomeEventPreview = { id: string; title: string; date: string; day: string; month: string; time: string; location: string; description: string };
-export const homeEventPreviews: HomeEventPreview[] = [
-    { id: 'sample-pmp', title: 'PMP study circle', date: '28 Nov 2026', day: '28', month: 'NOV', time: '8:00 PM BDT', location: 'Online', description: 'Practise scenario questions with fellow candidates.' },
-    { id: 'sample-scrum', title: 'Scrum case study night', date: '4 Dec 2026', day: '04', month: 'DEC', time: '7:30 PM BDT', location: 'Online', description: 'Discuss a sprint that went off track and what the team could try next.' },
-    { id: 'sample-resume', title: 'Project manager résumé clinic', date: '11 Dec 2026', day: '11', month: 'DEC', time: '6:00 PM BDT', location: 'Online', description: 'Bring a project achievement and rewrite it with the group.' },
-];
-
 /** Keep approved admin customizations; replace only seed-era copy with reference copy. */
 export const referenceText = (text: string | undefined, legacy: string, replacement: string) =>
     !text || text === legacy ? replacement : text;

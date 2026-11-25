@@ -47,7 +47,6 @@ export function HomeHeader({ eventsVisible = true }: { eventsVisible?: boolean }
                 ]}/>
                 <HeaderDropdown label="Learn & Practice" onNavigate={close} items={[
                     { href: '/learning', label: 'Browse courses' },
-                    { href: '/#pm-v2-ai', label: 'AI learning tools' },
                 ]}/>
                 <HeaderDropdown label="Community" onNavigate={close} items={[
                     { href: '/community', label: 'Community feed' },

@@ -9,7 +9,7 @@ test('About Us follows approved screenshot content, order and homepage shared sh
     const route = read('routes/web.php');
     const publicLayout = read('resources/js/layouts/pm/PublicLayout.tsx');
     assert.match(route, /Route::inertia\('\/about', 'public\/About'\)/);
-    assert.match(page, /<PublicLayout siteLayout homePrototype guideLayout>/);
+    assert.match(page, /<PublicLayout siteLayout homePrototype guideLayout banner=\{\{[^\n]*\}\}>/);
     assert.match(publicLayout, /<HomeHeader eventsVisible=\{homeEventsVisible\}\/>/);
     assert.match(publicLayout, /<SiteFooter pricingPrototype=/);
     assert.match(page, /<Head title="About PM Circle"\/>/);

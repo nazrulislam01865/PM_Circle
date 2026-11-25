@@ -6,7 +6,9 @@ use App\Domain\Community\Queries\FeedQuery;
 use App\Domain\Community\Queries\PostCheckFeed;
 use App\Domain\Community\Queries\FeedTabAvailability;
 use App\Models\User;
+use App\Domain\AI\Services\PmpAiUsageReadModel;
 use App\Domain\Billing\Queries\CurrentMemberPlan;
+use App\Domain\Billing\Queries\MemberFeatureAccess;
 use App\Domain\Billing\Services\ProfileCompletionRewardService;
 use App\Domain\Identity\Services\ProfileCompleteness;
 
@@ -18,7 +20,13 @@ final class DashboardOverview
         $user->loadMissing('profile');
 
         $isDemo = app()->environment(['local', 'testing']) && config('pm-circle.demo_content_enabled');
-        $plan = app(CurrentMemberPlan::class)->dashboardCode($user);
+        $actualPlan = app(CurrentMemberPlan::class)->code($user);
+        $plan = $actualPlan === 'plus' ? 'premium' : $actualPlan;
+        // Preview plans never change actual entitlements or quota balances.
+        $examAccess = MemberFeatureAccess::allowsExamSimulator($actualPlan);
+        $tokens = $examAccess
+            ? app(PmpAiUsageReadModel::class)->summary($user, includeActivity: false)
+            : ['configured' => false];
         $preview = $isDemo && in_array($previewPlan, ['free', 'premium', 'pro'], true);
         if ($preview) {
             $plan = $previewPlan;
@@ -45,6 +53,12 @@ final class DashboardOverview
                 'scenario' => null,
                 'learning' => $stats['learning'],
                 'overview' => $stats['overview'],
+                'planUsage' => [
+                    'plan' => $actualPlan,
+                    'examAccess' => $examAccess,
+                    'tokensRemaining' => $tokens['configured'] && ($tokens['allocated'] ?? 0) > 0
+                        ? (int) $tokens['remaining'] : null,
+                ],
                 'posts' => $dashboardPosts,
                 'postChecks' => $postChecks,
                 'virtualFeedEnabled' => (bool) config('pm-circle.virtual_feed_enabled', true),

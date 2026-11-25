@@ -39,7 +39,8 @@ test('reuse page header, tabs, layout and existing import/privacy modules', () =
   assert.match(page, /<MemberDashboardLayout/);
   assert.match(page, /<ResumeImportsTab/);
   assert.match(page, /<ProfilePrivacyTab/);
-  assert.match(page, /pm-profile-nav-tabs pm-member-tertiary-sticky/);
+  assert.match(page, /<ProfileWorkspaceHeader/);
+  assert.match(read('resources/js/components/profile/ProfileWorkspaceHeader.tsx'), /pm-profile-nav-tabs pm-member-tertiary-sticky/);
 });
 
 test('styles use centralized design tokens and stay scoped to the edit tab', () => {

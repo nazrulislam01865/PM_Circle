@@ -9,7 +9,7 @@ test('Exam Simulator parent is premium and only the two approved children remain
     assert.equal(group.premium, true);
     assert.deepEqual(group.children.map(({id, href, premium}) => [id, href, premium]), [['pmp','/exams/pmp',true],['scrum','/exams/scrum',true]]);
     assert.equal(memberSidebarActive('/exams/scrum'), 'scrum');
-    assert.match(read('resources/js/components/dashboard/DashboardSidebar.tsx'), /if \(!access\?\.examSimulator\) return renderItem/);
+    assert.match(read('resources/js/components/dashboard/DashboardSidebar.tsx'), /if \(entry\.premium && !access\?\.examSimulator\) return renderItem/);
 });
 
 test('member simulator routes use the same server plan rule and public Scrum link redirects members', () => {

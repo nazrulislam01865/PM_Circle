@@ -87,6 +87,8 @@ final class CvProfileImportTest extends TestCase
         config()->set('pm-ai.resume_extract_enabled', true);
         config()->set('pm-ai.resume_extract_api_key', 'test-resume-key');
         config()->set('pm-ai.resume_extract_model', 'gpt-4o-mini');
+        config()->set('pm-ai.global_daily_budget_usd', 20);
+        \Illuminate\Support\Facades\DB::table('ai_model_prices')->insert(['model' => 'gpt-4o-mini', 'input_usd_per_m' => 1, 'cached_input_usd_per_m' => 1, 'output_usd_per_m' => 1, 'effective_from' => now()->subMinute(), 'created_at' => now(), 'updated_at' => now()]);
         Storage::fake('local');
         Storage::disk('local')->put('resumes/test.pdf', '%PDF placeholder');
         $resume = new ProfileResume(['original_name' => 'test.pdf', 'storage_path' => 'resumes/test.pdf', 'file_size' => 17]);
@@ -113,6 +115,8 @@ final class CvProfileImportTest extends TestCase
         config()->set('pm-ai.resume_extract_enabled', true);
         config()->set('pm-ai.resume_extract_api_key', 'private-test-key');
         config()->set('pm-ai.resume_extract_model', 'gpt-4o');
+        config()->set('pm-ai.global_daily_budget_usd', 20);
+        \Illuminate\Support\Facades\DB::table('ai_model_prices')->insert(['model' => 'gpt-4o', 'input_usd_per_m' => 1, 'cached_input_usd_per_m' => 1, 'output_usd_per_m' => 1, 'effective_from' => now()->subMinute(), 'created_at' => now(), 'updated_at' => now()]);
         Storage::fake('local');
         Storage::disk('local')->put('resumes/scan.pdf', '%PDF-1.4 placeholder scanned pages');
         $resume = new ProfileResume([
@@ -136,6 +140,8 @@ final class CvProfileImportTest extends TestCase
         config()->set('pm-ai.resume_extract_enabled', true);
         config()->set('pm-ai.resume_extract_api_key', 'test-key');
         config()->set('pm-ai.resume_extract_model', 'gpt-4o-mini');
+        config()->set('pm-ai.global_daily_budget_usd', 20);
+        \Illuminate\Support\Facades\DB::table('ai_model_prices')->insert(['model' => 'gpt-4o-mini', 'input_usd_per_m' => 1, 'cached_input_usd_per_m' => 1, 'output_usd_per_m' => 1, 'effective_from' => now()->subMinute(), 'created_at' => now(), 'updated_at' => now()]);
         Http::fake();
         $this->expectException(RuntimeException::class);
         try {

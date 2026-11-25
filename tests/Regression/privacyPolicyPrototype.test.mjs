@@ -15,7 +15,7 @@ const titles = [
 
 test('Privacy uses the existing route and shared homepage layout without new requests', () => {
     assert.match(read('routes/web.php'), /Route::inertia\('\/privacy', 'public\/Privacy'\)->name\('privacy'\)/);
-    assert.match(page, /<PublicLayout siteLayout homePrototype guideLayout>/);
+    assert.match(page, /<PublicLayout siteLayout homePrototype guideLayout banner=\{\{[^\n]*\}\}>/);
     assert.match(read('resources/js/layouts/pm/PublicLayout.tsx'), /<HomeHeader eventsVisible=\{homeEventsVisible\}/);
     assert.match(read('resources/js/layouts/pm/PublicLayout.tsx'), /<SiteFooter pricingPrototype=/);
     assert.match(read('resources/js/components/home/v2/HomeFooter.tsx'), /'\/privacy', 'Privacy Policy'/);
@@ -23,7 +23,7 @@ test('Privacy uses the existing route and shared homepage layout without new req
 });
 
 test('Privacy prototype retains every section, list label and draft notice', () => {
-    assert.deepEqual([...page.matchAll(/title: '([^']+)'/g)].map(m => m[1]), titles);
+    assert.deepEqual([...page.slice(0, page.indexOf('<PublicLayout')).matchAll(/title: '([^']+)'/g)].map(m => m[1]), titles);
     assert.deepEqual([...page.matchAll(/<li><strong>([^<]+)<\/strong>/g)].map(m => m[1]), [
         'Account and profile.', 'Learning and practice.', 'Community and events.',
         'Career and AI tools.', 'Purchases and support.', 'Technical information.',

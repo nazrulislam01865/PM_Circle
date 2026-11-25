@@ -1,23 +1,25 @@
-/** Approved member menu order, with the requested nested exam navigation. */
-export type MemberSidebarId = 'home' | 'learning' | 'courses' | 'exams' | 'pmp' | 'scrum' | 'project' | 'challenge' | 'profile' | 'resume' | 'interview' | 'badges' | 'community' | 'members' | 'saved' | 'plan' | 'settings' | 'activity' | 'help';
+/** Approved member menu order, with nested course and exam navigation. */
+export type MemberSidebarId = 'home' | 'learning' | 'course-group' | 'courses' | 'certificates' | 'exams' | 'pmp' | 'scrum' | 'challenge' | 'profile' | 'resume' | 'interview' | 'badges' | 'community' | 'members' | 'saved' | 'plan' | 'settings' | 'activity' | 'help';
 export type MemberSidebarItem = { id: MemberSidebarId; label: string; href: string; premium?: boolean };
-export type MemberSidebarEntry = MemberSidebarItem | { id: 'exams'; label: string; children: MemberSidebarItem[]; premium: true };
+export type MemberSidebarEntry = MemberSidebarItem | { id: 'course-group' | 'exams'; label: string; children: MemberSidebarItem[]; premium?: boolean };
 export const memberSidebarGroups: { title: string; items: MemberSidebarEntry[] }[] = [
     { title: 'Learn & practise', items: [
-        { id: 'learning', label: 'My learning', href: '/dashboard/learning?tab=my-learning' },
-        { id: 'courses', label: 'Browse courses', href: '/learning' },
+        { id: 'course-group', label: 'Courses', children: [
+            { id: 'learning', label: 'My learning', href: '/dashboard/learning?tab=my-learning' },
+            { id: 'courses', label: 'Browse courses', href: '/learning' },
+            { id: 'certificates', label: 'Certificates', href: '/dashboard/learning/certificates' },
+        ] },
         { id: 'exams', label: 'Exam Simulator', premium: true, children: [
             { id: 'pmp', label: 'PMP exams', href: '/exams/pmp', premium: true },
             { id: 'scrum', label: 'Scrum / CSM exams', href: '/exams/scrum', premium: true },
         ] },
-        { id: 'project', label: 'Project Simulator', href: '/simulators/project' },
         { id: 'challenge', label: 'Daily challenge', href: '/dashboard/daily-challenge' },
     ] },
     { title: 'Profile & career', items: [
         { id: 'profile', label: 'My profile', href: '/settings/profile' },
-        { id: 'resume', label: 'AI Resume Assistant', href: '/dashboard/resume-assistant', premium: true },
+        { id: 'resume', label: 'AI Resume Assistant', href: '/settings/profile?tab=assistant', premium: true },
         { id: 'interview', label: 'Interview preparation', href: '/interview-preparation' },
-        { id: 'badges', label: 'Badges', href: '/dashboard/features/achievements' },
+        { id: 'badges', label: 'Achievements', href: '/dashboard/features/achievements' },
     ] },
     { title: 'Community', items: [
         { id: 'community', label: 'Community feed', href: '/community' },
@@ -40,15 +42,16 @@ export function memberSidebarActive(url: string): MemberSidebarId | undefined {
     const path = parsed.pathname.replace(/\/+$/, '') || '/';
     const within = (base: string) => path === base || path.startsWith(`${base}/`);
     if (path === '/dashboard' || path === '/dashboard/home') return parsed.searchParams.get('view') === 'community' ? 'community' : 'home';
+    if (within('/dashboard/learning/certificates') || within('/learning/certificates') || ((path === '/learning' || path === '/dashboard/learning') && parsed.searchParams.get('tab') === 'certificates')) return 'certificates';
+    if (within('/dashboard/learning/my-learning') || within('/learning/my-learning') || /\/courses\/[^/]+\/lessons\/\d+$/.test(path)) return 'learning';
     if (within('/dashboard/learning')) return within('/dashboard/learning/courses') || parsed.searchParams.get('tab') === 'courses' ? 'courses' : 'learning';
-    if (within('/learning')) return path === '/learning' || within('/learning/courses') ? 'courses' : 'learning';
+    if (within('/learning')) return (path === '/learning' && parsed.searchParams.get('tab') !== 'my-learning') || within('/learning/courses') ? 'courses' : 'learning';
     if (within('/dashboard/daily-challenge') || within('/daily-challenge') || within('/scenarios')) return 'challenge';
     if (path === '/simulators' || path === '/exam-simulator') return 'exams';
     if (['/simulators/capm', '/simulators/pmi-acp', '/simulators/business-analysis'].some(within)) return 'exams';
     if (within('/exams/pmp') || within('/exam-simulator/pmp') || path === '/dashboard/features/pmp') return 'pmp';
     if (within('/exams/scrum') || within('/simulators/scrum') || path === '/dashboard/features/scrum') return 'scrum';
-    if (within('/simulators/project') || path === '/dashboard/features/simulations') return 'project';
-    if (within('/settings/profile')) return 'profile';
+    if (within('/settings/profile')) return parsed.searchParams.get('tab') === 'assistant' ? 'resume' : 'profile';
     if (within('/dashboard/resume-assistant') || within('/ai-resume-assistant') || path === '/dashboard/features/resume') return 'resume';
     if (within('/interview-preparation')) return 'interview';
     if (path === '/dashboard/features/achievements') return 'badges';

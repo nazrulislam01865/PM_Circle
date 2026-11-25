@@ -5,6 +5,7 @@ import { eventDateParts, eventHref, type EventPreview } from './eventTypes';
 export function EventAction({ href, children, outline = false, className = '' }: {
     href: string; children: ReactNode; outline?: boolean; className?: string;
 }) {
+    if (href.startsWith('https://')) return <a href={href} target="_blank" rel="noopener noreferrer" className={`pm-guide-button${outline ? ' is-outline' : ''}${className ? ` ${className}` : ''}`}>{children}</a>;
     return <Link href={href} className={`pm-guide-button${outline ? ' is-outline' : ''}${className ? ` ${className}` : ''}`}>{children}</Link>;
 }
 
@@ -27,11 +28,16 @@ export function EventListingRow({ event }: { event: EventPreview }) {
     return <article className={`pm-event-listing-row pm-event-row-layout${event.sponsored ? ' is-sponsored' : ''}`}>
         <EventDateTile event={event}/>
         <div className="pm-event-listing-copy pm-event-row-copy">
-            {event.sponsored && <div className="pm-event-sponsor-meta"><span>Sponsored event</span><strong>{event.host} · Open to everyone</strong></div>}
+            {event.sponsored && <div className="pm-event-sponsor-meta"><span>Sponsored event</span><strong>{event.host} · {event.openToEveryone ? 'Open to everyone' : 'For members'}</strong></div>}
             <h3><Link href={eventHref(event.slug)}>{event.title}</Link></h3>
-            <p className="pm-event-meta">{date.full} · {event.time} · {event.location === 'Online' ? 'Online' : `In person · ${event.location}`}</p>
+            <p className="pm-event-meta">{date.full} · {event.time} · {event.format === 'online' ? 'Online' : `In person · ${event.location}`}</p>
             <p>{event.description}</p>
         </div>
-        <EventAction href={eventHref(event.slug)} className="pm-event-row-action">{event.sponsored ? 'View and register' : event.openToEveryone ? 'View event' : 'Join to view event'}</EventAction>
+        <EventAction href={eventHref(event.slug)} className="pm-event-row-action">{event.openToEveryone ? 'View and register' : 'View event'}</EventAction>
     </article>;
+}
+
+export function EventFormErrors({ errors }: { errors: object }) {
+    const messages = [...new Set(Object.values(errors).flatMap(value => Array.isArray(value) ? value : [value]).filter((value): value is string => typeof value === 'string' && value.length > 0))];
+    return messages.length ? <div className="pm-event-input-error" role="alert">{messages.map(message => <p key={message}>{message}</p>)}</div> : null;
 }

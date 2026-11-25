@@ -3,7 +3,7 @@ import { useEffect, useState, type MouseEvent } from 'react';
 import {
     Award, Bookmark, BookOpen, CalendarDays, ClipboardCheck, FileCheck2,
     ChevronDown, ChevronLeft, ClipboardList, Crown, History,
-    Home, Info, LockKeyhole, MessagesSquare, Mic, Settings, Sparkles,
+    Home, Info, LayoutGrid, CirclePlay, LockKeyhole, MessagesSquare, Mic, Settings, Sparkle, Sparkles,
     UserRound, UsersRound, X,
 } from 'lucide-react';
 import { Brand } from '@/components/pm/Brand';
@@ -11,10 +11,14 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import type { DashboardShellData } from '@/types/dashboard';
 import { memberSidebarActive, memberSidebarContains, memberSidebarGroups, type MemberSidebarItem, type MemberSidebarEntry } from './memberSidebarNavigation';
 
-const icons = { home: Home, learning: BookOpen, courses: BookOpen, exams: ClipboardList, pmp: ClipboardCheck, scrum: FileCheck2,
-    project: ClipboardList, challenge: CalendarDays, profile: UserRound,
+const icons = { home: Home, learning: CirclePlay, 'course-group': BookOpen, courses: LayoutGrid, certificates: Award, exams: ClipboardList, pmp: ClipboardCheck, scrum: FileCheck2,
+    challenge: CalendarDays, profile: UserRound,
     resume: Sparkles, interview: Mic, badges: Award, community: MessagesSquare, members: UsersRound,
     saved: Bookmark, plan: Crown, settings: Settings, activity: History, help: Info };
+
+function AiBadge() {
+    return <span className="pm-member-ai-badge" aria-label="AI"><Sparkle aria-hidden="true"/>AI</span>;
+}
 
 export function DashboardSidebar({ dashboard, open, close, collapsed, onToggle }: {
     dashboard: DashboardShellData;
@@ -30,10 +34,13 @@ export function DashboardSidebar({ dashboard, open, close, collapsed, onToggle }
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() =>
         Object.fromEntries(memberSidebarGroups.map(group => [group.title, group.title === 'Learn & practise' || group.title === activeGroup])),
     );
-    const examEntry = memberSidebarGroups[0].items.find(item => item.id === 'exams');
-    const examActive = examEntry ? memberSidebarContains(examEntry, active) : false;
-    const [examsExpanded, setExamsExpanded] = useState(examActive);
-    useEffect(() => { if (examActive) setExamsExpanded(true); }, [examActive, url]);
+    const [expandedSubmenus, setExpandedSubmenus] = useState<Record<string, boolean>>(() => ({
+        'course-group': true, exams: memberSidebarGroups[0].items.some(item => item.id === 'exams' && memberSidebarContains(item, active)),
+    }));
+    useEffect(() => {
+        const destination = memberSidebarGroups.flatMap(group => group.items).find(item => 'children' in item && memberSidebarContains(item, active));
+        if (destination) setExpandedSubmenus(previous => previous[destination.id] ? previous : { ...previous, [destination.id]: true });
+    }, [active, url]);
     // Open the destination group on navigation, but allow users to collapse it manually.
     useEffect(() => {
         if (activeGroup) setExpandedGroups(previous => previous[activeGroup] ? previous : { ...previous, [activeGroup]: true });
@@ -47,9 +54,10 @@ export function DashboardSidebar({ dashboard, open, close, collapsed, onToggle }
         const Icon = icons[item.id];
         const locked = Boolean(item.premium && !(item.id === 'resume' ? access?.resume : access?.examSimulator));
         const requiredPlan = item.id === 'resume' ? 'Pro' : 'Plus or Pro';
-        const selected = active === item.id || (item.id === 'exams' && examActive);
+        const selected = active === item.id || (item.id === 'exams' && memberSidebarGroups[0].items.some(entry => entry.id === 'exams' && memberSidebarContains(entry, active)));
         const className = `pm-dash-nav-link${support ? ' pm-member-support-link' : ''}${nested ? ' pm-member-exam-child' : ''}${selected ? ' is-active' : ''}`;
-        const content = <><Icon className="pm-member-nav-icon" size={20} strokeWidth={1.9} aria-hidden="true"/><span>{item.label}</span>
+        const content = <><Icon className="pm-member-nav-icon" size={20} strokeWidth={1.9} aria-hidden="true"/><span className={item.id === 'exams' ? 'pm-member-parent-label' : undefined}>{item.label}</span>
+            {item.id === 'exams' && <AiBadge/>}
             {locked && <LockKeyhole className="pm-dash-nav-lock" size={14} aria-hidden="true"/>}</>;
         if (locked) return <Dialog key={item.id}>
             <DialogTrigger asChild><button type="button" className={className} aria-label={`${item.label} — ${requiredPlan} required`} title={`${requiredPlan} required`}>{content}</button></DialogTrigger>
@@ -63,17 +71,21 @@ export function DashboardSidebar({ dashboard, open, close, collapsed, onToggle }
     };
     const renderEntry = (entry: MemberSidebarEntry) => {
         if (!('children' in entry)) return renderItem(entry);
-        // The whole group is premium: never reveal child navigation to a Free member.
-        if (!access?.examSimulator) return renderItem({ id: entry.id, label: entry.label, href: '/membership', premium: true });
+        // Courses are open to all members; the existing exam plan gate stays intact.
+        if (entry.premium && !access?.examSimulator) return renderItem({ id: entry.id, label: entry.label, href: '/membership', premium: true });
+        const Icon = icons[entry.id];
+        const expanded = Boolean(expandedSubmenus[entry.id]);
+        const selected = memberSidebarContains(entry, active);
+        const submenuId = `pm-member-${entry.id}-submenu`;
         return <div className="pm-member-exam-group" key={entry.id}>
-            <button type="button" className={`pm-dash-nav-link pm-member-exam-toggle${(active === 'exams' || (examActive && !examsExpanded)) ? ' is-active' : ''}`}
+            <button type="button" className={`pm-dash-nav-link pm-member-exam-toggle${(active === entry.id || (selected && !expanded)) ? ' is-active' : ''}`}
                 aria-label={entry.label} title={compact ? entry.label : undefined}
-                aria-expanded={examsExpanded} aria-controls="pm-member-exam-submenu"
-                onClick={() => setExamsExpanded(value => !value)}>
-                <ClipboardList className="pm-member-nav-icon" size={20} strokeWidth={1.9} aria-hidden="true"/>
-                <span>{entry.label}</span><ChevronDown className="pm-member-exam-chevron" size={16} aria-hidden="true"/>
+                aria-expanded={expanded} aria-controls={submenuId}
+                onClick={() => setExpandedSubmenus(previous => ({ ...previous, [entry.id]: !expanded }))}>
+                <Icon className="pm-member-nav-icon" size={20} strokeWidth={1.9} aria-hidden="true"/>
+                <span className="pm-member-parent-label">{entry.label}</span><AiBadge/><ChevronDown className="pm-member-exam-chevron" size={16} aria-hidden="true"/>
             </button>
-            <div id="pm-member-exam-submenu" className="pm-member-exam-submenu" hidden={!examsExpanded}>
+            <div id={submenuId} className="pm-member-exam-submenu" hidden={!expanded}>
                 {entry.children.map(item => renderItem(item, false, true))}
             </div>
         </div>;

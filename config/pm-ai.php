@@ -53,6 +53,8 @@ return [
     'editorial_queue' => env('PM_AI_EDITORIAL_QUEUE', 'ai-editorial'),
     'daily_editorial_time' => env('PM_AI_DAILY_DRAFT_TIME', '06:00'),
     'allow_demo_credit_grants' => (bool) env('PM_AI_ALLOW_DEMO_CREDIT_GRANTS', false),
+    'anthropic_api_key' => env('ANTHROPIC_API_KEY'),
+    'global_monthly_budget_usd' => env('PM_AI_GLOBAL_MONTHLY_BUDGET_USD'),
     'global_daily_budget_usd' => (float) env('PM_AI_GLOBAL_DAILY_BUDGET_USD', 0),
     'editorial_budget_usd' => (float) env('PM_AI_EDITORIAL_DAILY_BUDGET_USD', 0),
 ];

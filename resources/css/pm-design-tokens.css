@@ -10,7 +10,31 @@
        charts/metrics, not ordinary body, heading, labels or form controls. */
     color-scheme: light;
     --font-ui: "Inter", system-ui, Arial, sans-serif;
+    /* Scaled A4 document typography; never used for application controls. */
+    --pm-resume-paper-body: 1.68cqi;
+    --pm-resume-paper-name: 3.69cqi;
+    --pm-resume-paper-section: 2.68cqi;
+    --pm-cv-font: "Source Sans Pro", "Source Sans 3", var(--font-ui);
+    --pm-cv-ink: #333333;
+    --pm-cv-secondary: #5d5d5d;
+    --pm-cv-muted: #777777;
+    --pm-cv-entry: 2.02cqi;
+    --pm-cv-subtitle: 2.02cqi;
+    --pm-cv-small: 1.34cqi;
     --text-xs: var(--pm-guide-text-meta);
+    /* Approved AI management prototype: compact admin-only typography roles.
+       Keep the public-page type scale unchanged. */
+    --pm-ai-admin-title: 1.625rem;
+    --pm-ai-admin-section-title: .9375rem;
+    --pm-ai-admin-provider-title: 1.125rem;
+    --pm-ai-admin-dialog-title: 1.125rem;
+    --pm-ai-admin-body: .875rem;
+    --pm-ai-admin-table-text: .8125rem;
+    --pm-ai-admin-control-text: .75rem;
+    --pm-ai-admin-control-height: 2.375rem;
+    --pm-ai-admin-small: .6875rem;
+    --pm-ai-admin-stat: 1.8125rem;
+    --pm-ai-admin-provider-stat: 1.3125rem;
     --text-metric-caption: .75rem; /* Dense chart annotations only. */
     --line-metric-caption: 1rem;
     --pm-guide-tracking-h1: -.04em;
@@ -195,6 +219,12 @@
     /* Compact legal-page banner heading from the approved Terms prototype. */
     --pm-guide-text-legal-title: clamp(2rem, 3vw, 2.5rem);
     --pm-guide-text-h2: clamp(1.5rem, 3vw, 2rem);
+    /* Compact member exam workspace title: reuse the approved section-heading scale. */
+    --pm-member-workspace-title: var(--pm-guide-text-h2);
+    /* Compact profile identity heading within the approved 24–32px H2 range. */
+    --pm-guide-profile-identity-title: clamp(1.5rem, 3.5cqw, 1.75rem);
+    --pm-guide-profile-cover-ratio: 1590 / 300;
+    --pm-member-workspace-title-line: var(--pm-guide-line-h2);
     /* About Us prototype uses the guide's responsive type bounds but its section
        headings are more compact than the generic guide H2.  Container-driven
        scaling also prevents a wide overlapping browser window inflating headings. */
@@ -1421,4 +1451,83 @@
 }
 @media (max-width: 42rem) {
     .pm-app.pm-member-sidebar-layout .pm-dash-body { --pm-member-body-gutter: var(--s4); }
+}
+
+/* Achievement medal art: approved prototype-specific semantic palette. */
+:root {
+    --achievement-medal-highlight: #ffffff24;
+    --achievement-medal-hex-highlight: #ffffff33;
+    --achievement-medal-shadow: #142a4933;
+    --achievement-earned-tint: #f3f8ff;
+    --achievement-cover-start: #133e70;
+    --achievement-cover-end: #086ec2;
+    --achievement-status-locked-bg: #eef2f7;
+    --achievement-status-locked-ink: #415570;
+    --achievement-status-progress-ink: #164c8a;
+    --achievement-progress-green: #298056;
+    --achievement-progress-track: #e9e9e9;
+    --achievement-progress-outline: #b8b8b8;
+    --achievement-courses-light: #2378dc;
+    --achievement-courses-dark: #133f89;
+    --achievement-courses-edge: #a8d7ff;
+    --achievement-scenarios-light: #7960da;
+    --achievement-scenarios-dark: #3d237f;
+    --achievement-scenarios-edge: #d9c9ff;
+    --achievement-exams-light: #426ed9;
+    --achievement-exams-dark: #263778;
+    --achievement-exams-edge: #b5c9ff;
+    --achievement-challenges-light: #198d82;
+    --achievement-challenges-dark: #135952;
+    --achievement-challenges-edge: #a8eee2;
+    --achievement-posts-light: #bf6927;
+    --achievement-posts-dark: #743209;
+    --achievement-posts-edge: #ffe2ab;
+    --achievement-replies-light: #c35988;
+    --achievement-replies-dark: #792b52;
+    --achievement-replies-edge: #ffc8df;
+    --achievement-interviews-light: #4e65ba;
+    --achievement-interviews-dark: #2a3a81;
+    --achievement-interviews-edge: #cad4ff;
+    --achievement-profile-light: #158a9e;
+    --achievement-profile-dark: #145068;
+    --achievement-profile-edge: #a5ecf4;
+    --achievement-resumes-light: #5276ad;
+    --achievement-resumes-dark: #294972;
+    --achievement-resumes-edge: #c5ddff;
+    --achievement-events-light: #ad528d;
+    --achievement-events-dark: #662452;
+    --achievement-events-edge: #ffcaee;
+    --achievement-hosted-light: #98642c;
+    --achievement-hosted-dark: #604016;
+    --achievement-hosted-edge: #f9db94;
+    --achievement-articles-light: #507cb5;
+    --achievement-articles-dark: #254773;
+    --achievement-articles-edge: #bde4ff;
+    --achievement-minutes-light: #338b9d;
+    --achievement-minutes-dark: #154e67;
+    --achievement-minutes-edge: #a5e4ee;
+    --achievement-certificates-light: #b1801e;
+    --achievement-certificates-dark: #6b4610;
+    --achievement-certificates-edge: #ffe3a0;
+    --achievement-pmpExams-light: #327bb5;
+    --achievement-pmpExams-dark: #204774;
+    --achievement-pmpExams-edge: #b0dcff;
+    --achievement-scrumExams-light: #288f75;
+    --achievement-scrumExams-dark: #165b55;
+    --achievement-scrumExams-edge: #acf1d9;
+    --achievement-reviews-light: #6179c5;
+    --achievement-reviews-dark: #334586;
+    --achievement-reviews-edge: #cbd7ff;
+    --achievement-projects-light: #655ac5;
+    --achievement-projects-dark: #3a2a7a;
+    --achievement-projects-edge: #d8cbff;
+    --achievement-shares-light: #995d97;
+    --achievement-shares-dark: #5e315e;
+    --achievement-shares-edge: #f6d6f4;
+    --achievement-interviewReviews-light: #5f72c8;
+    --achievement-interviewReviews-dark: #394787;
+    --achievement-interviewReviews-edge: #d7dbff;
+    --achievement-challengeReviews-light: #328883;
+    --achievement-challengeReviews-dark: #225452;
+    --achievement-challengeReviews-edge: #b6e9d9;
 }

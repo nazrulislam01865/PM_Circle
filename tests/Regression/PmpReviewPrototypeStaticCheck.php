@@ -11,15 +11,15 @@ $check = static function (bool $condition, string $label): void {
     echo "PASS: {$label}\n";
 };
 
-$page = $source('resources/js/pages/exam/Review.tsx');
+$page = $source('resources/js/pages/exam/Review.tsx') . $source('resources/js/components/exam/PmpExamReviewView.tsx');
 $explanation = $source('resources/js/components/exam/PmpReviewExplanation.tsx');
 $summary = $source('resources/js/components/exam/PmpSubmitReviewSummary.tsx');
-$take = $source('resources/js/pages/exam/Take.tsx');
+$take = $source('resources/js/pages/exam/Take.tsx') . $source('resources/js/components/exam/PmpExamDialogs.tsx');
 $controller = $source('app/Http/Controllers/Exam/PmpExamController.php');
 $styles = $source('resources/css/pm-pmp-review-prototype.css');
 
 $check(str_contains($page, '<ExamPage shell={shell} className="pm-exam-review-page">')
-    && str_contains($page, '<ExamStatus total={attempt.total} correct={attempt.correct} answered={answered}/>')
+    && str_contains($page, '<ExamStatus total={total} correct={correct} answered={answered}/>')
     && str_contains($page, '<PmpReviewExplanation key={question.id} question={question}/>'),
     'Review reuses authenticated member layout, scoring, and modular explanation panel');
 $check(str_contains($source('resources/js/components/exam/pmpReviewContent.ts'), "filter === 'missed'")

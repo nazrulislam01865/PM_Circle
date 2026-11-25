@@ -138,7 +138,7 @@
 
 @container member-workspace (max-width: 53.125rem) {
     .pm-app.pm-member-sidebar-layout .pm-dash-body .pm-member-discussions .pm-two-column,
-    .pm-member-sidebar-layout .pm-dash-body :is(.pm-course-detail-grid, .pm-course-detail-hero, .pm-terms-grid, .pm-scenario-detail-layout, .pm-contact-layout, .pm-pmp-public-video-grid, .pm-public-resume-split) {
+    .pm-member-sidebar-layout .pm-dash-body :is(.pm-terms-grid, .pm-scenario-detail-layout, .pm-contact-layout, .pm-pmp-public-video-grid, .pm-public-resume-split) {
         grid-template-columns: minmax(0, 1fr);
     }
     .pm-member-sidebar-layout .pm-dash-body .pm-member-discussions .pm-community-sticky-sidebar { position: static; }
@@ -171,7 +171,7 @@
 .pm-app.pm-member-sidebar-layout .pm-dash-body .pm-pmp-public-hero-copy { width: 100%; padding: 0 0 var(--s4); }
 /* Existing page titles use the same semantic type role; no changes to card
    titles, form fields, navigation or specialized exam question typography. */
-.pm-app.pm-member-sidebar-layout .pm-dash-body :is(.pm-profile-top-titles, .pm-member-settings-heading, .pm-feature-heading, .pm-activity-heading, .pm-challenge-heading-row, .pm-interview-heading, .pm-members-intro, .pm-exam-report-heading, .pm-compare-intro, .pm-trends-hero, .pm-catalog-hero, .pm-terms-banner, .pm-about-banner, .pm-event-banner, .pm-sim-banner, .pm-pmp-public-hero) h1 {
+.pm-app.pm-member-sidebar-layout .pm-dash-body :is(.pm-profile-top-titles, .pm-member-settings-heading, .pm-feature-heading, .pm-activity-heading, .pm-challenge-heading-row, .pm-interview-heading, .pm-members-intro, .pm-compare-intro, .pm-trends-hero, .pm-catalog-hero, .pm-terms-banner, .pm-about-banner, .pm-event-banner, .pm-sim-banner, .pm-pmp-public-hero) h1 {
     font: var(--pm-guide-static-h1-weight) var(--text-h1)/var(--line-h1) var(--font-ui);
     color: var(--ink); letter-spacing: var(--pm-guide-tracking-h1); overflow-wrap: anywhere;
 }
@@ -265,7 +265,7 @@
    in member mode and retain its starting-point panel and actual course rows. */
 .pm-app.pm-member-sidebar-layout .pm-dash-body .pm-learn-v3 { background: transparent; }
 .pm-app.pm-member-sidebar-layout .pm-dash-body .pm-learn-v3-banner { background: transparent; border: 0; padding: 0; }
-.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-learn-v3-main { padding-block: var(--s4) var(--s8); }
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-learn-v3-main { padding-block: var(--s4); }
 .pm-app.pm-member-sidebar-layout .pm-dash-body .pm-learn-v3-content { gap: var(--pm-guide-card-gap); }
 @container member-workspace (max-width: 53.125rem) {
     .pm-app.pm-member-sidebar-layout .pm-dash-body .pm-catalog-layout { grid-template-columns: minmax(0,1fr); }

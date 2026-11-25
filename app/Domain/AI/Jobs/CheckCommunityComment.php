@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Throwable;
 
-/** Author-only until a completed review approves the comment or reply. */
+/** Comments and replies are hidden until automated safety checks approve them. */
 final class CheckCommunityComment implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -61,7 +61,7 @@ final class CheckCommunityComment implements ShouldQueue
             $result = $checker->inspect($comment->body, $bytes, $mime, [
                 'post_excerpt' => $comment->post?->body ?? '',
                 'parent_comment' => $comment->parent?->isVisible() ? $comment->parent->body : '',
-                'signals' => $signals,
+                'signals' => $signals, 'run_table' => 'comment_check_runs', 'run_id' => $run->id,
             ]);
             $cost = round(($result['input_tokens'] * 0.05 + $result['output_tokens'] * 0.40) / 1000000, 8);
             DB::transaction(function () use ($comment, $run, $result, $policy, $cost): void {
@@ -72,8 +72,9 @@ final class CheckCommunityComment implements ShouldQueue
                     $locked->check_reason = $result['reason'];
                     $policy->recordCommentViolation($locked->id, $locked->author_id, $result['category']);
                 } elseif ($result['needs_review']) {
-                    $locked->check_status = 'pending_review';
-                    $locked->check_reason = $result['reason'];
+                    // Fail closed without attributing a confirmed violation or recording a strike.
+                    $locked->check_status = 'restricted';
+                    $locked->check_reason = 'Your comment could not be cleared by the automated community safety checks. Please revise it and try again.';
                 } else {
                     $locked->check_status = 'approved';
                     $locked->check_reason = null;
@@ -96,6 +97,7 @@ final class CheckCommunityComment implements ShouldQueue
                 'status' => 'failed', 'error_code' => mb_substr($exception->getMessage(), 0, 40),
                 'updated_at' => now(),
             ]);
+            if (in_array($exception->getMessage(), ['POST_CHECK_OUTCOME_UNKNOWN', 'PROVIDER_STATUS_UNKNOWN', 'POST_CHECK_INVALID_RESULT', 'POST_CHECK_REVIEW_INCOMPLETE'], true)) { $this->fail($exception); return; }
             throw $exception;
         }
     }

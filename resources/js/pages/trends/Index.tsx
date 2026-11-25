@@ -1,3 +1,4 @@
+import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { TrendReportRow } from '@/components/trends/TrendShared';
@@ -48,16 +49,16 @@ function ReportListing({ initialSearch }: { initialSearch: string }) {
 
 export default function Index() {
     const initialSearch = new URLSearchParams(usePage().url.split('?')[1] ?? '').get('search') ?? '';
-    return <PublicLayout siteLayout homePrototype guideLayout active="/pm-trends">
+    return <PublicLayout siteLayout homePrototype guideLayout active="/pm-trends" banner={{title: 'Trends', description, titleId: 'pm-public-trends-title'}}>
         <Head title="Trends"><meta name="description" content={description}/></Head>
         <div className="pm-public-trends-page pm-guide-public-shell">
-            <section className="pm-terms-banner" aria-labelledby="pm-public-trends-title">
+            <LegacyPageHeading><section className="pm-terms-banner" aria-labelledby="pm-public-trends-title">
                 <div className="pm-public-trends-wrap">
                     <nav className="pm-terms-breadcrumb" aria-label="Breadcrumb"><Link href="/">Home</Link><span aria-hidden="true">/</span><span aria-current="page">Trends</span></nav>
                     <h1 id="pm-public-trends-title">Trends</h1>
                     <p>{description}</p>
                 </div>
-            </section>
+            </section></LegacyPageHeading>
             <ReportListing key={initialSearch} initialSearch={initialSearch}/>
         </div>
     </PublicLayout>;

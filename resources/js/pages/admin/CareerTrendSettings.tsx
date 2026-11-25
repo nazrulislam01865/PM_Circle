@@ -1,11 +1,13 @@
-import { Head, useForm } from '@inertiajs/react';
-import { CalendarDays, Clock3, ExternalLink, FileText, ShieldCheck, X, Bot } from 'lucide-react';
+import { WorkspaceConnectionPicker } from '@/components/admin/ai/WorkspaceConnectionPicker';
+import { Head, router, useForm } from '@inertiajs/react';
+import { CalendarDays, Clock3, FileText, ShieldCheck, X } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AdminLayout } from '@/layouts/admin/AdminLayout';
+import { IntegrationCard, ConnectionDialogContent } from '@/components/admin/ai/ConnectionControls';
+import { useDiagnosticTest } from '@/components/admin/ai/useDiagnosticTest';
 import { AdminChoice } from '@/components/admin/AdminChoice';
 import { AdminCreatableMultiChoice } from '@/components/admin/AdminCreatableMultiChoice';
 import { publishingPreview } from '@/components/admin/career-trends/schedule';
-import '../../../css/pm-career-trend-settings.css';
 
 type Provider = 'openai' | 'gemini';
 type Connection = { provider: Provider; label: string; model: string | null; connected: boolean; code: string | null; message: string; checked_at: string | null; pending?: boolean; request_id?: string };
@@ -37,8 +39,10 @@ const timeOptions = Array.from({ length: 96 }, (_, i) => {
 
 export default function CareerTrendSettings({ settings, options, connections }: Props) {
     const form = useForm<Settings>(settings);
+    const [connectionOpen, setConnectionOpen] = useState(false);
+    const [routingBusy, setRoutingBusy] = useState(false);
     const [tested, setTested] = useState<Partial<Record<Provider, Connection>>>({});
-    const [testing, setTesting] = useState(false);
+    const { busy: testing, retrySeconds, begin, finish, rateLimited } = useDiagnosticTest();
     const abortTest = useRef<AbortController | null>(null);
     useEffect(() => () => abortTest.current?.abort(), []);
     const [testError, setTestError] = useState('');
@@ -51,11 +55,14 @@ export default function CareerTrendSettings({ settings, options, connections }: 
         onChange={value => form.setData(key, value)} error={errorFor(key)} required/>;
     const multi = (key: 'topics' | 'target_levels', label: string) => <AdminCreatableMultiChoice id={`career-trends-${key}`} label={label} options={options[key]}
         value={form.data[key]} onChange={value => form.setData(key, value)} maxSelections={500} error={errorFor(key)}/>;
-    const showDialog = (kind: 'draft' | 'connection') => { setDialog(kind); dialogRef.current?.showModal(); };
+    const showDialog = (kind: 'draft' | 'connection') => { setDialog(kind); setConnectionOpen(kind === 'connection'); dialogRef.current?.showModal(); };
+    useEffect(() => { setTested({}); }, [connections]);
     const connection = tested[form.data.ai_provider] ?? connections[form.data.ai_provider];
     const testConnection = async () => {
         const provider = form.data.ai_provider;
-        setTesting(true); setTestError('');
+        if (routingBusy) return;
+        if (!begin()) return;
+        setTestError('');
         const controller = new AbortController(); abortTest.current = controller;
         try {
             const response = await fetch('/admin/ai/career-trends/connection-test', {
@@ -64,7 +71,8 @@ export default function CareerTrendSettings({ settings, options, connections }: 
                     'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
                 }, body: JSON.stringify({ provider }),
             });
-            if (!response.ok) throw new Error(response.status === 429 ? 'Too many tests. Try again shortly.' : `Unable to check connection (${response.status}).`);
+            if (rateLimited(response)) return;
+            if (!response.ok) throw new Error(`Unable to check connection (${response.status}).`);
             let result: Connection = await response.json();
             setTested(previous => ({ ...previous, [provider]: result }));
             const started = Date.now();
@@ -74,6 +82,7 @@ export default function CareerTrendSettings({ settings, options, connections }: 
                 const poll = await fetch(`/admin/ai/career-trends/connection-test/${encodeURIComponent(result.request_id)}`, {
                     credentials: 'same-origin', signal: controller.signal, headers: { Accept: 'application/json' },
                 });
+                if (rateLimited(poll)) return;
                 if (!poll.ok) throw new Error(`Unable to read test status (${poll.status}).`);
                 result = await poll.json();
                 setTested(previous => ({ ...previous, [provider]: result }));
@@ -82,8 +91,7 @@ export default function CareerTrendSettings({ settings, options, connections }: 
             if (controller.signal.aborted) return;
             const message = error instanceof Error ? error.message : 'Unable to check connection.';
             setTestError(message);
-            setTested(previous => ({ ...previous, [provider]: { ...connections[provider], connected: false, code: 'TEST_FAILED', message, checked_at: null } }));
-        } finally { if (!controller.signal.aborted) setTesting(false); }
+        } finally { if (!controller.signal.aborted) finish(); }
     };
     const actions = <div className="pm-career-settings-actions"><button type="button" className="pm-admin-button pm-admin-button-quiet" onClick={() => showDialog('draft')}>Preview draft</button>
         <button type="submit" form="career-trends-settings" className="pm-admin-button pm-admin-button-primary" disabled={form.processing}>{form.processing ? 'Saving…' : 'Save settings'}</button></div>;
@@ -108,10 +116,7 @@ export default function CareerTrendSettings({ settings, options, connections }: 
                     </SettingsPanel>
                 </div>
                 <div className="pm-career-settings-column">
-                    <SettingsPanel title="AI integration"><div className="pm-career-settings-integration">
-                        <div className="pm-career-settings-provider-icon">{form.data.ai_provider === 'openai' ? <img src="/images/admin/career-trends-openai.webp" alt="" width={44} height={44}/> : <Bot aria-hidden="true" size={32}/>}</div><div className="pm-career-settings-provider"><strong>{connection.label}</strong><span className={`pm-career-settings-status ${connection.pending ? '' : connection.connected ? 'is-configured' : 'is-disconnected'}`}><i aria-hidden="true"/>{connection.pending ? 'Testing…' : connection.connected ? 'Connected' : 'Disconnected'}</span><small className="pm-admin-hint">{connection.model ?? 'No model configured'}</small>{connection.checked_at && <small className="pm-admin-hint">Checked {new Date(connection.checked_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>}{!connection.connected && <small className={connection.pending ? "pm-admin-hint" : "pm-admin-error"}>{connection.message}</small>}{form.data.ai_provider !== settings.ai_provider && <small className="pm-admin-hint">Unsaved provider selection</small>}</div>
-                        <button type="button" className="pm-career-settings-connection" onClick={() => showDialog('connection')}>Manage connection <ExternalLink size={18} aria-hidden="true"/></button>
-                    </div></SettingsPanel>
+                    <SettingsPanel title="AI integration"><IntegrationCard connection={connection} provider={form.data.ai_provider} onManage={() => showDialog('connection')} unsaved={form.data.ai_provider !== settings.ai_provider}/></SettingsPanel>
                     <SettingsPanel title="Sources & quality">
                         {choice('source_policy', 'Sources')}{choice('lookback_days', 'Lookback')}{choice('minimum_sources', 'Minimum sources')}
                         <div className="pm-career-settings-quality-checks"><CheckField checked={form.data.include_source_links} onChange={checked => form.setData('include_source_links', checked)}>Include source links</CheckField><CheckField checked={form.data.include_source_dates} onChange={checked => form.setData('include_source_dates', checked)}>Include source dates</CheckField></div>
@@ -126,16 +131,10 @@ export default function CareerTrendSettings({ settings, options, connections }: 
                 </div>
             </div>
         </form>
-        <dialog ref={dialogRef} className="pm-career-settings-dialog" aria-labelledby="career-dialog-title">
+        <dialog ref={dialogRef} onClose={() => setConnectionOpen(false)} className="pm-career-settings-dialog" aria-labelledby="career-dialog-title">
             <div className="pm-career-settings-dialog-head"><h2 id="career-dialog-title">{dialog === 'draft' ? 'Preview draft' : 'Manage connection'}</h2><button type="button" className="pm-admin-button" aria-label="Close dialog" onClick={() => dialogRef.current?.close()}><X size={18}/></button></div>
             {dialog === 'draft' ? <><p className="pm-admin-hint">Template preview only. No AI request is made. Automatic draft generation and scheduled publication are not active.</p><h3>{form.data.title_pattern.replaceAll('{week_start}', schedule.weekStart)}</h3><p>Proposed publication: {schedule.publish} ({form.data.timezone})</p><ul>{options.sections.filter(option => form.data.sections.includes(option.value)).map(option => <li key={option.value}>{option.label}</li>)}</ul></> : <>
-                <AdminChoice id="career-provider" label="AI provider" portalContainer={dialogRef.current} disabled={testing} value={form.data.ai_provider} options={Object.values(connections).map(item => ({ value: item.provider, label: item.label }))} onChange={value => { if (!testing && (value === 'openai' || value === 'gemini')) { form.setData('ai_provider', value); setTestError(''); } }}/>
-                <p><strong>{connection.label}</strong> · {connection.model ?? 'No model configured'}</p>
-                <span className={`pm-career-settings-status ${connection.pending ? '' : connection.connected ? 'is-configured' : 'is-disconnected'}`}><i aria-hidden="true"/>{connection.pending ? 'Testing…' : connection.connected ? 'Connected' : 'Disconnected'}</span>
-                <p role="status">{connection.message}</p>{connection.checked_at && <p className="pm-admin-hint">Last checked: {new Date(connection.checked_at).toLocaleString()}</p>}
-                {testError && <p className="pm-admin-error" role="alert">{testError}</p>}
-                <p className="pm-admin-hint">Test makes a small, budgeted generation request and verifies mandatory moderation. It does not create or publish a report. Credentials are configured on the server. Select a provider here, then Save settings to apply it to new Career Trends drafts.</p>
-                <div className="pm-career-settings-dialog-actions"><button type="button" className="pm-admin-button pm-admin-button-quiet" disabled={testing} onClick={testConnection}>{testing ? 'Testing…' : 'Test connection'}</button><button type="button" className="pm-admin-button pm-admin-button-primary" onClick={() => dialogRef.current?.close()}>Use selection</button></div>
+                <ConnectionDialogContent id="career-provider" provider={form.data.ai_provider} options={Object.values(connections).map(item => ({ value: item.provider, label: item.label }))} onChange={value => { if (!testing && (value === 'openai' || value === 'gemini')) { form.setData('ai_provider', value); setTestError(''); } }} connection={connection} portalContainer={dialogRef.current} testing={testing} retrySeconds={retrySeconds} error={testError} onTest={testConnection} onClose={() => dialogRef.current?.close()} routingBusy={routingBusy} hint="Test makes a small, budgeted generation request and verifies mandatory moderation. It does not create or publish a report. Select a provider here, then Save settings before assigning its workspace credentials.">{connectionOpen && (form.data.ai_provider === settings.ai_provider ? <WorkspaceConnectionPicker operations={[{value: 'trend_draft', label: 'Career Trends'}]} portalContainer={dialogRef.current} disabled={testing} onBusy={setRoutingBusy} onHealthChanged={() => { setTested({}); router.reload({only:['connections']}); }} onSaved={() => { setTested({}); router.reload({only:['connections']}); }}/> : <p className="pm-admin-hint">Save the provider selection first to manage its credentials.</p>)}</ConnectionDialogContent>
             </>}
             {dialog === 'draft' && <button type="button" className="pm-admin-button pm-admin-button-primary" onClick={() => dialogRef.current?.close()}>Close</button>}
         </dialog>

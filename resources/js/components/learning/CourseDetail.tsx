@@ -1,222 +1,194 @@
-import { Link } from '@inertiajs/react';
-import {
-    Bookmark, BookOpenCheck, Check, ChevronDown, ClipboardCheck,
-    Clock3, FileText, GraduationCap, Layers3, LockKeyhole, Medal,
-    Share2, ShieldCheck, Target, Users,
-} from 'lucide-react';
-import type { ReactNode } from 'react';
+import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
+import { Link, router } from '@inertiajs/react';
+import { ClipboardCheck, Clock3, Layers3, LockKeyhole } from 'lucide-react';
+import { useRef, useState, type ReactNode } from 'react';
 import type { CoursePracticeSettings, CourseResourceData, DemoCourseDetailData } from '@/types/learning';
-import { router } from '@inertiajs/react';
-import { useState } from 'react';
+import { sampleMetrics } from './courseSampleMetrics';
 
 export type CourseDetailTab = 'overview' | 'curriculum' | 'practice' | 'reviews' | 'questions' | 'resources';
-
 const tabs: { key: CourseDetailTab; label: string }[] = [
-    { key: 'overview', label: 'Overview' },
-    { key: 'curriculum', label: 'Curriculum' },
-    { key: 'practice', label: 'Practice & Exams' },
-    { key: 'reviews', label: 'Reviews' },
-    { key: 'questions', label: 'Q&A' },
-    { key: 'resources', label: 'Resources' },
+    { key: 'overview', label: 'Overview' }, { key: 'curriculum', label: 'Curriculum' },
+    { key: 'practice', label: 'Practice & Exams' }, { key: 'reviews', label: 'Reviews' },
+    { key: 'questions', label: 'Q&A' }, { key: 'resources', label: 'Resources' },
 ];
+const isExamCourse = (course: DemoCourseDetailData) => /exam|certification|pmp/i.test(`${course.title} ${course.category}`);
+const isPmp = (course: DemoCourseDetailData) => course.slug === 'pmp-exam-preparation';
+const hasVideo = (course: DemoCourseDetailData) => course.lessons.some(lesson => lesson.hasVideo);
+const duration = (course: DemoCourseDetailData) => course.minutes <= 0 ? 'Self-paced' : course.minutes < 60 ? `${course.minutes} minutes estimated study` : `${Number((course.minutes / 60).toFixed(1))} ${course.minutes === 60 ? 'hour' : 'hours'} estimated study`;
+const notesLabel = (course: DemoCourseDetailData) => `${course.lessons.length} study ${course.lessons.length === 1 ? 'note' : 'notes'}`;
 
-export function CourseDetailTabs({ active, onChange }: { active: CourseDetailTab; onChange: (tab: CourseDetailTab) => void }) {
+export function courseActionError(status: number) {
+    if (status === 429) return 'Too many requests. Please wait a moment before trying again.';
+    if (status === 401 || status === 419) return 'Your session has expired. Refresh the page or sign in again.';
+    if (status === 403) return 'This action is not available with your current access.';
+    if (status === 404) return 'This course or content is no longer available.';
+    return 'Unable to complete this request. Please try again.';
+}
+
+export function CourseDetailTabs({ onChange }: { onChange: (tab: CourseDetailTab) => void }) {
     return <nav className="pm-course-detail-tabs" aria-label="Course details sections">
-        {tabs.map(tab => <button type="button" key={tab.key} className={active === tab.key ? 'is-active' : ''}
-            aria-current={active === tab.key ? 'page' : undefined} onClick={() => onChange(tab.key)}>{tab.label}</button>)}
+        {tabs.map(tab => <button type="button" key={tab.key} className="pm-guide-button is-outline" onClick={() => onChange(tab.key)}>{tab.label}</button>)}
     </nav>;
 }
 
-export function CourseDetailHero({ course, isMember, saved, saving, onSave, onShare, shareStatus }: {
-    course: DemoCourseDetailData;
-    isMember: boolean;
-    saved: boolean;
-    saving: boolean;
-    onSave: () => void;
-    onShare: () => void;
-    shareStatus: string;
-}) {
-    const examFocused = /exam|certification|pmp/i.test(`${course.title} ${course.category}`);
-    const hours = Math.round(course.minutes / 6) / 10;
+function DetailSection({ id, title, children, className = '' }: { id: CourseDetailTab; title: string; children: ReactNode; className?: string }) {
+    return <section id={`course-${id}`} tabIndex={-1} className={`pm-system-card pm-course-detail-card ${className}`} aria-labelledby={`course-${id}-title`}>
+        <h2 id={`course-${id}-title`}>{title}</h2>{children}
+    </section>;
+}
 
-    return <section className="pm-course-detail-hero" aria-labelledby="pm-course-detail-title">
-        <div className="pm-course-detail-cover">
-            <img src={course.coverUrl || `/images/learning/course-${course.thumbnail}.webp`} alt="" decoding="async" />
-            <span className="pm-course-detail-cover-label">{examFocused ? 'Exam prep' : course.category}</span>
-            <span className="pm-course-detail-cover-caption"><BookOpenCheck size={16} aria-hidden="true" /> Self-paced study · No video</span>
-        </div>
+function Disclosure({ title, children, open }: { title: ReactNode; children: ReactNode; open?: boolean }) {
+    return <details className="pm-course-detail-disclosure" open={open}><summary>{title}</summary><div className="pm-course-detail-disclosure-content">{children}</div></details>;
+}
+
+export function CourseDetailHero({ course, isMember, saved, saving, onSave, onShare, shareStatus, saveError }: {
+    course: DemoCourseDetailData; isMember: boolean; saved: boolean; saving: boolean;
+    onSave: () => void; onShare: () => void; shareStatus: string; saveError?: string;
+}) {
+    const examFocused = isExamCourse(course);
+    const fallback = `/images/learning/course-${course.thumbnail}.webp`;
+    return <header className="pm-course-detail-hero" aria-labelledby="pm-course-detail-title">
+        <figure className="pm-course-detail-cover">
+            <img key={course.coverUrl || fallback} src={course.coverUrl || fallback} alt="" decoding="async" onError={event => { const image = event.currentTarget; if (image.getAttribute('src') !== fallback) image.src = fallback; else image.style.visibility = 'hidden'; }} />
+            <figcaption className="pm-course-detail-cover-caption">Self-paced study · {hasVideo(course) ? 'Video & reading' : 'No video'}</figcaption>
+        </figure>
         <div className="pm-course-detail-heading">
             <div className="pm-course-detail-heading-top">
-                <span className="pm-course-detail-category">{examFocused ? 'Certification Preparation' : course.category}</span>
-                <div className="pm-course-detail-utility">
-                    {isMember ? <button type="button" className="pm-course-detail-utility-action" onClick={onSave}
-                        aria-pressed={saved} disabled={saving} aria-label={saved ? 'Remove saved course' : 'Save course'}>
-                        <Bookmark size={19} fill={saved ? 'currentColor' : 'none'} aria-hidden="true" />{saving ? 'Saving…' : saved ? 'Saved' : 'Save'}
-                    </button> : <Link className="pm-course-detail-utility-action" href="/register" aria-label="Join to save this course"><Bookmark size={19} aria-hidden="true" /> Save</Link>}
-                    <button type="button" className="pm-course-detail-utility-action" onClick={onShare}><Share2 size={18} aria-hidden="true" /> Share</button>
-                </div>
+                <span className="pm-course-detail-category">{examFocused ? 'Certification preparation' : course.category}</span>
+                {isMember && <button type="button" className="pm-guide-button is-outline" onClick={onSave} aria-pressed={saved} disabled={saving} aria-label={saved ? 'Remove saved course' : 'Save course'}>{saving ? 'Saving…' : saved ? 'Saved' : 'Save'}</button>}
+                <button type="button" className="pm-guide-button is-outline" onClick={onShare}>Share</button>
             </div>
-            <h1 id="pm-course-detail-title">{course.title}</h1>
-            <p className="pm-course-detail-summary">{course.summary}</p>
-            <div className="pm-course-detail-facts">
-                <span><Clock3 size={18} aria-hidden="true" />{hours} hours estimated study</span>
-                <span><GraduationCap size={18} aria-hidden="true" />{course.level}</span>
-                <span><FileText size={18} aria-hidden="true" />{course.lessons.length} study notes</span>
-            </div>
-            <div className="pm-course-detail-tags"><span>{course.category}</span>{examFocused && <span>{/pmp/i.test(course.title) ? 'PMP®' : 'Exam Prep'}</span>}<span>{examFocused ? 'Exam Preparation' : course.accessTier === 'free' ? 'Free to enroll' : 'Plus & Pro included'}</span></div>
+            <LegacyPageHeading><h1 id="pm-course-detail-title">{course.title}</h1>
+            <p className="pm-course-detail-summary">{course.summary}</p></LegacyPageHeading>
+            <p className="pm-course-detail-facts">{duration(course)} · {course.level} · {notesLabel(course)}</p>
+            <div className="pm-course-detail-tags"><span>{course.category}</span>{examFocused && <span>{isPmp(course) ? 'PMP®' : 'Exam Preparation'}</span>}{isPmp(course) && <span>Exam Preparation</span>}</div>
             {shareStatus && <p className="pm-course-detail-share-status" role="status">{shareStatus}</p>}
+            {saveError && <p className="pm-course-practice-error" role="alert">{saveError}</p>}
         </div>
-    </section>;
+    </header>;
 }
 
 export function CourseDetailOverview({ course }: { course: DemoCourseDetailData }) {
     const goals = course.objectives?.length ? course.objectives : course.lessons.map(lesson => lesson.title);
-    const examFocused = /exam|certification|pmp/i.test(`${course.title} ${course.category}`);
-    return <>
-        <section className="pm-system-card pm-course-detail-card pm-course-detail-about" aria-labelledby="pm-course-about-title">
-            <h2 id="pm-course-about-title">About this course</h2>
-            <p>{course.overview || course.summary}</p>
-            <p>{examFocused
-                ? 'This self-paced course uses project management topics and practical scenarios to support independent study and exam preparation. There are no video lessons.'
-                : 'Learn independently through structured topic notes and project management examples. There are no video lessons.'}</p>
-        </section>
-        <section className="pm-system-card pm-course-detail-card pm-course-detail-learn" aria-labelledby="pm-course-learn-title">
-            <div className="pm-course-detail-learn-inner">
-                <h2 id="pm-course-learn-title"><Target size={26} aria-hidden="true" /> What you’ll learn</h2>
-                <ul>{goals.map(goal => <li key={goal}><Check size={19} aria-hidden="true" /> <span>{goal}</span></li>)}</ul>
-            </div>
-        </section>
-    </>;
+    return <DetailSection id="overview" title="About this course" className="pm-course-detail-about">
+        <p>{course.overview || course.summary}</p>
+        {goals.length > 0 && <div className="pm-course-detail-learn-inner"><h3>What you’ll learn</h3><ul>{goals.map((goal, index) => <li key={index}>{goal}</li>)}</ul></div>}
+    </DetailSection>;
 }
 
-export function CourseDetailCurriculum({ course, canRead }: { course: DemoCourseDetailData; canRead: boolean }) {
-    const sections = course.outline?.length ? course.outline
-        : course.lessons.map(lesson => ({ title: lesson.title, topics: [lesson.title] }));
-
-    return <section className="pm-system-card pm-course-detail-card pm-course-detail-curriculum" aria-labelledby="pm-course-curriculum-title">
-        <div className="pm-course-detail-section-heading">
-            <h2 id="pm-course-curriculum-title">Course Curriculum</h2>
-            <span>{sections.length} sections · Self-paced</span>
-        </div>
-        <div className="pm-course-detail-accordion">
-            {sections.map((section, index) => <details key={`${index}-${section.title}`} open={index === 0 ? true : undefined}>
-                <summary><ChevronDown size={19} aria-hidden="true" /><strong>{index + 1}. {section.title}</strong><span>{section.topics.length} {section.topics.length === 1 ? 'topic' : 'topics'}</span></summary>
-                <ul>{section.topics.map((topic, topicIndex) => <li key={`${topicIndex}-${topic}`}><ClipboardCheck size={17} aria-hidden="true" /><span>{index + 1}.{topicIndex + 1} {topic}</span></li>)}</ul>
-            </details>)}
-        </div>
-        {canRead ? <div className="pm-course-detail-study-notes">
-            <h3><BookOpenCheck size={21} aria-hidden="true" /> Your study notes</h3>
-            <div className="pm-course-detail-note-list">{course.lessons.map((lesson, index) => <article key={`${index}-${lesson.title}`}><h4>{lesson.title}</h4><p>{lesson.body}</p></article>)}</div>
-        </div> : <p className="pm-course-detail-locked-note"><LockKeyhole size={16} aria-hidden="true" /> Enroll with an eligible membership to read the study notes. The course outline is public.</p>}
-    </section>;
+export function CourseDetailCurriculum({ course, canRead, lessonRoot = '/learning' }: { course: DemoCourseDetailData; canRead: boolean; lessonRoot?: string }) {
+    const sections = course.outline?.length ? course.outline : course.lessons.map(lesson => ({ title: lesson.title, topics: [lesson.title] }));
+    const count = sections.reduce((sum, section) => sum + section.topics.length, 0);
+    return <DetailSection id="curriculum" title="Course curriculum" className="pm-course-detail-curriculum">
+        <p className="pm-course-detail-meta">{sections.length} sections · {count} topics · Self-paced</p>
+        {sections.map((section, index) => <Disclosure key={`${index}-${section.title}`} open={index === 0 ? true : undefined} title={<>{index + 1}. {section.title} <span className="pm-course-detail-meta">· {section.topics.length} {section.topics.length === 1 ? 'topic' : 'topics'}</span></>}>
+            <ul className="pm-course-detail-topics">{section.topics.map((topic, topicIndex) => <li key={topicIndex}>{index + 1}.{topicIndex + 1} {topic}</li>)}</ul>
+        </Disclosure>)}
+        {!sections.length && <p>No curriculum has been published yet.</p>}
+        {course.lessons.length > 0 && <p className="pm-course-detail-meta">{canRead ? 'Your study notes are available in Resources and the course player.' : <>The outline is open to browse. Enroll to read the study notes. <Link href={`${lessonRoot}/courses/${encodeURIComponent(course.slug)}/lessons/1`}>View lesson outline</Link></>}</p>}
+    </DetailSection>;
 }
+
+// Public, illustrative scenarios from the supplied prototype, not the scored question bank.
+const pmpExamples = [
+    ['What should you do if a sponsor requests a scope change just before release?', 'Check the impact on schedule, risk, and value. Then follow the agreed change process and communicate the decision.'],
+    ['How should you respond when two team members disagree on priorities?', 'Understand each person’s concerns and facilitate a decision based on shared project goals.'],
+];
 
 export function CourseDetailPracticePanel({ course, practice, canRead }: { course: DemoCourseDetailData; practice: CoursePracticeSettings; canRead: boolean }) {
     const [section, setSection] = useState('');
     const [topic, setTopic] = useState('');
     const [starting, setStarting] = useState(false);
     const [error, setError] = useState('');
+    const lock = useRef(false);
     const selectedSection = practice.sections.find(item => item.title === section);
     const available = topic ? (selectedSection?.topics.find(item => item.title === topic)?.available ?? 0) : section ? (selectedSection?.available ?? 0) : practice.available;
-    const ready = practice.enabled && available >= practice.questionCount;
+    const ready = practice.enabled && practice.questionCount > 0 && available >= practice.questionCount;
     const start = () => {
-        if (starting || !canRead || !ready) return;
-        setError(''); setStarting(true);
+        if (lock.current || !canRead || !ready) return;
+        lock.current = true; setError(''); setStarting(true);
         router.post(`/learning/courses/${encodeURIComponent(course.slug)}/practice/start`, { section: section || null, topic: topic || null }, {
             onError: errors => setError(errors.topic || errors.section || 'Could not start this practice.'),
-            onFinish: () => setStarting(false),
+            onHttpException: response => { setError(courseActionError(response.status)); return false; },
+            onNetworkError: () => { setError('Connection failed. Check your connection and try again.'); return false; },
+            onFinish: () => { lock.current = false; setStarting(false); },
         });
     };
-    return <section className="pm-system-card pm-course-detail-card pm-course-detail-extra pm-course-practice-panel" aria-live="polite">
-        <div className="pm-course-detail-section-heading"><h2>Practice &amp; Exams</h2><span>{practice.available} published questions</span></div>
-        <p>Practice scenario-based and standard questions linked to this course curriculum. Answers are scored automatically, with explanations available after submission.</p>
-        {practice.enabled ? <>
+    return <DetailSection id="practice" title="Practice & Exams" className="pm-course-practice-panel">
+        {isPmp(course) && <><p>Try two sample scenario questions, then open the suggested responses.</p>{pmpExamples.map(([question, answer]) => <Disclosure key={question} title={question}><p>{answer}</p></Disclosure>)}</>}
+        {practice.enabled ? canRead ? <div className="pm-course-detail-practice-controls">
+            <p>Practice published questions linked to this course curriculum. Answers are scored automatically, with explanations after submission.</p>
             <div className="pm-course-practice-summary"><span><ClipboardCheck size={18}/>{practice.questionCount} questions</span><span><Clock3 size={18}/>{practice.durationMinutes} minutes</span><span><Layers3 size={18}/>{practice.sections.length} sections</span></div>
-            <label className="pm-course-practice-field"><strong>Practice scope</strong><select value={section} onChange={e => { setSection(e.target.value); setTopic(''); }}><option value="">Full course ({practice.available} available)</option>{practice.sections.map(item => <option key={item.title} value={item.title}>{item.title} ({item.available})</option>)}</select></label>
-            {selectedSection && <label className="pm-course-practice-field"><strong>Curriculum topic</strong><select value={topic} onChange={e => setTopic(e.target.value)}><option value="">All topics ({selectedSection.available} available)</option>{selectedSection.topics.map(item => <option key={item.title} value={item.title}>{item.title} ({item.available})</option>)}</select></label>}
-            {!ready && <p className="pm-course-practice-hint">Not enough published questions for this selection. The administrator can add questions or adjust the practice count.</p>}
+            <label className="pm-course-practice-field"><strong>Practice scope</strong><select className="pm-guide-control" value={section} onChange={e => { setSection(e.target.value); setTopic(''); setError(''); }} disabled={starting}><option value="">Full course ({practice.available} available)</option>{practice.sections.map(item => <option key={item.title} value={item.title}>{item.title} ({item.available})</option>)}</select></label>
+            {selectedSection && <label className="pm-course-practice-field"><strong>Curriculum topic</strong><select className="pm-guide-control" value={topic} onChange={e => { setTopic(e.target.value); setError(''); }} disabled={starting}><option value="">All topics ({selectedSection.available} available)</option>{selectedSection.topics.map(item => <option key={item.title} value={item.title}>{item.title} ({item.available})</option>)}</select></label>}
+            {!ready && <p className="pm-course-practice-hint">Not enough published questions for this selection.</p>}
             {error && <p role="alert" className="pm-course-practice-error">{error}</p>}
-            {canRead ? <button type="button" className="pm-system-button pm-course-practice-start" onClick={start} disabled={!ready || starting}>{starting ? 'Starting…' : 'Start practice exam'}</button>
-                : <p className="pm-course-detail-locked-note"><LockKeyhole size={16}/> Enroll with an eligible membership to start practice.</p>}
-        </> : <p className="pm-course-practice-hint">Practice is not published for this course yet.</p>}
-        {course.slug === 'pmp-exam-preparation' && <Link href="/exams/pmp" className="pm-system-button pm-system-button-secondary">Open PMP Exam Simulator</Link>}
-    </section>;
+            <button type="button" className="pm-guide-button pm-course-practice-start" onClick={start} disabled={!ready || starting}>{starting ? 'Starting…' : 'Start practice exam'}</button>
+        </div> : <p className="pm-course-detail-locked-note"><LockKeyhole size={16} aria-hidden="true"/> Enroll with eligible membership to start practice.</p> : !isPmp(course) && <p>Practice is not published for this course yet.</p>}
+        {isPmp(course) && <Link href="/exams/pmp" className="pm-guide-button is-outline pm-course-detail-exam-link">Open PMP Exam Simulator</Link>}
+    </DetailSection>;
 }
 
-export function CourseDetailResourcesPanel({ course, resources, canRead }: { course: DemoCourseDetailData; resources: CourseResourceData[]; canRead: boolean }) {
-    return <section className="pm-system-card pm-course-detail-card pm-course-detail-extra" aria-live="polite">
-        <div className="pm-course-detail-section-heading"><h2>Resources</h2><span>{resources.length} available</span></div>
-        {resources.length === 0 ? <p>No resources have been published for this course yet.</p> : <div className="pm-course-resource-list">{resources.map(resource => <article key={resource.id} className="pm-course-resource-item">
+export function CourseDetailResourcesPanel({ course, resources, canRead, lessonRoot = '/learning' }: { course: DemoCourseDetailData; resources: CourseResourceData[]; canRead: boolean; lessonRoot?: string }) {
+    return <DetailSection id="resources" title="Resources">
+        {course.lessons.length > 0 && <><p>{notesLabel(course)} {course.lessons.length === 1 ? 'is' : 'are'} available inside the course player.</p><ul className="pm-course-detail-resource-notes">{course.lessons.map((lesson, index) => <li key={`${index}-${lesson.title}`}>{canRead ? <Link href={`${lessonRoot}/courses/${encodeURIComponent(course.slug)}/lessons/${index + 1}`}>{lesson.title}</Link> : lesson.title}</li>)}</ul></>}
+        {resources.length > 0 && <div className="pm-course-resource-list">{resources.map(resource => <article key={resource.id} className="pm-course-resource-item">
             <div><strong>{resource.title}</strong><span>{resource.section}{resource.description ? ` · ${resource.description}` : ''}</span></div>
-            {canRead ? <a href={`/learning/courses/${encodeURIComponent(course.slug)}/resources/${resource.id}`} className="pm-system-button pm-system-button-secondary" target="_blank" rel="noopener noreferrer">{resource.kind === 'file' ? 'Download' : 'Open resource'}</a>
-                : <span className="pm-course-resource-locked"><LockKeyhole size={15}/> Enroll to access</span>}
+            {canRead ? <a href={`/learning/courses/${encodeURIComponent(course.slug)}/resources/${resource.id}`} className="pm-guide-button is-outline" target="_blank" rel="noopener noreferrer">{resource.kind === 'file' ? 'Download' : 'Open resource'}</a> : <span className="pm-course-resource-locked"><LockKeyhole size={15} aria-hidden="true"/> Enroll to access</span>}
         </article>)}</div>}
-    </section>;
+        {!course.lessons.length && !resources.length && <p>No resources have been published for this course yet.</p>}
+    </DetailSection>;
 }
 
-export function CourseDetailExtraPanel({ active, course, practice }: { active: 'reviews' | 'questions'; course: DemoCourseDetailData; practice: CoursePracticeSettings }) {
-    if (active === 'questions') return <section className="pm-system-card pm-course-detail-card pm-course-detail-extra" aria-live="polite"><h2>Course Q&amp;A</h2><p>{practice.available} published questions are organized by curriculum section. Use Practice &amp; Exams to answer them, then review the correct answers and explanations after submitting.</p></section>;
-    return <section className="pm-system-card pm-course-detail-card pm-course-detail-extra" aria-live="polite"><h2>Reviews</h2><p>No learner reviews are available for this course yet.</p></section>;
+export function CourseDetailExtraPanel({ active, course }: { active: 'reviews' | 'questions'; course: DemoCourseDetailData; practice: CoursePracticeSettings }) {
+    if (active === 'questions') {
+        const faq = [
+            ['Is this a video course?', hasVideo(course) ? 'This course includes video and study notes.' : 'This self-paced course uses written study notes. No video is currently listed.'],
+            ['Who can enroll?', course.accessTier === 'paid' ? 'This course is included with eligible Plus and Pro memberships.' : 'PM Circle community members can enroll for free.'],
+            ['Does the completion certificate grant PMP certification?', 'The certificate records completion in PM Circle. PMP certification is awarded separately through PMI.'],
+            ['What does the study estimate mean?', `${duration(course)} is the catalog estimate, not a guarantee of study time or certification eligibility.`],
+        ];
+        return <DetailSection id="questions" title="Q&A">{faq.filter((_, index) => index !== 2 || isPmp(course)).map(([question, answer]) => <Disclosure key={question} title={question}><p>{answer}</p></Disclosure>)}</DetailSection>;
+    }
+    const metric = sampleMetrics[course.title.trim()];
+    return <DetailSection id="reviews" title="Reviews">
+        {metric && <p className="pm-course-detail-meta"><strong className="pm-course-detail-rating">★ {metric.rating}</strong> · Sample rating · {metric.learners.toLocaleString('en-US')} sample learners</p>}
+        {isPmp(course) && metric ? <><p className="pm-course-detail-meta">Illustrative prototype reviews — not actual learner feedback.</p><blockquote>“The scenario examples helped me see why the first action matters.” <span>— Farhana R., sample learner</span></blockquote><blockquote>“The outline helped me plan which topics to review each week.” <span>— Tanvir H., sample learner</span></blockquote></> : <p>No learner reviews are available for this course yet.</p>}
+    </DetailSection>;
 }
 
-export function CourseAccessCard({ course, isMember, isAuthenticated, eligible, enrolled, memberTier, submitting, onEnroll, onViewCurriculum }: {
-    course: DemoCourseDetailData;
-    isMember: boolean;
-    isAuthenticated: boolean;
-    eligible: boolean;
-    enrolled: boolean;
-    memberTier: 'free' | 'plus' | 'pro';
-    submitting: boolean;
-    onEnroll: () => void;
-    onViewCurriculum: () => void;
+export function CourseAccessCard({ course, isMember, isAuthenticated, eligible, enrolled, memberTier, submitting, onEnroll, onViewCurriculum, lessonHref, error }: {
+    course: DemoCourseDetailData; isMember: boolean; isAuthenticated: boolean; eligible: boolean; enrolled: boolean; memberTier: 'free' | 'plus' | 'pro'; submitting: boolean; onEnroll: () => void; onViewCurriculum: () => void; lessonHref?: string; error?: string;
 }) {
-    const included = course.accessTier === 'paid';
-    const examFocused = /exam|certification|pmp/i.test(`${course.title} ${course.category}`);
+    const paid = course.accessTier === 'paid';
     const canRead = isMember && enrolled && eligible;
-    const joinHref = isAuthenticated ? '/join/step/2' : '/register';
     let action: ReactNode;
     let description: string;
-
     if (canRead) {
-        description = 'Your enrollment is active. Study notes are ready below.';
-        action = <button type="button" className="pm-system-button" onClick={onViewCurriculum}><BookOpenCheck size={18} aria-hidden="true" /> View curriculum</button>;
+        description = 'Your enrollment is active.';
+        action = lessonHref ? <Link className="pm-guide-button" href={lessonHref}>Continue learning</Link> : null;
     } else if (!isMember) {
-        description = included ? 'Join PM Circle and choose Plus or Pro to access this course.' : 'Join the community for free to enroll in this course.';
-        action = <Link className="pm-system-button" href={joinHref}>{isAuthenticated ? 'Finish joining' : 'Join to enroll'}</Link>;
+        description = paid ? 'Join PM Circle and choose Plus or Pro to access this course.' : 'Join the community for free to enroll in this course.';
+        action = <Link className="pm-guide-button" href={isAuthenticated ? '/join/step/2' : '/register'}>{isAuthenticated ? 'Finish joining' : 'Join to enroll'}</Link>;
     } else if (!eligible) {
         description = 'This course is included with an active Plus or Pro membership. There is no separate course charge.';
-        action = <Link className="pm-system-button" href="/membership">Explore Plus & Pro</Link>;
+        action = <Link className="pm-guide-button" href="/membership">Explore Plus &amp; Pro</Link>;
     } else {
-        description = included ? `Included with your ${memberTier === 'plus' ? 'Plus' : 'Pro'} membership.` : 'Free for PM Circle community members.';
-        action = <button type="button" className="pm-system-button" onClick={onEnroll} disabled={submitting} aria-busy={submitting}>
-            <BookOpenCheck size={18} aria-hidden="true" />{submitting ? 'Enrolling…' : 'Enroll now'}
-        </button>;
+        description = paid ? `Included with your ${memberTier === 'plus' ? 'Plus' : 'Pro'} membership.` : 'Free for PM Circle community members.';
+        action = <button type="button" className="pm-guide-button" onClick={onEnroll} disabled={submitting} aria-busy={submitting}>{submitting ? 'Enrolling…' : 'Enroll now'}</button>;
     }
-
     return <section className="pm-system-card pm-course-detail-card pm-course-detail-access" aria-label="Course enrollment">
-        <span className="pm-course-detail-access-label">{canRead ? 'Enrolled' : included ? 'Plus & Pro' : 'Free course'}</span>
-        <h2>{canRead ? 'Ready to study' : included ? 'Included with your membership' : 'Free for community members'}</h2>
-        <p className="pm-course-detail-access-description">{description}</p>
-        <div className="pm-course-detail-access-buttons">{action}<button type="button" className="pm-system-button pm-system-button-secondary" onClick={onViewCurriculum}>View course outline</button></div>
-        <ul className="pm-course-detail-perks">
-            <li><Clock3 size={19} aria-hidden="true" /> {examFocused ? 'Self-paced exam-focused study' : 'Self-paced project management study'}</li>
-            <li><FileText size={19} aria-hidden="true" /> {course.lessons.length} guided study notes</li>
-            <li><Layers3 size={19} aria-hidden="true" /> Structured curriculum overview</li>
-            <li><Target size={19} aria-hidden="true" /> Project management scenarios</li>
-            <li><ShieldCheck size={19} aria-hidden="true" /> {included ? 'Included in Plus & Pro' : 'Free member enrollment'}</li>
-        </ul>
+        <span className="pm-course-detail-access-label">{canRead ? 'Enrolled' : paid ? 'Plus & Pro' : 'Free course'}</span>
+        <h2>{canRead ? 'Ready to study' : paid ? isMember && eligible ? 'Included with your membership' : 'Included with Plus & Pro' : 'Free for community members'}</h2>
+        <p>{description}</p>
+        <div className="pm-course-detail-access-buttons">{action}<button type="button" className="pm-guide-button is-outline" onClick={onViewCurriculum}>View course outline</button></div>
+        {error && <p className="pm-course-practice-error" role="alert">{error}</p>}
+        <ul className="pm-course-detail-perks"><li>{isExamCourse(course) ? 'Self-paced exam-focused study' : 'Self-paced project management study'}</li><li>{notesLabel(course)}</li><li>Project management scenarios</li>{course.lessons.length > 0 && <li>Completion certificate after completing all lessons</li>}</ul>
     </section>;
 }
 
 export function CourseProviderCard() {
     return <section className="pm-system-card pm-course-detail-card pm-course-detail-provider" aria-labelledby="pm-course-provider-title">
-        <h2 id="pm-course-provider-title">Course provider</h2>
-        <div className="pm-course-detail-provider-row">
-            <span className="pm-course-detail-provider-mark" aria-hidden="true">PM</span>
-            <div><strong>PM Circle</strong><span>Learn &amp; Practice</span></div>
-            <Medal size={19} className="pm-course-detail-provider-check" aria-hidden="true" />
-        </div>
-        <p>Project management learning and exam-preparation study resources for the PM Circle community.</p>
-        <p className="pm-course-detail-provider-foot"><Users size={16} aria-hidden="true" /> Available to eligible community members</p>
+        <h2 id="pm-course-provider-title">Course provider</h2><strong>PM Circle by ITQAN</strong><p>Project management learning and exam preparation resources.</p>
     </section>;
 }

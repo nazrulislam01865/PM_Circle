@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Learning;
 use App\Domain\Billing\Queries\CurrentMemberPlan;
 use App\Domain\Learning\Queries\DemoCourseCatalog;
 use App\Http\Controllers\Controller;
+use App\Services\Learning\CourseLessonProgress;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,12 +14,13 @@ use Inertia\Response;
 
 final class DemoCourseController extends Controller
 {
-    public function show(Request $request, string $course, DemoCourseCatalog $catalog, CurrentMemberPlan $plans): Response
+    public function show(Request $request, string $course, DemoCourseCatalog $catalog, CurrentMemberPlan $plans, CourseLessonProgress $progress): Response
     {
-        $record = $catalog->find($course);
-        abort_unless($record, 404);
+        $courseModel = $catalog->findPublished($course);
+        abort_unless($courseModel, 404);
+        $record = $catalog->detailData($courseModel);
         $member = $request->user();
-        $joined = $member && (int) $member->onboarding_step >= 3 && $member->hasVerifiedEmail();
+        $joined = $member && ! $member->is_admin && $member->status === 'active' && (int) $member->onboarding_step >= 3 && $member->hasVerifiedEmail();
         $tier = $joined ? $plans->code($member) : 'free';
         $eligible = $record['accessTier'] === 'free' || in_array($tier, ['plus', 'pro'], true);
         $enrolled = $joined && DB::table('learning_demo_course_enrollments')
@@ -26,7 +28,6 @@ final class DemoCourseController extends Controller
         $saved = $joined && DB::table('learning_demo_course_saves')
             ->where('user_id', $member->id)->where('course_slug', $course)->exists();
 
-        $courseModel = \App\Models\LearningCourse::query()->where('slug', $course)->firstOrFail();
         $counts = $courseModel->practice_enabled
             ? \App\Models\LearningCourseQuestion::query()->where('course_id', $courseModel->id)
                 ->where('is_published', true)->selectRaw('section_title, topic_title, COUNT(*) AS total')
@@ -61,6 +62,7 @@ final class DemoCourseController extends Controller
                 ...collect($record)->except('lessons')->all(),
                 'lessons' => collect($record['lessons'])->map(fn ($lesson) => [
                     'title' => $lesson['title'],
+                    'hasVideo' => ! empty($lesson['video_url']),
                     // Server-side gate: no lesson body leaks before enrollment or after a downgrade.
                     'body' => $joined && $enrolled && $eligible ? $lesson['body'] : null,
                 ])->all(),
@@ -73,6 +75,9 @@ final class DemoCourseController extends Controller
             'memberTier' => $tier,
             'practice' => $practice,
             'resources' => $resources,
+            'nextLesson' => $joined && $enrolled && $eligible
+                ? $progress->summary($progress->lessons($courseModel), $progress->records($member, $courseModel->id))['next']
+                : 1,
         ]);
     }
 

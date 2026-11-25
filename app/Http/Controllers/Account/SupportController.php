@@ -19,7 +19,7 @@ final class SupportController extends Controller
         if ($request->user() && ! $request->user()->is_admin && $request->user()->onboarding_step >= 3) {
             return to_route('support.guides');
         }
-        return Inertia::render('public/Support', ['mode' => 'help']);
+        return Inertia::render('support/HelpCentre', ['publicView' => true]);
     }
 
     public function guides() { return Inertia::render('support/HelpCentre'); }

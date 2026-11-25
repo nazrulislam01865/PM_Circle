@@ -53,8 +53,8 @@ export function PmpReviewExplanation({ question }: { question: ExamQuestion }) {
                             <h3>{item.title}</h3>{item.description && <p>{item.description}</p>}
                         </div>)}
                     </div> : <p className="pm-review-empty-detail">No related concepts have been provided for this question.</p>}
-                    {concepts.connection && <div className="pm-review-detail-block">
-                        <h3>How they connect</h3><p>{concepts.connection}</p>
+                    {(concepts.connection || concepts.items.length > 0) && <div className="pm-review-detail-block">
+                        <h3>How they connect</h3><p>{concepts.connection || 'No concept connection has been provided for this question.'}</p>
                     </div>}
                 </>;
             }
@@ -68,11 +68,12 @@ export function PmpReviewExplanation({ question }: { question: ExamQuestion }) {
                             <dl>
                                 {source.chapter && <div><dt>Chapter</dt><dd>{source.chapter}</dd></div>}
                                 {source.section && <div><dt>Section</dt><dd>{source.section}</dd></div>}
-                                {source.page && <div><dt>{source.pageLabel || 'Reference PDF page'}</dt><dd>{source.page}</dd></div>}
-                                {source.pageRange && <div><dt>Section page range</dt><dd>{source.pageRange}</dd></div>}
+                                {source.kind !== 'eco' && source.page && <div><dt>{source.pageLabel || 'Reference PDF page'}</dt><dd>{source.page}</dd></div>}
+                                {(source.pageRange || source.kind === 'publication') && <div><dt>Section page range</dt><dd>{source.pageRange || 'Not provided'}</dd></div>}
                                 {source.examDomain && <div><dt>Exam domain</dt><dd>{source.examDomain}</dd></div>}
                                 {source.task && <div><dt>ECO task</dt><dd>{source.task}</dd></div>}
                                 {source.focus && <div><dt>Task focus</dt><dd>{source.focus}</dd></div>}
+                                {source.kind === 'eco' && source.page && <div><dt>{source.pageLabel || 'ECO page'}</dt><dd>{source.page}</dd></div>}
                                 {source.ecoReference && <div><dt>ECO reference</dt><dd>{source.ecoReference}</dd></div>}
                             </dl>
                         </div>)}

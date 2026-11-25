@@ -26,7 +26,7 @@ test('admin controls and member dialog display exact settings and low-bank state
 });
 
 test('timed exam remains fully interactive while using compact navigation and design tokens', () => {
-    const take = source('resources/js/pages/exam/Take.tsx');
+    const take = source('resources/js/pages/exam/Take.tsx') + source('resources/js/components/exam/PmpExamTakingView.tsx');
     const css = source('resources/css/pm-exam-simulator.css');
     const navigator = source('resources/js/components/exam/PmpExamNavigator.tsx');
     for (const term of ['ExamTimeProgress', 'PmpExamNavigator', 'persist(id']) {

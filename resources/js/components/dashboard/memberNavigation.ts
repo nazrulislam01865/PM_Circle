@@ -28,7 +28,6 @@ const secondary: Record<MemberSection, MemberSecondaryLink[]> = {
         { id: 'courses', label: 'Course library', href: '/dashboard/learning?tab=courses' },
         { id: 'paths', label: 'My learning', href: '/dashboard/learning?tab=paths' },
         { id: 'practice', label: 'Practice', href: '/dashboard/learning?tab=practice' },
-        { id: 'project', label: 'Project simulator', href: '/simulators/project' },
         { id: 'interview', label: 'Interview preparation', href: '/interview-preparation' },
     ],
     exams: [
@@ -60,7 +59,6 @@ export function memberNavigationForUrl(url: string): MemberNavigationState {
         || path.startsWith('/interview-preparation') || path.startsWith('/simulators/project')) {
         section = 'learn';
         active = path.startsWith('/interview-preparation') ? 'interview'
-            : path.startsWith('/simulators/project') ? 'project'
             : path.startsWith('/dashboard/learning') || path === '/learning'
                 ? query.get('tab') === 'paths' || query.get('tab') === 'my-learning' ? 'paths'
                     : query.get('tab') === 'practice' ? 'practice' : 'courses'

@@ -90,6 +90,41 @@ final class MemberWorkspaceTest extends TestCase
             ->where('tokens.allocated', 80000)->where('tokens.used', 123)->where('tokens.remaining', 79870)->where('credits.available', 30)->where('usage.0.tokens', 123)->where('usage.0.requests', 1));
     }
 
+    public function test_home_plan_cards_use_actual_access_and_token_balance_without_granting_tokens(): void
+    {
+        $member = $this->member();
+        $this->actingAs($member);
+        $this->grantPlan($member, 'free');
+        $this->get('/dashboard')->assertOk()->assertInertia(fn ($page) => $page->component('account/Dashboard')
+            ->where('dashboard.planUsage.plan', 'free')->where('dashboard.planUsage.examAccess', false)
+            ->where('dashboard.planUsage.tokensRemaining', null));
+        $this->assertDatabaseMissing('ai_chat_usage_buckets', ['user_id' => $member->id]);
+        $this->get('/exams/pmp/enter')->assertRedirect(route('pricing'));
+        config()->set('pm-circle.demo_content_enabled', true);
+        $this->get('/dashboard?demo_plan=pro')->assertOk()->assertInertia(fn ($page) => $page
+            ->where('dashboard.plan', 'pro')->where('dashboard.planUsage.plan', 'free')
+            ->where('dashboard.planUsage.examAccess', false)->where('dashboard.planUsage.tokensRemaining', null));
+
+        $this->grantPlan($member, 'plus');
+        DB::table('ai_chat_limit_policies')->where('plan_code', 'plus')->where('feature_scope', 'feature:pmp')->delete();
+        $this->get('/dashboard')->assertOk()->assertInertia(fn ($page) => $page
+            ->where('dashboard.planUsage.plan', 'plus')->where('dashboard.planUsage.examAccess', true)
+            ->where('dashboard.planUsage.tokensRemaining', null));
+        DB::table('ai_chat_limit_policies')->insert(['version' => 1, 'plan_code' => 'plus', 'feature_scope' => 'feature:pmp', 'max_daily' => 5, 'max_cycle' => 40, 'max_per_conversation' => 10, 'max_concurrent' => 3, 'max_cycle_tokens' => 80000, 'enabled' => true, 'active_from_utc' => now()->subDay(), 'created_at' => now(), 'updated_at' => now()]);
+        config()->set('pm-ai.hard_pmp_cycle_tokens', 100000);
+        $start = now('Asia/Dhaka')->startOfMonth()->utc();
+        DB::table('ai_chat_usage_buckets')->insert(['user_id' => $member->id, 'scope_key' => 'feature:pmp', 'window_kind' => 'cycle', 'window_start_utc' => $start, 'window_end_utc' => now('Asia/Dhaka')->startOfMonth()->addMonth()->utc(), 'used_tokens' => 123, 'reserved_tokens' => 7]);
+        $this->get('/dashboard')->assertOk()->assertInertia(fn ($page) => $page
+            ->where('dashboard.planUsage.tokensRemaining', 79870));
+        $this->get('/membership')->assertOk()->assertInertia(fn ($page) => $page->where('tokens.remaining', 79870));
+        $this->get('/exams/pmp/enter')->assertRedirect('/exams/pmp');
+        DB::table('ai_chat_usage_buckets')->where('user_id', $member->id)->update(['used_tokens' => 80000, 'reserved_tokens' => 0]);
+        $this->get('/dashboard')->assertOk()->assertInertia(fn ($page) => $page->where('dashboard.planUsage.tokensRemaining', 0));
+        $this->grantPlan($member, 'pro');
+        $this->get('/dashboard')->assertOk()->assertInertia(fn ($page) => $page
+            ->where('dashboard.planUsage.plan', 'pro')->where('dashboard.planUsage.examAccess', true));
+    }
+
     public function test_support_requests_are_persistent_private_and_have_staff_replies(): void
     {
         Storage::fake('local');

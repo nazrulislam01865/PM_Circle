@@ -137,7 +137,7 @@ export default function PmpQuestionBank({ settings, selectedSampleQuestions, que
     }, { preserveScroll: true, onError: setErrors });
 
     return <AdminLayout active="/admin/exam-simulator/pmp/questions" title="PMP exam management"
-        subtitle="Manage the question bank, Excel/CSV imports, and simulator rules without modifying ongoing attempts.">
+        subtitle="Manage the question bank, Excel/CSV imports, and simulator rules without modifying ongoing attempts." headingAction={<Link href="/admin/ai/pmp-settings" className="pm-admin-button pm-admin-button-quiet">AI settings</Link>}>
         <Head title="PMP exam management | PM Circle"/>
         {flash?.status && <p className="pm-admin-notice pm-admin-notice-success" role="status"><CheckCircle2 size={17}/>{flash.status}</p>}
         {otherErrors.length > 0 && <div className="pm-admin-notice pm-admin-notice-error" role="alert"><AlertCircle size={18}/><span>{otherErrors.join(' ')}</span></div>}
@@ -314,7 +314,7 @@ export default function PmpQuestionBank({ settings, selectedSampleQuestions, que
                             option_rationales: { ...emptyRationales(), ...(current.option_rationales ?? {}), [key]: e.target.value } } : null)}/></label>)}</div>
                     <div className="pm-admin-field-grid">
                         <label className="pm-admin-field"><span>Key Takeaway</span><textarea rows={3} value={question.takeaway ?? ''} onChange={e => updateQuestion('takeaway', e.target.value)}/></label>
-                        <label className="pm-admin-field"><span>Related Concepts (semicolon separated)</span><textarea rows={3} value={question.concepts ?? ''} onChange={e => updateQuestion('concepts', e.target.value)}/></label>
+                        <label className="pm-admin-field"><span>Related Concepts</span><small>Use semicolon-separated names, or one concept per line as Title | Description. Add How they connect: followed by the authored connection on a final line.</small><textarea rows={5} value={question.concepts ?? ''} onChange={e => updateQuestion('concepts', e.target.value)}/></label>
                     </div>
                     {!optionKeys.some(key => Boolean(question.option_rationales?.[key]?.trim())) && Boolean(question.other_options) &&
                         <label className="pm-admin-field"><span>Legacy other-option explanations</span><textarea rows={2} value={question.other_options ?? ''} onChange={e => updateQuestion('other_options', e.target.value)}/></label>}

@@ -1,3 +1,5 @@
+import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
+import { sampleMetrics } from './courseSampleMetrics';
 import { Pagination } from '@/components/pm/Pagination';
 import { MobileFilterPanel } from '@/components/pm/MobileFilterPanel';
 import { Head, Link, usePage } from '@inertiajs/react';
@@ -16,19 +18,10 @@ const topicLabels = [
     'Stakeholder Management',
 ] as const;
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 4;
 
 type Topic = (typeof topicLabels)[number];
 type Access = 'all' | 'free' | 'paid';
-
-/** View-only prototype metrics: no ratings or learner counts are stored in the course catalog. */
-const sampleMetrics: Record<string, { rating: string; reviews: number; learners: number }> = {
-    'Project Management Foundations': { rating: '4.8', reviews: 124, learners: 386 },
-    'Agile and Scrum Fundamentals': { rating: '4.7', reviews: 96, learners: 274 },
-    'Stakeholder Management': { rating: '4.9', reviews: 82, learners: 196 },
-    'Project Coordination Essentials': { rating: '4.7', reviews: 57, learners: 143 },
-    'Scheduling for Project Coordinators': { rating: '4.8', reviews: 43, learners: 112 },
-};
 
 /** Match topic chips against the published course's real title, category and summary. */
 function matchesTopic(course: DemoCourseData, topic: Topic): boolean {
@@ -43,25 +36,26 @@ function matchesTopic(course: DemoCourseData, topic: Topic): boolean {
     }
 }
 
-function CourseRow({ course }: { course: DemoCourseData }) {
-    const metric = sampleMetrics[course.title];
+function CatalogCourseTile({ course, href }: { course: DemoCourseData; href: string }) {
+    const metric = sampleMetrics[course.title.trim()];
     const free = course.accessTier === 'free';
     const duration = course.minutes > 0
-        ? course.minutes >= 60 ? `${Number((course.minutes / 60).toFixed(1))} hours` : `${course.minutes} min`
+        ? course.minutes >= 60 ? `${Number((course.minutes / 60).toFixed(1))} ${course.minutes === 60 ? 'hr' : 'hrs'}` : `${course.minutes} min`
         : null;
 
-    return <article className="pm-learn-v3-course pm-course-row">
-        <Link href={demoCourseHref(course.slug)} className="pm-learn-v3-course-image" aria-label={`View ${course.title}`}>
-            <img src={course.coverUrl || `/images/learning/course-${course.thumbnail}.webp`} alt="" loading="lazy" decoding="async" />
+    const fallback = `/images/learning/course-${course.thumbnail}.webp`;
+    return <article className="pm-learn-v3-course">
+        <Link href={href} className="pm-learn-v3-course-image" aria-label={`View ${course.title}`}>
+            <img key={course.coverUrl || fallback} src={course.coverUrl || fallback} alt="" loading="lazy" decoding="async" onError={event => { const image = event.currentTarget; if (image.getAttribute('src') !== fallback) image.src = fallback; else image.style.visibility = 'hidden'; }} />
         </Link>
         <div className="pm-learn-v3-course-body">
             <div className="pm-learn-v3-badges"><span className="pm-learn-v3-meta">{course.level}</span><span className={`pm-learn-v3-pill${free ? ' is-free' : ' is-paid'}`}>{free ? 'Free' : 'Paid'}</span></div>
-            <h3><Link href={demoCourseHref(course.slug)}>{course.title}</Link></h3>
+            <h3><Link href={href}>{course.title}</Link></h3>
             <p>{course.summary}</p>
             <div className="pm-learn-v3-course-metrics"><span>{course.category}{duration ? ` · ${duration}` : ''}</span>
-                {metric && <span className="pm-learn-v3-sample-rating" title="Illustrative sample ratings, not real course feedback"><span className="pm-learn-v3-star" aria-hidden="true">★</span> <strong>{metric.rating}/5</strong> ({metric.reviews} ratings) <span className="pm-learn-v3-metric-divider" aria-hidden="true">|</span> {metric.learners} active learners</span>}
+                {metric && <span className="pm-learn-v3-sample-rating" title="Illustrative sample ratings, not real course feedback"><span className="pm-learn-v3-star" aria-hidden="true">★</span> <strong>{metric.rating}</strong> · {metric.learners.toLocaleString('en-US')} learners</span>}
             </div>
-            <Link href={demoCourseHref(course.slug)} className="pm-guide-button is-outline pm-learn-v3-detail-link">View details</Link>
+            <Link href={href} className="pm-guide-button is-outline pm-learn-v3-detail-link">View details</Link>
         </div>
     </article>;
 }
@@ -73,7 +67,7 @@ const startingQuestions = [
 ] as const;
 
 /** A lightweight, three-question recommendation using only courses already loaded for the catalog. */
-function StartingPoint({ courses }: { courses: DemoCourseData[] }) {
+function StartingPoint({ courses, courseHref }: { courses: DemoCourseData[]; courseHref: (slug: string) => string }) {
     const ref = useRef<HTMLDialogElement>(null);
     const [open, setOpen] = useState(false);
     const [step, setStep] = useState(0);
@@ -100,8 +94,8 @@ function StartingPoint({ courses }: { courses: DemoCourseData[] }) {
     const close = () => setOpen(false);
     return <>
         <section className="pm-learn-v3-starting" aria-labelledby="pm-learn-start-title">
-            <h2 id="pm-learn-start-title">Find Your Starting Point</h2>
-            <p>Answer three questions about your experience and what you want to learn. Get one course recommendation from this catalog.</p>
+            <div className="pm-learn-v3-start-copy"><h2 id="pm-learn-start-title">Find Your Starting Point</h2>
+            <p>Answer three questions to get a course recommendation from this catalog.</p></div>
             <button type="button" className="pm-guide-button" onClick={reset}>Find my starting point</button>
         </section>
         <dialog ref={ref} className="pm-learn-v3-dialog" aria-labelledby="pm-learn-v3-dialog-title" onClose={close} onCancel={close}>
@@ -109,7 +103,7 @@ function StartingPoint({ courses }: { courses: DemoCourseData[] }) {
                 <button type="button" className="pm-guide-button is-outline" onClick={close} aria-label="Close recommendation">Close</button></div>
             {complete ? <div className="pm-learn-v3-dialog-result" role="status">
                 {recommendation ? <><p>Based on your answers, start with:</p><h3>{recommendation.title}</h3><p>{recommendation.summary}</p>
-                    <Link href={demoCourseHref(recommendation.slug)} className="pm-guide-button" onClick={close}>View recommended course</Link></>
+                    <Link href={courseHref(recommendation.slug)} className="pm-guide-button" onClick={close}>View recommended course</Link></>
                     : <p>No published courses are available yet. Please check back later.</p>}
                 <button type="button" className="pm-guide-button is-outline" onClick={reset}>Start again</button>
             </div> : <div className="pm-learn-v3-dialog-questions"><p className="pm-learn-v3-meta">Question {step + 1} of {startingQuestions.length}</p>
@@ -125,9 +119,12 @@ function StartingPoint({ courses }: { courses: DemoCourseData[] }) {
     </>;
 }
 
-export function PublicCourseCatalog({ courses }: { courses: DemoCourseData[] }) {
+/** Shared Browse courses content; PublicLayout selects the existing guest/member shell. */
+export function PublicCourseCatalog({ courses, memberView = false }: { courses: DemoCourseData[]; memberView?: boolean }) {
+    const pageUrl = usePage().url;
+    const courseHref = (slug: string) => memberView ? `/dashboard/learning/courses/${encodeURIComponent(slug)}` : demoCourseHref(slug);
     const { rewardPromotion } = usePage<{ rewardPromotion?: RewardPromotionData | null }>().props;
-    const [search, setSearch] = useState('');
+    const [search, setSearch] = useState(() => new URLSearchParams(pageUrl.split('?')[1] || '').get('search') || '');
     const [topic, setTopic] = useState<Topic>('All topics');
     const [level, setLevel] = useState('all');
     const [access, setAccess] = useState<Access>('all');
@@ -150,39 +147,40 @@ export function PublicCourseCatalog({ courses }: { courses: DemoCourseData[] }) 
     const currentPage = Math.min(page, pageCount);
     const shown = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-    return <PublicLayout siteLayout homePrototype guideLayout homeOfferLabel={rewardPromotion?.discountLabel}>
+    return <PublicLayout siteLayout homePrototype guideLayout homeOfferLabel={rewardPromotion?.discountLabel} banner={{title: 'Learn & Practice', currentLabel: 'Browse courses', parents: [{label: 'Learn & Practice', href: '/learning'}], description: 'Find project management courses for your role, your goals, and the work you do.', titleId: 'pm-learn-v3-heading'}}>
         <Head title="Learn & Practice | PM Circle"><meta name="description" content="Explore project management courses and find the right starting point for your goals." /></Head>
         <div className="pm-learn-v3">
-            <section className="pm-learn-v3-banner" aria-labelledby="pm-learn-v3-heading"><div className="pm-learn-v3-wrap">
-                <nav aria-label="Breadcrumb" className="pm-learn-v3-crumb"><Link href="/">Home</Link><span aria-hidden="true">/</span><span aria-current="page">Learn &amp; Practice</span></nav>
+            <LegacyPageHeading><section className="pm-learn-v3-banner" aria-labelledby="pm-learn-v3-heading"><div className="pm-learn-v3-wrap">
+                <nav aria-label="Breadcrumb" className="pm-learn-v3-crumb"><Link href={memberView ? '/dashboard' : '/'}>Home</Link><span aria-hidden="true">/</span><span>Learn &amp; Practice</span><span aria-hidden="true">/</span><span aria-current="page">Browse courses</span></nav>
                 <h1 id="pm-learn-v3-heading">Learn &amp; Practice</h1>
                 <p>Find project management courses for your role, your goals, and the work you do.</p>
-            </div></section>
+            </div></section></LegacyPageHeading>
             <div className="pm-learn-v3-wrap pm-learn-v3-main">
-                <StartingPoint courses={courses}/>
+                <StartingPoint courses={courses} courseHref={courseHref}/>
                 <nav className="pm-learn-v3-topics" aria-label="Filter by course topic">{topicLabels.map(label => <button type="button" key={label} aria-pressed={topic === label} className={`pm-learn-v3-chip${topic === label ? ' is-active' : ''}`} onClick={() => changeTopic(label)}>{label}</button>)}</nav>
                 <div className="pm-learn-v3-content">
-                    <MobileFilterPanel className="pm-learn-v3-sidebar" label="Filters" activeCount={Number(level !== 'all') + Number(topic !== 'All topics') + Number(access !== 'all')}><div className="pm-learn-v3-filter-heading"><h2>Filters</h2><button type="button" onClick={clear}>Clear all</button></div>
-                        <label className="pm-guide-field-label" htmlFor="pm-learn-level">Career level</label>
-                        <select id="pm-learn-level" className="pm-guide-control" value={level} onChange={event => { setLevel(event.target.value); setPage(1); }}><option value="all">All levels</option>{levels.map(value => <option key={value} value={value}>{value}</option>)}</select>
-                        <label className="pm-guide-field-label" htmlFor="pm-learn-topic">Topic</label>
-                        <select id="pm-learn-topic" className="pm-guide-control" value={topic} onChange={event => changeTopic(event.target.value as Topic)}>{topicLabels.map(value => <option key={value} value={value}>{value}</option>)}</select>
-                        <fieldset className="pm-learn-v3-access"><legend>Access</legend>{([['all', 'All courses'], ['free', 'Free'], ['paid', 'Paid']] as const).map(([value, title]) => <label key={value}><input type="radio" name="course-access" value={value} checked={access === value} onChange={() => { setAccess(value); setPage(1); }}/>{title}</label>)}</fieldset>
+                    <MobileFilterPanel className="pm-learn-v3-sidebar" label="Filters" activeCount={Number(level !== 'all') + Number(topic !== 'All topics') + Number(access !== 'all') + Number(!!search.trim()) + Number(sort !== 'recommended')}>
+                        <label className="pm-guide-field-label" htmlFor="pm-learn-level">Career level
+                            <select id="pm-learn-level" className="pm-guide-control" value={level} onChange={event => { setLevel(event.target.value); setPage(1); }}><option value="all">All levels</option>{levels.map(value => <option key={value} value={value}>{value}</option>)}</select></label>
+                        <label className="pm-guide-field-label" htmlFor="pm-learn-topic">Topic
+                            <select id="pm-learn-topic" className="pm-guide-control" value={topic} onChange={event => changeTopic(event.target.value as Topic)}>{topicLabels.map(value => <option key={value} value={value}>{value}</option>)}</select></label>
+                        <label className="pm-guide-field-label" htmlFor="pm-learn-access">Access
+                            <select id="pm-learn-access" className="pm-guide-control" value={access} onChange={event => { setAccess(event.target.value as Access); setPage(1); }}><option value="all">All courses</option><option value="free">Free</option><option value="paid">Paid</option></select></label>
+                        <label className="pm-guide-field-label" htmlFor="pm-learn-search">Search courses
+                            <input id="pm-learn-search" className="pm-guide-control" type="search" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} placeholder="Agile, risk or stakeholder" /></label>
+                        <label className="pm-guide-field-label" htmlFor="pm-learn-sort">Sort by
+                            <select id="pm-learn-sort" className="pm-guide-control" value={sort} onChange={event => { setSort(event.target.value); setPage(1); }}><option value="recommended">Recommended</option><option value="title">Title A–Z</option><option value="shortest">Shortest first</option><option value="longest">Longest first</option></select></label>
+                        <button className="pm-learn-v3-clear" type="button" onClick={clear}>Clear all</button>
                     </MobileFilterPanel>
                     <section className="pm-learn-v3-results" aria-label="Available learning courses">
-                        <div className="pm-learn-v3-search-sort"><label className="pm-guide-field-label" htmlFor="pm-learn-search">Search courses
-                            <input id="pm-learn-search" className="pm-guide-control" type="search" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} placeholder="e.g. Agile, risk or stakeholder" /></label>
-                            <label className="pm-guide-field-label" htmlFor="pm-learn-sort">Sort by
-                                <select id="pm-learn-sort" className="pm-guide-control" value={sort} onChange={event => { setSort(event.target.value); setPage(1); }}><option value="recommended">Recommended</option><option value="title">Title A–Z</option><option value="shortest">Shortest first</option><option value="longest">Longest first</option></select></label></div>
-                        <p className="pm-learn-v3-result-count" role="status" aria-live="polite">{filtered.length} {filtered.length === 1 ? 'course' : 'courses'}</p>
-                        <p className="pm-learn-v3-data-note">Ratings and active learner counts are sample data.</p>
-                        {shown.length ? <div className="pm-learn-v3-rows">{shown.map(course => <CourseRow key={course.slug} course={course}/>)}</div>
+                        <div className="pm-learn-v3-results-heading"><p className="pm-learn-v3-result-count" role="status" aria-live="polite">{filtered.length} {filtered.length === 1 ? 'course' : 'courses'}</p>
+                        {shown.some(course => sampleMetrics[course.title.trim()]) && <p className="pm-learn-v3-data-note">Ratings and learner counts are sample data.</p>}</div>
+                        {shown.length ? <div className="pm-learn-v3-rows">{shown.map(course => <CatalogCourseTile key={course.slug} course={course} href={courseHref(course.slug)}/>)}</div>
                             : <div className="pm-learn-v3-empty"><h3>No matching courses</h3><p>Try changing your search or filters.</p><button className="pm-guide-button is-outline" type="button" onClick={clear}>Clear filters</button></div>}
                         <Pagination current={currentPage} last={pageCount} label="Course pages" onPageChange={setPage}/>
                     </section>
                 </div>
             </div>
-            <aside className="pm-learn-v3-course-note"><div className="pm-learn-v3-wrap"><h2>How we develop our courses</h2><p>PM Circle courses draw on decades of hands-on experience from project management professionals. Their judgment shapes what we teach, from the skills that matter on real projects to the decisions learners get to practise. We use AI to help turn that experience into clear explanations, realistic scenarios, and practical exercises. Our project management experts are responsible for the content and its quality.</p></div></aside>
         </div>
     </PublicLayout>;
 }

@@ -7,7 +7,7 @@ const css = read('resources/css/pm-member-navigation.css');
 
 const pages = [
     ['Scenario Library', 'resources/js/pages/scenarios/Index.tsx', 'pm-challenge-tabs'],
-    ['My profile', 'resources/js/pages/settings/profile.tsx', 'pm-profile-nav-tabs'],
+    ['My profile', 'resources/js/components/profile/ProfileWorkspaceHeader.tsx', 'pm-profile-nav-tabs'],
     ['PMP simulator dashboard', 'resources/js/components/exam/PmpWorkspacePanels.tsx', 'pm-pmp-tabs'],
 ];
 

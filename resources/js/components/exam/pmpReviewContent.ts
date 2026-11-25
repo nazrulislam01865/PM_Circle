@@ -5,7 +5,7 @@ type ContentRecord = Record<string, unknown>;
 type Concept = { title: string; description?: string };
 type Reference = {
     source?: string; title?: string; chapter?: string; section?: string;
-    page?: string; pageLabel?: string; pageRange?: string; examDomain?: string; task?: string; focus?: string; ecoReference?: string;
+    page?: string; pageLabel?: string; pageRange?: string; examDomain?: string; task?: string; focus?: string; ecoReference?: string; kind?: string;
 };
 
 function objectValue(value: string | null | undefined): ContentRecord | null {
@@ -17,7 +17,7 @@ function objectValue(value: string | null | undefined): ContentRecord | null {
 }
 
 function text(value: unknown): string {
-    return typeof value === 'string' ? value.trim() : '';
+    return typeof value === 'string' ? value.trim() : typeof value === 'number' && Number.isFinite(value) ? String(value) : '';
 }
 
 export function answerRationales(raw: string | null | undefined): { key: string; reason: string }[] {
@@ -54,7 +54,23 @@ export function conceptsContent(raw: string | null | undefined): { items: Concep
         }) : [];
         return { items, connection: text(data.connection), approach: text(data.approach), industry: text(data.industry) };
     }
-    return { items: (raw ?? '').split(/\s*[;\n]\s*/).map(title => ({ title: title.trim() })).filter(item => item.title), connection: '', approach: '', industry: '' };
+    // Workbook cells can contain the legacy semicolon list or authored lines
+    // in the form 'Concept | Description' and 'How they connect: ...'.
+    const value = raw?.trim() ?? '';
+    const lines = value.split(/\r?\n/);
+    const connectionIndex = lines.findIndex(line => /^how they connect\s*:/i.test(line.trim()));
+    const connection = connectionIndex < 0 ? '' : lines.slice(connectionIndex).join('\n').replace(/^\s*how they connect\s*:\s*/i, '').trim();
+    const conceptLines = connectionIndex < 0 ? lines : lines.slice(0, connectionIndex);
+    const items = conceptLines.flatMap(line => {
+        const divider = line.indexOf('|');
+        if (divider >= 0) {
+            const title = line.slice(0, divider).trim();
+            const description = line.slice(divider + 1).trim();
+            return title ? [{ title, ...(description ? { description } : {}) }] : [];
+        }
+        return line.split(';').map(title => ({ title: title.trim() })).filter(item => item.title);
+    });
+    return { items, connection, approach: '', industry: '' };
 }
 
 export function referenceContent(raw: string | null | undefined): { sources: Reference[]; performanceDomain: string; knowledgeArea: string } {
@@ -70,10 +86,38 @@ export function referenceContent(raw: string | null | undefined): { sources: Ref
         return [{
             source: text(entry.source), title: text(entry.title), chapter: text(entry.chapter),
             section: text(entry.section), page: text(entry.page), pageLabel: text(entry.pageLabel), pageRange: text(entry.pageRange),
-            examDomain: text(entry.examDomain), task: text(entry.task), focus: text(entry.focus), ecoReference: text(entry.ecoReference),
+            examDomain: text(entry.examDomain), task: text(entry.task), focus: text(entry.focus), ecoReference: text(entry.ecoReference), kind: text(entry.kind),
         }];
     }) : [];
-    return { sources, performanceDomain: text(data.performanceDomain), knowledgeArea: text(data.knowledgeArea) };
+    // Existing workbook imports store a publication and ECO metadata in one
+    // source. Separate those fields at presentation time so saved attempts and
+    // existing question banks work without a destructive data migration.
+    const separated = sources.flatMap((source): Reference[] => {
+        const hasEco = Boolean(source.ecoReference || source.task || source.focus || source.examDomain);
+        const alreadyEco = source.kind === 'eco' || /exam content outline|\beco\b/i.test(source.source ?? '');
+        if (!hasEco || alreadyEco) return [source];
+        const { examDomain, task, focus, ecoReference, ...publication } = source;
+        const match = ecoReference?.match(/^(.+?\s+ECO),\s*Domain\s+([IVXLCDM]+),\s*Task\s+(\d+),\s*p\.\s*(\d+)$/i);
+        const section = publication.section ?? '';
+        const chapter = publication.chapter || section.match(/^(\d+)\.\d+(?:\.\d+)*$/)?.[1];
+        const standard = /^The Standard for Project Management, 8th ed\. volume$/i.test(publication.source ?? '');
+        const hasPublication = Boolean(publication.source || publication.title || publication.section || publication.page || publication.chapter || publication.pageRange);
+        const book: Reference = standard ? {
+            ...publication, kind: 'publication', source: 'PMBOK® GUIDE · 8TH EDITION VOLUME',
+            title: 'The Standard for Project Management', chapter,
+            section: [section, publication.title].filter(Boolean).join(' · '),
+        } : { ...publication, kind: 'publication', chapter };
+        const eco: Reference = {
+            kind: 'eco', source: 'PMP® Exam Content Outline', title: match?.[1] || undefined,
+            examDomain: [match?.[2], examDomain].filter(Boolean).join(' · '),
+            task: [task, match ? `Task ${match[3]}` : ''].filter(Boolean).join(' · '),
+            focus, page: match?.[4], pageLabel: 'ECO page',
+            // Keep the original citation whenever it cannot be safely decomposed.
+            ecoReference: match ? undefined : ecoReference,
+        };
+        return [...(hasPublication ? [book] : []), eco];
+    });
+    return { sources: separated, performanceDomain: text(data.performanceDomain), knowledgeArea: text(data.knowledgeArea) };
 }
 
 

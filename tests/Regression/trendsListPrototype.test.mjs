@@ -35,7 +35,7 @@ test('search, topic and saved filters combine and handle empty results without r
 });
 
 test('uses the shared homepage layout, banner, form controls, images and existing bookmark contract', () => {
-    assert.match(page, /<PublicLayout siteLayout homePrototype guideLayout active="\/pm-trends">/);
+    assert.match(page, /<PublicLayout siteLayout homePrototype guideLayout active="\/pm-trends" banner=\{\{[^\n]*\}\}>/);
     assert.match(page, /pm-terms-banner/);
     assert.match(page, /Search titles or topics/);
     assert.match(page, /Saved reports only/);

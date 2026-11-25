@@ -12,6 +12,8 @@ final class AiServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->scoped(\App\Domain\AI\Services\AiRuntimeSettings::class);
+        $this->app->scoped(\App\Domain\AI\Services\AiFeatureRouting::class);
         $this->app->bind(AiProvider::class, OpenAiResponsesProvider::class);
         $this->app->bind(AiPaymentGateway::class, UnconfiguredAiPaymentGateway::class);
     }

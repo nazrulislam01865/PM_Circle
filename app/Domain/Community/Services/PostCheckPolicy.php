@@ -34,12 +34,12 @@ final class PostCheckPolicy
     public function assertOperational(): void
     {
         if (! config('pm-ai.enabled') || ! config('pm-ai.post_check_enabled')
-            || ! filled(config('pm-ai.post_check_api_key'))
+            || ! filled(app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential('post_check_api_key'))
             || ! in_array(config('pm-ai.post_check_provider', 'responses'), ['responses', 'omni'], true)
             || (config('pm-ai.post_check_provider', 'responses') === 'responses'
-                && ((float) config('pm-ai.post_check_daily_budget_usd', 0) < 0.02
+                && ((float) app(\App\Domain\AI\Services\AiRuntimeSettings::class)->budget('post_check_daily_budget_usd') < 0.02
                     || ! in_array(\App\Domain\AI\Services\PostContentCheckService::MODEL,
-                        config('pm-ai.allowed_models', []), true)))) {
+                        app(\App\Domain\AI\Services\AiRuntimeSettings::class)->allowedModels(), true)))) {
             throw ValidationException::withMessages([
                 'body' => 'Post checking is temporarily unavailable. Please try again later.',
             ]);

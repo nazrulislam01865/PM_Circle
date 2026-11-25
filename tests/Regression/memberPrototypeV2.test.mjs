@@ -7,11 +7,12 @@ const read = path => readFileSync(new URL(`../../${path}`, import.meta.url), 'ut
 
 test('member sidebar contains exactly the four prototype groups, their order and submenu labels', () => {
     assert.deepEqual(memberSidebarGroups.map(g => [g.title, g.items.map(i => i.label)]), [
-        ['Learn & practise', ['My learning', 'Browse courses', 'Exam Simulator', 'Project Simulator', 'Daily challenge']],
-        ['Profile & career', ['My profile', 'AI Resume Assistant', 'Interview preparation', 'Badges']],
+        ['Learn & practise', ['Courses', 'Exam Simulator', 'Daily challenge']],
+        ['Profile & career', ['My profile', 'AI Resume Assistant', 'Interview preparation', 'Achievements']],
         ['Community', ['Community feed', 'Members', 'Saved posts']],
         ['Account', ['Plan & usage', 'Settings', 'Activity log']],
     ]);
+    assert.deepEqual(memberSidebarGroups[0].items.find(i => i.id === 'course-group').children.map(i => i.label), ['My learning', 'Browse courses', 'Certificates']);
     assert.deepEqual(memberSidebarGroups[0].items.find(i => i.id === 'exams').children.map(i => i.label), ['PMP exams', 'Scrum / CSM exams']);
     assert.deepEqual(memberSidebarGroups.flatMap(g => g.items).flatMap(i => i.children ?? [i]).filter(i => i.premium).map(i => i.id), ['pmp', 'scrum', 'resume']);
     const sidebar = read('resources/js/components/dashboard/DashboardSidebar.tsx');
@@ -37,7 +38,7 @@ test('every member submenu destination exists in the current routes; active sele
         ['/help-center', 'help'], ['/contact', 'help'], ['/settings/appearance', 'settings'],
     ]) assert.equal(memberSidebarActive(url), id, url);
     assert.match(read('app/Http/Controllers/Account/AccountFeatureController.php'), /\$feature === 'achievements'/);
-    assert.match(read('resources/js/pages/learning/Catalog.tsx'), /initialTab === 'my-learning'/);
+    assert.match(read('app/Http/Controllers/Learning/LearningController.php'), /\$request->query\('tab'\) === 'my-learning'/);
 });
 
 test('member footer includes exact copyright and policy destinations; public footer and live exam exclusions remain', () => {

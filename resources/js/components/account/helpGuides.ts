@@ -43,7 +43,7 @@ export const helpGuides = [
                 "id": "1",
                 "title": "Start a course",
                 "steps": [
-                    "Open Learn & practise → Browse courses.",
+                    "Open Learn & practise → Courses → Browse courses.",
                     "Select a course to review its outline and access requirements.",
                     "Enrol if required, then open the first lesson."
                 ],
@@ -53,7 +53,7 @@ export const helpGuides = [
                 "id": "2",
                 "title": "Track your progress",
                 "steps": [
-                    "Open Learn & practise → My learning.",
+                    "Open Learn & practise → Courses → My learning.",
                     "Select an enrolled course to see completed lessons.",
                     "Choose Resume learning to continue."
                 ],
@@ -79,7 +79,7 @@ export const helpGuides = [
                 "id": "1",
                 "title": "Start a PMP practice exam",
                 "steps": [
-                    "Open Learn & practise → PMP Exam Simulator.",
+                    "Open Learn & practise → Exam Simulator → PMP exams.",
                     "Check your access in Plan & usage if the simulator is locked.",
                     "Choose a practice mode, review the instructions and start."
                 ],
@@ -97,13 +97,13 @@ export const helpGuides = [
             },
             {
                 "id": "3",
-                "title": "Find Scrum and Project simulators",
+                "title": "Find the Scrum / CSM simulator",
                 "steps": [
-                    "Open Learn & practise.",
-                    "Choose Scrum Simulator or Project Simulator.",
-                    "These simulators are coming soon; check their pages for availability."
+                    "Open Learn & practise → Exam Simulator.",
+                    "Choose Scrum / CSM exams.",
+                    "Check the simulator page for availability."
                 ],
-                "quickAnswer": "Both simulator pages are available from Learn & practise; practice functionality is coming soon."
+                "quickAnswer": "Open Scrum / CSM exams under Exam Simulator to check availability."
             }
         ]
     },

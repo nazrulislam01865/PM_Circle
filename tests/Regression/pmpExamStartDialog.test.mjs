@@ -45,7 +45,7 @@ test('approved question activation does not bypass editorial review', () => {
 
 test('dialog consumes shared design tokens and has accessible responsive state', () => {
     const css = source('resources/css/pm-pmp-start-dialog.css');
-    assert.match(css, /--text-h2/);
+    assert.match(css, /--pm-guide-text-dialog-title/);
     assert.match(css, /--radius-card/);
     assert.match(css, /--blue-soft/);
     assert.match(css, /--warning-soft/);

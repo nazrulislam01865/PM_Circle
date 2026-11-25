@@ -15,7 +15,7 @@ final class DailyChallengeSettings
     public function isReady(): bool
     {
         return (bool) config('pm-ai.enabled') && (bool) config('pm-ai.editorial_enabled')
-            && filled(config('pm-ai.daily_challenge_api_key'));
+            && app(\App\Domain\AI\Services\AiFeatureRouting::class)->configured('scenario_generate', 'daily_challenge_api_key');
     }
 
     public function closeExpired(): int

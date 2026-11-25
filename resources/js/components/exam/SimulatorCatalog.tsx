@@ -1,3 +1,4 @@
+import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { Link } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight, Gift, Star } from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
@@ -180,11 +181,11 @@ export function SimulatorCatalog({ promotion }: { promotion: RewardPromotionData
     const showSpotlight = filtered.some(simulator => simulator.code === 'PMP');
 
     return <div className="pm-simulators-page">
-        <section className="pm-sim-banner" aria-labelledby="pm-sim-page-title"><div className="pm-v2-container">
+        <LegacyPageHeading><section className="pm-sim-banner" aria-labelledby="pm-sim-page-title"><div className="pm-v2-container">
             <nav className="pm-sim-breadcrumb" aria-label="Breadcrumb"><Link href="/">Home</Link><span aria-hidden="true">/</span><span aria-current="page">Browse Exam Simulators</span></nav>
             <h1 id="pm-sim-page-title">Browse Exam Simulators</h1>
             <p>Find practice for your certification, see what each simulator covers, and choose how to get started.</p>
-        </div></section>
+        </div></section></LegacyPageHeading>
         <div className="pm-sim-main">
             {promotion && <aside className="pm-sim-reward" aria-label="Profile completion offer"><span className="pm-sim-reward-icon"><Gift aria-hidden="true" size={20}/></span>
                 <div><strong>Complete your profile. Get {promotion.discountLabel} off.</strong><p>Reach 100% profile completion to receive a discount code for any PM Circle Exam Simulator.</p></div>

@@ -12,7 +12,7 @@ final class AiSubjectContext
 {
     public function __construct(private readonly ResumeTextExtractor $extractor) {}
 
-    /** Never take question/answer keys, resume text or rubric definitions from the member's request. */
+    /** Never accept client question/answer keys or rubrics. Only explicitly consented editor text is accepted as untrusted CV data. */
     public function resolve(User $user, string $feature, array $subject, ?string $message = null,
         bool $consent = false, bool $includeResumeText = true): array
     {
@@ -79,6 +79,17 @@ final class AiSubjectContext
         if (in_array($feature, ['resume_analyze', 'resume_rewrite'], true)) {
             if (! $consent) {
                 throw new AiFailure('CONSENT_REQUIRED', 422);
+            }
+            if (($subject['draft'] ?? false) === true || ($subject['draft'] ?? false) === 1) {
+                // The member explicitly supplies their own private editor snapshot; it is data, never instructions.
+                if (isset($subject['resume_id'])) throw new AiFailure('SUBJECT_NOT_ACCESSIBLE', 422);
+                $section = trim((string) ($subject['section'] ?? ''));
+                if ($feature === 'resume_rewrite' && ! in_array($section, ['Professional summary', 'Responsibilities'], true)) throw new AiFailure('RESUME_SECTION_REQUIRED', 422);
+                $limit = $feature === 'resume_analyze' ? 18000 : 5000;
+                $text = trim((string) $message);
+                if (mb_strlen($text) < 2 || mb_strlen($text) > $limit) throw new AiFailure('MESSAGE_TOO_LONG', 422);
+                return ['subject_type' => 'resume_editor_draft', 'subject_id' => null,
+                    'context' => ['resume_excerpt' => $text, 'estimated_input_chars' => mb_strlen($text), 'section' => $section], 'message' => null];
             }
             $resume = ProfileResume::query()->where('user_id', $user->id)
                 ->find((int) ($subject['resume_id'] ?? 0));

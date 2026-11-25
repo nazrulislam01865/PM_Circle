@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Learning\CheckAnswerRequest;
 use App\Http\Requests\Learning\CompleteActivityRequest;
 use App\Models\LearningPath;
+use App\Services\Learning\CourseLessonProgress;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,8 +20,15 @@ use Inertia\Response;
 
 final class LearningController extends Controller
 {
-    public function index(Request $request, LearningOverview $overview, DemoCourseCatalog $catalog, CurrentMemberPlan $plans): Response
+    public function index(Request $request, LearningOverview $overview, DemoCourseCatalog $catalog, CurrentMemberPlan $plans, CourseLearningController $courseLearning, CourseLessonProgress $progress): Response
     {
+        if ($request->query('tab') === 'my-learning') {
+            return $courseLearning->index($request, $plans, $progress);
+        }
+        if ($request->query('tab') === 'certificates') {
+            return $courseLearning->certificates($request);
+        }
+
         $user = $request->user();
         $joined = $user && (int) $user->onboarding_step >= 3 && $user->hasVerifiedEmail();
         $learning = $joined ? $overview->paths($user) : ['paths' => $overview->publicPaths(), 'courses' => $overview->publicPracticeModules()];

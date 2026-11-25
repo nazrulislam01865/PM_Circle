@@ -26,7 +26,7 @@ export type DemoCourseData = {
     saved: boolean;
 };
 export type DemoCourseDetailData = Omit<DemoCourseData, 'enrolled' | 'saved'> & {
-    lessons: { title: string; body: string | null }[];
+    lessons: { title: string; body: string | null; hasVideo?: boolean }[];
     overview?: string;
     objectives?: string[];
     outline?: { title: string; topics: string[] }[];
@@ -66,3 +66,11 @@ export type LearningQuestionData = {
 export const learningPathHref = (slug: string) => `/learning/${slug}`;
 export const learningActivityHref = (slug: string, module: number, activity: number) =>
     `${learningPathHref(slug)}/modules/${module}/activities/${activity}`;
+
+export type CourseLessonSummary = { position: number; title: string; completed: boolean };
+export type CourseLessonProgress = { lessons: CourseLessonSummary[]; completed: number; total: number; percent: number; next: number };
+export type EnrolledCourse = Omit<DemoCourseData, 'enrolled' | 'saved'> & Omit<CourseLessonProgress, 'lessons'> & { eligible: boolean; certificate: string | null };
+export type CourseCertificate = { reference: string; memberName: string; courseTitle: string; issuedAt: string };
+export type CourseLesson = CourseLessonSummary & { key: string; body: string; video_url?: string | null; takeaway?: string | null; when_to_apply?: string | null; example?: string | null; application?: string | null; references?: string | null };
+export const courseLearningRoot = (url: string) => url.startsWith('/dashboard/learning') ? '/dashboard/learning' : '/learning';
+export const courseLessonHref = (root: string, slug: string, position: number) => `${root}/courses/${encodeURIComponent(slug)}/lessons/${position}`;

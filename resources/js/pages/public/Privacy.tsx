@@ -1,3 +1,4 @@
+import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { Head, Link } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
@@ -83,12 +84,12 @@ const sections: PrivacySection[] = [
 ];
 
 export default function Privacy() {
-    return <PublicLayout siteLayout homePrototype guideLayout>
+    return <PublicLayout siteLayout homePrototype guideLayout banner={{title: 'Privacy Policy', description, titleId: 'pm-privacy-policy-title'}}>
         <Head title="Privacy Policy">
             <meta name="description" content={description}/>
         </Head>
         <div className="pm-terms-page pm-privacy-policy-page">
-            <section className="pm-terms-banner" aria-labelledby="pm-privacy-policy-title">
+            <LegacyPageHeading><section className="pm-terms-banner" aria-labelledby="pm-privacy-policy-title">
                 <div className="pm-terms-wrap">
                     <nav className="pm-terms-breadcrumb" aria-label="Breadcrumb">
                         <Link href="/">Home</Link><span aria-hidden="true">/</span><span aria-current="page">Privacy Policy</span>
@@ -96,7 +97,7 @@ export default function Privacy() {
                     <h1 id="pm-privacy-policy-title">Privacy Policy</h1>
                     <p>{description}</p>
                 </div>
-            </section>
+            </section></LegacyPageHeading>
             <div className="pm-terms-wrap pm-terms-main">
                 <div className="pm-terms-grid">
                     <nav className="pm-terms-toc" aria-label="On this page">

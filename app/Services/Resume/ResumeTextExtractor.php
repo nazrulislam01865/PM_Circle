@@ -20,11 +20,7 @@ class ResumeTextExtractor
         $path = $disk->path($resume->storage_path);
         $extension = strtolower(pathinfo($resume->original_name, PATHINFO_EXTENSION));
 
-        $text = match ($extension) {
-            'pdf' => $this->readPdf($path),
-            'docx' => $this->readDocx($path),
-            default => throw new RuntimeException('Only PDF and DOCX documents can be analysed.'),
-        };
+        $text = $this->readText($path, $extension);
 
         $text = preg_replace('/[ \t]+/u', ' ', str_replace("\r", '', $text));
         $text = trim(preg_replace('/\n{3,}/', "\n\n", $text));
@@ -34,6 +30,32 @@ class ResumeTextExtractor
         }
 
         return mb_substr($text, 0, 30000);
+    }
+
+    /** Keep layout spacing for the approved CV parser. Temporary uploads are never persisted. */
+    public function extractTemplate(string $path, string $extension): string
+    {
+        // Require bounded archive reads for this new endpoint; do not use the legacy unzip fallback.
+        if ($extension === 'docx' && ! class_exists(ZipArchive::class)) {
+            throw new RuntimeException('Word extraction requires PHP ZipArchive on the server.');
+        }
+        $text = trim($this->readText($path, $extension));
+        if (! mb_check_encoding($text, 'UTF-8') || mb_strlen($text) < 40) {
+            throw new RuntimeException('No readable text was found. Choose a text-based PDF or DOCX.');
+        }
+        if (mb_strlen($text) > 30000) {
+            throw new RuntimeException('The document contains too much text. Choose a shorter CV.');
+        }
+        return $text;
+    }
+
+    private function readText(string $path, string $extension): string
+    {
+        return match ($extension) {
+            'pdf' => $this->readPdf($path),
+            'docx' => $this->readDocx($path),
+            default => throw new RuntimeException('Only PDF and DOCX documents can be analysed.'),
+        };
     }
 
     private function readPdf(string $path): string

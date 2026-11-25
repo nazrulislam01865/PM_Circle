@@ -34,7 +34,10 @@ class Profile extends Model
         'editor_details',
     ];
 
+    protected $hidden = ['private_resume_document'];
+
     protected $casts = [
+        'private_resume_document' => 'encrypted:array',
         'skills' => 'array',
         'field_visibility' => 'array',
         'languages' => 'array',

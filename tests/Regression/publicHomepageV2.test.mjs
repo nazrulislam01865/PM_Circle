@@ -30,13 +30,15 @@ test('the V2 post card reuses existing moderation-safe display and engagement se
     assert.doesNotMatch(card, /fetch\(/);
 });
 
-test('published catalog data only and no new database event writes', () => {
+test('homepage reads only bounded published catalog and upcoming event data', () => {
     const controller = read('app/Http/Controllers/PublicSite/HomeController.php');
     assert.match(controller, /LearningCourse::query\(\)->where\('is_published', true\)/);
     assert.match(controller, /->limit\(8\)/);
     assert.match(controller, /->catalogData\(\)/);
     const events = read('resources/js/components/home/v2/HomeEvents.tsx');
-    assert.match(events, /not published or open for booking/);
+    assert.match(controller, /CommunityEvent::query\(\)->published\(\)->upcoming\(\).*->limit\(3\)/);
+    assert.match(events, /eventHref\(item.slug\)/);
+    assert.doesNotMatch(events, /homeEventPreviews|addPreview/);
     assert.doesNotMatch(events, /router\.(post|put|delete)|fetch\(/);
 });
 

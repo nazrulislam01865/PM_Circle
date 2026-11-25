@@ -8,14 +8,14 @@ const css = read('resources/css/pm-terms.css');
 
 test('Refund Policy preserves the public route and uses the shared homepage shell', () => {
     assert.match(read('routes/web.php'), /Route::inertia\('\/refund-policy', 'public\/PolicyNotice'\)->name\('refund-policy'\)/);
-    assert.match(page, /<PublicLayout siteLayout homePrototype guideLayout>/);
+    assert.match(page, /<PublicLayout siteLayout homePrototype guideLayout banner=\{\{[^\n]*\}\}>/);
     assert.doesNotMatch(page, /fetch\(|axios\.|useEffect\(|router\.get\(|has not been published yet/);
     assert.match(read('resources/js/components/home/v2/HomeFooter.tsx'), /'\/refund-policy', 'Refund Policy'/);
 });
 
 test('Prototype text, navigation and support destinations are present', () => {
     const titles = ['Monthly plan payments', 'Cancel your plan any time', 'Payment and access issues', 'Consumer rights'];
-    assert.deepEqual([...page.matchAll(/title: '([^']+)'/g)].map(match => match[1]), titles);
+    assert.deepEqual([...page.slice(0, page.indexOf('<PublicLayout')).matchAll(/title: '([^']+)'/g)].map(match => match[1]), titles);
     assert.match(page, /navigationTitle: 'Cancel your plan'/);
     assert.match(page, /Monthly plan payments, cancellations and purchase support\./);
     assert.match(page, /Completed monthly plan payments are non-refundable/);

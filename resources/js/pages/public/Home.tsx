@@ -12,18 +12,19 @@ import type { ScenarioSummary } from '@/components/home/ScenarioPreview';
 import type { HomePost } from '@/components/home/HomePostPreview';
 import type { HomeContent, HomeMember } from '@/types/home';
 import type { HomeCourseCard } from '@/components/home/v2/reference';
+import type { EventPreview } from '@/components/events/eventTypes';
 import type { RewardPromotionData } from '@/types/reward';
 
 type Props = {
     content: HomeContent; rewardPromotion: RewardPromotionData | null;
     scenario: ScenarioSummary | null; posts: HomePost[]; members: HomeMember[];
-    courses?: HomeCourseCard[];
+    courses?: HomeCourseCard[]; events?: EventPreview[];
 };
 
 type User = { onboarding_step: number; email_verified_at: string | null; is_admin?: boolean };
 
 /** Homepage V2 only. Admin sections, public data, auth checks and shared footer remain centralized. */
-export default function Home({ content, scenario, posts, members, rewardPromotion, courses = [] }: Props) {
+export default function Home({ content, scenario, posts, members, rewardPromotion, courses = [], events = [] }: Props) {
     const { auth, emailVerificationRequired } = usePage<{ auth: { user: User | null }; emailVerificationRequired?: boolean }>().props;
     const [joinAction, setJoinAction] = useState<string | null>(null);
     const user = auth?.user;
@@ -43,7 +44,7 @@ export default function Home({ content, scenario, posts, members, rewardPromotio
             {visible('ai_features') && <HomeAiPractice content={content.ai_features}/>}
             {visible('careers') && <HomeResume content={content.careers}/>}
             <HomeTrends/>
-            {visible('careers') && <HomeEvents join={content.careers?.join}/>}
+            {visible('careers') && <HomeEvents join={content.careers?.join} events={events}/>}
             <JoinCommunityDialog action={joinAction} onClose={() => setJoinAction(null)} hasAccount={Boolean(user && !user.is_admin)}/>
         </div>
     </PublicLayout>;

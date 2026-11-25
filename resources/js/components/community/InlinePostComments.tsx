@@ -3,6 +3,7 @@ import { CommunityResponsiveImage } from './CommunityResponsiveImage';
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronDown } from 'lucide-react';
 import { CommentEngagementActions } from './CommentEngagementActions';
+import { CommentFeedback } from './CommentFeedback';
 import { CommentComposer, type SavedComment } from './CommentComposer';
 import { useEffect, useState } from 'react';
 import { Avatar } from '@/components/pm/Avatar';
@@ -125,7 +126,7 @@ export function InlinePostComments({ postId, canInteract, onJoin, onPosted, onCl
                 <option value="relevant">Most relevant</option><option value="newest">Newest first</option>
             </select><ChevronDown size={18} aria-hidden="true"/>
         </label></div>
-        {error && <p className="pm-inline-comment-error" role="alert">{error}</p>}
+        {error && <CommentFeedback tone="error" message={error}/>}
         {loading ? <p className="pm-inline-comments-status" role="status">Loading comments...</p> : comments.length === 0 ? <p className="pm-inline-comments-status">No comments yet. Start the conversation.</p> : <div className="pm-inline-comments-list">
             {comments.map(comment => <CommentEntry key={comment.id} comment={comment} postId={postId} rootId={comment.id}
                 viewer={viewer} canInteract={canInteract} onJoin={onJoin} activeReply={activeReply}

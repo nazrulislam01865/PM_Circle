@@ -1,3 +1,4 @@
+import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { Head, Link, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
@@ -72,12 +73,12 @@ const sections: TermsSection[] = [
 export default function Terms() {
     const { rewardPromotion } = usePage<{ rewardPromotion?: RewardPromotionData | null }>().props;
 
-    return <PublicLayout siteLayout homePrototype guideLayout homeOfferLabel={rewardPromotion?.discountLabel}>
+    return <PublicLayout siteLayout homePrototype guideLayout homeOfferLabel={rewardPromotion?.discountLabel} banner={{title: 'Terms and Conditions', description: 'The rules for using PM Circle, joining the community and purchasing access.', titleId: 'pm-terms-page-title'}}>
         <Head title="Terms and Conditions | PM Circle">
             <meta name="description" content="Read the PM Circle terms and conditions for accounts, learning, exam practice, community participation and purchases."/>
         </Head>
         <div className="pm-terms-page">
-            <section className="pm-terms-banner" aria-labelledby="pm-terms-page-title">
+            <LegacyPageHeading><section className="pm-terms-banner" aria-labelledby="pm-terms-page-title">
                 <div className="pm-terms-wrap">
                     <nav aria-label="Breadcrumb" className="pm-terms-breadcrumb">
                         <Link href="/">Home</Link><span aria-hidden="true">/</span><span aria-current="page">Terms and Conditions</span>
@@ -85,7 +86,7 @@ export default function Terms() {
                     <h1 id="pm-terms-page-title">Terms and Conditions</h1>
                     <p>The rules for using PM Circle, joining the community and purchasing access.</p>
                 </div>
-            </section>
+            </section></LegacyPageHeading>
             <div className="pm-terms-wrap pm-terms-main">
                 <div className="pm-terms-grid">
                     <nav className="pm-terms-toc" aria-label="On this page">

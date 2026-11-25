@@ -49,8 +49,8 @@ test('exam submenu resolves every existing destination and protects the entire p
     assert.equal(memberSidebarActive('/simulators'), 'exams');
     assert.equal(memberSidebarActive('/exams/pmp/attempts/17/review'), 'pmp');
     const sidebar = read('resources/js/components/dashboard/DashboardSidebar.tsx');
-    assert.match(sidebar, /aria-expanded=\{examsExpanded\}/);
-    assert.match(sidebar, /hidden=\{!examsExpanded\}/);
+    assert.match(sidebar, /aria-expanded=\{expanded\}/);
+    assert.match(sidebar, /hidden=\{!expanded\}/);
     assert.match(sidebar, /memberSidebarContains\(item, active\)/);
     assert.match(sidebar, /item\.id === 'resume' \? access\?\.resume : access\?\.examSimulator/);
 });
@@ -67,7 +67,7 @@ test('collapsed rail retains the logo and only hides the name; mobile drawer kee
 test('member heading roles follow the design guideline rather than oversized or undersized legacy aliases', () => {
     const pmp = read('resources/css/pm-pmp-workspace.css');
     assert.doesNotMatch(pmp, /\.pm-pmp-(history-heading|ai-lead) h2\s*\{[^}]*font-size:\s*var\(--text-h1\)/);
-    assert.match(pmp, /\.pm-pmp-section-heading h2,\.pm-pmp-history-heading h2,\.pm-pmp-ai-lead h2 \{\s*font-size: var\(--text-h2\)/);
+    assert.match(pmp, /\.pm-pmp-workspace h1 \{ font-size:var\(--pm-member-workspace-title\)/);
     assert.match(read('resources/css/pm-member-overview.css'), /\.pm-member-overview-card h2 \{ font: var\(--bold\) var\(--text-h3\)\/var\(--line-h3\)/);
     assert.match(read('resources/css/pm-learning-core.css'), /\.pm-learn-content \.pm-learn-panel-heading h2 \{ font-size: var\(--text-h3\); line-height: var\(--line-h3\)/);
     assert.match(read('resources/css/pm-profile-editor-prototype.css'), /\.pm-prototype-entry-head h4 \{ font-size: var\(--text-h4\)/);

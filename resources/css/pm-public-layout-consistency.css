@@ -10,10 +10,9 @@
     margin-inline: auto;
 }
 
-/* Keep the restored course details, tabs and all membership actions untouched;
-   only its guest canvas matches the white public homepage. */
+/* Course details share the approved catalog canvas while retaining the public rail. */
 .pm-app.pm-page-shell.pm-guest-public-shell > main .pm-course-detail {
-    background: var(--surface);
+    background: var(--canvas);
 }
 
 /* Event, legal, exam and course pages must not silently widen the footer. */

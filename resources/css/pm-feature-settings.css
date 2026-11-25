@@ -1,0 +1,23 @@
+/* Shared Career Trends composition, no independent font or color scale. */
+.pm-feature-panel-heading { display:flex; align-items:center; justify-content:space-between; gap:var(--s2); flex-wrap:wrap; }
+.pm-feature-panel-heading a { color:var(--pm-guide-blue); display:inline-flex; align-items:center; gap:var(--s1); font-size:var(--pm-admin-settings-control-text); }
+.pm-feature-settings .pm-admin-field textarea { width:100%; min-height:calc(var(--s10) * 2); resize:vertical; font-size:var(--pm-admin-settings-control-text); }
+.pm-feature-settings .pm-career-settings-check span { min-width:0; }
+.pm-feature-settings .pm-career-settings-check small { display:block; margin-top:var(--s1); color:var(--pm-guide-muted); }
+.pm-feature-settings .pm-feature-ready { color:var(--pm-guide-green); }
+.pm-feature-settings .pm-feature-info { background:var(--pm-guide-pale); padding:var(--s2); border-radius:var(--radius-control); color:var(--pm-guide-muted); font-size:var(--pm-admin-settings-control-text); }
+.pm-feature-settings .pm-feature-info svg { display:inline-block; vertical-align:middle; margin-inline-end:var(--s1); color:var(--pm-guide-blue); }
+.pm-feature-settings .pm-career-settings-preview span { overflow-wrap:anywhere; }
+.pm-feature-settings .pm-feature-details { margin-top:var(--s4); }
+.pm-feature-settings .pm-feature-details summary { cursor:pointer; font-weight:var(--bold); color:var(--pm-guide-blue); }
+.pm-feature-settings .pm-feature-details[open] summary { margin-bottom:var(--s3); }
+.pm-feature-settings .pm-career-settings-integration { padding-block:var(--s3); }
+.pm-feature-settings .pm-career-settings-panel .pm-admin-field > label { overflow-wrap:anywhere; }
+
+.pm-feature-settings .pm-career-settings-check:has(small) { align-items:flex-start; }
+.pm-feature-settings .pm-career-settings-check:has(small) input { margin-top:var(--s1); }
+.pm-feature-settings .pm-feature-details .pm-ai-daily-table-wrap { overflow:auto; }
+.pm-feature-settings .pm-feature-details .pm-ai-daily-expiry-form > * { min-width:0; }
+.pm-feature-settings .pm-ai-daily-generate { display:grid; gap:var(--s3); margin-bottom:0; }
+.pm-feature-settings .pm-ai-daily-generate > .pm-admin-field { min-width:0; }
+.pm-feature-settings .pm-feature-notices { margin-bottom:var(--s3); }

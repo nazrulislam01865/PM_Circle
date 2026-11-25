@@ -1,3 +1,4 @@
+import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { ChevronDown, LockKeyhole, Users } from 'lucide-react';
 import { JoinCommunityDialog } from '@/components/home/HomeEngagement';
@@ -27,8 +28,8 @@ export default function PostShow({ post, comments, viewerReaction, viewerSaved, 
     const [sort, setSort] = useState('relevant');
     const [joinAction, setJoinAction] = useState<string | null>(null);
     const commentsShown = [...newComments, ...[...comments.data].sort((a, b) => sort === 'newest' ? b.id - a.id : a.id - b.id)];
-    return <PublicLayout active="/community" joinLabel="Join the Circle"><Head title={post.title || 'Community discussion'}/>
-        <div className="pm-container pm-page pm-member-post-page"><div className="pm-crumbs">Community &nbsp;/&nbsp; Member post</div><Link className="pm-back" href="/community">← &nbsp;Back to community</Link>
+    return <PublicLayout active="/community" joinLabel="Join the Circle" banner={{title: post.title || 'Community discussion', parents: [{label: 'Community', href: '/community'}], currentLabel: 'Member post'}}><Head title={post.title || 'Community discussion'}/>
+        <div className="pm-container pm-page pm-member-post-page"><LegacyPageHeading><div className="pm-crumbs">Community &nbsp;/&nbsp; Member post</div></LegacyPageHeading><Link className="pm-back" href="/community">← &nbsp;Back to community</Link>
             <div className="pm-two-column"><div className="pm-stack">
                 <PostCard post={{ ...post, comments_count: post.comments_count + newComments.length + extraReplyCount, viewer_reaction: viewerReaction as PostPreview['viewer_reaction'], viewer_saved: viewerSaved }}
                     mode="detail" isGuest={!canInteract} onJoin={setJoinAction}

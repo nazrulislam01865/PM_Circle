@@ -41,6 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->dontFlash(['secret']);
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
@@ -48,13 +49,30 @@ return Application::configure(basePath: dirname(__DIR__))
         // Preserve throttling; Inertia forms need inline errors rather than HTML 429 modals.
         $exceptions->respond(function (SymfonyResponse $response, \Throwable $exception, Request $request): SymfonyResponse {
             if ($response->getStatusCode() !== 429
-                || ! $request->isMethod('POST')
+                || ! in_array($request->method(), ['POST', 'PATCH', 'PUT'], true)
                 || ! $request->hasHeader('X-Inertia')
                 || $request->expectsJson()) {
                 return $response;
             }
 
             $retryAfter = max(1, (int) $response->headers->get('Retry-After', '60'));
+
+            if ($request->is('events', 'events/*', 'admin/events', 'admin/events/*')) {
+                $route = match ($request->route()?->getName()) {
+                    'events.store' => route('events.create'),
+                    'events.register', 'events.comments.store' => route('events.show', $request->route('slug')),
+                    'admin.events.store' => route('admin.events.create'),
+                    'admin.events.update' => route('admin.events.edit', $request->route('event')),
+                    'admin.events.settings.update' => route('admin.events.settings'),
+                    'admin.events.comments.moderate' => route('admin.events.participants', $request->route('event')),
+                    default => route('admin.events.index'),
+                };
+                return redirect()->to($route, 303)->withErrors(['event' => "Too many event requests. Try again in {$retryAfter} seconds."]);
+            }
+
+            if (! $request->isMethod('POST')) {
+                return $response;
+            }
 
             if ($request->is('membership/temporary')) {
                 return redirect()->route('membership.index', [], 303)

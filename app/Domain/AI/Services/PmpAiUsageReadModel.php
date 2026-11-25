@@ -12,7 +12,7 @@ final class PmpAiUsageReadModel
 {
     public function __construct(private readonly AiChatQuotaService $quotas) {}
 
-    public function summary(User $user): array
+    public function summary(User $user, bool $includeActivity = true): array
     {
         try {
             $usage = $this->quotas->summary($user, 'pmp_explain');
@@ -38,7 +38,7 @@ final class PmpAiUsageReadModel
         }
 
         // Two feature rows at most, using ai_requests(user_id, created_at). No transcript loading.
-        $activity = DB::table('ai_requests')
+        $activity = $includeActivity ? DB::table('ai_requests')
             ->where('user_id', $user->id)
             ->whereIn('feature_code', ['pmp_explain', 'pmp_followup'])
             ->where('status', 'completed')
@@ -50,7 +50,7 @@ final class PmpAiUsageReadModel
             ->get()->map(static fn ($row): array => [
                 'kind' => $row->feature_code === 'pmp_explain' ? 'question_explanation' : 'follow_up',
                 'tokens' => (int) $row->total_tokens,
-            ])->all();
+            ])->all() : [];
 
         return [
             'configured' => true,

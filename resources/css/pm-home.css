@@ -1403,7 +1403,7 @@
     font-size: var(--type-caption);
 }
 
-.pm-app:has(.pm-home) .pm-brand-copy small {
+.pm-app:has(.pm-home) :is(.pm-header,.pm-footer) .pm-brand-copy small {
     font-size: var(--type-caption);
 }
 

@@ -1,3 +1,4 @@
+import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { Head, Link } from '@inertiajs/react';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
 
@@ -39,10 +40,10 @@ function AboutFeatureCard({ title, description, linkLabel, href }: AboutFeature)
 
 /** About Us prototype: homepage shell, centrally defined guide tokens, no page-specific data requests. */
 export default function About() {
-    return <PublicLayout siteLayout homePrototype guideLayout>
+    return <PublicLayout siteLayout homePrototype guideLayout banner={{title: 'About PM Circle', description: 'Learn, practise and connect with people who manage projects.', titleId: 'pm-about-title'}}>
         <Head title="About PM Circle"/>
         <div className="pm-about-page">
-            <section className="pm-about-banner" aria-labelledby="pm-about-title">
+            <LegacyPageHeading><section className="pm-about-banner" aria-labelledby="pm-about-title">
                 <div className="pm-about-wrap">
                     <nav className="pm-about-breadcrumb" aria-label="Breadcrumb">
                         <Link href="/">Home</Link>
@@ -52,7 +53,7 @@ export default function About() {
                     <h1 id="pm-about-title">About PM Circle</h1>
                     <p>Learn, practise and connect with people who manage projects.</p>
                 </div>
-            </section>
+            </section></LegacyPageHeading>
 
             <div className="pm-about-wrap pm-about-content">
                 <section className="pm-about-intro" aria-labelledby="pm-about-intro-title">

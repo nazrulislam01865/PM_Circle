@@ -9,7 +9,20 @@ final class AiAdminAccess
 {
     public function authorize(User $actor, string $permission): void
     {
-        abort_unless($actor->is_admin && DB::table('ai_admin_permissions')
+        abort_unless($actor->is_admin === true && $actor->status === 'active' && $actor->email_verified_at !== null,
+            403, 'An active, verified administrator account is required.');
+
+        // Feature settings and editorial workflows belong to the administrator role.
+        // Keep explicit authorization for unrelated financial and operational privileges.
+        if (in_array($permission, ['ai.manage_features', 'ai.manage_editorial'], true)) {
+            return;
+        }
+
+        if ($permission === 'ai.view_workspace') {
+            return;
+        }
+
+        abort_unless(DB::table('ai_admin_permissions')
             ->where('user_id', $actor->id)->where('permission', $permission)->exists(),
             403, 'This AI administrative action requires a separately assigned permission.');
     }

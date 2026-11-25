@@ -14,7 +14,6 @@
 .pm-public-trends-page .pm-terms-banner h1 { margin-top: var(--pm-guide-s3); }
 .pm-public-trends-page .pm-terms-banner p { margin-top: var(--pm-guide-s2); }
 .pm-public-trends-page .pm-terms-breadcrumb a { text-decoration: underline; }
-.pm-home-v2-shell:has(.pm-public-trends-page) .pm-v2-header-nav > a[aria-current="page"] { color: var(--pm-guide-blue); text-decoration: underline; text-underline-offset: .3em; }
 .pm-public-trends-list {
     /* Use the same outer rail as the banner; pm-public-trends-wrap owns width. */
     padding-block: var(--pm-guide-s6) var(--pm-guide-editorial-section-inset);

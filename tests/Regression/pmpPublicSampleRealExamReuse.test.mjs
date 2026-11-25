@@ -3,44 +3,78 @@ import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 const source = path => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
-const sample = source('resources/js/components/exam/PmpPublicSampleExam.tsx');
+const component = name => source(`resources/js/components/exam/${name}.tsx`);
+const sample = component('PmpPublicSampleExam');
 const take = source('resources/js/pages/exam/Take.tsx');
-const review = source('resources/js/components/exam/PmpSampleReview.tsx');
+const review = component('PmpSampleReview');
 const realReview = source('resources/js/pages/exam/Review.tsx');
+const taking = component('PmpExamTakingView');
+const dialogs = component('PmpExamDialogs');
+const reviewView = component('PmpExamReviewView');
+const report = component('PmpExamResultReport');
+const result = source('resources/js/pages/exam/Result.tsx');
 const css = source('resources/css/pm-pmp-public.css');
 
-test('paid and sample question UI consume one navigator and one options presentation', () => {
-    assert.match(take, /<PmpExamNavigator/);
-    assert.match(sample, /<PmpExamNavigator/);
-    assert.match(take, /<PmpExamQuestionHeading/);
-    assert.match(sample, /<PmpExamQuestionHeading/);
-    assert.match(take, /<PmpExamQuestionTools/);
-    assert.match(sample, /<PmpExamQuestionTools/);
-    assert.match(take, /<ExamOptionList/);
-    assert.match(sample, /<ExamOptionList/);
-    assert.match(sample, /pm-exam-taking pm-pmp-public-exam-preview/);
-    assert.match(sample, /ExamTimeProgress/);
-    assert.match(sample, /ExamToolGuide/);
+test('both modes mount the same complete taking view and dialogs, rather than copying their JSX', () => {
+    for (const consumer of [take, sample]) {
+        for (const name of ['PmpExamTakingView', 'PmpExamFinishDialog', 'PmpExamCalculator']) assert.ok(consumer.includes(`<${name} `));
+        assert.doesNotMatch(consumer, /<PmpExamNavigator|<ExamOptionList|<Dialog\.Content|className="pm-exam-examhead"/);
+    }
+    for (const name of ['PmpExamNavigator', 'PmpExamQuestionHeading', 'PmpExamQuestionTools', 'ExamOptionList', 'ExamTimeProgress', 'ExamToolGuide']) assert.ok(taking.includes(`<${name}`));
+    assert.match(dialogs, /<PmpSubmitReviewSummary/);
+    assert.match(dialogs, /<Dialog.Title>Calculator/);
+    assert.match(taking, /Previous Marked/);
+    assert.match(taking, /Next Marked/);
 });
 
-test('public preview reuses paid submission review UI without paid API requests', () => {
-    assert.match(take, /<PmpSubmitReviewSummary/);
-    assert.match(sample, /<PmpSubmitReviewSummary/);
-    assert.match(sample, /Finish & Review/);
+test('sample remains local, scroll-started, unrestricted, and retains single and multi-question completion', () => {
+    assert.match(sample, /IntersectionObserver/);
+    assert.match(sample, /Math.max\(30, Math.min\(900, sampleDurationSeconds\)\)/);
+    assert.match(sample, /Date.now\(\) \+ duration \* 1000/);
+    assert.match(sample, /canVisit=\{\(\) => true\}/);
+    assert.match(sample, /if \(total === 1\)/);
     assert.match(sample, /Select an answer before checking/);
-    assert.doesNotMatch(sample, /fetch\(|router\.visit\(|localStorage\.|\/attempts\/|\/answer['"`]|\/submit['"`]/);
+    assert.match(sample, /finalLabel=\{total === 1 \? 'Check answer' : 'Finish & Review'\}/);
+    assert.match(sample, /onConfirm=\{complete\}/);
+    assert.match(sample, /finished \? <PmpSampleReview/);
+    assert.match(sample, /setAnswers\(\{\}\)/);
+    for (const file of [sample, review, taking, dialogs, reviewView, report]) assert.doesNotMatch(file, /fetch\(|router\.visit\(|localStorage\.|\/attempts\/|PmpQuestionAiChat|useExamStart\(/);
+    assert.match(take, /persist\(id, next\)/);
+    assert.match(take, /examSecondsUntilExpiry\(attempt.expiresAt/);
+    assert.match(take, /canVisit=\{canVisit\}/);
 });
 
-test('public completed sample uses real review structure, score, filters and all explanation tabs', () => {
-    for (const field of ['pm-exam-review-grid', 'pm-exam-review-side', 'pm-exam-review-question',
-        'pm-pmp-review-filter-actions', 'ExamStatus', 'ExamOptionList', 'PmpReviewExplanation',
-        'matchesReviewFilter', 'setPosition(0)']) {
-        assert.ok(review.includes(field), `Public review missing ${field}`);
-    }
-    for (const field of ['pm-exam-review-grid', 'pm-exam-review-side', 'pm-exam-review-question',
-        'pm-pmp-review-filter-actions', 'ExamStatus', 'ExamOptionList', 'PmpReviewExplanation']) {
-        assert.ok(realReview.includes(field), `Paid review missing ${field}`);
-    }
-    assert.match(css, /pm-pmp-public-exam-preview\.pm-exam-taking/);
-    assert.match(css, /--pm-guide-s5/);
+test('review and result are single shared views with result-first sample actions and registration-only public AI prompt', () => {
+    for (const consumer of [review, realReview]) assert.match(consumer, /<PmpExamReviewView/);
+    for (const name of ['ExamStatus', 'ExamOptionList', 'PmpReviewExplanation']) assert.ok(reviewView.includes(`<${name}`));
+    assert.match(reviewView, /setFilter\(item.value\); setPosition\(0\);/);
+    assert.match(realReview, /<PmpQuestionAiChat/);
+    assert.match(review, /useState<'review' \| 'result'>\('result'\)/);
+    for (const consumer of [review, result]) assert.match(consumer, /<PmpExamResultReport/);
+    assert.match(review, /total: questions.length, correct, answered/);
+    assert.match(review, /openReview\('missed'\)/);
+    assert.match(review, /openReview\('all'\)/);
+    assert.match(review, /onClick=\{\(\) => setView\('result'\)\}/);
+    assert.match(review, /onClick=\{onTryAgain\}/);
+    assert.match(review, /<SampleAiRegistrationPrompt key=\{question.id\} metadata=\{metadata\}/);
+    assert.match(review, /Ask AI About This Answer/);
+    assert.match(review, /aria-expanded=\{open\} aria-controls=\{panelId\}/);
+    assert.match(review, /open && <div id=\{panelId\} className="pm-review-ai-chat"/);
+    assert.match(review, /<Link href="\/register"/);
+    assert.match(review, /<Link href="\/login"/);
+    assert.match(review, /eligible Plus or Pro membership/);
+    assert.doesNotMatch(review, /<textarea|<form|requestJson|\/ai\/requests|PmpQuestionAiChat/);
+    assert.match(report, /<OverallPerformance/);
+    assert.match(report, /<DomainPerformance/);
+    assert.match(report, /<PracticeSummary/);
+});
+
+test('sample uses existing admin-selected active question settings and only layout-specific CSS', () => {
+    const controller = source('app/Http/Controllers/PublicSite/PmpPublicPageController.php');
+    assert.match(controller, /whereIn\('id', \$sampleIds\)->where\('is_active', true\)/);
+    assert.match(controller, /'readinessThresholds' => array_intersect_key/);
+    assert.match(controller, /'sampleDurationSeconds' => \$settings\['sample_duration_seconds'\]/);
+    assert.match(css, /@container sample-exam/);
+    assert.match(css, /h2:not\(:where\(\.pm-exam h2\)\)/);
+    assert.doesNotMatch(css, /\.pm-pmp-public-sample-review \.pm-exam-review-top h2/);
 });

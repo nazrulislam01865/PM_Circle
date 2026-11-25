@@ -74,6 +74,10 @@ final class CareerTrendSettingsController extends Controller
         DB::transaction(function () use ($request, $access, $values): void {
             $before = DB::table('career_trend_settings')->where('id', 1)->lockForUpdate()->first();
             abort_unless($before, 503, 'Career Trends settings have not been initialized.');
+            $old = json_decode($before->settings, true, 512, JSON_THROW_ON_ERROR);
+            if (($old['ai_provider'] ?? 'openai') !== ($values['ai_provider'] ?? 'openai') && DB::table('ai_workspace_feature_routes')->where('feature_code', 'trend_draft')->whereNotNull('primary_credential_id')->exists()) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['ai_provider' => 'Reset the explicit primary credential in AI Workspace before switching provider.']);
+            }
             DB::table('career_trend_settings')->where('id', 1)->update([
                 'settings' => json_encode($values, JSON_THROW_ON_ERROR), 'updated_at' => now(),
             ]);

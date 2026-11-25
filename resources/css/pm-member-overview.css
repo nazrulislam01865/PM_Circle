@@ -34,3 +34,13 @@
 .pm-member-overview-link { display:flex; align-items:center; justify-content:space-between; gap:var(--s2); margin-top:var(--s2); padding-top:var(--s2); border-top:1px solid var(--border); font:var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui); color:var(--blue); }
 .pm-member-overview-link:hover,.pm-member-overview-heading-link:hover,.pm-member-overview-profile-links a:hover { color:var(--blue-hover); }
 @media(max-width:42rem) { .pm-member-overview-profile-links a { min-height:var(--control-touch); } }
+
+/* Plan and practice cards: reuse the existing overview surface, type and action roles. */
+.pm-member-overview-summary-heading, .pm-member-overview-summary-row { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:var(--s2); min-width:0; }
+.pm-member-home .pm-dash-right .pm-member-overview-summary-heading h2 { display:flex; align-items:center; gap:var(--s2); margin:0; min-width:0; overflow-wrap:anywhere; }
+.pm-member-overview-summary-icon { display:grid; place-items:center; flex:none; width:var(--control-compact); height:var(--control-compact); border-radius:var(--radius-control); color:var(--blue); background:var(--blue-soft); }
+.pm-member-overview-summary-icon svg { width:var(--icon); height:var(--icon); }
+.pm-member-overview-summary-pill { display:inline-flex; align-items:center; gap:var(--s1); max-width:100%; padding:var(--s1) var(--s2); border:1px solid var(--border); border-radius:var(--radius-pill); background:var(--blue-soft); color:var(--ink); font:var(--semibold) var(--text-sm)/var(--line-ui) var(--font-ui); overflow-wrap:anywhere; }
+.pm-member-overview-summary-pill svg { flex:none; width:1em; height:1em; }
+.pm-member-overview-summary-copy { margin:0; min-width:0; color:var(--ink); font:var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui); font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.pm-member-overview-summary > :is(.pm-member-overview-summary-copy,.pm-member-overview-summary-row) { margin-top:var(--s3); }

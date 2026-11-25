@@ -149,7 +149,13 @@ final class PmpExamAdminManagementTest extends TestCase
             ->where('sampleQuestions.0.id', $second)
             ->where('sampleQuestions.1.id', $first)
             ->where('sampleQuestion.id', $second)
+            ->where('sampleQuestions.0.code', 'sample-two')
+            ->where('sampleDurationSeconds', 120)
+            ->where('readinessThresholds.needs_improvement_below', 25)
+            ->where('readinessThresholds.target_below', 65)
+            ->where('readinessThresholds.above_target_from', 85)
             ->etc());
+        $this->assertDatabaseCount('pmp_exam_attempts', 0);
 
         // Deactivating a selected question must not expose it to guests.
         $this->actingAs($admin)->patch("/admin/exam-simulator/pmp/questions/{$second}/status", ['is_active' => false])

@@ -3,7 +3,7 @@ import {
     ArrowRight, Bookmark, CalendarDays, Check, CheckCircle2, ChevronDown, ChevronRight,
     CircleHelp, Clock3, Coins, FileCheck2, Info, Layers3, Play, Sparkles, Target, RefreshCcw, BarChart3,
 } from 'lucide-react';
-import { Fragment, useState, type FormEvent, type ReactNode } from 'react';
+import { Fragment, useEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import { examResult, examReview } from '@/components/exam/ExamShared';
 import { PmpAiRefillPanel } from '@/components/exam/PmpAiRefillPanel';
 
@@ -71,9 +71,6 @@ function Panel({ children, className = '' }: { children: ReactNode; className?: 
 }
 function IconTile({ children }: { children: ReactNode }) {
     return <span className="pm-pmp-icon-tile" aria-hidden="true">{children}</span>;
-}
-function PagePill({ children }: { children: ReactNode }) {
-    return <span className="pm-pmp-page-pill">{children}</span>;
 }
 function PrimaryAction({ children, onClick, disabled = false }: {
     children: ReactNode; onClick: () => void; disabled?: boolean;
@@ -188,7 +185,7 @@ export function PmpOverview({ attempts, planCode, planDetails, targetExamDate, a
 
     return <Surface>
         <div className="pm-pmp-overview-heading">
-            <div><PagePill>OVERVIEW</PagePill><h1>My PMP Exam Simulator</h1>
+            <div><h1>My PMP Exam Simulator</h1>
                 <span className="pm-pmp-sample-tag"><Info size={13}/> Your exam activity</span></div>
             <div className="pm-pmp-heading-action"><PrimaryAction onClick={onStart} disabled={!availableQuestions || starting}>
                 <Play size={17} fill="currentColor"/> {starting ? 'Starting exam...' : 'Start a New Mock Exam'}
@@ -197,7 +194,7 @@ export function PmpOverview({ attempts, planCode, planDetails, targetExamDate, a
                 : `${activeQuestionCount} of ${fullQuestionCount} required questions active · Full mocks temporarily unavailable`}</span></div>
         </div>
         <div className="pm-pmp-overview-cards">
-            <Panel><div className="pm-pmp-card-title"><IconTile><CalendarDays/></IconTile><strong>Current Plan · {planCode.toUpperCase()}</strong></div>
+            <Panel><div className="pm-pmp-card-title"><IconTile><CalendarDays/></IconTile><h2>Current Plan · {planCode.toUpperCase()}</h2></div>
                 <div className="pm-pmp-plan-dates"><span>Activated <strong>{dateLabel(planDetails.starts_at, true)}</strong></span>
                     <span>Expires <strong>{dateLabel(planDetails.ends_at, true)}</strong></span></div>
                 <div className="pm-pmp-dual-stats"><div><strong>{usedDays ?? '—'}</strong><small>days used</small></div>
@@ -205,13 +202,13 @@ export function PmpOverview({ attempts, planCode, planDetails, targetExamDate, a
                 {planDetails.source === 'complimentary' && <p className="pm-pmp-muted">Complimentary access has no billed activation or expiry dates.</p>}
                 <SecondaryLink href="/membership">Manage Plan</SecondaryLink>
             </Panel>
-            <Panel><div className="pm-pmp-card-title"><IconTile><Layers3/></IconTile><strong>Mock Exams</strong></div>
+            <Panel><div className="pm-pmp-card-title"><IconTile><Layers3/></IconTile><h2>Mock Exams</h2></div>
                 <div className="pm-pmp-dual-stats"><div><strong>{attemptTotals.completed}</strong><small>completed</small></div>
                     <div><strong>{attemptTotals.inProgress}</strong><small>in progress</small></div></div>
                 <p className="pm-pmp-muted">Latest score: <strong>{attemptTotals.latestScore !== null ? `${attemptTotals.latestScore}%` : 'No completed mock yet'}</strong></p>
                 {attemptTotals.practiceCompleted > 0 && <p className="pm-pmp-muted">Focused practice completed: <strong>{attemptTotals.practiceCompleted}</strong></p>}
             </Panel>
-            <Panel><div className="pm-pmp-card-title"><IconTile><Sparkles/></IconTile><strong>AI Tokens</strong></div>
+            <Panel><div className="pm-pmp-card-title"><IconTile><Sparkles/></IconTile><h2>AI Tokens</h2></div>
                 <div className="pm-pmp-dual-stats"><div><strong>{aiUsage.used.toLocaleString('en-US')}</strong><small>used</small></div>
                     <div><strong>{aiUsage.remaining.toLocaleString('en-US')}</strong><small>remaining</small></div></div>
                 <p className="pm-pmp-muted">{aiUsage.configured === false
@@ -254,28 +251,46 @@ export function PmpOverview({ attempts, planCode, planDetails, targetExamDate, a
 
 function ScoreTrend({ completed }: { completed: PmpWorkspaceAttempt[] }) {
     const points = [...completed].reverse();
+    const chartRef = useRef<SVGSVGElement>(null);
+    const [size, setSize] = useState({ width: 570, height: 232 });
+    // Match the viewBox to the actual CSS-pixel viewport: resizing a chart must
+    // not enlarge or shrink the guide's 14px text. Keep dense series scrollable.
+    useEffect(() => {
+        const chart = chartRef.current;
+        if (!chart) return;
+        const update = () => {
+            const { width, height } = chart.getBoundingClientRect();
+            if (width && height) setSize(old => old.width === width && old.height === height ? old : { width, height });
+        };
+        update();
+        const observer = new ResizeObserver(update);
+        observer.observe(chart);
+        return () => observer.disconnect();
+    }, [points.length]);
     if (!points.length) return <p className="pm-pmp-empty">Finish a mock exam to see your score trend.</p>;
-    const x = (index: number) => 48 + index * (474 / Math.max(1, points.length - 1));
-    const y = (score: number) => 178 - score * 1.38;
+    const scale = size.height / 232;
+    const x = (index: number) => 56 * scale + index * ((size.width - 104 * scale) / Math.max(1, points.length - 1));
+    const bottom = size.height - 48 * scale;
+    const y = (score: number) => bottom - score * ((bottom - 36 * scale) / 100);
     const coords = points.map((attempt, i) => `${x(i)},${y(valuePercent(attempt))}`);
     const outline = `M ${coords.join(' L ')}`;
-    const area = `${outline} L ${x(points.length - 1)},178 L ${x(0)},178 Z`;
-    return <svg className="pm-pmp-chart" viewBox="0 0 570 230" role="img"
+    const area = `${outline} L ${x(points.length - 1)},${bottom} L ${x(0)},${bottom} Z`;
+    return <div className="pm-pmp-chart-scroll" tabIndex={0} aria-label="Scrollable score trend"><svg ref={chartRef} className="pm-pmp-chart" style={{ '--pm-pmp-chart-points': points.length } as CSSProperties} viewBox={`0 0 ${size.width} ${size.height}`} role="img"
         aria-label={`Exam score trend: ${points.map(a => `${dateLabel(a.finished_at, true)} ${valuePercent(a)} percent`).join('; ')}`}>
         <defs><linearGradient id="pmp-dashboard-score-fill" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="var(--blue)" stopOpacity=".18"/><stop offset="100%" stopColor="var(--blue)" stopOpacity="0"/>
         </linearGradient></defs>
-        {[0, 20, 40, 60, 80, 100].map(n => <g key={n}><line x1="42" x2="535" y1={y(n)} y2={y(n)} stroke="var(--border)" strokeDasharray="3 5"/>
-            <text x="35" y={y(n) + 4} textAnchor="end" className="pm-pmp-axis-text">{n}%</text></g>)}
+        {[0, 20, 40, 60, 80, 100].map(n => <g key={n}><line x1={48 * scale} x2={size.width - 32 * scale} y1={y(n)} y2={y(n)} stroke="var(--border)" strokeDasharray="3 5"/>
+            <text x={41 * scale} y={y(n) + 4 * scale} textAnchor="end" className="pm-pmp-axis-text">{n}%</text></g>)}
         <path d={area} fill="url(#pmp-dashboard-score-fill)"/>
         <path d={outline} stroke="var(--blue)" strokeWidth="2.4" fill="none" strokeLinejoin="round"/>
         {points.map((attempt, index) => <g key={attempt.id}>
             <title>{`${dateLabel(attempt.finished_at, true)} · ${valuePercent(attempt)}% · Mock #${attempt.id}`}</title>
             <circle cx={x(index)} cy={y(valuePercent(attempt))} r="4.5" stroke="var(--blue)" strokeWidth="2" fill="var(--surface)"/>
-            <text x={x(index)} y={y(valuePercent(attempt)) - 12} textAnchor="middle" className="pm-pmp-point-label">{valuePercent(attempt)}%</text>
-            <text x={x(index)} y="207" textAnchor="middle" className="pm-pmp-axis-text">{dateLabel(attempt.finished_at)}</text>
+            <text x={x(index)} y={y(valuePercent(attempt)) - 12 * scale} textAnchor="middle" className="pm-pmp-point-label">{valuePercent(attempt)}%</text>
+            <text x={x(index)} y={size.height - 16 * scale} textAnchor="middle" className="pm-pmp-axis-text">{dateLabel(attempt.finished_at)}</text>
         </g>)}
-    </svg>;
+    </svg></div>;
 }
 
 export function PmpPerformance({ attempts, topics, onStart, onFocus, starting, canStart, fullQuestionCount }: {
@@ -303,7 +318,7 @@ export function PmpPerformance({ attempts, topics, onStart, onFocus, starting, c
         { label: 'Completed mocks', value: `${group.length}` },
     ];
     return <Surface>
-        <div className="pm-pmp-section-heading"><div><PagePill>PERFORMANCE</PagePill><h2>Performance and Preparation</h2>
+        <div className="pm-pmp-section-heading"><div><h1>Performance and Preparation</h1>
             <div className="pm-pmp-performance-filters"><select aria-label="Exam category" value={mode} onChange={e => setMode(e.target.value as 'full' | 'short')}>
                 <option value="full">Full mocks ({fullQuestionCount} questions)</option><option value="short">Short practice</option>
             </select><select aria-label="Performance history range" value={limit} onChange={e => setLimit(Number(e.target.value))}>
@@ -311,8 +326,8 @@ export function PmpPerformance({ attempts, topics, onStart, onFocus, starting, c
             </select></div></div><span className="pm-pmp-sample-tag"><Info size={14}/> Your practice data</span></div>
         <div className="pm-pmp-metric-grid">{stats.map(stat => <Panel key={stat.label} className="pm-pmp-metric"><small>{stat.label}</small><strong>{stat.value}</strong></Panel>)}</div>
         <div className="pm-pmp-analysis-grid"><Panel><h2>Score Trend</h2><ScoreTrend completed={group}/></Panel>
-            <Panel><h2>Topic Accuracy</h2>{breakdown.length ? <div className="pm-pmp-table-scroll"><table className="pm-pmp-topic-table"><thead><tr>
-                <th>Topic</th><th>Accuracy</th><th>Correct (out of)</th></tr></thead><tbody>
+            <Panel><h2>Topic Accuracy</h2>{breakdown.length ? <div className="pm-pmp-table-scroll"><table className="pm-pmp-topic-table" aria-label="Topic accuracy"><thead><tr>
+                <th scope="col">Topic</th><th scope="col">Accuracy</th><th scope="col">Correct (out of)</th></tr></thead><tbody>
                 {breakdown.map(topic => <tr key={topic.topic}><td>{topic.topic}</td><td><strong>{topic.percent}%</strong></td><td>{topic.correct}/{topic.total}</td></tr>)}
             </tbody></table></div> : <p className="pm-pmp-empty">No results for this exam type. Complete a {mode === 'full' ? 'full mock' : 'short practice'} to see accuracy.</p>}</Panel>
         </div>
@@ -372,7 +387,7 @@ export function PmpHistory({ attempts, initialNextCursor, onStart, starting, can
         }
     };
     return <Surface className="pm-pmp-history-surface">
-        <div className="pm-pmp-history-heading"><div><h2>Exam history</h2><p>All times in Bangladesh time.</p></div>
+        <div className="pm-pmp-history-heading"><div><h1>Exam history</h1><p>All times in Bangladesh time.</p></div>
             <PrimaryAction onClick={onStart} disabled={starting || !canStart}><Play size={17} fill="currentColor"/>Start a new mock exam</PrimaryAction>
         </div>
         <div className="pm-pmp-history-filters">
@@ -387,8 +402,8 @@ export function PmpHistory({ attempts, initialNextCursor, onStart, starting, can
             </select><ChevronDown size={16}/></label>
             <span className="pm-pmp-sample-tag"><Info size={14}/> Your exam records</span>
         </div>
-        <div className="pm-pmp-table-scroll"><table className="pm-pmp-history-table"><thead><tr>
-            <th>Exam</th><th>Date</th><th>Started</th><th>Finished</th><th>Time allowed</th><th>Time used</th><th>Time left</th><th>Score</th><th>Status</th><th>Action</th>
+        <div className="pm-pmp-table-scroll"><table className="pm-pmp-history-table" aria-label="Exam history"><thead><tr>
+            <th scope="col">Exam</th><th scope="col">Date</th><th scope="col">Started</th><th scope="col">Finished</th><th scope="col">Time allowed</th><th scope="col">Time used</th><th scope="col">Time left</th><th scope="col">Score</th><th scope="col">Status</th><th scope="col">Action</th>
         </tr></thead><tbody>{rows.map(attempt => {
             const active = isResumable(attempt);
             const expired = attempt.status === 'in_progress' && !active;
@@ -445,7 +460,7 @@ export function PmpAiUsage({ usage, planDetails, onRefresh, loading = false, err
             <div className="pm-pmp-ai-main">
                 <Panel className="pm-pmp-ai-balance">
                     <div className="pm-pmp-ai-lead"><IconTile><Sparkles/></IconTile><div>
-                        <h2>AI usage and refills</h2>
+                        <h1>AI usage and refills</h1>
                         <p>Track your AI token usage for question explanations, follow-up questions, and study insights, and review your current allocation.</p>
                     </div>{onRefresh && <button type="button" className="pm-pmp-ai-refresh" onClick={onRefresh} disabled={loading}
                         aria-label="Refresh AI usage" title="Refresh AI usage"><RefreshCcw size={17} className={loading ? 'is-spinning' : ''}/></button>}</div>

@@ -1,3 +1,4 @@
+import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { Head, Link } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
@@ -44,12 +45,12 @@ const sections: RefundSection[] = [
 ];
 
 export default function PolicyNotice() {
-    return <PublicLayout siteLayout homePrototype guideLayout>
+    return <PublicLayout siteLayout homePrototype guideLayout banner={{title: 'Refund Policy', description: 'Monthly plan payments, cancellations and purchase support.', titleId: 'pm-refund-title'}}>
         <Head title="Refund Policy">
             <meta name="description" content="Monthly plan payments, cancellations and purchase support."/>
         </Head>
         <div className="pm-terms-page pm-refund-page">
-            <section className="pm-terms-banner" aria-labelledby="pm-refund-title">
+            <LegacyPageHeading><section className="pm-terms-banner" aria-labelledby="pm-refund-title">
                 <div className="pm-terms-wrap">
                     <nav className="pm-terms-breadcrumb" aria-label="Breadcrumb">
                         <Link href="/">Home</Link><span aria-hidden="true">/</span><span aria-current="page">Refund Policy</span>
@@ -57,7 +58,7 @@ export default function PolicyNotice() {
                     <h1 id="pm-refund-title">Refund Policy</h1>
                     <p>Monthly plan payments, cancellations and purchase support.</p>
                 </div>
-            </section>
+            </section></LegacyPageHeading>
             <div className="pm-terms-wrap pm-terms-main">
                 <div className="pm-terms-grid">
                     <nav className="pm-terms-toc" aria-label="On this page">

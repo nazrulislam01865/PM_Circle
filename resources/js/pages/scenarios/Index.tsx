@@ -1,3 +1,4 @@
+import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { Pagination } from '@/components/pm/Pagination';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { ArrowRight, ChevronDown, Search } from 'lucide-react';
@@ -53,12 +54,12 @@ export default function Index({ scenarios, topics, statusCounts, todaySlug, filt
         navigate({ search: search.trim() });
     };
 
-    return <PublicLayout siteLayout={!memberView} active="/daily-challenge" joinLabel="Join free">
+    return <PublicLayout siteLayout={!memberView} active="/daily-challenge" joinLabel="Join free" banner={{title: 'Scenario Library', description: 'Real project scenarios to think, decide, and learn together.'}}>
         <Head title="Scenario Library · PM Circle" />
         <div className="pm-challenge-page">
             <div className="pm-container pm-challenge-container">
                 <div className="pm-challenge-heading-row">
-                    <div><h1>Scenario Library</h1><p>Real project scenarios to think, decide, and learn together.</p></div>
+                    <LegacyPageHeading><div><h1>Scenario Library</h1><p>Real project scenarios to think, decide, and learn together.</p></div></LegacyPageHeading>
                     {todaySlug && <Link className="pm-challenge-today-link" href={`${memberView ? libraryRoot : '/scenarios'}/${encodeURIComponent(todaySlug)}`}>Today's scenario <ArrowRight size={18} aria-hidden="true" /></Link>}
                 </div>
                 <div className="pm-challenge-tabs pm-member-tertiary-sticky" role="group" aria-label="Scenario views">

@@ -1,3 +1,4 @@
+import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { useState, type ReactNode } from 'react';
 import { PlanComparisonRows } from '@/components/billing/PlanComparison';
 import { ProfileImportIllustration } from '@/components/billing/ProfileImportIllustration';
@@ -30,10 +31,10 @@ export function PricingComparisonContent({ plans, renderAction, notice, error, b
     const plusMonthly = selectedPlus ? money(selectedPlus.amount_minor / selectedPlus.months) : null;
 
     return <div className="pm-compare-page">
-        <div className="pm-compare-intro">
+        <LegacyPageHeading><div className="pm-compare-intro">
             <h1>Choose the support you need to grow.</h1>
             <p>Start free. Add more practice and career tools when you're ready.</p>
-        </div>
+        </div></LegacyPageHeading>
 
         {notice}
         {error && <p role="alert" className="pm-compare-error">{error}</p>}

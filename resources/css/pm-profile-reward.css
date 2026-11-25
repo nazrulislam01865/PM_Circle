@@ -123,3 +123,26 @@
 }
 
 .pm-member-overview-completion-label strong { display: inline-flex; align-items: center; gap: var(--s1); }
+
+/* Profile Overview reward presentation; dashboard variant remains unchanged. */
+.pm-profile-reward-profile {
+    margin-bottom: 0;
+    padding: var(--pm-guide-card-padding);
+    border-radius: var(--radius-card);
+    background: var(--reward-surface);
+}
+.pm-profile-reward-profile .pm-profile-reward-content {
+    display: grid; grid-template-columns: var(--icon) minmax(0, 1fr); gap: var(--s3) var(--s2); align-items: start;
+}
+.pm-profile-reward-profile .pm-profile-reward-icon {
+    width: var(--icon); height: var(--icon); margin-top: var(--s1);
+    background: transparent; border: 0; border-radius: 0;
+}
+.pm-profile-reward-profile .pm-profile-reward-main { display: contents; }
+.pm-profile-reward-profile .pm-profile-reward-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2); min-width: 0; }
+.pm-profile-reward-profile .pm-profile-reward-heading h2 { margin: 0; font: var(--bold) var(--text-h3)/var(--line-h3) var(--font-ui); color: var(--ink); overflow-wrap: anywhere; }
+.pm-profile-reward-locked { border-radius: var(--radius-control); background: var(--pm-guide-amber-bg); color: var(--pm-guide-amber); font: var(--pm-guide-weight-control) var(--text-ui)/var(--line-ui) var(--font-ui); padding: var(--s1) var(--s2); }
+.pm-profile-reward-profile .pm-profile-reward-main > :not(.pm-profile-reward-heading) { grid-column: 1 / -1; min-width: 0; }
+.pm-profile-reward-profile .pm-profile-reward-main > p { color: var(--muted); }
+.pm-profile-reward-profile .pm-profile-reward-main > .pm-profile-reward-availability { font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui); }
+.pm-profile-reward-profile .pm-profile-reward-complete { margin-top: 0; justify-self: start; }

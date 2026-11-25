@@ -35,15 +35,24 @@ final class DemoCourseCatalog
 
     public function find(string $slug): ?array
     {
-        $course = LearningCourse::query()->where('slug', $slug)
-            ->where('is_published', true)->first();
+        $course = $this->findPublished($slug);
 
-        return $course ? [
+        return $course ? $this->detailData($course) : null;
+    }
+
+    public function findPublished(string $slug): ?LearningCourse
+    {
+        return LearningCourse::query()->where('slug', $slug)->where('is_published', true)->first();
+    }
+
+    public function detailData(LearningCourse $course): array
+    {
+        return [
             ...$course->catalogData(),
             'overview' => $course->overview,
             'objectives' => $course->objectives ?? [],
             'outline' => $course->outline ?? [],
             'lessons' => $course->lessons ?? [],
-        ] : null;
+        ];
     }
 }

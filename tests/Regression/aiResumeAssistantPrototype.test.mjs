@@ -8,7 +8,7 @@ const tokens = read('resources/css/pm-design-tokens.css');
 
 test('resume preview uses a static public route and the same homepage layout', () => {
     assert.match(read('routes/web.php'), /Route::inertia\('\/ai-resume-assistant', 'public\/AiResumeAssistant'\)->name\('ai-resume-assistant'\)/);
-    assert.match(page, /<PublicLayout siteLayout homePrototype guideLayout>/);
+    assert.match(page, /<PublicLayout siteLayout homePrototype guideLayout banner=\{\{[^\n]*\}\}>/);
     assert.match(page, /pm-terms-banner/);
     assert.match(page, /href="\/#pm-v2-ai">AI Tools/);
     assert.doesNotMatch(page, /fetch\(|axios\.|useEffect\(|router\.get\(|dangerouslySetInnerHTML/);

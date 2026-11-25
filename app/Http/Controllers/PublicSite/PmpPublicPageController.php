@@ -40,6 +40,7 @@ final class PmpPublicPageController extends Controller
                 'correct' => $question->correct_option, 'explanation' => $question->explanation,
                 'otherOptions' => $question->other_options, 'takeaway' => $question->takeaway,
                 'concepts' => $question->concepts, 'references' => $question->references,
+                'code' => $question->code, 'approach' => $question->approach, 'industry' => $question->industry,
             ];
         })->filter()->values()->all();
         $sample = $samples[0] ?? null;
@@ -48,6 +49,7 @@ final class PmpPublicPageController extends Controller
             'sampleQuestion' => $sample,
             'sampleQuestions' => $samples,
             'sampleDurationSeconds' => $settings['sample_duration_seconds'],
+            'readinessThresholds' => array_intersect_key($settings, array_flip(['needs_improvement_below', 'target_below', 'above_target_from'])),
         ]);
     }
 }

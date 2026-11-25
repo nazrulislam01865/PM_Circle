@@ -1,3 +1,4 @@
+import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     Bookmark,
@@ -225,15 +226,15 @@ export default function Show({ scenario, responses, related }: Props) {
     };
 
     return (
-        <PublicLayout active="/daily-challenge" joinLabel="Join the community">
+        <PublicLayout active="/daily-challenge" joinLabel="Join the community" banner={{title: scenario.title, parents: [{label: 'Daily Challenge', href: '/daily-challenge'}]}}>
             <Head title={`${scenario.title} · PM Circle`} />
 
             <div className="pm-container pm-page pm-scenario-detail-page">
                 {/* Breadcrumbs & back navigation */}
-                <nav className="pm-crumbs" aria-label="Breadcrumb">
+                <LegacyPageHeading><nav className="pm-crumbs" aria-label="Breadcrumb">
                     <Link href={memberView ? '/dashboard' : '/'}>Home</Link> &nbsp;/&nbsp; <Link href={libraryRoot}>Daily Challenge</Link> &nbsp;/&nbsp;{' '}
                     <span>Scenario</span>
-                </nav>
+                </nav></LegacyPageHeading>
 
                 <div style={{ marginBottom: 'var(--s4)' }}>
                     <Link href={libraryRoot} className="pm-back" style={{ fontWeight: 'var(--type-weight-semibold)' }}>

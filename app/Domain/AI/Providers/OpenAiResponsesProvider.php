@@ -35,11 +35,12 @@ final class OpenAiResponsesProvider implements AiProvider
         array $schema, int $maxOutputTokens, bool $useExternalModeration = true): array
     {
         $feature = (string) ($context['_ai_feature_code'] ?? '');
-        unset($context['_ai_feature_code']);
+        $diagnostic = ($context['_connection_diagnostic'] ?? false) === true;
+        unset($context['_ai_feature_code'], $context['_connection_diagnostic']);
         $daily = in_array($feature, ['scenario_generate', 'daily_challenge_review'], true);
-        $key = config($daily ? 'pm-ai.daily_challenge_api_key' : 'pm-ai.api_key');
+        $key = app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential($daily ? 'daily_challenge_api_key' : 'api_key');
         if (! is_string($key) || $key === '') {
-            throw new AiFailure('PROVIDER_NOT_CONFIGURED', 503);
+            throw new AiFailure('PROVIDER_NOT_CONFIGURED', 503, retrySafe: true);
         }
         $client = Http::withToken($key)->acceptJson()
             ->timeout((int) config('pm-ai.timeout_seconds'));
@@ -48,7 +49,7 @@ final class OpenAiResponsesProvider implements AiProvider
         $moderationClient = $feature === 'trend_draft'
             ? Http::withToken($key)->acceptJson()->connectTimeout(4)->timeout(8) : $client;
         if ($daily && $useExternalModeration) {
-            $postCheckKey = config('pm-ai.post_check_api_key');
+            $postCheckKey = app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential('post_check_api_key');
             if (! is_string($postCheckKey) || trim($postCheckKey) === '') {
                 throw new AiFailure('MODERATION_UNAVAILABLE', 503);
             }
@@ -69,7 +70,7 @@ final class OpenAiResponsesProvider implements AiProvider
             }
             if (! $moderation->successful()) {
                 $code = $moderation->json('error.code');
-                throw new AiFailure($feature === 'trend_draft' ? ProviderHttpFailure::moderationCode($moderation->status(), is_string($code) ? $code : null) : 'MODERATION_UNAVAILABLE', 503);
+                throw new AiFailure(($feature === 'trend_draft' || $diagnostic) ? ProviderHttpFailure::moderationCode($moderation->status(), is_string($code) ? $code : null) : 'MODERATION_UNAVAILABLE', 503);
             }
             $flagged = $moderation->json('results.0.flagged');
             if (! is_bool($flagged)) {
@@ -102,23 +103,26 @@ final class OpenAiResponsesProvider implements AiProvider
             throw new AiFailure('PROVIDER_STATUS_UNKNOWN', 503);
         }
         if (! $response->successful()) {
-            if ($feature === 'trend_draft') {
+            if ($response->status() >= 500 || $response->status() === 408) throw new AiFailure('PROVIDER_STATUS_UNKNOWN', 503);
+            if ($feature === 'trend_draft' || $diagnostic) {
                 $code = $response->json('error.code');
-                throw new AiFailure(ProviderHttpFailure::code($response->status(), is_string($code) ? $code : null), 503);
+                throw new AiFailure(ProviderHttpFailure::code($response->status(), is_string($code) ? $code : null), 503, retrySafe: in_array($response->status(), [401, 402, 403, 404, 429], true));
             }
             throw new AiFailure(in_array($response->status(), [408, 429, 500, 502, 503, 504])
-                ? 'PROVIDER_UNAVAILABLE' : 'PROVIDER_REJECTED', 503);
+                ? 'PROVIDER_UNAVAILABLE' : 'PROVIDER_REJECTED', 503, retrySafe: in_array($response->status(), [401, 402, 403, 404, 429], true));
         }
         $data = $response->json();
-        if (! is_array($data) || ($data['status'] ?? null) !== 'completed') {
-            throw new AiFailure('INCOMPLETE_AI_RESPONSE', 503);
-        }
+        $usage = is_array($data) ? ($data['usage'] ?? null) : null;
+        $in = $usage['input_tokens'] ?? null; $out = $usage['output_tokens'] ?? null; $cached = data_get($usage, 'input_tokens_details.cached_tokens', 0);
+        if (! is_numeric($in) || ! is_numeric($out) || ! is_numeric($cached) || $in < 0 || $out < 0 || $cached < 0 || $cached > $in) throw new AiFailure('PROVIDER_STATUS_UNKNOWN', 503);
+        $metered = ['input_tokens' => (int) $in, 'cached_tokens' => (int) $cached, 'output_tokens' => (int) $out];
+        if (($data['status'] ?? null) !== 'completed') throw new AiFailure('INCOMPLETE_AI_RESPONSE', 503, usage: $metered);
         $parts = $data['output'] ?? [];
         $answer = null;
         foreach ($parts as $part) {
             foreach ($part['content'] ?? [] as $content) {
                 if (($content['type'] ?? '') === 'refusal') {
-                    throw new AiFailure('AI_REFUSED', 422);
+                    throw new AiFailure('AI_REFUSED', 422, usage: $metered);
                 }
                 if (($content['type'] ?? '') === 'output_text') {
                     $answer = $content['text'] ?? null;
@@ -126,14 +130,14 @@ final class OpenAiResponsesProvider implements AiProvider
             }
         }
         if (! is_string($answer)) {
-            throw new AiFailure('INVALID_AI_RESPONSE', 503);
+            throw new AiFailure('INVALID_AI_RESPONSE', 503, usage: $metered);
         }
         $decoded = json_decode($answer, true);
         $usage = $data['usage'] ?? null;
         if (! is_array($decoded) || ! is_array($usage)
             || ! is_numeric($usage['input_tokens'] ?? null)
             || ! is_numeric($usage['output_tokens'] ?? null)) {
-            throw new AiFailure('INVALID_AI_RESPONSE', 503);
+            throw new AiFailure('INVALID_AI_RESPONSE', 503, usage: $metered);
         }
         // Moderation remains mandatory for all other features. PMP can use a restricted
         // Responses-only key, with bounded educational context and server validation.
@@ -143,25 +147,25 @@ final class OpenAiResponsesProvider implements AiProvider
                     'model' => 'omni-moderation-latest', 'input' => $answer,
                 ]);
             } catch (ConnectionException) {
-                throw new AiFailure('MODERATION_UNAVAILABLE', 503);
+                throw new AiFailure('MODERATION_UNAVAILABLE', 503, usage: $metered);
             }
             if (! $outputModeration->successful()) {
                 $code = $outputModeration->json('error.code');
-                throw new AiFailure($feature === 'trend_draft' ? ProviderHttpFailure::moderationCode($outputModeration->status(), is_string($code) ? $code : null) : 'MODERATION_UNAVAILABLE', 503);
+                throw new AiFailure(($feature === 'trend_draft' || $diagnostic) ? ProviderHttpFailure::moderationCode($outputModeration->status(), is_string($code) ? $code : null) : 'MODERATION_UNAVAILABLE', 503, usage: $metered);
             }
             $flagged = $outputModeration->json('results.0.flagged');
             if (! is_bool($flagged)) {
-                throw new AiFailure('MODERATION_UNAVAILABLE', 503);
+                throw new AiFailure('MODERATION_UNAVAILABLE', 503, usage: $metered);
             }
             if ($flagged) {
-                throw new AiFailure('CONTENT_REJECTED', 422);
+                throw new AiFailure('CONTENT_REJECTED', 422, usage: $metered);
             }
         }
         $in = (int) $usage['input_tokens'];
         $cached = (int) data_get($usage, 'input_tokens_details.cached_tokens', 0);
         $out = (int) $usage['output_tokens'];
         if ($in < 1 || $out < 1 || $cached < 0 || $cached > $in) {
-            throw new AiFailure('INVALID_USAGE', 503);
+            throw new AiFailure('INVALID_USAGE', 503, usage: $metered);
         }
         return ['id' => (string) ($data['id'] ?? ''), 'model' => (string) ($data['model'] ?? $model),
             'result' => $decoded, 'input_tokens' => $in,

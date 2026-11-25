@@ -20,8 +20,8 @@
 .pm-pmp-public-page h2,
 .pm-pmp-public-page h3,
 .pm-pmp-public-footer h2 { color: var(--ink); }
-.pm-pmp-public-page h2 { font-size: var(--pm-guide-text-h2); line-height: var(--pm-guide-line-h2); font-weight: var(--pm-guide-weight-h2); letter-spacing: var(--pm-tracking-neg-p015em); }
-.pm-pmp-public-page h3 { font-size: var(--pm-guide-text-h3); line-height: var(--pm-guide-line-h3); font-weight: var(--pm-guide-weight-h2); }
+.pm-pmp-public-page h2:not(:where(.pm-exam h2)) { font-size: var(--pm-guide-text-h2); line-height: var(--pm-guide-line-h2); font-weight: var(--pm-guide-weight-h2); letter-spacing: var(--pm-tracking-neg-p015em); }
+.pm-pmp-public-page h3:not(:where(.pm-exam h3)) { font-size: var(--pm-guide-text-h3); line-height: var(--pm-guide-line-h3); font-weight: var(--pm-guide-weight-h2); }
 .pm-pmp-public-breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: var(--pm-guide-s2); font-size: var(--pm-guide-text-meta); line-height: var(--pm-guide-line-body); color: var(--pm-guide-muted); margin-bottom: var(--pm-guide-s3); }
 .pm-pmp-public-breadcrumb a { color: var(--pm-guide-blue); text-decoration: underline; text-underline-offset: .18em; }
 .pm-pmp-public-breadcrumb a:hover { color: var(--blue); }
@@ -66,12 +66,12 @@
 .pm-pmp-public-section-note { color: var(--pm-guide-muted); font-size: var(--pm-guide-text-meta); line-height: var(--pm-guide-line-body); margin-top: var(--pm-guide-s1); margin-bottom: var(--pm-guide-s4); }
 
 .pm-pmp-public-study-column { min-width: 0; }
-.pm-pmp-public-study-column h2 { display: flex; align-items: center; gap: var(--s3); }
-.pm-pmp-public-study-column h2 svg { color: var(--blue); width: var(--s6); height: var(--s6); flex: none; }
+.pm-pmp-public-study-column > h2 { display: flex; align-items: center; gap: var(--s3); }
+.pm-pmp-public-study-column > h2 svg { color: var(--blue); width: var(--s6); height: var(--s6); flex: none; }
 .pm-pmp-public-study-column > .pm-pmp-public-section-note { padding-left: calc(var(--s6) + var(--s3)); }
 
 /* Reuse the exact paid simulator question-card and option styles; only scope its width here. */
-.pm-pmp-public-exam-preview { background: transparent; border: 1px solid var(--border); border-radius: var(--radius-control); overflow: hidden; }
+.pm-pmp-public-exam-preview { background: transparent; border: 1px solid var(--border); border-radius: var(--radius-control); overflow: hidden; container: sample-exam / inline-size; min-width: 0; }
 .pm-pmp-public-exam-preview .pm-exam-take-body { width: 100%; padding: var(--s4); }
 .pm-pmp-public-exam-preview .pm-exam-examhead { padding: var(--s3) var(--s4); }
 .pm-pmp-public-exam-preview .pm-exam-take-grid { gap: var(--s4); }
@@ -203,7 +203,7 @@
 @media (max-width: 500px) {
     .pm-pmp-public-benefit-grid, .pm-pmp-public-footer-columns { grid-template-columns: minmax(0,1fr); }
     .pm-pmp-public-card, .pm-pmp-public-benefit { padding: var(--s4); }
-    .pm-pmp-public-page h2 { font-size: var(--pm-guide-text-h2); line-height: var(--pm-guide-line-h2); }
+    .pm-pmp-public-page h2:not(:where(.pm-exam h2)) { font-size: var(--pm-guide-text-h2); line-height: var(--pm-guide-line-h2); }
     .pm-pmp-public-hero h1 { font-size: var(--pm-guide-text-h1); line-height: var(--pm-guide-line-h1); }
     .pm-pmp-public-actions .pm-pmp-public-button { flex: 1 1 12rem; }
     .pm-pmp-public-ai-example { padding: var(--s3); }
@@ -222,7 +222,7 @@
 
 /* Admin-controlled page: 32-36px icon targets, overriding legacy 24px section icons. */
 .pm-pmp-public-benefit h3>svg,.pm-pmp-public-benefit h3>.pm-pmp-public-icon-image{width:32px;height:32px;flex:none;object-fit:contain}
-.pm-pmp-public-study-column h2>svg,.pm-pmp-public-study-column h2>.pm-pmp-public-icon-image,.pm-pmp-public-card>h2>svg,.pm-pmp-public-card>h2>.pm-pmp-public-icon-image{width:32px;height:32px;flex:none;object-fit:contain}
+.pm-pmp-public-study-column>h2>svg,.pm-pmp-public-study-column>h2>.pm-pmp-public-icon-image,.pm-pmp-public-card>h2>svg,.pm-pmp-public-card>h2>.pm-pmp-public-icon-image{width:32px;height:32px;flex:none;object-fit:contain}
 .pm-pmp-public-video-points>div>svg,.pm-pmp-public-video-points>div>.pm-pmp-public-icon-image{width:36px;height:36px;flex:none;object-fit:contain}
 .pm-pmp-public-ai-cards .pm-pmp-public-benefit-grid{margin-top:var(--s4)}
 .pm-pmp-public-social a{width:36px;height:36px}.pm-pmp-public-social a svg{width:32px;height:32px}.pm-pmp-public-social a img{display:block;width:32px;height:32px;object-fit:contain}
@@ -258,12 +258,27 @@
     font: var(--regular) var(--pm-guide-text-control)/var(--pm-guide-line-body) var(--pm-guide-font);
 }
 .pm-pmp-public-sample-review .pm-pmp-sample-review-status strong { color: var(--pm-guide-ink); }
-.pm-pmp-public-sample-review .pm-exam-review-top h2 {
-    margin: 0; font: var(--bold) var(--text-h1)/var(--line-h1) var(--font-ui);
-    letter-spacing: var(--pm-tracking-neg-p025em);
-}
+.pm-pmp-sample-actions { display: flex; flex-wrap: wrap; gap: var(--pm-guide-s2); }
 @media (max-width: 650px) {
     .pm-pmp-public-exam-preview .pm-pmp-public-sample-review { padding: var(--pm-guide-s4); }
-    .pm-pmp-public-sample-review .pm-exam-review-top h2 { font-size: var(--text-h2); line-height: var(--line-h2); }
     .pm-pmp-public-exam-preview.pm-exam-taking .pm-exam-examhead-right { flex-wrap: wrap; }
+}
+
+/* The embedded canvas responds to available width, not only viewport width. */
+@container sample-exam (max-width: 53.125rem) {
+    .pm-pmp-public-exam-preview .pm-exam-take-grid,
+    .pm-pmp-public-exam-preview .pm-exam-review-grid,
+    .pm-pmp-public-exam-preview .pm-exam-guide-layout { grid-template-columns: minmax(0, 1fr); }
+    .pm-pmp-public-exam-preview .pm-exam-examhead { flex-wrap: wrap; }
+    .pm-pmp-public-exam-preview .pm-exam-examhead-right { justify-content: flex-start; }
+    .pm-pmp-public-exam-preview .pm-exam-report-heading { flex-wrap: wrap; }
+}
+@container sample-exam (max-width: 40.625rem) {
+    .pm-pmp-public-exam-preview :is(.pm-review-reference-grid, .pm-review-concept-grid, .pm-review-reference-secondary, .pm-exam-review-side) { grid-template-columns: minmax(0, 1fr); }
+    .pm-pmp-public-exam-preview .pm-exam-review-top { flex-wrap: wrap; }
+    .pm-pmp-public-exam-preview .pm-exam-navigator-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .pm-pmp-public-exam-preview .pm-exam-question-card > footer { flex-wrap: wrap; }
+    .pm-pmp-public-exam-preview .pm-exam-report-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .pm-pmp-public-exam-preview .pm-exam-report-summary h2 { grid-column: 1 / -1; }
+    .pm-pmp-public-exam-preview .pm-exam-report-summary-stat:nth-of-type(3) { border-left: 0; }
 }

@@ -19,6 +19,7 @@ use App\Http\Controllers\Onboarding\OnboardingController;
 use App\Http\Controllers\Settings\ProfileController as SettingsProfileController;
 use App\Http\Controllers\PublicSite\HomeController;
 use App\Http\Controllers\PublicSite\EventPreviewController;
+use App\Http\Controllers\Admin\CommunityEventController;
 use App\Http\Controllers\PublicSite\ContactController;
 use App\Http\Controllers\Admin\HomepageController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
@@ -54,6 +55,16 @@ Route::post('/admin/logout', [AuthenticatedSessionController::class, 'destroy'])
 // Administration is isolated from public/member areas and authorized on every request.
 Route::middleware(['auth', 'pm.admin', 'verified'])->prefix('admin')->name('admin.')->group(function (): void {
     Route::get('/', AdminDashboardController::class)->name('dashboard');
+    Route::get('/events', [CommunityEventController::class, 'index'])->name('events.index');
+    Route::get('/events/create', [CommunityEventController::class, 'create'])->name('events.create');
+    Route::get('/events/settings', [CommunityEventController::class, 'settings'])->name('events.settings');
+    Route::put('/events/settings', [CommunityEventController::class, 'saveSettings'])->middleware('throttle:10,1')->name('events.settings.update');
+    Route::post('/events', [CommunityEventController::class, 'store'])->middleware('throttle:10,1')->name('events.store');
+    Route::get('/events/{event}/edit', [CommunityEventController::class, 'edit'])->whereNumber('event')->name('events.edit');
+    Route::post('/events/{event}', [CommunityEventController::class, 'update'])->whereNumber('event')->middleware('throttle:15,1')->name('events.update');
+    Route::patch('/events/{event}/status', [CommunityEventController::class, 'status'])->whereNumber('event')->middleware('throttle:20,1')->name('events.status');
+    Route::get('/events/{event}/participants', [CommunityEventController::class, 'participants'])->whereNumber('event')->name('events.participants');
+    Route::patch('/events/{event}/comments/{comment}', [CommunityEventController::class, 'moderate'])->whereNumber(['event', 'comment'])->middleware('throttle:30,1')->name('events.comments.moderate');
     Route::get('/support-requests', [\App\Http\Controllers\Account\SupportController::class, 'adminIndex'])->name('support.index');
     Route::get('/support-requests/{ticket}', [\App\Http\Controllers\Account\SupportController::class, 'adminShow'])->whereNumber('ticket')->name('support.show');
     Route::post('/support-requests/{ticket}', [\App\Http\Controllers\Account\SupportController::class, 'reply'])->whereNumber('ticket')->middleware('throttle:30,1')->name('support.reply');
@@ -137,6 +148,9 @@ Route::get('/community', [PostController::class, 'index'])->name('community.inde
 Route::get('/community/feed-page', [PostController::class, 'feedPage'])->middleware('throttle:90,1')->name('community.feed-page');
 Route::get('/learning', [LearningController::class, 'index'])->name('learning.index');
 Route::get('/learning/courses/{course}', [DemoCourseController::class, 'show'])->name('learning.courses.show');
+Route::get('/learning/my-learning', [\App\Http\Controllers\Learning\CourseLearningController::class, 'index'])->name('learning.my-learning');
+Route::get('/learning/certificates', [\App\Http\Controllers\Learning\CourseLearningController::class, 'certificates'])->name('learning.certificates');
+Route::get('/learning/courses/{course}/lessons/{lesson}', [\App\Http\Controllers\Learning\CourseLearningController::class, 'show'])->whereNumber('lesson')->name('learning.courses.lesson');
 Route::get('/profile-media/{kind}/{filename}', [SettingsProfileController::class, 'showProfileImage'])
     ->where(['kind' => 'avatar|cover', 'filename' => '[a-zA-Z0-9._-]+'])->name('profile-media.show');
 Route::get('/post-media/{filename}', [PostController::class, 'media'])->where('filename', '[a-zA-Z0-9._-]+')->name('posts.media');
@@ -174,10 +188,15 @@ Route::inertia('/refund-policy', 'public/PolicyNotice')->name('refund-policy');
 // Static public resume preview; no AI request or resume data access.
 Route::inertia('/ai-resume-assistant', 'public/AiResumeAssistant')->name('ai-resume-assistant');
 
-// Public prototype event catalog. No booking endpoint or event database queries.
+// Published event catalog and server-side registration/discussion.
 Route::get('/events', [EventPreviewController::class, 'index'])->name('events.index');
-Route::get('/events/{slug}', [EventPreviewController::class, 'show'])
-    ->where('slug', '[a-z0-9-]+')->name('events.show');
+Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded'])->group(function (): void {
+    Route::get('/events/create', [EventPreviewController::class, 'create'])->name('events.create');
+    Route::post('/events', [EventPreviewController::class, 'store'])->middleware('throttle:5,1')->name('events.store');
+});
+Route::get('/events/{slug}', [EventPreviewController::class, 'show'])->where('slug', '[a-z0-9-]+')->name('events.show');
+Route::post('/events/{slug}/register', [EventPreviewController::class, 'register'])->where('slug', '[a-z0-9-]+')->middleware('throttle:5,1')->name('events.register');
+Route::post('/events/{slug}/comments', [EventPreviewController::class, 'comment'])->where('slug', '[a-z0-9-]+')->middleware('throttle:5,1')->name('events.comments.store');
 
 // Career job listing and detail routes are temporarily disabled. Existing data and controller are retained.
 Route::get('/members', [MemberDirectoryController::class, 'index'])->name('members.index');
@@ -252,6 +271,14 @@ Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded'])->group(func
     // The public routes remain available to visitors and members.
     Route::get('/dashboard/learning', [LearningController::class, 'index'])->name('dashboard.learning.index');
     Route::get('/dashboard/learning/courses/{course}', [DemoCourseController::class, 'show'])->name('dashboard.learning.courses.show');
+    Route::get('/dashboard/learning/my-learning', [\App\Http\Controllers\Learning\CourseLearningController::class, 'index'])->name('dashboard.learning.my-learning');
+    Route::get('/dashboard/learning/certificates', [\App\Http\Controllers\Learning\CourseLearningController::class, 'certificates'])->name('dashboard.learning.certificates');
+    Route::get('/dashboard/learning/courses/{course}/lessons/{lesson}', [\App\Http\Controllers\Learning\CourseLearningController::class, 'show'])->whereNumber('lesson')->name('dashboard.learning.courses.lesson');
+    Route::get('/learning/certificates/{reference}', [\App\Http\Controllers\Learning\CourseLearningController::class, 'certificate'])->whereUuid('reference')->name('learning.certificate.show');
+    Route::get('/dashboard/learning/certificates/{reference}', [\App\Http\Controllers\Learning\CourseLearningController::class, 'certificate'])->whereUuid('reference')->name('dashboard.learning.certificate.show');
+    Route::post('/learning/courses/{course}/lessons/{lesson}/complete', [\App\Http\Controllers\Learning\CourseLearningController::class, 'complete'])->whereNumber('lesson')->middleware('throttle:course-lesson-write')->name('learning.courses.lesson.complete');
+    Route::post('/learning/courses/{course}/lessons/{lesson}/notes', [\App\Http\Controllers\Learning\CourseLearningController::class, 'notes'])->whereNumber('lesson')->middleware('throttle:course-lesson-write')->name('learning.courses.lesson.notes');
+    Route::post('/learning/courses/{course}/lessons/{lesson}/check', [\App\Http\Controllers\Learning\CourseLearningController::class, 'check'])->whereNumber('lesson')->middleware('throttle:course-lesson-write')->name('learning.courses.lesson.check');
     Route::post('/dashboard/learning/courses/{course}/enroll', [DemoCourseController::class, 'enroll'])->middleware('throttle:20,1')->name('dashboard.learning.courses.enroll');
     Route::get('/dashboard/daily-challenge', [ScenarioController::class, 'index'])->name('dashboard.scenarios.index');
     Route::get('/dashboard/daily-challenge/{scenario:slug}', [ScenarioController::class, 'show'])->name('dashboard.scenarios.show');
@@ -263,6 +290,9 @@ Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded'])->group(func
     Route::delete('/members/{member}/follow', [MemberDirectoryController::class, 'unfollow'])->whereNumber('member')->name('members.unfollow');
     Route::get('/membership', [TemporaryMembershipController::class, 'index'])->name('membership.index');
     Route::get('/dashboard/resume-assistant', \App\Http\Controllers\Account\ResumeAssistantController::class)->name('member.resume-assistant');
+    Route::post('/dashboard/resume-assistant/export', [\App\Http\Controllers\Account\ResumeAssistantController::class, 'export'])->middleware('throttle:resume-assistant-export')->name('member.resume-assistant.export');
+    Route::post('/dashboard/resume-assistant/extract', [\App\Http\Controllers\Account\ResumeAssistantController::class, 'extract'])->middleware('throttle:resume-assistant-extract')->name('member.resume-assistant.extract');
+    Route::post('/dashboard/resume-assistant', [\App\Http\Controllers\Account\ResumeAssistantController::class, 'save'])->middleware('throttle:15,1')->name('member.resume-assistant.save');
     Route::get('/help-center/guides', [\App\Http\Controllers\Account\SupportController::class, 'guides'])->name('support.guides');
     Route::get('/help-center/contact', [\App\Http\Controllers\Account\SupportController::class, 'create'])->name('support.create');
     Route::post('/help-center/requests', [\App\Http\Controllers\Account\SupportController::class, 'store'])->middleware('throttle:support-submit')->name('support.store');
@@ -354,6 +384,25 @@ Route::middleware(['auth', 'pm.admin', 'verified', 'throttle:60,1'])
         $editorial = \App\Http\Controllers\Admin\AI\AiEditorialController::class;
         $credits = \App\Http\Controllers\Admin\AI\AiCreditAdminController::class;
         Route::get('/', [$management, 'index'])->name('index');
+        $workspace = \App\Http\Controllers\Admin\AI\AiWorkspaceController::class;
+        Route::redirect('/workspace', '/admin/ai/workspace/overview')->name('workspace');
+        Route::get('/workspace/{section}', [$workspace, 'index'])->whereIn('section', \App\Http\Controllers\Admin\AI\AiWorkspaceController::PAGES)->name('workspace.section');
+        Route::post('/workspace/providers', [$workspace, 'saveProvider'])->name('workspace.providers.create');
+        Route::put('/workspace/providers/{id}', [$workspace, 'saveProvider'])->whereNumber('id')->name('workspace.providers.update');
+        Route::post('/workspace/credentials', [$workspace, 'saveKey'])->name('workspace.credentials.create');
+        Route::put('/workspace/credentials/{id}', [$workspace, 'saveKey'])->whereNumber('id')->name('workspace.credentials.update');
+        Route::post('/workspace/credentials/activate', [$workspace, 'activateKey'])->name('workspace.credentials.activate');
+        Route::post('/workspace/environment/{slot}/rotate', [$workspace, 'rotateEnvironment'])->withoutMiddleware('throttle:60,1')->middleware('throttle:admin-ai-workspace-test')->name('workspace.environment.rotate');
+        Route::post('/workspace/environment/{slot}/test', [$workspace, 'testEnvironment'])->withoutMiddleware('throttle:60,1')->middleware('throttle:admin-ai-workspace-test')->name('workspace.environment.test');
+        Route::post('/workspace/credentials/{id}/test', [$workspace, 'testKey'])->whereNumber('id')->withoutMiddleware('throttle:60,1')->middleware('throttle:admin-ai-workspace-test')->name('workspace.credentials.test');
+        Route::post('/workspace/credentials/{id}/rotate', [$workspace, 'rotateKey'])->whereNumber('id')->withoutMiddleware('throttle:60,1')->middleware('throttle:admin-ai-workspace-test')->name('workspace.credentials.rotate');
+        Route::post('/workspace/models', [$workspace, 'saveModel'])->name('workspace.models.create');
+        Route::put('/workspace/models/{id}', [$workspace, 'saveModel'])->whereNumber('id')->name('workspace.models.update');
+        Route::get('/workspace/connection/{feature}', [$workspace, 'connectionOptions'])->name('workspace.connection.options');
+        Route::put('/workspace/connection/{feature}', [$workspace, 'saveConnectionPrimary'])->name('workspace.connection.save');
+        Route::put('/workspace/features/{feature}', [$workspace, 'saveFeatureRoute'])->name('workspace.features.save');
+        Route::put('/workspace/budget', [$workspace, 'saveBudget'])->name('workspace.budget.save');
+
         Route::get('/usage', [$management, 'usage'])->name('usage');
         Route::put('/features', [$management, 'saveFeature'])->name('features.save');
         Route::post('/prompts', [$management, 'publishPrompt'])->name('prompts.publish');
@@ -375,9 +424,19 @@ Route::middleware(['auth', 'pm.admin', 'verified', 'throttle:60,1'])
         Route::get('/career-trends', [$trends, 'index'])->name('career-trends.index');
         Route::put('/career-trends', [$trends, 'update'])->name('career-trends.update');
         Route::post('/career-trends/connection-test', [$trends, 'testConnection'])
-            ->middleware('throttle:5,1')->name('career-trends.connection-test');
+            ->withoutMiddleware('throttle:60,1')->middleware('throttle:admin-ai-diagnostic')->name('career-trends.connection-test');
         Route::get('/career-trends/connection-test/{uuid}', [$trends, 'connectionTestStatus'])
-            ->whereUuid('uuid')->middleware('throttle:60,1')->name('career-trends.connection-test.status');
+            ->whereUuid('uuid')->withoutMiddleware('throttle:60,1')->middleware('throttle:admin-ai-diagnostic-status')->name('career-trends.connection-test.status');
+        $featureSettings = \App\Http\Controllers\Admin\AI\FeatureSettingsController::class;
+        Route::get('/pmp-settings', [$featureSettings, 'pmp'])->name('pmp-settings.index');
+        Route::put('/pmp-settings', [$featureSettings, 'updatePmp'])->name('pmp-settings.update');
+        Route::get('/feed-moderation', [$featureSettings, 'feed'])->name('feed-moderation.index');
+        Route::put('/feed-moderation', [$featureSettings, 'updateFeed'])->name('feed-moderation.update');
+        Route::post('/feed-moderation/test', [$featureSettings, 'testModeration'])->withoutMiddleware('throttle:60,1')->middleware('throttle:admin-ai-diagnostic')->name('feed-moderation.test');
+        Route::post('/feature-connection/{feature}', [$featureSettings, 'connection'])
+            ->whereIn('feature', ['daily-challenge', 'pmp', 'feed-moderation'])->withoutMiddleware('throttle:60,1')->middleware('throttle:admin-ai-diagnostic')->name('feature-connection');
+        Route::get('/feature-connection/{feature}/{uuid}', [$featureSettings, 'connectionStatus'])
+            ->whereIn('feature', ['daily-challenge', 'pmp'])->whereUuid('uuid')->withoutMiddleware('throttle:60,1')->middleware('throttle:admin-ai-diagnostic-status')->name('feature-connection.status');
         $daily = \App\Http\Controllers\Admin\DailyChallenge\DailyChallengeController::class;
         Route::get('/daily-challenge', [$daily, 'index'])->name('daily-challenge.index');
         Route::put('/daily-challenge', [$daily, 'update'])->name('daily-challenge.update');

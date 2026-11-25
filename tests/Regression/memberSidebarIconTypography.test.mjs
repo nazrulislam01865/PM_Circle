@@ -9,7 +9,8 @@ const sidebar = read('resources/js/components/dashboard/DashboardSidebar.tsx');
 
 test('member navigation retains icons in expanded, collapsed and mobile drawer modes', () => {
     assert.match(sidebar, /<Icon className="pm-member-nav-icon"/);
-    assert.match(sidebar, /<ClipboardList className="pm-member-nav-icon"/);
+    assert.match(sidebar, /exams: ClipboardList/);
+    assert.match(sidebar, /'course-group': BookOpen/);
     assert.match(css, /\.pm-member-restored-sidebar \.pm-member-nav-icon \{ display: block; flex: 0 0 var\(--icon\); width: var\(--icon\); height: var\(--icon\);/);
     assert.doesNotMatch(css, /\.pm-member-nav-icon\s*\{[^}]*display:\s*none/);
     assert.match(css, /\.is-collapsed \.pm-dash-nav-link span,/);

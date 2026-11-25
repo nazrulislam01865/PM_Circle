@@ -26,21 +26,21 @@ final class TrendAiConnection
     private function key(string $provider): ?string
     {
         return match ($provider) {
-            'openai' => config('pm-ai.api_key'),
-            'gemini' => config('pm-ai.gemini_api_key'),
+            'openai' => app(AiFeatureRouting::class)->primarySecret('trend_draft', 'api_key'),
+            'gemini' => app(AiFeatureRouting::class)->primarySecret('trend_draft', 'gemini_api_key'),
             default => null,
         };
     }
 
     private function moderationKey(string $provider): ?string
     {
-        return $provider === 'gemini' ? (config('pm-ai.post_check_api_key') ?: config('pm-ai.api_key')) : config('pm-ai.api_key');
+        return $provider === 'gemini' ? (app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential('post_check_api_key') ?: app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential('api_key')) : $this->key('openai');
     }
 
     public function configurationIssue(string $provider, ?string $model): ?string
     {
         if (! filled($this->key($provider))) return 'PROVIDER_NOT_CONFIGURED';
-        if (! $model || ! in_array($model, config('pm-ai.allowed_models', []), true)
+        if (! $model || ! in_array($model, app(\App\Domain\AI\Services\AiRuntimeSettings::class)->allowedModels(), true)
             || ($provider === 'gemini' && ! preg_match('/^gemini-[a-zA-Z0-9.-]{1,70}$/D', $model))
             || ($provider === 'openai' && str_starts_with($model, 'gemini-'))) return 'MODEL_NOT_ALLOWLISTED';
         if (! filled($this->moderationKey($provider))) return 'MODERATION_UNAVAILABLE';
@@ -57,7 +57,33 @@ final class TrendAiConnection
 
     private function cacheKey(string $provider, ?string $model): string
     {
-        return 'pm:trend-ai:'.hash_hmac('sha256', implode('|', [$provider, $model, $this->key($provider), $this->moderationKey($provider)]), (string) config('app.key'));
+        return 'pm:trend-ai:'.$this->fingerprint($provider, $model);
+    }
+
+    private function fingerprint(string $provider, ?string $model): string
+    {
+        return hash_hmac('sha256', json_encode([$provider, $model, $this->key($provider), $this->moderationKey($provider), app(AiFeatureRouting::class)->primaryAccounting('trend_draft', AiFeatureRouting::slot('trend_draft', $provider))]), (string) config('app.key'));
+    }
+
+    public function assertCurrent(object $request): void
+    {
+        $model = $this->model($request->provider, DB::table('ai_features')->where('code', 'trend_draft')->value('model'));
+        if ($model !== $request->model || $request->client_key !== $this->fingerprint($request->provider, $model)) {
+            throw new AiFailure('CONFIGURATION_CHANGED', 409);
+        }
+    }
+
+    public function recordCompleted(object $request, ?string $issue): void
+    {
+        if ($request->subject_type === 'trend_connection_test') {
+            try { $this->assertCurrent($request); } catch (AiFailure) { return; }
+        } else {
+            // A production fallback is not verification of the primary credential.
+            $actual = DB::table('ai_requests')->where('id', $request->id)->value('credential_ref');
+            $primary = app(AiFeatureRouting::class)->primaryAccounting('trend_draft', AiFeatureRouting::slot('trend_draft', $request->provider));
+            if (! $actual || $actual !== ($primary['ref'] ?? null)) return;
+        }
+        $this->record($request->provider, $request->model, $issue);
     }
 
     public function status(string $provider, ?string $model, bool $featureEnabled = true): array
@@ -67,7 +93,7 @@ final class TrendAiConnection
         if (! $featureEnabled || ! config('pm-ai.enabled') || ! config('pm-ai.editorial_enabled')) return $this->result($provider, $model, 'FEATURE_DISABLED', null);
         $cached = Cache::get($this->cacheKey($provider, $model));
 
-        return is_array($cached) ? $cached : $this->result($provider, $model, 'NOT_TESTED', null);
+        return is_array($cached) ? [...$cached, ...$this->credentialHealth($provider)] : $this->result($provider, $model, 'NOT_TESTED', null);
     }
 
     /** Test the same generation + moderation path as a real report, without creating a draft. */
@@ -89,7 +115,7 @@ final class TrendAiConnection
                 // Serialize test admission with the settings record, and reuse in-flight tests.
                 DB::table('career_trend_settings')->where('id', 1)->lockForUpdate()->first();
                 $existing = DB::table('ai_requests')->where('subject_type', 'trend_connection_test')
-                    ->where('subject_id', $actorId)->where('provider', $provider)->where('model', $model)
+                    ->where('subject_id', $actorId)->where('provider', $provider)->where('model', $model)->where('client_key', $this->fingerprint($provider, $model))
                     ->whereIn('status', ['queued', 'running'])->where('lease_until', '>', now())->latest('id')->first();
                 if ($existing) return $this->pending($provider, $model, $existing->request_uuid);
                 $uuid = (string) Str::uuid();
@@ -97,7 +123,7 @@ final class TrendAiConnection
                 $instructions = 'This is an internal connection diagnostic, not a report for publication. Return the required JSON fields: title, summary and body_markdown must each contain the single word Test; source_urls must be an empty array. No external facts.';
                 $id = DB::table('ai_requests')->insertGetId([
                     'request_uuid' => $uuid, 'feature_code' => 'trend_draft', 'subject_type' => 'trend_connection_test',
-                    'subject_id' => $actorId, 'status' => 'queued', 'model' => $model, 'provider' => $provider,
+                    'subject_id' => $actorId, 'client_key' => $this->fingerprint($provider, $model), 'status' => 'queued', 'model' => $model, 'provider' => $provider,
                     'prompt_version' => $feature->prompt_version, 'max_output_tokens' => 1024,
                     'payload_encrypted' => Crypt::encryptString(json_encode(['context' => $context, 'instructions' => $instructions], JSON_THROW_ON_ERROR)),
                     'model_price_snapshot' => json_encode([...$prices, 'price_id' => $price->id], JSON_THROW_ON_ERROR),
@@ -118,6 +144,7 @@ final class TrendAiConnection
         $row = DB::table('ai_requests')->where('request_uuid', $uuid)->where('subject_type', 'trend_connection_test')
             ->where('subject_id', $actorId)->first();
         abort_unless($row, 404);
+        try { $this->assertCurrent($row); } catch (AiFailure) { return $this->result($row->provider, $row->model, 'CONFIGURATION_CHANGED', null); }
         if (in_array($row->status, ['queued', 'running'], true) && $row->lease_until && now()->lt(\Illuminate\Support\Carbon::parse($row->lease_until))) {
             return $this->pending($row->provider, $row->model, $uuid);
         }
@@ -143,11 +170,18 @@ final class TrendAiConnection
         return $result;
     }
 
+    private function credentialHealth(string $provider): array
+    {
+        $slot = AiFeatureRouting::slot('trend_draft', $provider);
+        return app(AiWorkspaceCredentials::class)->healthFor(app(AiFeatureRouting::class)->primaryAccounting('trend_draft', $slot), $slot);
+    }
+
     private function result(string $provider, ?string $model, ?string $issue, ?string $checkedAt): array
     {
         $message = match ($issue) {
             null => 'Generation and mandatory moderation verified successfully.',
             'TEST_PENDING' => 'Testing generation and moderation. Waiting for the AI queue.',
+            'CONFIGURATION_CHANGED' => 'The workspace connection changed. Test the current saved connection again.',
             'TEST_TIMEOUT' => 'Connection test timed out. Check the editorial queue worker.',
             'FEATURE_DISABLED' => 'Enable the AI gateway, editorial generation and Trend draft feature before testing.',
             'MODEL_PRICE_MISSING' => 'Publish an approved price for this model before running a test.',
@@ -156,7 +190,7 @@ final class TrendAiConnection
             'AI_PROCESSING_FAILED' => 'AI processing failed. Check the editorial worker and server logs.',
             'QUEUE_JOB_FAILED' => 'The AI queue job failed. Check the editorial worker and server logs.',
             'NOT_TESTED' => 'Connection has not been checked recently. Select Test connection.',
-            'PROVIDER_NOT_CONFIGURED' => 'API key missing. Configure the provider on the server.',
+            'PROVIDER_NOT_CONFIGURED' => 'No usable primary credential is assigned. Select a tested credential from AI Workspace.',
             'MODEL_NOT_ALLOWLISTED' => 'Configure an approved model in AI settings and the model allowlist.',
             'PROVIDER_AUTH_FAILED' => 'API authentication failed. Check the API key.',
             'PROVIDER_PERMISSION_DENIED' => 'API permission denied. Check key access to the selected model.',
@@ -171,6 +205,6 @@ final class TrendAiConnection
             'PROVIDER_UNAVAILABLE', 'PROVIDER_STATUS_UNKNOWN' => 'Provider did not respond successfully. Check network access or provider availability.',
             default => 'Provider returned an unsuccessful or invalid response ('.$issue.').',
         };
-        return ['provider' => $provider, 'model' => $model, 'connected' => $issue === null, 'code' => $issue, 'message' => $message, 'checked_at' => $checkedAt, 'pending' => false];
+        return [...$this->credentialHealth($provider), 'provider' => $provider, 'model' => $model, 'routing_target' => $provider === 'gemini' ? 'gemini_api_key' : 'api_key', 'credential_name' => app(AiFeatureRouting::class)->primaryName('trend_draft', $provider === 'gemini' ? 'gemini_api_key' : 'api_key'), 'connected' => $issue === null, 'code' => $issue, 'message' => $message, 'checked_at' => $checkedAt, 'pending' => false];
     }
 }

@@ -29,7 +29,7 @@ final class AiFeatureCatalog
         if (! $feature || ! $feature->enabled || ! config('pm-ai.enabled')) {
             throw new AiFailure('FEATURE_DISABLED', 503);
         }
-        if (! in_array($feature->model, config('pm-ai.allowed_models', []), true)) {
+        if (($code !== 'trend_draft' && ! preg_match('/^(?:gpt-|o[1-9])/', $feature->model)) || ! in_array($feature->model, app(\App\Domain\AI\Services\AiRuntimeSettings::class)->allowedModels(), true)) {
             throw new AiFailure('MODEL_NOT_ALLOWLISTED', 503);
         }
         if ($feature->max_output_tokens < 50 || $feature->max_output_tokens > 5000) {

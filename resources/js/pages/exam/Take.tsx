@@ -1,14 +1,9 @@
+import { PmpExamTakingView } from '@/components/exam/PmpExamTakingView';
+import { PmpExamCalculator, PmpExamFinishDialog } from '@/components/exam/PmpExamDialogs';
 import { Head, router } from '@inertiajs/react';
-import * as Dialog from '@radix-ui/react-dialog';
-import { ArrowLeft, ArrowRight, Clock3, Flag, Info, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ExamToolGuide } from '@/components/exam/ExamToolGuide';
-import { PmpSubmitReviewSummary } from '@/components/exam/PmpSubmitReviewSummary';
-import { PmpExamNavigator } from '@/components/exam/PmpExamNavigator';
-import { PmpExamQuestionHeading, PmpExamQuestionTools } from '@/components/exam/PmpExamQuestionChrome';
-import { ExamTimeProgress } from '@/components/exam/ExamTimeProgress';
 import { examSecondsUntilExpiry, examServerClockOffset } from '@/components/exam/examCountdownMath';
-import { ExamOptionList, Highlighted, examBase, examResult, type ExamQuestion, type ExamResponses, type ExamResponse } from '@/components/exam/ExamShared';
+import { examBase, examResult, type ExamQuestion, type ExamResponses, type ExamResponse } from '@/components/exam/ExamShared';
 import { SiteHeader } from '@/components/pm/SiteHeader';
 
 type Strikes = Record<string, string[]>;
@@ -47,7 +42,6 @@ export default function Take({ attempt, questions, responses: initial }: {
     const timedOut = useRef(false);
     const lastSelection = useRef<string | null>(null);
     const [navStart, setNavStart] = useState(0);
-    const [calculator, setCalculator] = useState({ a: '', b: '', op: '+' });
 
     useEffect(() => {
         const tick = () => setSeconds(examSecondsUntilExpiry(attempt.expiresAt, Date.now(), serverClockOffset));
@@ -67,8 +61,6 @@ export default function Take({ attempt, questions, responses: initial }: {
     const selected = responses[question.id] ?? initialResponse;
     const answeredCount = questions.filter(q => Boolean(responses[q.id]?.choice)).length;
     const markedIndexes = questions.flatMap((q, i) => responses[q.id]?.marked ? [i] : []);
-    const markedCount = markedIndexes.length;
-    const markedPosition = markedIndexes.indexOf(index);
     // A learner may review earlier questions, but cannot skip ahead of the first unanswered one.
     const firstUnansweredIndex = questions.findIndex(q => !responses[q.id]?.choice);
     const lastUnlockedIndex = firstUnansweredIndex < 0 ? questions.length - 1 : firstUnansweredIndex;
@@ -237,90 +229,24 @@ export default function Take({ attempt, questions, responses: initial }: {
         const initialRemaining = examSecondsUntilExpiry(attempt.expiresAt, Date.now(), serverClockOffset);
         return Number.isFinite(initialRemaining) && initialRemaining > 0 ? initialRemaining : 1;
     }, [attempt.id, attempt.durationSeconds, attempt.expiresAt, serverClockOffset]);
-    const mm = (n: number) => String(Math.floor(n)).padStart(2, '0');
-    const time = `${mm(seconds / 3600)}:${mm((seconds % 3600) / 60)}:${mm(seconds % 60)}`;
-    const a = Number(calculator.a), b = Number(calculator.b);
-    const validCalc = calculator.a.trim() !== '' && calculator.b.trim() !== '' && Number.isFinite(a) && Number.isFinite(b) && !(calculator.op === '/' && b === 0);
-    const calcResult = calculator.op === '+' ? a + b : calculator.op === '-' ? a - b : calculator.op === '×' ? a * b : a / b;
-
     return <div className="pm-app pm-exam pm-exam-taking"><Head title="PMP Practice Exam"/><SiteHeader active="/exams/pmp" authenticatedMemberNavigation/>
-        <div className="pm-exam-examhead"><div className="pm-exam-examhead-title"><strong>PMP® Exam Simulator</strong></div>
-            <div className="pm-exam-examhead-right">{guideOpen ? <button className="btn secondary pm-exam-action" type="button" onClick={() => setGuideOpen(false)}><X size={18}/>Close</button> : <>
-                <span><Clock3 size={20}/>Time Remaining: <b className={seconds < 60 ? 'is-urgent' : ''}>{time}</b></span>
-                <span>Question {index + 1} of {questions.length}</span><button type="button" aria-label="Mark current question for review" aria-pressed={selected.marked} onClick={() => selected.marked ? removeReviewMark() : updateResponse(question.id, { marked: true })}><Flag fill={selected.marked ? 'currentColor' : 'none'}/></button>
-                <button className="pm-exam-guide-open" type="button" onClick={() => setGuideOpen(true)}><Info size={18}/> Exam Tools Guide</button>
-                <button className="btn secondary pm-exam-action" type="button" onClick={() => setFinishOpen(true)}>Finish Exam</button></>}</div></div>
-        <div className="pm-exam-take-body">
-        {guideOpen ? <ExamToolGuide/> : <>
-            <ExamTimeProgress secondsRemaining={seconds} durationSeconds={duration}/>
-            <div className="pm-exam-take-grid"><section className="pm-exam-panel pm-exam-question-card">
-                {(selected.marked || (reviewingMarked && markedPosition >= 0)) && <div className="pm-exam-marked-banner"><Flag size={15} fill="currentColor"/>
-                    {reviewingMarked && markedPosition >= 0 ? <><strong>Reviewing marked questions</strong><span>· {markedPosition + 1} of {markedCount} · You can change your answers.</span></>
-                        : <><strong>Marked for review</strong><span>· You can review this question before submitting.</span></>}
-                </div>}
-                <PmpExamQuestionHeading index={index} total={questions.length} domain={question.domain}/>
-                <div className="pm-exam-question-main"><p className="pm-exam-question-prompt" onMouseUp={event => {
-                    const selection = window.getSelection();
-                    if (!selection || selection.isCollapsed || !event.currentTarget.contains(selection.anchorNode) || !event.currentTarget.contains(selection.focusNode)) return;
-                    const text = selection.toString().trim();
-                    if (text) recordSelection(text);
-                }}><Highlighted content={question.prompt} active={tools.highlights[question.id]?.prompt ?? []} onRemove={unhighlightText}/></p>
-                    <ExamOptionList question={question} chosen={selected.choice}
-                        onChoose={chooseOption}
-                        onStrike={toggleStrike} strikeMode={strikeMode} struck={tools.strikes[question.id] ?? []}/></div>
-                <footer><PmpExamQuestionTools marked={selected.marked} strikeMode={strikeMode} highlightMode={highlightMode}
-                    onToggleMark={() => selected.marked ? removeReviewMark() : updateResponse(question.id, { marked: true })}
-                    onToggleStrike={() => setStrikeMode(v => !v)} onToggleHighlight={toggleHighlightMode}
-                    onCalculator={() => setCalcOpen(true)}/>
-                    {reviewingMarked && markedPosition >= 0 ?
-                        <div className="pm-exam-nextprev"><button className="btn secondary pm-exam-action" disabled={markedPosition === 0} onClick={() => goto(markedIndexes[markedPosition - 1], true)}><ArrowLeft size={18}/>Previous Marked</button>
-                            <button className="btn pm-exam-action" disabled={markedPosition === markedCount - 1} onClick={() => goto(markedIndexes[markedPosition + 1], true)}>Next Marked <ArrowRight size={18}/></button></div>
-                        : <div className="pm-exam-nextprev"><button className="btn secondary pm-exam-action" disabled={index === 0} onClick={() => goto(index - 1)}><ArrowLeft size={18}/>Previous</button>
-                            {index === questions.length - 1 ? <button className="btn pm-exam-action" onClick={() => setFinishOpen(true)}>Finish &amp; Review <ArrowRight size={18}/></button>
-                                : <button className="btn pm-exam-action" disabled={!canVisit(index + 1)} title={!canVisit(index + 1) ? 'Answer this and preceding questions to continue' : undefined} onClick={() => goto(index + 1)}>Next <ArrowRight size={18}/></button>}</div>}</footer>
-            </section><PmpExamNavigator questions={questions} responses={responses} currentIndex={index}
-                pageStart={navStart} onPageStartChange={setNavStart} canVisit={canVisit}
-                onNavigate={(target, marked) => marked ? startMarkedReview(target) : goto(target)}
-                onReviewMarked={() => startMarkedReview()} onExamSummary={() => setFinishOpen(true)}/></div>
-            {savingError && <div className="alert error pm-exam-save-error" role="alert">{savingError} <button type="button" onClick={() => { for (const id of failedSaveIds.current) persist(id, responses[id] ?? initialResponse); }}>Retry unsaved answers</button>
-                {savingError.includes('ended') && <a href={examResult(attempt.id)}>View results</a>}</div>}
-        </>}</div>
-        <Dialog.Root open={finishOpen} onOpenChange={open => {
-            if (!submittingRef.current) {
-                setFinishOpen(open);
-                if (!open) setConfirmSubmit(false);
-                if (open) setSubmitError('');
-            }
-        }}><Dialog.Portal><Dialog.Overlay className="pm-exam-modal-overlay"/><Dialog.Content className={`pm-exam-modal pm-exam-finish-modal${confirmSubmit ? '' : ' pm-exam-finish-prototype'}`} aria-describedby="pm-exam-finish-description">
-            {confirmSubmit ? <>
-                <Dialog.Title>Submit your exam?</Dialog.Title>
-                <Dialog.Description id="pm-exam-finish-description">
-                    {questions.length > answeredCount ? 'Unanswered questions will be left blank. ' : ''}Once you submit, your answers are final.
-                </Dialog.Description>
-                {submitError && <div className="alert error" role="alert">{submitError}</div>}
-                <div className="pm-exam-confirm-actions">
-                    <button type="button" className="btn secondary pm-exam-action" disabled={submitting} onClick={() => { setSubmitError(''); setConfirmSubmit(false); }}>Back to Summary</button>
-                    <button type="button" className="btn pm-exam-action" disabled={submitting} onClick={() => void submit()}>{submitting ? 'Submitting…' : 'Confirm Submission'}</button>
-                </div>
-            </> : <PmpSubmitReviewSummary
-                total={questions.length}
-                answeredCount={answeredCount}
-                markedIndexes={markedIndexes}
-                unansweredIndexes={questions.flatMap((q, i) => !responses[q.id]?.choice ? [i] : [])}
-                canVisit={canVisit}
-                submitting={submitting}
-                onClose={() => { setFinishOpen(false); setReviewingMarked(false); }}
-                onMarked={i => startMarkedReview(i)}
-                onUnanswered={i => { setFinishOpen(false); goto(i); }}
-                onSubmit={() => { setSubmitError(''); setConfirmSubmit(true); }}
-            />}
-        </Dialog.Content></Dialog.Portal></Dialog.Root>
-        <Dialog.Root open={calcOpen} onOpenChange={setCalcOpen}><Dialog.Portal><Dialog.Overlay className="pm-exam-modal-overlay"/><Dialog.Content className="pm-exam-modal pm-exam-calc"><Dialog.Close className="pm-exam-modal-close" aria-label="Close"><X/></Dialog.Close>
-            <Dialog.Title>Calculator</Dialog.Title><Dialog.Description>Quick arithmetic during the practice exam.</Dialog.Description>
-            <div className="pm-exam-calc-fields"><label>First number<input type="number" value={calculator.a} onChange={event => setCalculator(v => ({...v,a:event.target.value}))}/></label>
-                <label>Operation<select value={calculator.op} onChange={event => setCalculator(v => ({...v,op:event.target.value}))}><option value="+">+</option><option value="-">−</option><option value="×">×</option><option value="/">÷</option></select></label>
-                <label>Second number<input type="number" value={calculator.b} onChange={event => setCalculator(v => ({...v,b:event.target.value}))}/></label></div>
-            <output className="pm-exam-calc-output">{validCalc ? Number(calcResult.toFixed(8)).toLocaleString() : calculator.op === '/' && b === 0 ? 'Cannot divide by zero' : 'Enter two numbers'}</output>
-        </Dialog.Content></Dialog.Portal></Dialog.Root>
+        <PmpExamTakingView questions={questions} responses={responses} index={index} selected={selected} seconds={seconds} duration={duration}
+            guideOpen={guideOpen} strikeMode={strikeMode} highlightMode={highlightMode} reviewingMarked={reviewingMarked}
+            markedIndexes={markedIndexes} navStart={navStart} strikes={tools.strikes[question.id] ?? []} highlights={tools.highlights[question.id]?.prompt ?? []}
+            canVisit={canVisit} goto={goto} onGuide={setGuideOpen} onToggleMark={() => selected.marked ? removeReviewMark() : updateResponse(question.id, { marked: true })}
+            onToggleStrike={() => setStrikeMode(v => !v)} onToggleHighlight={toggleHighlightMode} onCalculator={() => setCalcOpen(true)}
+            onSelection={recordSelection} onRemoveHighlight={unhighlightText} onChoose={chooseOption} onStrike={toggleStrike}
+            onPageStartChange={setNavStart} onNavigate={(target, marked) => marked ? startMarkedReview(target) : goto(target)} onReviewMarked={() => startMarkedReview()}
+            onFinish={() => setFinishOpen(true)} onFinal={() => setFinishOpen(true)} onSummary={() => setFinishOpen(true)}
+            saveNotice={savingError && <div className="alert error pm-exam-save-error" role="alert">{savingError} <button type="button" onClick={() => { for (const id of failedSaveIds.current) persist(id, responses[id] ?? initialResponse); }}>Retry unsaved answers</button>
+                {savingError.includes('ended') && <a href={examResult(attempt.id)}>View results</a>}</div>}/>
+        <PmpExamFinishDialog open={finishOpen} onOpenChange={open => {
+            if (!submittingRef.current) { setFinishOpen(open); if (!open) setConfirmSubmit(false); if (open) setSubmitError(''); }
+        }} confirming={confirmSubmit} onConfirmStep={() => { setSubmitError(''); setConfirmSubmit(true); }}
+            onBack={() => { setSubmitError(''); setConfirmSubmit(false); }} onConfirm={() => void submit()} error={submitError}
+            total={questions.length} answeredCount={answeredCount} markedIndexes={markedIndexes}
+            unansweredIndexes={questions.flatMap((q, i) => !responses[q.id]?.choice ? [i] : [])} canVisit={canVisit} submitting={submitting}
+            onClose={() => { setFinishOpen(false); setReviewingMarked(false); }} onMarked={i => startMarkedReview(i)} onUnanswered={i => { setFinishOpen(false); goto(i); }}/>
+        <PmpExamCalculator open={calcOpen} onOpenChange={setCalcOpen}/>
     </div>;
 }

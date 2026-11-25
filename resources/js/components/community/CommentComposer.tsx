@@ -1,5 +1,6 @@
 import { ImagePlus, Send, Smile, X } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { CommentFeedback } from './CommentFeedback';
 import { Avatar } from '@/components/pm/Avatar';
 import type { RequestToJoin } from '@/components/home/HomeEngagement';
 
@@ -84,8 +85,8 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
                     setPendingReview(null); setReviewNotice(''); setFailedComment(null);
                 } else if (result.status === 'restricted') {
                     settled = true;
-                    setBody(pendingReview.submittedBody);
-                    setError(result.reason || 'Your comment did not meet the community policy. Edit and submit again.');
+                    setBody(previous => previous || pendingReview.submittedBody);
+                    setError(`Not published. ${result.reason || 'Your comment did not meet the community policy. Edit and submit again.'}`);
                     setReviewNotice(''); setPendingReview(null);
                 } else if (result.status === 'check_error') {
                     settled = true;
@@ -94,7 +95,8 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
                     setPendingReview(null);
                 } else if (result.status === 'pending_review') {
                     settled = true;
-                    setReviewNotice('Your comment is awaiting an administrator review.');
+                    setReviewNotice('');
+                    setError('This comment has not been published. Please revise it and try again.');
                     setPendingReview(null);
                 }
             } catch { /* The next poll retries; never expose unchecked comments. */ }
@@ -135,7 +137,7 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
     const submit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (!canInteract) { onJoin(isReply ? 'reply to a comment' : 'comment on a post'); return; }
-        if (!valid || busy) return;
+        if (!valid || busy || pendingReview) return;
         setBusy(true); setError(''); setReviewNotice('');
         try {
             if (onSubmitText) {
@@ -166,8 +168,11 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
             if (result.check_status === 'pending_check') {
                 setPendingReview({ id: result.comment.id, submittedBody: body.trim() });
                 setReviewNotice(isReply ? 'Checking your reply...' : 'Checking your comment...');
-            } else {
+            } else if (!result.check_status || result.check_status === 'approved') {
                 onCreated?.(result.comment);
+            } else {
+                setError('Your comment has not been published. Please revise it and try again.');
+                return;
             }
             setBody(''); if (!compact && postId !== undefined) commentDrafts.delete(postId); setFile(null); setEmojiOpen(false);
         } catch (reason) {
@@ -199,8 +204,12 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
                 </button>
             </div>
             {emojiOpen && <div className="pm-comment-emoji-list" role="group" aria-label="Choose an emoji">{emojis.map(emoji => <button key={emoji} type="button" aria-label={`Insert ${emoji}`} onClick={() => { setBody(previous => { const value = previous + emoji; if (!compact && postId !== undefined) commentDrafts.set(postId, value); return value; }); editor.current?.focus(); setEmojiOpen(false); }}>{emoji}</button>)}</div>}
-            {reviewNotice && <p className="pm-inline-comment-info" role="status">{reviewNotice}{failedComment && <button type="button" className="pm-button pm-button-outline pm-button-sm" onClick={() => void retryFailedReview()}>Retry check</button>}</p>}
-            {error && <p className="pm-inline-comment-error" role="alert">{error}</p>}
+            {(reviewNotice || error) && <div className="pm-comment-feedback-stack">
+                {reviewNotice && <CommentFeedback tone={failedComment ? 'warning' : pendingReview ? 'checking' : 'info'} message={reviewNotice}>
+                    {failedComment && <button type="button" className="pm-button pm-button-outline pm-button-sm" onClick={() => void retryFailedReview()}>Retry check</button>}
+                </CommentFeedback>}
+                {error && <CommentFeedback tone="error" message={error}/>}
+            </div>}
         </div>
     </form>;
 }

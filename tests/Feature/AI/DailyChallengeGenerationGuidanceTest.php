@@ -36,10 +36,6 @@ final class DailyChallengeGenerationGuidanceTest extends TestCase
         $this->admin = User::factory()->create([
             'is_admin' => true, 'status' => 'active', 'email_verified_at' => now(),
         ]);
-        DB::table('ai_admin_permissions')->insert([
-            'user_id' => $this->admin->id, 'permission' => 'ai.manage_editorial',
-            'created_at' => now(),
-        ]);
     }
 
     private function settingsInput(): array

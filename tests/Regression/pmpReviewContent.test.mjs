@@ -67,3 +67,47 @@ test('review filters distinguish an incorrect answer from an unanswered question
     assert.equal(matchesReviewFilter(question, { choice: 'D', marked: true }, 'flagged'), true);
     assert.equal(matchesReviewFilter(question, blank, 'all'), true);
 });
+
+
+test('original workbook citation becomes separate publication and ECO cards without changing stored data', () => {
+    const raw = JSON.stringify({ sources: [{
+        source: 'The Standard for Project Management, 8th ed. volume', title: 'Focus on Value',
+        section: '3.4', page: 63, examDomain: 'People', task: 'I-01', focus: 'Build a shared vision',
+        ecoReference: 'July 2026 ECO, Domain I, Task 1, p. 7',
+    }], performanceDomain: 'Stakeholders', knowledgeArea: 'Stakeholder Management' });
+    const result = referenceContent(raw);
+    assert.equal(result.sources.length, 2);
+    const [book, eco] = result.sources;
+    assert.equal(book.title, 'The Standard for Project Management');
+    assert.equal(book.chapter, '3');
+    assert.equal(book.section, '3.4 · Focus on Value');
+    assert.equal(book.page, '63');
+    assert.equal(book.task, undefined);
+    assert.equal(eco.title, 'July 2026 ECO');
+    assert.equal(eco.examDomain, 'I · People');
+    assert.equal(eco.task, 'I-01 · Task 1');
+    assert.equal(eco.focus, 'Build a shared vision');
+    assert.equal(eco.page, '7');
+    assert.equal(eco.pageLabel, 'ECO page');
+    assert.equal(result.performanceDomain, 'Stakeholders');
+    assert.equal(result.knowledgeArea, 'Stakeholder Management');
+});
+
+test('appendix citations, unknown ECO formats and separately authored sources remain intact', () => {
+    const result = referenceContent(JSON.stringify({sources: [{source: 'PMBOK Guide, 8th ed.', title: 'Source Selection Criteria', section: 'X4.7', page: '354', ecoReference: 'Custom citation', task: 'II-05'}]}));
+    assert.equal(result.sources.length, 2);
+    assert.equal(result.sources[0].chapter, undefined);
+    assert.equal(result.sources[0].section, 'X4.7');
+    assert.equal(result.sources[1].ecoReference, 'Custom citation');
+    assert.equal(result.sources[1].page, undefined);
+    const separated = referenceContent(JSON.stringify({sources: [{source: 'PMBOK Guide', title: 'Source'}, {source: 'PMP Exam Content Outline', title: 'July 2026 ECO', task: 'I-01', page: '7'}]}));
+    assert.equal(separated.sources.length, 2);
+    assert.equal(separated.sources[1].task, 'I-01');
+});
+
+test('workbook and admin authored concepts preserve descriptions and connection with legacy fallback', () => {
+    const result = conceptsContent('Shared outcome | Agree what better check-in looks like.\nSuccess measures | Track wait time and staffing.\nHow they connect: Measures show whether the outcome is reached.');
+    assert.deepEqual(result.items, [{title:'Shared outcome', description:'Agree what better check-in looks like.'}, {title:'Success measures', description:'Track wait time and staffing.'}]);
+    assert.equal(result.connection, 'Measures show whether the outcome is reached.');
+    assert.equal(conceptsContent('Shared outcome; success measures').connection, '');
+});

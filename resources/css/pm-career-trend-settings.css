@@ -42,7 +42,7 @@
 .pm-career-settings-preview > div:last-child { border-bottom: 0; }
 .pm-career-settings-preview > div > svg { width: var(--icon); height: var(--icon); color: var(--pm-guide-muted); }
 .pm-career-settings-preview > div > span:last-child:nth-child(2) { grid-column: 2/-1; }
-.pm-career-settings-dialog { margin: auto; max-width: min(var(--pm-guide-reward-dialog-width), calc(100% - var(--s6))); max-height: calc(100dvh - var(--s6)); overflow: auto; padding: var(--s6); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); color: var(--ink); box-shadow: var(--pm-guide-dialog-shadow); }
+.pm-career-settings-dialog { position: fixed; inset: 0; margin: auto; height: fit-content; max-width: min(var(--pm-guide-reward-dialog-width), calc(100% - var(--s6))); max-height: calc(100dvh - var(--s6)); overflow: auto; padding: var(--s6); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); color: var(--ink); box-shadow: var(--pm-guide-dialog-shadow); }
 .pm-career-settings-dialog::backdrop { background: var(--pm-guide-dialog-backdrop); }
 .pm-career-settings-dialog > * + * { margin-top: var(--s3); }
 .pm-career-settings-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); }

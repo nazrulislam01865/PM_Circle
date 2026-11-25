@@ -1,0 +1,42 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+const read = p => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+test('all three operations have workspace-managed configuration and existing settings fallback', () => {
+ const admin=read('app/Http/Controllers/Admin/AI/AiWorkspaceController.php');
+ const route=read('app/Domain/AI/Services/AiFeatureRouting.php');
+ const ui=read('resources/js/pages/admin/AiWorkspace.tsx');
+ for(const code of ['resume_extract','resume_analyze','resume_rewrite']) assert.ok(admin.includes(code));
+ for(const field of ['enabled_override','request_daily_limit','output_token_limit','primary_model']) assert.ok(route.includes(field));
+ for(const label of ['Feature status','Daily requests per member','Maximum output tokens','AI credits per request']) assert.ok(ui.includes(label));
+ assert.match(read('app/Domain/AI/Services/ResumeExtractionSettings.php'), /enabled_override \?\? config/);
+ assert.doesNotMatch(read('app/Domain/AI/Services/AiWorkspaceCredentials.php'), /Direct resume extraction has no cost ledger/);
+});
+test('editor extraction is explicit opt-in with existing document validation and metered transport', () => {
+ const controller=read('app/Http/Controllers/Account/ResumeAssistantController.php');
+ const service=read('app/Domain/AI/Services/CvExtractionService.php');
+ const page=read('resources/js/pages/account/ResumeAssistant.tsx');
+ assert.match(controller,/boolean\('use_ai'\) && ! \$request->boolean\('ai_consent'\)/);
+ assert.match(controller,/extractTemplate\(\$text, \$request->user\(\)->id\)/);
+ assert.match(controller,/\$parser->parse\(\$text\)/);
+ assert.match(service,/ResumeDocument::rules\(\)/);
+ assert.match(service,/'store' => false/);
+ assert.match(service,/directCandidates\('resume_extract', 'resume_extract_api_key'\)/);
+ assert.match(service,/\$ledger->settle/);
+ assert.match(page,/useState\(false\);\n    const \[submitConfirm/);
+ assert.match(page,/I consent to sending the extracted résumé text/);
+});
+test('draft AI requests use existing gateway consent, credit reservation and queue without saving profile documents', () => {
+ const context=read('app/Domain/AI/Services/AiSubjectContext.php');
+ const gateway=read('app/Domain/AI/Services/AiGateway.php');
+ const exec=read('app/Domain/AI/Services/AiExecutionService.php');
+ const ui=read('resources/js/components/profile/ResumeAiReview.tsx');
+ assert.match(context,/'subject_type' => 'resume_editor_draft', 'subject_id' => null/);
+ assert.match(gateway,/ai-resume-draft-v1/);
+ assert.match(gateway,/Crypt::encryptString/);
+ assert.match(gateway,/\$this->credits->reserve/);
+ assert.match(gateway,/ExecuteAiRequest::dispatch/);
+ assert.match(exec,/CONSENT_REVOKED/);
+ assert.match(exec,/\$row->feature_code === 'resume_rewrite' && \$row->subject_type === 'profile_resume'/);
+ assert.match(ui,/Current résumé draft/);
+});

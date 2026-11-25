@@ -8,7 +8,7 @@ test('public header contains all screenshot dropdown entries in the required ord
     const header = read('resources/js/components/home/v2/HomeHeader.tsx');
     for (const [label, entries] of [
         ['Exam Simulator', ['Browse simulators', 'Compare Plans']],
-        ['Learn & Practice', ['Browse courses', 'AI learning tools']],
+        ['Learn & Practice', ['Browse courses']],
         ['Community', ['Community feed', 'Daily Challenge', 'Community events']],
     ]) {
         const group = header.indexOf(`<HeaderDropdown label="${label}"`);
@@ -42,7 +42,7 @@ test('all prototype header links resolve to declared public destinations', () =>
         assert.ok(header.includes(target), `${target} linked`);
         assert.ok(routes.includes(routeLiteral), `${target} route exists`);
     }
-    assert.match(header, /\/\#pm-v2-ai/);
+    assert.doesNotMatch(header, /AI learning tools|\/\#pm-v2-ai/);
     assert.match(read('resources/js/components/home/v2/HomeAiResume.tsx'), /id="pm-v2-ai"/);
 });
 

@@ -17,10 +17,10 @@ test('guest content, header and shared footer use a rule stronger than the legac
     assert.match(layout, /isGuest \? ' pm-guest-public-shell'/);
 });
 
-test('only guest course canvas changes; approved course UI and footer are preserved', () => {
-    assert.match(css, /\.pm-app\.pm-page-shell\.pm-guest-public-shell > main \.pm-course-detail\s*\{[^}]*background:\s*var\(--surface\)/s);
+test('guest course canvas matches the shared catalog while the rail and footer are preserved', () => {
+    assert.match(css, /\.pm-app\.pm-page-shell\.pm-guest-public-shell > main \.pm-course-detail\s*\{[^}]*background:\s*var\(--canvas\)/s);
     assert.match(course, /<CourseDetailHero course=\{course\}/);
-    assert.match(course, /<CourseDetailTabs active=\{tab\}/);
+    assert.match(course, /<CourseDetailTabs onChange=\{jump\}/);
     assert.match(course, /<CourseAccessCard course=\{course\}/);
     assert.match(footer, /<HomeFooter content=\{content\}/);
 });

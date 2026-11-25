@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 type ImageKind = 'avatar' | 'cover';
 const specifications = {
     avatar: { width: 400, height: 400, label: 'Profile photo' },
-    cover: { width: 1536, height: 400, label: 'Cover photo' },
+    cover: { width: 1590, height: 300, label: 'Cover photo' },
 };
 const clamp = (number: number, low: number, high: number) => Math.max(low, Math.min(high, number));
 
@@ -29,13 +29,20 @@ export function ProfileImageCropDialog({ file, kind, onCancel, onConfirm }: {
         if (!file) { setImage(null); return; }
         const url = URL.createObjectURL(file);
         const next = new Image();
-        next.onload = () => setImage(next);
+        setImage(null);
+        next.onload = () => {
+            if (next.naturalWidth > 6000 || next.naturalHeight > 6000) {
+                setError('Choose an image no larger than 6000 × 6000 pixels.');
+                return;
+            }
+            setImage(next);
+        };
         next.onerror = () => setError('This image could not be opened. Choose another JPG, PNG or WebP image.');
         next.src = url;
         setZoom(1);
         setCenter({ x: 0.5, y: 0.5 });
         setError('');
-        return () => URL.revokeObjectURL(url);
+        return () => { next.onload = null; next.onerror = null; URL.revokeObjectURL(url); };
     }, [file]);
 
     const getSource = () => {
@@ -71,6 +78,7 @@ export function ProfileImageCropDialog({ file, kind, onCancel, onConfirm }: {
         const source = getSource();
         if (!source) return;
         setBusy(true);
+        setError('');
         try {
             const output = document.createElement('canvas');
             output.width = spec.width;
@@ -130,7 +138,7 @@ export function ProfileImageCropDialog({ file, kind, onCancel, onConfirm }: {
                 <label htmlFor="pm-image-crop-zoom" className="pm-label">Zoom</label>
                 <input id="pm-image-crop-zoom" type="range" min="1" max="3" step="0.05" value={zoom}
                     onChange={(event) => setZoom(Number(event.target.value))} />
-            </> : <div className="pm-image-crop-loading"><ImageIcon size={24} /> Preparing image preview...</div>}
+            </> : !error && <div className="pm-image-crop-loading" role="status"><ImageIcon size={24} /> Preparing image preview...</div>}
             {error && <p role="alert" className="pm-profile-error">{error}</p>}
             </div>
             <DialogFooter className="pm-image-crop-footer">

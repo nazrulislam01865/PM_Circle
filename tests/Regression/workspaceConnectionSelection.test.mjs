@@ -1,0 +1,21 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+const read = p => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+test('connection picker is shared and saves only approved workspace assignments', () => {
+    const ui = read('resources/js/components/admin/ai/WorkspaceConnectionPicker.tsx');
+    assert.match(ui, /Primary API credential/);
+    assert.match(ui, /AI model/);
+    assert.match(ui, /expected_model: data.model/);
+    assert.match(ui, /method: 'PUT'/);
+    assert.match(ui, /credentials\/\$\{selected.id\}\/test/);
+    assert.doesNotMatch(ui, /type="password"|localStorage/);
+    const controller = read('app/Http/Controllers/Admin/AI/AiWorkspaceController.php');
+    assert.match(controller, /public function saveConnectionPrimary/);
+    assert.match(controller, /\$routing->save\(\$feature/);
+    assert.match(controller, /'backup_credential_id' => \$route\?->backup_credential_id/);
+    assert.match(controller, /\$current === \$data\['expected'\]/);
+    for (const path of ['resources/js/components/admin/ai/SettingsShared.tsx', 'resources/js/pages/admin/CareerTrendSettings.tsx']) assert.match(read(path), /<WorkspaceConnectionPicker/);
+    assert.match(read('app/Domain/AI/Services/FeatureConnectionStatus.php'), /healthFor\(/);
+    assert.match(read('app/Domain/AI/Services/TrendAiConnection.php'), /\$request->client_key !== \$this->fingerprint/);
+});

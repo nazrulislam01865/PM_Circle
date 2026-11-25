@@ -1,0 +1,50 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const read = path => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
+const page = read('resources/js/pages/account/ResumeAssistant.tsx');
+const client = read('resources/js/components/profile/resumeExport.ts');
+const server = read('app/Http/Controllers/Account/ResumeAssistantController.php');
+const exporter = read('app/Domain/Identity/Services/ResumeExport.php');
+const css = read('resources/css/pm-resume-assistant.css');
+test('full preview and exports use live draft state, not saved-profile links',()=>{
+    assert.match(page,/exportResumeDraft\(data,cv,format\)/);
+    assert.match(page,/<ResumeDraftPreview data=\{data\} document=\{cv\}/);
+    assert.doesNotMatch(page,/\/settings\/profile\/resume\/export\?format=/);
+    assert.match(client,/JSON.stringify\(\{ name, email, role, location, summary, document: cv, format \}\)/);
+    assert.match(client,/response.status === 429/);
+    assert.match(client,/X-CSRF-TOKEN/);
+    assert.match(server,/\$data\['document'\], \$data\['format'\]/);
+});
+test('Word output is a real DOCX and shares the section order with the printable export',()=>{
+    const word=read('app/Domain/Identity/Services/ResumeWordDocument.php');
+    const print=read('resources/views/profile/resume-export.blade.php');
+    assert.match(exporter,/application\/vnd.openxmlformats-officedocument.wordprocessingml.document/);
+    assert.match(exporter,/ZipArchive::CREATE \| ZipArchive::OVERWRITE/);
+    assert.match(exporter,/finally \{/);
+    assert.match(word,/word\/document.xml/);
+    assert.match(word,/ResumeExport::SECTIONS/);
+    assert.match(print,/ResumeExport::SECTIONS/);
+    assert.match(word,/ENT_XML1/);
+    assert.match(print,/contact-separator/);
+    assert.doesNotMatch(print,/\$member->/);
+});
+test('editor footer owns actions and aligns them to the right',()=>{
+    const editor=page.split('<div className="pm-resume-builder-card pm-resume-editor">')[1].split('<aside')[0];
+    const aside=page.split('<aside className="pm-resume-builder-aside"')[1].split('</aside>')[0];
+    assert.match(editor,/pm-resume-editor-footer/);
+    assert.match(editor,/>Save draft</);assert.match(editor,/Submit profile/);
+    assert.doesNotMatch(aside,/Save draft|Submit profile/);
+    assert.match(css,/\.pm-resume-editor-footer \.pm-resume-builder-actions \{[^}]*justify-content: flex-end/);
+    assert.match(aside,/ResumeQuality/);assert.match(aside,/ResumeDraftPreview/);
+});
+test('sticky rail accounts for actual profile tabs and editor bottom, and never shrinks document pages',()=>{
+    assert.match(page,/tabs.getBoundingClientRect\(\).height/);
+    assert.match(page,/grid.getBoundingClientRect\(\).bottom/);
+    assert.match(page,/requestAnimationFrame\(sync\)/);
+    assert.match(page,/removeEventListener\('scroll',schedule\)/);
+    assert.match(page,/<aside[^>]*tabIndex=\{0\}/);
+    assert.match(css,/\.pm-resume-builder-aside \{\s*position: sticky;[^}]*grid-auto-rows: max-content;[^}]*overflow-y: auto/);
+    assert.match(css,/@container pm-resume-builder \(max-width: 52rem\) \{\s*\.pm-resume-builder-aside \{ position: static[^}]*overflow: visible/);
+    assert.doesNotMatch(css,/pm-resume-aside-content/);
+});

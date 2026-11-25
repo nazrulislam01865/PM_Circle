@@ -1,3 +1,4 @@
+import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { Link } from '@inertiajs/react';
 import { PostAuthorLink, postAuthorHref, postAuthorUnavailable } from './PostAuthorLinks';
 import { PostEngagementActions } from '@/components/community/PostEngagementActions';
@@ -86,7 +87,7 @@ export function PostCard({
             </header>
 
             <div className="pm-post-card-main pm-post-aligned-content">
-                {post.title && (mode === 'detail' ? <h1 className="pm-card-title">{post.title}</h1> : <h3 className="pm-card-title">{post.viewer_hidden ? post.title : <Link href={`/posts/${post.id}`}>{post.title}</Link>}</h3>)}
+                {post.title && (mode === 'detail' ? <LegacyPageHeading><h1 className="pm-card-title">{post.title}</h1></LegacyPageHeading> : <h3 className="pm-card-title">{post.viewer_hidden ? post.title : <Link href={`/posts/${post.id}`}>{post.title}</Link>}</h3>)}
                 {mode === 'detail' || post.viewer_hidden ? <PostContent className="pm-card-body" body={post.body} image={post.image_path}/>
                     : <Link href={`/posts/${post.id}`} className="pm-unified-post-body-link" aria-label={`View discussion by ${post.author.name}`}><PostContent className="pm-card-body" body={post.body} image={post.image_path}/></Link>}
             </div>

@@ -1,0 +1,17 @@
+/* Shared local image picker; typography and controls inherit the PM design system. */
+.pm-image-upload { display: grid; gap: var(--s2); min-width: 0; }
+.pm-image-upload-label { font: var(--pm-guide-weight-control) var(--text-ui)/var(--line-ui) var(--font-ui); color: var(--ink); }
+.pm-image-upload-zone { display: grid; grid-template-columns: minmax(0, 12rem) minmax(0, 1fr); align-items: center; gap: var(--s4); padding: var(--s3); border: 1px dashed var(--control-border); border-radius: var(--radius-card); background: var(--surface); }
+.pm-image-upload-zone.is-dragging { border-color: var(--blue); background: var(--blue-soft); }
+.pm-image-upload-preview, .pm-image-upload-placeholder { width: 100%; aspect-ratio: 16/9; border-radius: var(--radius-control); background: var(--canvas); }
+.pm-image-upload-preview { display: block; object-fit: contain; }
+.pm-image-upload-placeholder { display: grid; align-content: center; justify-items: center; gap: var(--s2); color: var(--muted); text-align: center; padding: var(--s2); font-size: var(--text-ui); }
+.pm-image-upload-placeholder svg { width: var(--s8); height: var(--s8); color: var(--blue); }
+.pm-image-upload-info { display: grid; gap: var(--s2); min-width: 0; font-size: var(--text-ui); color: var(--ink); overflow-wrap: anywhere; }
+.pm-image-upload-info small { color: var(--muted); font-size: var(--text-ui); }
+.pm-image-upload input[hidden] { display: none !important; }
+.pm-image-upload-actions { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.pm-image-upload-actions button { display: inline-flex; align-items: center; gap: var(--s2); }
+.pm-image-upload-actions svg { width: var(--icon); height: var(--icon); flex-shrink: 0; }
+.pm-image-upload-error { color: var(--red); font-size: var(--text-ui); }
+@media (max-width: 40.625rem) { .pm-image-upload-zone { grid-template-columns: minmax(0, 1fr); } .pm-image-upload-preview, .pm-image-upload-placeholder { max-width: 18rem; } }

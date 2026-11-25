@@ -94,6 +94,19 @@ final class PostOmniModerationTest extends TestCase
             && $request->data()['model'] === 'omni-moderation-latest');
     }
 
+    public function test_clean_post_can_be_held_without_recording_a_violation(): void
+    {
+        DB::table('feed_moderation_settings')->where('id', 1)->update(['hold_clean_content' => true]);
+        $this->response();
+        $post = $this->post();
+        $this->process($post);
+        $post->refresh();
+        $this->assertSame('pending_review', $post->status);
+        $this->assertNull($post->published_at);
+        $this->assertNull($post->check_category);
+        $this->assertSame(0, DB::table('post_check_violations')->where('post_id', $post->id)->count());
+    }
+
     public function test_clean_anonymous_post_is_published_by_ai_without_admin_approval(): void
     {
         $this->response();

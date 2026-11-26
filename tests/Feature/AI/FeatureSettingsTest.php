@@ -142,6 +142,83 @@ final class FeatureSettingsTest extends TestCase
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/moderations') && $request->hasHeader('Authorization', 'Bearer synthetic-moderation-secret'));
     }
 
+    public function test_shared_openai_primary_can_be_assigned_to_daily_operations_and_diagnostics_use_that_key(): void
+    {
+        $this->configureGenerationDiagnostic();
+        config()->set('pm-ai.daily_challenge_api_key', null);
+        DB::table('ai_features')->updateOrInsert(['code' => 'daily_challenge_review'], ['enabled' => true, 'model' => 'gpt-5-nano', 'created_at' => now(), 'updated_at' => now()]);
+        $provider = DB::table('ai_workspace_providers')->where('adapter', 'openai')->where('is_default', true)->value('id');
+        $key = DB::table('ai_workspace_credentials')->insertGetId([
+            'slot' => 'api_key', 'provider_id' => $provider, 'name' => 'Shared Responses', 'suffix' => 'cret', 'secret_encrypted' => \Illuminate\Support\Facades\Crypt::encryptString('synthetic-shared-secret'),
+            'enabled' => true, 'health_code' => 'OPERATION_VERIFIED', 'checked_at' => now(), 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $moderation = DB::table('ai_workspace_credentials')->insertGetId([
+            'slot' => 'post_check_api_key', 'provider_id' => $provider, 'name' => 'Isolated moderation', 'suffix' => 'cret', 'secret_encrypted' => \Illuminate\Support\Facades\Crypt::encryptString('synthetic-isolated-secret'),
+            'enabled' => true, 'health_code' => 'OPERATION_VERIFIED', 'checked_at' => now(), 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $this->actingAs($this->admin());
+        $routing = app(\App\Domain\AI\Services\AiFeatureRouting::class);
+        $this->assertFalse($routing->primaryConfigured('scenario_generate', 'daily_challenge_api_key'));
+        $results = [
+            'scenario_generate' => ['title' => 'Test', 'summary' => 'Test', 'situation' => 'Test', 'known_facts' => ['One', 'Two'], 'topics' => ['Schedule'], 'difficulty' => 'Moderate', 'focus' => 'Test', 'learner_prompt' => 'Test', 'rubric_criteria' => [['key' => 'a', 'description' => 'Test', 'max_points' => 5], ['key' => 'b', 'description' => 'Test', 'max_points' => 5]]],
+            'daily_challenge_review' => ['criteria' => [['key' => 'risk', 'points' => 10, 'evidence' => 'Risk identified']], 'strengths' => ['Risk owner'], 'gaps' => ['Add details'], 'next_actions' => ['Track risk'], 'disclaimer' => 'Educational'],
+        ];
+        $payload = [];
+        Http::fake(function ($request) use (&$payload) {
+            if (str_ends_with($request->url(), '/moderations')) return Http::response(['results' => [['flagged' => false]]]);
+            return Http::response(['id' => 'test-shared', 'status' => 'completed', 'output' => [['content' => [['type' => 'output_text', 'text' => json_encode($payload)]]]], 'usage' => ['input_tokens' => 50, 'output_tokens' => 30]]);
+        });
+        foreach ($results as $operation => $payload) {
+            $url = '/admin/ai/workspace/connection/'.$operation;
+            $options = $this->getJson($url)->assertOk()->assertJsonPath('default_name', null)->assertJsonPath('credentials.0.id', (string) $key)->assertJsonPath('credentials.0.shared', true)->assertDontSee('synthetic-shared-secret')->json();
+            $this->assertNotContains((string) $moderation, array_column($options['credentials'], 'id'));
+            $data = ['credential_id' => $key, 'expected' => 'default', 'primary_model' => 'gpt-5-nano', 'expected_model' => 'gpt-5-nano'];
+            $this->putJson($url, [...$data, 'credential_id' => $moderation])->assertUnprocessable();
+            $this->putJson($url, $data)->assertOk();
+            $this->getJson($url)->assertOk()->assertJsonPath('connection.configured', true)->assertJsonPath('connection.connected', false);
+            $diagnostic = '/admin/ai/feature-connection/'.($operation === 'scenario_generate' ? 'daily-challenge' : 'daily-challenge-review');
+            $receipt = $this->postJson($diagnostic)->assertOk()->assertJsonPath('pending', true)->json();
+            $row = DB::table('ai_requests')->where('request_uuid', $receipt['request_id'])->first();
+            $this->assertNull($row->user_id);
+            $snapshot = json_decode($row->routing_snapshot, true);
+            $this->assertSame('daily_challenge_api_key', $snapshot[0]['slot']);
+            $this->assertSame($key, $snapshot[0]['id']);
+            app(AiExecutionService::class)->execute($row->id);
+            $this->getJson($diagnostic.'/'.$receipt['request_id'])->assertOk()->assertJsonPath('connected', true);
+            $this->assertDatabaseHas('ai_requests', ['id' => $row->id, 'credential_ref' => 'credential:'.$key, 'status' => 'completed', 'final_charge' => 0]);
+        }
+        $this->assertDatabaseHas('ai_workspace_credentials', ['id' => $key, 'slot' => 'api_key']);
+        $this->assertDatabaseCount('ai_editorial_drafts', 0);
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/responses') && $request->hasHeader('Authorization', 'Bearer synthetic-shared-secret'));
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/moderations') && $request->hasHeader('Authorization', 'Bearer synthetic-moderation-secret'));
+    }
+
+    public function test_career_review_diagnostics_use_synthetic_data_and_do_not_charge_members(): void
+    {
+        $this->configureGenerationDiagnostic();
+        $results = [
+            'resume_analyze' => ['strengths' => ['Clear experience'], 'improvements' => ['Add detail'], 'role_alignment' => 'Relevant', 'disclaimer' => 'Educational'],
+            'resume_rewrite' => ['suggested_text' => 'Coordinated project risk reviews.', 'reason' => 'Concise wording'],
+            'interview_answer_review' => ['summary' => 'Clear approach', 'strengths' => ['Risk owner'], 'improvements' => ['Add outcome'], 'suggested_answer' => 'Track risk mitigation.'],
+        ];
+        $payload = [];
+        Http::fake(function ($request) use (&$payload) {
+            if (str_ends_with($request->url(), '/moderations')) return Http::response(['results' => [['flagged' => false]]]);
+            return Http::response(['id' => 'synthetic-review', 'status' => 'completed', 'output' => [['content' => [['type' => 'output_text', 'text' => json_encode($payload)]]]], 'usage' => ['input_tokens' => 50, 'output_tokens' => 30]]);
+        });
+        foreach ($results as $code => $result) {
+            $payload = $result;
+            DB::table('ai_features')->where('code', $code)->update(['enabled' => true, 'model' => 'gpt-5-nano']);
+            $url = '/admin/ai/feature-connection/'.$code;
+            $receipt = $this->actingAs($this->admin())->postJson($url)->assertOk()->assertJsonPath('pending', true)->json();
+            $row = DB::table('ai_requests')->where('request_uuid', $receipt['request_id'])->first();
+            $this->assertNull($row->user_id);
+            app(AiExecutionService::class)->execute($row->id);
+            $this->getJson($url.'/'.$receipt['request_id'])->assertOk()->assertJsonPath('connected', true);
+            $this->assertDatabaseHas('ai_requests', ['id' => $row->id, 'status' => 'completed', 'final_charge' => 0]);
+        }
+    }
+
     public function test_generation_connection_respects_budget_and_does_not_send_when_disabled(): void
     {
         $this->configureGenerationDiagnostic();

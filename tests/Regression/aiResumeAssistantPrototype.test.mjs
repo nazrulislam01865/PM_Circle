@@ -23,10 +23,9 @@ test('prototype study values, five steps, four examples and safety note are pres
 });
 test('homepage CTA is connected while preserving admin custom destinations', () => {
     const home = read('resources/js/components/home/v2/HomeAiResume.tsx');
-    assert.match(home, /const configuredHref = content\?\.resume\?\.button_url/);
-    assert.match(home, /const resumeHref = configuredHref .*\? configuredHref : '\/ai-resume-assistant'/);
-    assert.match(home, /href=\{resumeHref\}/);
-    assert.match(read('app/Http/Controllers/Admin/HomepageController.php'), /\['resume'\]\['button_url'\] \?\?= '\/ai-resume-assistant'/);
+    assert.match(home, /href=\{content.button_url\}/);
+    assert.match(read('config/homepage-v2.php'), /'button_url' => '\/ai-resume-assistant'/);
+    assert.match(read('app/Support/Home/HomepagePresentation.php'), /careers\.resume\.button_url/);
     assert.match(read('resources/js/pages/admin/Homepage.tsx'), /'\/ai-resume-assistant'/);
     assert.match(page, /href="\/register" className="pm-guide-button"/);
     assert.match(page, /href="\/login" className="pm-guide-button is-outline"/);

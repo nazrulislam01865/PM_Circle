@@ -4,22 +4,17 @@ import { readFileSync } from 'node:fs';
 
 const read = path => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 
-test('home footer keeps exactly the prototype five columns and excludes legacy extra navigation links', () => {
+test('footer starts with the approved prototype columns but renders the saved groups', () => {
     const footer = read('resources/js/components/home/v2/HomeFooter.tsx');
+    const defaults = read('app/Support/Admin/SiteFooterContent.php');
     const layout = read('resources/css/pm-home-v2-sections.css');
-    assert.match(footer, /const companyLinks: LinkData\[\]/);
-    assert.match(footer, /prototypeLink\(explore, '\/about'/);
-    assert.match(footer, /label: 'Testimonials'/);
-    assert.match(footer, /label: 'Trends'/);
-    assert.match(footer, /prototypeLink\(support, '\/help-center'/);
-    assert.match(footer, /content\.show_explore === false && content\.show_support === false/);
-    assert.match(footer, /uniqueLinks\(/);
-    assert.match(footer, /<FooterLinks title="Company" items=\{companyLinks\}\/>/);
-    assert.doesNotMatch(footer, /supportOther|supportCompany|company\.filter/);
-    assert.match(footer, /<FooterLinks title="Learning"/);
-    assert.match(footer, /<FooterLinks title="Community"/);
-    assert.match(footer, /<FooterLinks title="Plans & Policies"/);
-    assert.match(layout, /grid-template-columns: 1\.45fr repeat\(4, minmax\(0, 1fr\)\)/);
+    for (const title of ['Company','Learning','Community','Plans & Policies']) assert.ok(defaults.includes(`'title' => '${title}'`));
+    assert.match(footer, /content\.columns\.filter/);
+    assert.match(footer, /column\.visible && column\.links\.length/);
+    assert.match(footer, /columns\.map/);
+    assert.match(footer, /title=\{column.title\} items=\{column.links\}/);
+    assert.doesNotMatch(footer, /prototypeLink|uniqueLinks|title="Company"/);
+    assert.match(layout, /grid-template-columns: var\(--pm-footer-desktop-columns, 1\.45fr repeat\(4/);
 });
 
 test('footer social icons stay horizontal, round and homepage-ordered in the canonical footer', () => {
@@ -29,9 +24,9 @@ test('footer social icons stay horizontal, round and homepage-ordered in the can
     assert.match(layout, /\.pm-v2-footer-grid > nav \{[^}]*flex-direction: column/);
     assert.match(layout, /\.pm-v2-footer-identity \.pm-unified-footer-social \{[^}]*flex-direction: row/);
     assert.match(layout, /\.pm-v2-footer-identity \.pm-unified-footer-social a \{[^}]*border-radius: 50%/);
-    assert.match(social, /prototypeSocialNetworks/);
-    assert.match(social, /prototypeOrder = false/);
-    assert.match(homeFooter, /<FooterSocial content=\{content\} compact prototypeOrder\/>/);
+    assert.match(social, /content\.socials\.filter/);
+    assert.match(social, /active\.map/);
+    assert.match(homeFooter, /<FooterSocial content=\{content\} compact\/>/);
 });
 
 test('community cards retain live content but match prototype typography, height and fallback icon appearance', () => {

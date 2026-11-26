@@ -17,7 +17,7 @@ test('browse and PMP details reuse one homepage header, footer and guide rail', 
     assert.match(browse, /<PublicLayout siteLayout homePrototype guideLayout/);
     assert.match(detail, /<PublicLayout siteLayout homePrototype guideLayout/);
     assert.match(shell, /guideLayout\s*\? ' pm-guide-public-shell'/);
-    assert.match(shell, /const showHomeHeader = homePrototype \|\| isGuest/);
+    assert.match(shell, /const showHomeHeader = homePrototype \|\| isPublicView/);
     assert.match(shell, /showHomeHeader \? <HomeHeader/);
     assert.match(shell, /variant=\{homePrototype \? 'home' : footerVariant\}/);
     assert.doesNotMatch(catalogCss, /--pm-v2-container-width\s*:/);
@@ -32,8 +32,8 @@ test('PMP sections, admin-controlled footer visibility and multiple sample quest
     for (const component of ['PmpPublicHero','PmpPublicBenefits','PmpPublicSampleStudy','PmpPublicPlans','PmpPublicFaq','PmpPublicVideoStories','PmpPublicTestimonials']) {
         assert.ok(detail.includes(`<${component}`), component);
     }
-    assert.match(detail, /pmpFooterContent=\{content\.sections\.footer \? content\.footer : undefined\}/);
-    assert.match(detail, /hideFooter=\{!content\.sections\.footer\}/);
+    assert.match(detail, /pmpFooterContent=\{content\.footer\}/);
+    assert.doesNotMatch(detail, /hideFooter=\{!content\.sections\.footer\}/);
     assert.match(detail, /sampleQuestions=\{sampleQuestions\}/);
     assert.match(controller, /sampleQuestions' => \$samples/);
     assert.match(sections, /href="\/exam-simulator\/pmp"/);

@@ -1,5 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { ChevronDown, ChevronRight, Database, ExternalLink, Flag, House, LayoutDashboard, LogOut, Menu, PanelTop, ClipboardCheck, Gift, Route, Settings2, CalendarDays, X, BookOpen, Heart, MessageSquareMore, Search, Bell } from 'lucide-react';
 import { aiWorkspaceLinks } from '@/components/admin/ai/workspace-navigation';
 import { Brand } from '@/components/pm/Brand';
@@ -33,6 +33,13 @@ const aiSettingsLinks = [
     { title: 'AI usage management', href: '/admin/ai/usage-management' },
 ];
 
+// Admin pages own their layout instance. Keep only navigation UI state across
+// Inertia page remounts, independently of the document scroll position.
+const adminSidebarState = {
+    scrollTop: 0,
+    groups: { workspace: false, ai: false, home: false, master: false, navigation: false, pmp: false },
+};
+
 export function AdminLayout({ title, subtitle, children, active, selectedHomeSection, onSelectHomeSection, homepageVisibility, selectedCatalogCategory, selectedPmpSection, onSelectPmpSection, pmpVisibility, headingAction, breadcrumb, dashboardHeader }: Props) {
     const { auth } = usePage<{ auth?: { user?: { name?: string } | null } }>().props;
     const [searchOpen, setSearchOpen] = useState(false);
@@ -44,9 +51,12 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
         ...aiWorkspaceLinks,
         { title: 'Interview preparation', href: '/admin/interview-preparation' },
         { title: 'Course library', href: '/admin/learning/courses' },
+        { title: 'Browse Courses control', href: '/admin/learning/courses/catalog-settings' },
         { title: 'Community events', href: '/admin/events' },
         { title: 'Manage rewards', href: '/admin/profile-rewards' },
         { title: 'Homepage control', href: '/admin/homepage' },
+        { title: 'Terms and Conditions', href: '/admin/legal/terms' },
+        { title: 'Privacy Policy', href: '/admin/legal/privacy' },
         { title: 'PMP questions', href: '/admin/exam-simulator/pmp/questions' },
         { title: 'Master data', href: '/admin/master-data' },
     ];
@@ -57,14 +67,37 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
     const isPmpBank = active === '/admin/exam-simulator/pmp/questions';
     const isAi = aiSettingsLinks.some(item => item.href === active);
     const isAiWorkspace = active.startsWith('/admin/ai/workspace/');
-    const [workspaceOpen, setWorkspaceOpen] = useState(isAiWorkspace);
-    const isLearning = active.startsWith('/admin/learning/courses');
-    const [aiOpen, setAiOpen] = useState(isAi);
-    const [homeOpen, setHomeOpen] = useState(isHomepage);
-    const [masterOpen, setMasterOpen] = useState(isMaster);
-    const [navOpen, setNavOpen] = useState(isNavigation);
-    const [pmpOpen, setPmpOpen] = useState(isPmp);
+    const [workspaceOpen, setWorkspaceOpen] = useState(() => isAiWorkspace || adminSidebarState.groups.workspace);
+    const isCatalogSettings = active === '/admin/learning/courses/catalog-settings';
+    const isLearning = active.startsWith('/admin/learning/courses') && !isCatalogSettings;
+    const [aiOpen, setAiOpen] = useState(() => isAi || adminSidebarState.groups.ai);
+    const [homeOpen, setHomeOpen] = useState(() => isHomepage || adminSidebarState.groups.home);
+    const [masterOpen, setMasterOpen] = useState(() => isMaster || adminSidebarState.groups.master);
+    const [navOpen, setNavOpen] = useState(() => isNavigation || adminSidebarState.groups.navigation);
+    const [pmpOpen, setPmpOpen] = useState(() => isPmp || adminSidebarState.groups.pmp);
     const [mobileOpen, setMobileOpen] = useState(false);
+    const sidebarRef = useRef<HTMLElement>(null);
+
+    useLayoutEffect(() => {
+        adminSidebarState.groups = { workspace: workspaceOpen, ai: aiOpen, home: homeOpen, master: masterOpen, navigation: navOpen, pmp: pmpOpen };
+    }, [workspaceOpen, aiOpen, homeOpen, masterOpen, navOpen, pmpOpen]);
+
+    useLayoutEffect(() => {
+        const sidebar = sidebarRef.current;
+        if (sidebar && !window.matchMedia('(max-width: 45rem)').matches) {
+            sidebar.scrollTop = adminSidebarState.scrollTop;
+        }
+    }, []);
+
+    function rememberSidebarPosition() {
+        const sidebar = sidebarRef.current;
+        // Mobile uses a separate, collapsible navigation surface. Its zero
+        // scroll position must not overwrite the desktop sidebar position.
+        if (sidebar && !window.matchMedia('(max-width: 45rem)').matches) {
+            adminSidebarState.scrollTop = sidebar.scrollTop;
+        }
+    }
+
     // Both catalog areas reuse one Inertia page; expand the matching group on route changes.
     useEffect(() => {
         if (isAi) setAiOpen(true);
@@ -101,7 +134,7 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
                     aria-current={active === '/admin/footer' ? 'page' : undefined}
                     className={`pm-admin-submenu-link ${active === '/admin/footer' ? 'is-active' : ''}`}
                     onClick={() => setMobileOpen(false)}>
-                    <span className="pm-admin-submenu-marker" aria-hidden="true"/><span>Shared site footer</span>
+                    <span className="pm-admin-submenu-marker" aria-hidden="true"/><span>Footer control</span>
                 </Link>}
             </div>}
         </>;
@@ -109,7 +142,7 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
 
     return <div className="pm-admin">
         <Head title={`${title} · PM Circle Admin`} />
-        <aside className="pm-admin-sidebar" aria-label="Admin sidebar">
+        <aside ref={sidebarRef} className="pm-admin-sidebar" aria-label="Admin sidebar" onScroll={rememberSidebarPosition} onClickCapture={rememberSidebarPosition}>
             <div className="pm-admin-brand"><Brand/><span className="pm-admin-brand-label">ADMINISTRATION</span></div>
             <button className="pm-admin-mobile-toggle" type="button" aria-controls="pm-admin-navigation" aria-expanded={mobileOpen} onClick={() => setMobileOpen(!mobileOpen)}>
                 {mobileOpen ? <X size={18}/> : <Menu size={18}/>} {mobileOpen ? 'Close menu' : 'Admin menu'}
@@ -191,11 +224,11 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
                         const selected = isPmp && section.key === selectedPmpSection;
                         const contents = <><span className="pm-admin-submenu-marker" aria-hidden="true"/><span>{section.title}</span>
                             {pmpVisibility && !pmpVisibility[section.key] && <span className="pm-admin-submenu-status">Hidden</span>}</>;
-                        return section.key !== 'footer' && isPmp && onSelectPmpSection
+                        return isPmp && onSelectPmpSection
                             ? <button key={section.key} type="button" className={`pm-admin-submenu-link ${selected ? 'is-active' : ''}`}
                                 aria-current={selected ? 'step' : undefined}
                                 onClick={() => { onSelectPmpSection(section.key); setMobileOpen(false); }}>{contents}</button>
-                            : <Link key={section.key} href={section.key === 'footer' ? '/admin/footer' : `/admin/exam-simulator/pmp?section=${section.key}`}
+                            : <Link key={section.key} href={`/admin/exam-simulator/pmp?section=${section.key}`}
                                 className="pm-admin-submenu-link" onClick={() => setMobileOpen(false)}>{contents}</Link>;
                     })}
                 </div>}
@@ -211,7 +244,10 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
                     className={`pm-admin-nav-link ${isLearning ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
                     <BookOpen size={18} aria-hidden="true"/><span>Course library</span>
                 </Link>
+                <Link href="/admin/learning/courses/catalog-settings" aria-current={isCatalogSettings ? 'page' : undefined} className={`pm-admin-nav-link ${isCatalogSettings ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}><PanelTop size={18} aria-hidden="true"/><span>Browse Courses control</span></Link>
                 <Link href="/admin/events" aria-current={active === '/admin/events' ? 'page' : undefined} className={`pm-admin-nav-link ${active === '/admin/events' ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}><CalendarDays size={18} aria-hidden="true"/><span>Community events</span></Link>
+                <Link href="/admin/legal/terms" aria-current={active === '/admin/legal/terms' ? 'page' : undefined} className={`pm-admin-nav-link ${active === '/admin/legal/terms' ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}><ClipboardCheck size={18} aria-hidden="true"/><span>Terms and Conditions</span></Link>
+                <Link href="/admin/legal/privacy" aria-current={active === '/admin/legal/privacy' ? 'page' : undefined} className={`pm-admin-nav-link ${active === '/admin/legal/privacy' ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}><ClipboardCheck size={18} aria-hidden="true"/><span>Privacy Policy</span></Link>
                 {adminGroup(<Route size={18} aria-hidden="true"/>, 'Navigation control', '/admin/navigation', navOpen, () => setNavOpen(value => !value), navigationGroups)}
                 {adminGroup(<Database size={18} aria-hidden="true"/>, 'Master data', '/admin/master-data', masterOpen, () => setMasterOpen(value => !value), dropdownGroups)}
                 <span className="pm-admin-nav-label pm-admin-nav-label-separate">QUICK LINKS</span>

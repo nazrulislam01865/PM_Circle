@@ -76,7 +76,7 @@
 .pm-member-sidebar-layout .pm-dash-body :is(.pm-terms-page, .pm-public-trends-page, .pm-public-resume-page, .pm-about-page, .pm-events-page, .pm-simulators-page) {
     background: transparent;
 }
-.pm-member-sidebar-layout .pm-dash-body :is(.pm-terms-banner, .pm-about-banner, .pm-event-banner, .pm-sim-banner, .pm-catalog-hero) {
+.pm-member-sidebar-layout .pm-dash-body :is(.pm-terms-banner, .pm-about-banner, .pm-event-banner, .pm-sim-banner:not(.pm-public-page-banner), .pm-catalog-hero) {
     background: transparent;
     border: 0;
     min-height: 0;
@@ -124,8 +124,6 @@
         grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
     }
     .pm-member-sidebar-layout .pm-dash-body .pm-catalog-sidebar { min-height: 0; }
-    .pm-member-sidebar-layout .pm-dash-body .pm-profile-page--editor .pm-prototype-edit-grid { grid-template-columns: minmax(0, 1fr); }
-    .pm-member-sidebar-layout .pm-dash-body .pm-profile-page--editor .pm-prototype-help { grid-column: auto; grid-template-columns: minmax(0, 1fr); }
     .pm-member-sidebar-layout .pm-dash-body .pm-profile-page--editor .pm-prototype-nav { position: static; max-height: none; }
     .pm-member-sidebar-layout .pm-dash-body :is(.pm-sim-card-grid, .pm-sim-review-grid, .pm-sim-filters) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -171,11 +169,11 @@
 .pm-app.pm-member-sidebar-layout .pm-dash-body .pm-pmp-public-hero-copy { width: 100%; padding: 0 0 var(--s4); }
 /* Existing page titles use the same semantic type role; no changes to card
    titles, form fields, navigation or specialized exam question typography. */
-.pm-app.pm-member-sidebar-layout .pm-dash-body :is(.pm-profile-top-titles, .pm-member-settings-heading, .pm-feature-heading, .pm-activity-heading, .pm-challenge-heading-row, .pm-interview-heading, .pm-members-intro, .pm-compare-intro, .pm-trends-hero, .pm-catalog-hero, .pm-terms-banner, .pm-about-banner, .pm-event-banner, .pm-sim-banner, .pm-pmp-public-hero) h1 {
+.pm-app.pm-member-sidebar-layout .pm-dash-body :is(.pm-member-settings-heading, .pm-feature-heading, .pm-activity-heading, .pm-challenge-heading-row, .pm-interview-heading, .pm-members-intro, .pm-compare-intro, .pm-trends-hero, .pm-catalog-hero, .pm-terms-banner, .pm-about-banner, .pm-event-banner, .pm-sim-banner, .pm-pmp-public-hero) h1 {
     font: var(--pm-guide-static-h1-weight) var(--text-h1)/var(--line-h1) var(--font-ui);
     color: var(--ink); letter-spacing: var(--pm-guide-tracking-h1); overflow-wrap: anywhere;
 }
-.pm-app.pm-member-sidebar-layout .pm-dash-body :is(.pm-profile-top-titles, .pm-member-settings-heading, .pm-feature-heading, .pm-challenge-heading-row, .pm-interview-heading, .pm-members-intro, .pm-exam-report-heading, .pm-compare-intro, .pm-trends-hero, .pm-catalog-hero, .pm-terms-banner, .pm-about-banner, .pm-event-banner, .pm-sim-banner) p {
+.pm-app.pm-member-sidebar-layout .pm-dash-body :is(.pm-member-settings-heading, .pm-feature-heading, .pm-challenge-heading-row, .pm-interview-heading, .pm-members-intro, .pm-exam-report-heading, .pm-compare-intro, .pm-trends-hero, .pm-catalog-hero, .pm-terms-banner, .pm-about-banner, .pm-event-banner, .pm-sim-banner) p {
     font: var(--regular) var(--pm-guide-text-lead)/var(--line-body) var(--font-ui); color: var(--muted); overflow-wrap: anywhere;
 }
 .pm-app.pm-member-sidebar-layout .pm-dash-body :is(.pm-member-settings-tabs, .pm-members-tabs, .pm-learn-tabs, .pm-challenge-tabs, .pm-pmp-tabs) {

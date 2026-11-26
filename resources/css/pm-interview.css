@@ -376,3 +376,91 @@
 /* Admin-configured question-set selector; shares all member form tokens. */
 .pm-interview-set-field { display: grid; gap: var(--s2); font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui); }
 .pm-interview-set-field .pm-input { width: 100%; min-height: var(--control-height); padding: var(--s2) var(--s3); border: 1px solid var(--control-border); border-radius: var(--radius-control); background: var(--surface); color: var(--ink); font: inherit; }
+
+/* Prototype interview flow. Existing global semantic tokens remain authoritative. */
+.pm-interview-flow { max-width: var(--pm-interview-max-width); gap: var(--s4); font-family: var(--font-ui); }
+.pm-interview-flow .pm-if-heading { display:flex; align-items:center; justify-content:space-between; gap:var(--s3); }
+.pm-interview-flow .pm-if-heading h1 { font-size:var(--text-h1); line-height:var(--line-h1); }
+.pm-interview-flow .pm-if-heading p { margin-top:var(--s1); color:var(--muted); font-size:var(--text-body); }
+.pm-if-heading > a { flex:none; }
+.pm-if-layout { display:grid; grid-template-columns:minmax(0,2.28fr) minmax(15rem,1fr); gap:var(--s4); align-items:start; }
+.pm-if-layout.is-single { grid-template-columns:minmax(0,1fr); }
+.pm-if-stack { display:grid; gap:var(--s3); min-width:0; align-content:start; }
+.pm-if-stack-small { display:grid; gap:var(--s2); min-width:0; }
+.pm-if-hero { min-height:var(--pm-interview-flow-hero-height); display:grid; align-content:center; padding:var(--s5) var(--s6); border:1px solid var(--border); border-radius:var(--radius-card); background:linear-gradient(90deg,var(--pm-interview-flow-hero) 40%,transparent 100%),url('/images/interview/role-focused-hero.jpg') right center/auto 100% no-repeat,var(--pm-interview-flow-hero); color:var(--surface); }
+.pm-interview-flow .pm-if-hero h2 { color:var(--surface); font-size:var(--text-h2); line-height:var(--line-h2); }
+.pm-interview-flow .pm-if-hero p { max-width:65%; margin-top:var(--s2); font-size:var(--text-ui); line-height:var(--line-body); color:var(--surface); }
+.pm-if-wizard { overflow:hidden; }
+.pm-if-steps { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:var(--s2); list-style:none; margin:0; padding:var(--s3) var(--s4); border-bottom:1px solid var(--border); background:var(--pm-guide-soft); }
+.pm-if-steps li { display:flex; align-items:center; gap:var(--s2); font-size:var(--text-xs); color:var(--muted); min-width:0; }
+.pm-if-steps li > span { width:var(--s6); height:var(--s6); display:grid; place-items:center; flex:none; background:var(--track); color:var(--muted); border-radius:var(--radius-pill); font-weight:var(--bold); }
+.pm-if-steps li.is-done > span { background:var(--green-soft); color:var(--green); }
+.pm-if-steps li.is-current { color:var(--blue); font-weight:var(--bold); }
+.pm-if-steps li.is-current > span { background:var(--blue); color:var(--surface); }
+.pm-if-pad { display:grid; gap:var(--s3); padding:var(--s5); min-width:0; }
+.pm-if-intro { display:grid; gap:var(--s1); margin-bottom:var(--s2); }
+.pm-interview-flow .pm-if-intro h2 { font-size:var(--text-h2); line-height:var(--line-h2); }
+.pm-if-intro p,.pm-if-muted { color:var(--muted); font-size:var(--text-ui); line-height:var(--line-body); }
+.pm-if-fieldset { border:0; padding:0; margin:0; min-width:0; display:grid; gap:var(--s3); }
+.pm-if-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--s3); }
+.pm-if-field { display:grid; gap:var(--s1); min-width:0; font-size:var(--text-ui); font-weight:var(--semibold); }
+.pm-if-field small,.pm-if-box h3 small { color:var(--muted); font-size:var(--text-xs); font-weight:var(--regular); }
+.pm-if-field .pm-input { display:block; width:100%; min-width:0; min-height:var(--control-height); border:1px solid var(--control-border); border-radius:var(--radius-control); padding:var(--s2) var(--s3); background:var(--surface); font:var(--regular) var(--text-ui)/var(--line-body) var(--font-ui); color:var(--ink); }
+/* Outrank the shared single-line control min-height without changing its typography. */
+.pm-interview-flow .pm-if-field textarea.pm-if-jd { height:auto; min-height:var(--pm-interview-flow-jd-height); resize:vertical; }
+.pm-interview-flow .pm-if-answer-editor textarea.pm-if-answer { display:block; width:100%; height:auto; min-height:var(--pm-interview-flow-answer-height); resize:vertical; border:1px solid var(--control-border); border-radius:var(--radius-control); padding:var(--s3); background:var(--surface); font:var(--regular) var(--text-ui)/var(--line-body) var(--font-ui); color:var(--ink); }
+.pm-if-answer-editor { display:grid; gap:var(--s2); min-width:0; }
+.pm-if-answer-editor textarea[readonly] { background:var(--surface); }
+.pm-if-answer-actions { display:flex; align-items:center; flex-wrap:wrap; gap:var(--s2); }
+.pm-if-answer-actions .pm-button { flex:0 1 auto; }
+.pm-if-answer-actions .is-recording { color:var(--red); border-color:var(--red); }
+.pm-if-dictation-status:empty { margin:0; height:0; overflow:hidden; position:absolute; }
+.pm-if-upload { display:grid; gap:var(--s2); min-width:0; }
+.pm-if-upload-zone { display:flex; align-items:center; flex-wrap:wrap; gap:var(--s3); padding:var(--s4); border:1px dashed var(--control-border); border-radius:var(--radius-control); background:var(--surface); }
+.pm-if-upload-zone.is-dragging,.pm-if-upload-zone:focus-within { border-color:var(--blue); background:var(--blue-soft); }
+.pm-if-upload-icon { display:grid; place-items:center; flex:none; width:var(--control-height); height:var(--control-height); border-radius:var(--radius-control); color:var(--blue); background:var(--blue-soft); }
+.pm-if-upload-zone.has-file .pm-if-upload-icon { background:var(--green-soft); color:var(--green); }
+.pm-if-upload-copy { display:grid; gap:var(--s1); flex:1 1 12rem; min-width:0; overflow-wrap:anywhere; }
+.pm-if-upload-zone > .pm-button { flex:none; }
+.pm-if-upload-spinner { animation:pm-if-spin 1s linear infinite; }
+@keyframes pm-if-spin { to { transform:rotate(360deg); } }
+@media(prefers-reduced-motion:reduce) { .pm-if-upload-spinner { animation:none; } }
+.pm-interview-flow .pm-admin-choice-field { align-content:start; gap:var(--s1); }
+.pm-interview-flow .pm-admin-choice-trigger { width:100%; }
+
+.pm-if-box { display:grid; gap:var(--s2); background:var(--pm-guide-soft); border:1px solid var(--border); border-radius:var(--radius-control); padding:var(--s3) var(--s4); font-size:var(--text-ui); line-height:var(--line-body); min-width:0; overflow-wrap:anywhere; }
+.pm-interview-flow .pm-if-box h3,.pm-interview-flow .pm-if-pad > h3,.pm-interview-flow .pm-if-fieldset > h3 { font-size:var(--text-h4); line-height:var(--line-h4); }
+.pm-if-between,.pm-if-strip { display:flex; gap:var(--s2); flex-wrap:wrap; align-items:center; }
+.pm-if-between { justify-content:space-between; }
+.pm-if-toolbar { display:flex; justify-content:space-between; gap:var(--s2); flex-wrap:wrap; padding:var(--s3) var(--s4); border-top:1px solid var(--border); background:var(--pm-guide-soft); }
+.pm-if-toolbar > div { display:flex; flex-wrap:wrap; gap:var(--s2); align-items:center; }
+.pm-if-toolbar > div:last-child { margin-left:auto; }
+.pm-if-quiet { display:inline-flex; gap:var(--s1); align-items:center; border:0; background:transparent; color:var(--blue); font:var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui); padding:var(--s2); cursor:pointer; }
+.pm-if-quiet:disabled { opacity:.5; cursor:not-allowed; }
+.pm-if-picks { display:flex; flex-wrap:wrap; gap:var(--s2); }
+.pm-if-picks label { display:flex; gap:var(--s2); align-items:center; padding:var(--s2); border:1px solid var(--border); border-radius:var(--radius-control); font-size:var(--text-ui); cursor:pointer; }
+.pm-if-picks label:has(input:checked) { background:var(--blue-soft); border-color:var(--blue); }
+.pm-if-picks input { accent-color:var(--blue); }
+.pm-if-tag { display:inline-flex; align-items:center; padding:var(--s1) var(--s2); background:var(--blue-soft); color:var(--blue); border-radius:var(--radius-control); font-size:var(--text-xs); font-weight:var(--semibold); }
+.pm-if-tag.is-easy { background:var(--green-soft); color:var(--green); }
+.pm-if-tag.is-medium { background:var(--warning-soft); color:var(--warning); }
+.pm-if-tag.is-hard { background:var(--pm-guide-purple-bg); color:var(--pm-guide-purple); }
+.pm-if-summary { margin:0; display:grid; gap:var(--s2); font-size:var(--text-ui); }
+.pm-if-summary > div { display:flex; justify-content:space-between; align-items:start; gap:var(--s3); }
+.pm-if-summary dt { color:var(--muted); flex-shrink:0; }
+.pm-if-summary dd { margin:0; text-align:right; font-weight:var(--semibold); overflow-wrap:anywhere; min-width:0; }
+.pm-interview-flow .pm-interview-card-head { background:var(--pm-guide-soft); padding:var(--s3) var(--s4); }
+.pm-interview-flow .pm-interview-card-head h2 { font-size:var(--text-h4); line-height:var(--line-h4); }
+.pm-if-note { color:var(--muted); font-size:var(--text-xs); line-height:var(--line-body); overflow-wrap:anywhere; }
+.pm-if-self { justify-self:start; }
+.pm-if-item { border-bottom:1px solid var(--border); padding:var(--s2) 0; overflow-wrap:anywhere; }
+.pm-if-item:last-child { border-bottom:0; }
+.pm-if-review summary { cursor:pointer; font-weight:var(--semibold); }
+.pm-if-review > div { margin-top:var(--s2); }
+.pm-if-question-meta { font-size:var(--text-ui); }
+.pm-interview-flow .pm-if-pad > .pm-if-question { font-size:var(--text-h3); line-height:var(--line-h3); }
+.pm-if-score { color:var(--blue); font-size:var(--text-stat); line-height:var(--line-stat); font-variant-numeric:tabular-nums; }
+.pm-if-answer-text { white-space:pre-wrap; }
+@media(max-width: 1100px) { .pm-if-layout { grid-template-columns:minmax(0,1fr) minmax(13rem,.55fr); } }
+@media(max-width: 900px) { .pm-if-layout { grid-template-columns:minmax(0,1fr); } }
+@media(max-width: 600px) { .pm-if-heading { flex-wrap:wrap; } .pm-if-fields { grid-template-columns:minmax(0,1fr); } .pm-if-steps li { flex-direction:column; text-align:center; gap:var(--s1); } .pm-if-pad { padding:var(--s3); } .pm-if-hero { padding:var(--s4); } .pm-interview-flow .pm-if-hero p { max-width:85%; } .pm-if-summary dt { flex-shrink:1; } }

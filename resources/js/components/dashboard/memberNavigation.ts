@@ -14,7 +14,7 @@ const secondary: Record<MemberSection, MemberSecondaryLink[]> = {
         { id: 'profile', label: 'My profile', href: '/settings/profile' },
         { id: 'achievements', label: 'Achievements', href: '/dashboard/features/achievements' },
         { id: 'activity', label: 'Activity Log', href: '/activity-log' },
-        { id: 'settings', label: 'Settings', href: '/settings/security' },
+        { id: 'settings', label: 'Settings', href: '/settings/account' },
     ],
     challenge: [
         { id: 'library', label: 'Daily Challenge', href: '/dashboard/daily-challenge' },

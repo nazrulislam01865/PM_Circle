@@ -1,170 +1,109 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useMicrophoneWaveform } from './useMicrophoneWaveform';
 
 type SpeechResult = { isFinal: boolean; 0: { transcript: string } };
 type SpeechEvent = { results: ArrayLike<SpeechResult> };
-type SpeechError = { error: string };
 type RecognitionLike = {
     lang: string; continuous: boolean; interimResults: boolean;
+    onstart: (() => void) | null;
     onresult: ((event: SpeechEvent) => void) | null;
-    onerror: ((event: SpeechError) => void) | null;
+    onerror: ((event: { error: string }) => void) | null;
     onend: (() => void) | null;
     start(): void; stop(): void; abort(): void;
 };
 type SpeechWindow = Window & { SpeechRecognition?: new () => RecognitionLike; webkitSpeechRecognition?: new () => RecognitionLike };
-type SpeechState = 'idle' | 'requesting' | 'listening' | 'paused';
+type SpeechState = 'idle' | 'requesting' | 'listening' | 'stopping';
+export const ANSWER_LIMIT = 6000;
 
-/** In-browser transcription; the stream is analysed locally and never uploaded by PM Circle. */
+/** Web Speech owns microphone access. No separate getUserMedia stream or audio upload. */
 export function useSpeechAnswer(onTranscript: (value: string) => void, initial: string) {
     const recognition = useRef<RecognitionLike | null>(null);
-    const stream = useRef<MediaStream | null>(null);
-    const committed = useRef(initial);
     const latest = useRef(initial);
-    const shouldListen = useRef(false);
-    const requestId = useRef(0);
     const callback = useRef(onTranscript);
+    const timer = useRef<number | null>(null);
     const [state, setState] = useState<SpeechState>('idle');
-    const [elapsed, setElapsed] = useState(0);
     const [error, setError] = useState('');
-    const waveform = useMicrophoneWaveform();
-    const waveformStart = waveform.start;
-    const waveformStop = waveform.stop;
+    const [status, setStatus] = useState('');
     const supported = typeof window !== 'undefined' && Boolean((window as SpeechWindow).SpeechRecognition || (window as SpeechWindow).webkitSpeechRecognition);
-
+    const secure = typeof window !== 'undefined' && window.isSecureContext;
     useEffect(() => { callback.current = onTranscript; }, [onTranscript]);
 
-    const cleanup = useCallback(() => {
+    const cleanup = useCallback((abort: boolean) => {
+        if (timer.current !== null) { window.clearTimeout(timer.current); timer.current = null; }
         const current = recognition.current;
         recognition.current = null;
         if (current) {
-            current.onend = null;
-            current.onresult = null;
-            current.onerror = null;
-            current.abort();
+            current.onstart = current.onresult = current.onerror = current.onend = null;
+            if (abort) { try { current.abort(); } catch { /* Already ended. */ } }
         }
-        stream.current?.getTracks().forEach(track => track.stop());
-        stream.current = null;
-        waveformStop();
-    }, [waveformStop]);
+    }, []);
 
     const stop = useCallback(() => {
-        shouldListen.current = false;
-        requestId.current++;
-        committed.current = latest.current.trim();
-        cleanup();
-        setState('idle');
-    }, [cleanup]);
+        const instance = recognition.current;
+        if (!instance) return;
+        if (state === 'requesting') { cleanup(true); setState('idle'); setStatus('Dictation cancelled.'); return; }
+        if (state === 'stopping') return;
+        setState('stopping');
+        // stop(), unlike abort(), permits final recognition results to arrive.
+        try {
+            instance.stop();
+            if (recognition.current === instance) timer.current = window.setTimeout(() => {
+                if (recognition.current === instance) { cleanup(true); setState('idle'); setStatus(''); }
+            }, 2500);
+        } catch { cleanup(true); setState('idle'); setStatus(''); }
+    }, [cleanup, state]);
 
-    // Each new browser recognition segment starts with a fresh base to avoid
-    // duplicated text when the browser automatically ends on silence.
-    const beginRecognition = useCallback(() => {
+    const start = useCallback(() => {
+        if (recognition.current) return;
+        setError(''); setStatus('');
+        if (!secure) { setError('Microphone access requires HTTPS or localhost. You can still type your answer.'); return; }
         const Win = window as SpeechWindow;
         const Constructor = Win.SpeechRecognition ?? Win.webkitSpeechRecognition;
-        if (!Constructor) throw new Error('unsupported');
-        const instance = new Constructor();
-        instance.lang = 'en-US';
-        instance.continuous = true;
-        instance.interimResults = true;
-        instance.onresult = event => {
-            if (recognition.current !== instance || !shouldListen.current) return;
-            const finalParts: string[] = [];
-            const interimParts: string[] = [];
-            for (let i = 0; i < event.results.length; i++) {
-                const part = event.results[i];
-                (part.isFinal ? finalParts : interimParts).push(part[0].transcript);
-            }
-            const value = [committed.current, ...finalParts, ...interimParts].filter(Boolean).join(' ').trim().slice(0, 1000);
-            latest.current = value;
-            callback.current(value);
-        };
-        instance.onerror = event => {
-            if (!shouldListen.current || recognition.current !== instance) return;
-            if (event.error === 'no-speech' || event.error === 'aborted') return;
-            setError(event.error === 'not-allowed' || event.error === 'service-not-allowed'
-                ? 'Speech recognition permission was denied. Allow microphone access or use Type Answer.'
-                : 'Speech transcription stopped. You can retry recording or type your answer.');
-            stop();
-        };
-        instance.onend = () => {
-            if (recognition.current !== instance || !shouldListen.current) return;
-            recognition.current = null;
-            committed.current = latest.current;
-            // Browsers often stop recognition after silence despite `continuous`.
-            // Restart while the member is still recording; keep the same mic analyser.
-            try { beginRecognition(); }
-            catch { setError('Speech transcription has stopped. Please try recording again.'); stop(); }
-        };
-        recognition.current = instance;
-        instance.start();
-    }, [stop]);
-
-    const start = useCallback(async () => {
-        if (shouldListen.current) return;
-        if (!supported) { setError('Live speech transcription is not available in this browser. Please use Type Answer in a supported browser.'); return; }
-        if (!navigator.mediaDevices?.getUserMedia || typeof AudioContext === 'undefined') {
-            setError('Microphone capture requires a supported browser and HTTPS (or localhost).');
-            return;
-        }
-        const id = ++requestId.current;
-        setState('requesting');
-        setError('');
+        if (!Constructor) { setError('This browser does not support live dictation. Try Chrome or Edge, or type your answer.'); return; }
+        if (latest.current.length >= ANSWER_LIMIT) { setError('Your answer has reached the character limit. Edit it before adding more.'); return; }
+        const base = latest.current;
+        let heardSpeech = false;
+        let failure = false;
         try {
-            const media = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true }, video: false });
-            if (id !== requestId.current) { media.getTracks().forEach(track => track.stop()); return; }
-            stream.current = media;
-            await waveformStart(media);
-            if (id !== requestId.current) { cleanup(); return; }
-            shouldListen.current = true;
-            committed.current = latest.current;
-            beginRecognition();
-            setState('listening');
-            media.getAudioTracks()[0]?.addEventListener('ended', () => {
-                if (id === requestId.current && shouldListen.current) {
-                    setError('Microphone access ended. Start recording again to continue.');
-                    stop();
-                }
-            }, { once: true });
-        } catch (exception) {
-            if (id !== requestId.current) return;
-            cleanup();
-            shouldListen.current = false;
-            setState('idle');
-            const name = exception instanceof DOMException ? exception.name : '';
-            setError(name === 'NotAllowedError' || name === 'PermissionDeniedError'
-                ? 'Microphone access was denied. Allow microphone permission in your browser and try again.'
-                : name === 'NotFoundError' ? 'No microphone was found. Connect a microphone and try again.'
-                    : 'Could not start live recording. Check your microphone and browser permissions.');
-        }
-    }, [beginRecognition, cleanup, stop, supported, waveformStart]);
+            const instance = new Constructor();
+            recognition.current = instance;
+            instance.lang = 'en-US'; instance.continuous = true; instance.interimResults = true;
+            instance.onstart = () => { if (recognition.current === instance) { setState('listening'); setStatus('Listening… speak in English.'); } };
+            instance.onresult = event => {
+                if (recognition.current !== instance) return;
+                // Results contain the full recognition segment, including revised interim text.
+                const parts = Array.from(event.results, result => result[0].transcript.trim()).filter(Boolean);
+                if (!parts.length) return;
+                heardSpeech = true;
+                const value = [base.trimEnd(), ...parts].filter(Boolean).join(' ').slice(0, ANSWER_LIMIT);
+                latest.current = value; callback.current(value);
+            };
+            instance.onerror = event => {
+                if (recognition.current !== instance) return;
+                failure = true;
+                const messages: Record<string, string> = {
+                    'not-allowed': 'Microphone permission was denied. Allow microphone access in your browser and try again.',
+                    'service-not-allowed': 'Speech recognition is blocked or unavailable. Check browser permissions or try Chrome or Edge.',
+                    'audio-capture': 'No usable microphone was found. Connect or enable a microphone and try again.',
+                    'network': 'The browser speech service could not connect. Check your connection or type your answer.',
+                    'no-speech': 'No speech was detected. Start dictation again and speak clearly.',
+                    'aborted': 'Dictation was interrupted. Start again to continue.',
+                };
+                setError(messages[event.error] ?? 'Dictation stopped unexpectedly. Try again or type your answer.');
+                cleanup(true); setState('idle'); setStatus('');
+            };
+            instance.onend = () => {
+                if (recognition.current !== instance) return;
+                cleanup(false); setState('idle');
+                if (!failure) setStatus(heardSpeech ? '' : 'No speech captured. Start dictation again or type your answer.');
+            };
+            setState('requesting'); setStatus('Waiting for microphone access…');
+            // Start synchronously from the user's click, preserving browser activation.
+            instance.start();
+        } catch { cleanup(true); setState('idle'); setStatus(''); setError('Could not start dictation. Check microphone permissions and try again.'); }
+    }, [cleanup, secure]);
 
-    const pause = useCallback(() => {
-        if (!shouldListen.current) return;
-        shouldListen.current = false;
-        requestId.current++;
-        committed.current = latest.current;
-        cleanup();
-        setState('paused');
-    }, [cleanup]);
-    const resume = useCallback(() => { void start(); }, [start]);
-    const replaceTranscript = useCallback((value: string) => {
-        latest.current = value;
-        committed.current = value;
-    }, []);
-    const reset = useCallback(() => {
-        stop();
-        committed.current = '';
-        latest.current = '';
-        setElapsed(0);
-        setError('');
-    }, [stop]);
-
-    useEffect(() => {
-        if (state !== 'listening') return;
-        const interval = window.setInterval(() => setElapsed(previous => Math.min(180, previous + 1)), 1000);
-        return () => window.clearInterval(interval);
-    }, [state]);
-    useEffect(() => { if (elapsed >= 180 && state === 'listening') stop(); }, [elapsed, state, stop]);
-    useEffect(() => () => { shouldListen.current = false; requestId.current++; cleanup(); }, [cleanup]);
-
-    return { state, elapsed, error, supported, levels: waveform.levels, start, stop, pause, resume, replaceTranscript, reset };
+    const replaceTranscript = useCallback((value: string) => { latest.current = value; }, []);
+    const reset = useCallback(() => { cleanup(true); latest.current = ''; setState('idle'); setError(''); setStatus(''); }, [cleanup]);
+    useEffect(() => () => cleanup(true), [cleanup]);
+    return { state, error, status, supported, secure, start, stop, replaceTranscript, reset };
 }

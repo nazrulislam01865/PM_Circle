@@ -21,8 +21,12 @@ final class MasterDataController extends Controller
         return $this->catalog(false);
     }
 
-    public function navigationIndex(): Response
+    public function navigationIndex(): Response|RedirectResponse
     {
+        if (request()->query('category') === 'footer_menu') {
+            return to_route('admin.footer.edit');
+        }
+
         return $this->catalog(true);
     }
 

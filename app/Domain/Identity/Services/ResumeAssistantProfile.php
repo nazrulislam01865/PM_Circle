@@ -27,7 +27,7 @@ final class ResumeAssistantProfile
             'name' => $user->name, 'email' => $user->email,
             'role' => $profile?->role ?: ($experience?->job_title ?? ''),
             'company' => $profile?->editor_details['current_organization'] ?? $experience?->organization ?? '',
-            'location' => implode(', ', array_filter([$profile?->city, $profile?->country])),
+            'location' => $profile?->editor_details['compact']['display_location'] ?? implode(', ', array_filter([$profile?->city, $profile?->country])),
             'summary' => $profile?->about ?? '', 'period' => $period($experience),
             'responsibilities' => $experience?->responsibilities ?? '',
             'skills' => implode("\n", $profile?->skills ?? []),
@@ -41,7 +41,7 @@ final class ResumeAssistantProfile
             'educations' => $user->educations->sortBy('id')->skip(1)->map->only(['degree', 'institution', 'year'])->values()->all(),
             'certifications' => $user->certifications->sortBy('id')->skip(1)->pluck('name')->values()->all(),
         ];
-        return ['fields' => $fields, 'extra' => $extra, 'document' => $document, 'version' => hash('sha256', json_encode([$fields, $extra, $profile?->private_resume_document, $experience?->id, $experience?->job_title, $experience?->organization, $education?->id, $certification?->id], JSON_THROW_ON_ERROR))];
+        return ['fields' => $fields, 'extra' => $extra, 'document' => $document, 'version' => hash('sha256', json_encode([$fields, $extra, $document, $experience?->id, $experience?->job_title, $experience?->organization, $education?->id, $certification?->id], JSON_THROW_ON_ERROR))];
     }
 
     public function submit(User $user, array $input): void
@@ -75,6 +75,11 @@ final class ResumeAssistantProfile
                     throw ValidationException::withMessages(['location' => 'Use a city and country of at most 120 characters each.']);
                 }
                 $profile->city = $parts[0]; $profile->country = $parts[1] ?? '';
+                $details = $profile->editor_details ?? [];
+                if (isset($details['compact']['display_location'])) {
+                    $details['compact']['display_location'] = $data['location'];
+                    $profile->editor_details = $details;
+                }
             }
             if ($changed('skills')) {
                 $skills = array_values(array_unique(array_filter(array_map('trim', preg_split('/[,\r\n]+/', $data['skills'])))));

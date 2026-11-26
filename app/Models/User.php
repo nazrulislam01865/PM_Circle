@@ -22,7 +22,7 @@ use RuntimeException;
 use Throwable;
 
 #[Fillable(['name', 'email', 'password', 'onboarding_step', 'accepted_terms_version', 'accepted_privacy_version', 'legal_accepted_at'])]
-#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'accepted_terms_version', 'accepted_privacy_version'])]
+#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'accepted_terms_version', 'accepted_privacy_version', 'account_preferences'])]
 class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
@@ -37,6 +37,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'legal_accepted_at' => 'datetime',
             'onboarding_step' => 'integer',
             'is_admin' => 'boolean',
+            'account_preferences' => 'array',
         ];
     }
 

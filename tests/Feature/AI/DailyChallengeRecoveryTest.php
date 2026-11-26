@@ -290,4 +290,79 @@ final class DailyChallengeRecoveryTest extends TestCase
         $this->assertSame(2, DB::table('ai_requests')
             ->where('feature_code', 'daily_challenge_review')->where('subject_id', $responseId)->count());
     }
+    public function test_scheduler_recovers_a_previously_exhausted_safe_failure_once_due(): void
+    {
+        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-11-26 10:00:00', 'Asia/Dhaka'));
+        [$date, $draftId, $historical] = $this->failedDraft();
+        $date = now('Asia/Dhaka')->addDay()->toDateString();
+        DB::table('ai_editorial_drafts')->where('id', $draftId)->update([
+            'slot_key' => 'daily-scenario:'.$date, 'publication_at' => now()->addDay(),
+        ]);
+        DB::table('ai_requests')->where('id', $historical)->update(['updated_at' => now()->subHours(4)]);
+        $this->artisan('ai:prepare-scenarios')->assertExitCode(0);
+        $this->assertDatabaseHas('ai_editorial_drafts', ['id' => $draftId, 'status' => 'queued', 'generation_attempts' => 4]);
+        $this->assertDatabaseHas('ai_requests', ['id' => $historical, 'status' => 'failed']);
+        $this->assertDatabaseHas('ai_audit_events', ['action' => 'daily_challenge.draft.retry', 'subject_id' => $draftId]);
+        $this->artisan('ai:prepare-scenarios')->assertExitCode(0);
+        $this->assertSame(2, DB::table('ai_requests')->where('subject_type', 'editorial_draft')->where('subject_id', $draftId)->count());
+    }
+
+    public function test_manual_generation_recovers_eligible_failure_and_preserves_history(): void
+    {
+        [$date, $draftId, $historical] = $this->failedDraft();
+        $this->actingAs($this->admin)->post('/admin/ai/daily-challenge/generate', ['date' => $date])
+            ->assertSessionHasNoErrors()->assertSessionHas('daily_generation_notice');
+        $this->assertDatabaseHas('ai_editorial_drafts', ['id' => $draftId, 'status' => 'queued', 'generation_attempts' => 4]);
+        $this->assertDatabaseHas('ai_requests', ['id' => $historical, 'status' => 'failed']);
+        $this->assertDatabaseHas('ai_audit_events', ['action' => 'daily_challenge.draft.retry', 'subject_id' => $draftId, 'actor_id' => $this->admin->id]);
+    }
+
+    public function test_manual_generation_refuses_ambiguous_or_exhausted_slots(): void
+    {
+        [$date, $draftId, $historical] = $this->failedDraft();
+        DB::table('ai_requests')->where('id', $historical)->update(['status' => 'provider_status_unknown']);
+        $this->actingAs($this->admin)->post('/admin/ai/daily-challenge/generate', ['date' => $date])->assertSessionHasErrors('date');
+        DB::table('ai_requests')->where('id', $historical)->update(['status' => 'failed']);
+        DB::table('ai_editorial_drafts')->where('id', $draftId)->update(['generation_attempts' => 6]);
+        $this->post('/admin/ai/daily-challenge/generate', ['date' => $date])->assertSessionHasErrors('date');
+        $this->assertSame(1, DB::table('ai_requests')->where('subject_type', 'editorial_draft')->where('subject_id', $draftId)->count());
+    }
+
+    public function test_expired_today_does_not_prevent_preparing_tomorrow(): void
+    {
+        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-11-26 12:00:00', 'Asia/Dhaka'));
+        DB::table('daily_challenge_settings')->where('id', 1)->update(['expiry_hours' => 1]);
+        $this->artisan('ai:prepare-scenarios')->assertExitCode(0);
+        $this->assertDatabaseMissing('ai_editorial_drafts', ['slot_key' => 'daily-scenario:2026-11-26']);
+        $this->assertDatabaseHas('ai_editorial_drafts', ['slot_key' => 'daily-scenario:2026-11-27', 'status' => 'queued']);
+    }
+
+    public function test_missing_moderation_credential_does_not_create_a_paid_request(): void
+    {
+        config()->set('pm-ai.post_check_api_key', null);
+        app(\App\Domain\AI\Services\AiRuntimeSettings::class)->forget();
+        $date = now('Asia/Dhaka')->addDay()->toDateString();
+        $this->actingAs($this->admin)->post('/admin/ai/daily-challenge/generate', ['date' => $date])->assertSessionHasErrors('date');
+        $this->assertDatabaseMissing('ai_editorial_drafts', ['slot_key' => 'daily-scenario:'.$date]);
+        $this->assertDatabaseMissing('ai_requests', ['feature_code' => 'scenario_generate']);
+    }
+
+    public function test_historical_failure_requires_explicit_archive_recovery_and_preserves_original_request(): void
+    {
+        [, $draftId, $oldRequest] = $this->failedDraft();
+        $date = now('Asia/Dhaka')->subDays(3)->toDateString();
+        DB::table('ai_editorial_drafts')->where('id', $draftId)->update([
+            'slot_key' => 'daily-scenario:'.$date, 'publication_at' => now()->subDays(3),
+        ]);
+        $this->actingAs($this->admin)->post('/admin/ai/daily-challenge/generate', ['date' => $date])
+            ->assertSessionHasErrors('date');
+        $this->post('/admin/ai/daily-challenge/generate', ['date' => $date, 'archive_recovery' => true])
+            ->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('ai_editorial_drafts', ['id' => $draftId, 'status' => 'queued', 'archive_recovery' => true]);
+        $this->assertDatabaseHas('ai_requests', ['id' => $oldRequest, 'status' => 'failed']);
+        $this->assertSame(2, DB::table('ai_requests')->where('subject_type', 'editorial_draft')->where('subject_id', $draftId)->count());
+        $this->post('/admin/ai/daily-challenge/generate', ['date' => $date, 'archive_recovery' => true]);
+        $this->assertSame(2, DB::table('ai_requests')->where('subject_type', 'editorial_draft')->where('subject_id', $draftId)->count());
+    }
+
 }

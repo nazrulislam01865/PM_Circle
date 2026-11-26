@@ -3,6 +3,7 @@
 namespace App\Actions\Fortify;
 
 use App\Support\SignupPasswordRules;
+use App\Support\Legal\LegalPages;
 use App\Models\User;
 use App\Support\SignupVerificationMode;
 use Illuminate\Support\Facades\DB;
@@ -16,10 +17,6 @@ class CreateNewUser implements CreatesNewUsers
     /** @param array<string, mixed> $input */
     public function create(array $input): User
     {
-        if (app()->isProduction() && ! config('pm-circle.legal_documents_published')) {
-            throw ValidationException::withMessages(['legal_acceptance' => 'Registration is unavailable until the current Terms and Privacy Policy are published.']);
-        }
-
         $input['email'] = mb_strtolower(trim((string) ($input['email'] ?? '')));
 
         Validator::make($input, [
@@ -43,13 +40,14 @@ class CreateNewUser implements CreatesNewUsers
         $name = ! empty($input['name']) ? trim((string) $input['name']) : explode('@', $input['email'])[0];
 
         $user = DB::transaction(function () use ($input, $name, $requiresCode): User {
+            $legal = LegalPages::verifyAcceptance($input);
             $user = new User([
                 'name' => $name,
                 'email' => $input['email'],
                 'password' => Hash::driver('bcrypt')->make($input['password']),
                 'onboarding_step' => 1,
-                'accepted_terms_version' => config('pm-circle.terms_version'),
-                'accepted_privacy_version' => config('pm-circle.privacy_version'),
+                'accepted_terms_version' => $legal['terms'],
+                'accepted_privacy_version' => $legal['privacy'],
                 'legal_accepted_at' => now(),
             ]);
             // The verification timestamp is guarded against mass assignment.

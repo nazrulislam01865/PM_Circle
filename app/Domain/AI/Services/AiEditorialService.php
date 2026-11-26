@@ -39,22 +39,77 @@ final class AiEditorialService
             ->where('slot_key', $slot)->first();
     }
 
-    public function queueScenarioSlot(string $date, ?string $exactTitle = null): array
+    /** Never replay an ambiguous provider request or remove settled request history. */
+    public const SCENARIO_RETRYABLE_ERRORS = [
+        'MODERATION_UNAVAILABLE', 'MODERATION_AUTH_FAILED', 'MODERATION_PERMISSION_DENIED',
+        'MODERATION_RATE_LIMITED', 'PROVIDER_NOT_CONFIGURED', 'PROVIDER_AUTH_FAILED',
+        'PROVIDER_PERMISSION_DENIED', 'PROVIDER_RATE_LIMITED', 'PROVIDER_QUOTA_EXHAUSTED',
+        'PROVIDER_UNAVAILABLE', 'PROVIDER_REJECTED', 'QUEUE_DELIVERY_FAILED',
+        'INVALID_AI_RESPONSE', 'INCOMPLETE_AI_RESPONSE',
+    ];
+
+    public function queueScenarioSlot(string $date, ?string $exactTitle = null, bool $manual = false, ?int $actorId = null, bool $archiveRecovery = false): array
     {
-        return DB::transaction(function () use ($date, $exactTitle): array {
+        return DB::transaction(function () use ($date, $exactTitle, $manual, $actorId, $archiveRecovery): array {
+            if ($date < now('Asia/Dhaka')->toDateString() && ! ($manual && $archiveRecovery)) {
+                throw new AiFailure('PAST_PUBLICATION_DATE', 422);
+            }
+            if (DB::table('scenarios')->where('daily_slot', $date)->exists()) {
+                return ['status' => 'published'];
+            }
+            if ($archiveRecovery && (! $manual || ! $actorId || ! DB::table('ai_editorial_drafts')
+                ->where('feature', 'scenario_generate')->where('slot_key', 'daily-scenario:'.$date)
+                ->where('status', 'failed')->exists())) {
+                throw new AiFailure('ARCHIVE_RECOVERY_NOT_ELIGIBLE', 422);
+            }
             $draft = $this->createScenarioSlot($date);
             $draft = DB::table('ai_editorial_drafts')->where('id', $draft->id)->lockForUpdate()->first();
-            if ($draft->request_id !== null && $draft->status !== 'failed') {
+            $expired = $date < now('Asia/Dhaka')->toDateString() || ($draft->publication_at && Carbon::parse($draft->publication_at)
+                ->addHours((int) app(DailyChallengeSettings::class)->get()->expiry_hours)->lessThanOrEqualTo(now()));
+            if ($archiveRecovery && ! $expired) throw new AiFailure('ARCHIVE_RECOVERY_NOT_ELIGIBLE', 422);
+            if (! $draft->publication_at || ($expired && ! ($manual && $archiveRecovery && $draft->status === 'failed'))) {
+                throw new AiFailure('PUBLICATION_WINDOW_CLOSED', 422);
+            }
+            if (! in_array($draft->status, ['queued', 'failed'], true) || ($draft->request_id !== null && $draft->status !== 'failed')) {
+                if ($manual && $draft->status === 'queued' && $draft->request_id !== null
+                    && DB::table('ai_requests')->where('id', $draft->request_id)->value('status') === 'provider_status_unknown') {
+                    return ['draft_id' => $draft->id, 'status' => 'queued', 'blocked' => 'RECONCILIATION_OR_REVIEW_REQUIRED'];
+                }
                 return ['draft_id' => $draft->id, 'status' => $draft->status];
             }
-            if ($draft->status === 'failed' && (int) $draft->generation_attempts >= 3) {
-                return ['draft_id' => $draft->id, 'status' => 'failed', 'retry_limit_reached' => true];
-            }
             if ($draft->status === 'failed') {
+                $requests = DB::table('ai_requests')->where('feature_code', 'scenario_generate')
+                    ->where('subject_type', 'editorial_draft')->where('subject_id', $draft->id);
+                $last = (clone $requests)->orderByDesc('id')->first(['id', 'status', 'error_code', 'updated_at']);
+                if (! $last || (int) $last->id !== (int) $draft->request_id || $last->status !== 'failed'
+                    || ! in_array($last->error_code, self::SCENARIO_RETRYABLE_ERRORS, true)
+                    || (clone $requests)->whereNotIn('status', ['failed', 'cancelled'])->exists()) {
+                    return ['draft_id' => $draft->id, 'status' => 'failed', 'blocked' => 'RECONCILIATION_OR_REVIEW_REQUIRED'];
+                }
+                $attempts = max((int) $draft->generation_attempts, (clone $requests)->count());
+                if ($attempts >= 6) {
+                    return ['draft_id' => $draft->id, 'status' => 'failed', 'retry_limit_reached' => true];
+                }
+                // Three additional recovery attempts, spaced farther apart after the original cap.
+                $cooldown = $attempts >= 3 ? 180 : 30;
+                if (! $manual && Carbon::parse($last->updated_at)->addMinutes($cooldown)->isFuture()) {
+                    return ['draft_id' => $draft->id, 'status' => 'failed', 'retry_waiting' => true];
+                }
                 DB::table('ai_editorial_drafts')->where('id', $draft->id)->update([
                     'request_id' => null, 'status' => 'queued', 'payload_encrypted' => null,
-                    'reviewed_by' => null, 'updated_at' => now(),
+                    'reviewed_by' => null, 'generation_attempts' => $attempts, 'updated_at' => now(),
                 ]);
+                $this->access->audit($actorId, 'daily_challenge.draft.retry', 'ai_editorial_drafts',
+                    $draft->id, ['last_request_id' => $last->id, 'error_code' => $last->error_code],
+                    ['attempt' => $attempts + 1], $manual ? 'Administrator requested retry' : 'Scheduled bounded recovery');
+            }
+            if ($archiveRecovery && $expired) {
+                DB::table('ai_editorial_drafts')->where('id', $draft->id)->update(['archive_recovery' => true]);
+            }
+            // Missing moderation configuration is an admission error, not a paid retry.
+            $localSmokeTest = app()->environment('local') && config('pm-ai.daily_challenge_skip_generation_moderation', false);
+            if (! $localSmokeTest && ! filled(app(AiRuntimeSettings::class)->credential('post_check_api_key'))) {
+                throw new AiFailure('MODERATION_NOT_CONFIGURED', 503);
             }
             DB::table('ai_editorial_drafts')->where('id', $draft->id)->increment('generation_attempts');
             $recent = DB::table('scenarios')->where('published_at', '>=', now()->subDays(30))
@@ -139,7 +194,7 @@ final class AiEditorialService
         $this->access->authorize($actor, 'ai.manage_editorial');
         DB::transaction(function () use ($actor, $id, $reason): void {
             $draft = DB::table('ai_editorial_drafts')->where('id', $id)->lockForUpdate()->first();
-            if (! $draft || ! in_array($draft->status, ['pending_review', 'scheduled'], true) || ! $draft->payload_encrypted) {
+            if (! $draft || ! in_array($draft->status, ['pending_review', 'scheduled', 'approved'], true) || ! $draft->payload_encrypted) {
                 throw new AiFailure('DRAFT_NOT_REVIEWABLE', 409);
             }
             $data = json_decode(Crypt::decryptString($draft->payload_encrypted), true);
@@ -213,17 +268,18 @@ final class AiEditorialService
     /** Intentionally distinct from human approve/publish: only an explicitly enabled
      * daily slot may go live without staff sign-off. The draft lock and unique slot
      * make scheduler retries idempotent. */
-    public function publishAutomatedScenario(int $id): ?int
+    public function publishAutomatedScenario(int $id, ?int $archiveActorId = null): ?int
     {
         $policy = app(DailyChallengeSettings::class);
         $settings = $policy->get();
-        if (! $settings->enabled || ! $settings->auto_publish || ! $policy->isReady()) {
+        // Publishing validated, persisted content does not require another provider request.
+        if (! $settings->enabled || ! $settings->auto_publish || ! config('pm-ai.enabled') || ! config('pm-ai.editorial_enabled')) {
             return null;
         }
-        return DB::transaction(function () use ($id, $policy): ?int {
+        return DB::transaction(function () use ($id, $policy, $archiveActorId): ?int {
             $draft = DB::table('ai_editorial_drafts')->where('id', $id)->lockForUpdate()->first();
             if (! $draft || $draft->feature !== 'scenario_generate'
-                || ! in_array($draft->status, ['pending_review', 'scheduled'], true) || ! $draft->payload_encrypted
+                || ! in_array($draft->status, ['pending_review', 'scheduled', 'approved'], true) || ! $draft->payload_encrypted
                 || ! str_starts_with($draft->slot_key, 'daily-scenario:')
                 || ! $draft->publication_at || Carbon::parse($draft->publication_at)->isFuture()) {
                 return null;
@@ -232,6 +288,11 @@ final class AiEditorialService
             if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $day)) {
                 throw new AiFailure('INVALID_PUBLICATION_DATE', 422);
             }
+            // Historical slots only enter the archive via an explicit admin recovery.
+            $expired = $day < now('Asia/Dhaka')->toDateString() || Carbon::parse($draft->publication_at)
+                ->addHours((int) $policy->get()->expiry_hours)->lessThanOrEqualTo(now());
+            $archive = $expired && ((bool) $draft->archive_recovery || $archiveActorId !== null);
+            if ($expired && ! $archive) return null;
             $existing = DB::table('scenarios')->where('daily_slot', $day)->value('id');
             if ($existing) {
                 DB::table('ai_editorial_drafts')->where('id', $id)->update([
@@ -239,22 +300,25 @@ final class AiEditorialService
                 ]);
                 return (int) $existing;
             }
+            if ($draft->request_id && DB::table('ai_requests')->where('id', $draft->request_id)->value('status') !== 'completed') {
+                throw new AiFailure('GENERATION_NOT_COMPLETED', 409);
+            }
             $data = json_decode(Crypt::decryptString($draft->payload_encrypted), true);
             if (! is_array($data)) {
                 throw new AiFailure('INVALID_EDITORIAL_DRAFT', 422);
             }
-            $scenarioId = $this->persistScenario($draft, $data, null);
+            $scenarioId = $this->persistScenario($draft, $data, null, $archive);
             DB::table('ai_editorial_drafts')->where('id', $id)->update([
                 'status' => 'published', 'published_at' => now(), 'updated_at' => now(),
             ]);
-            $this->access->audit(null, 'editorial.auto_publish', 'scenarios', $scenarioId,
-                null, ['draft_id' => $id, 'slot' => $day],
+            $this->access->audit($archiveActorId, 'editorial.auto_publish', 'scenarios', $scenarioId,
+                null, ['draft_id' => $id, 'slot' => $day, 'archive' => $archive, 'requested_by' => $archiveActorId],
                 'Automated daily publication explicitly enabled by administrator');
             return $scenarioId;
         }, 3);
     }
 
-    private function persistScenario(object $draft, array $data, ?int $actorId): int
+    private function persistScenario(object $draft, array $data, ?int $actorId, bool $archive = false): int
     {
         $data = app(AiFeatureCatalog::class)->validate('scenario_generate', $data);
         $rubric = $data['rubric_criteria'];
@@ -279,6 +343,8 @@ final class AiEditorialService
         $expires = $slot && $draft->publication_at
             ? Carbon::parse($draft->publication_at)->addHours((int) $settings->expiry_hours)
             : now()->addHours((int) $settings->expiry_hours);
+        $publishedAt = now();
+        if ($archive) $expires = $publishedAt->copy();
         $slug = Str::slug($data['title']).'-'.$draft->id;
         $id = DB::table('scenarios')->insertGetId([
             'slug' => $slug, 'title' => $data['title'],
@@ -288,10 +354,10 @@ final class AiEditorialService
             'topics' => json_encode($data['topics'], JSON_THROW_ON_ERROR),
             'difficulty' => mb_substr($data['difficulty'], 0, 32),
             'focus' => mb_substr($data['focus'], 0, 80), 'minutes' => 10,
-            'status' => $expires->isPast() ? 'closed' : 'published',
+            'status' => $archive || $expires->isPast() ? 'closed' : 'published',
             'rubric_version' => 1, 'ai_generated' => true,
             'daily_slot' => $slot, 'expires_at' => $expires,
-            'published_at' => now(), 'created_at' => now(), 'updated_at' => now(),
+            'published_at' => $publishedAt, 'created_at' => now(), 'updated_at' => now(),
         ]);
         DB::table('scenario_rubric_versions')->insert([
             'scenario_id' => $id, 'version' => 1,

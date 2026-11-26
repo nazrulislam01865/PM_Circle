@@ -14,13 +14,15 @@ const migration = read('database/migrations/2026_11_18_000004_add_profile_field_
 const directories = read('app/Http/Controllers/Members/MemberDirectoryController.php');
 const homepage = read('app/Http/Controllers/PublicSite/HomeController.php');
 
-test('the four prototype groups and all 31 labels are preserved exactly', () => {
+test('the four prototype groups preserve all existing labels and add research and interests', () => {
   const groups = [...config.matchAll(/'title' => '([^']+)'/g)].map((x) => x[1]);
   assert.deepEqual(groups, ['Basic details', 'About & skills', 'Professional sections', 'Career preferences']);
   const labels = [...config.matchAll(/\['key' => '([^']+)', 'label' => '([^']+)'\]/g)].map((x) => x[2]);
-  assert.equal(labels.length, 31);
+  assert.equal(labels.length, 33);
   assert.deepEqual(labels.slice(0, 4), ['Full name','Professional headline','Current job title','Current organisation']);
   assert.ok(labels.includes('Certifications & licences'));
+  assert.ok(labels.includes('Research work'));
+  assert.ok(labels.includes('Interests'));
   assert.equal(labels.at(-1), 'Open to relocation');
 });
 test('privacy stays inside the existing profile page, member header and footer', () => {
@@ -51,8 +53,8 @@ test('responsive page preserves rows, field labels and accessible controls', () 
 });
 test('privacy choices save for the authenticated user with server validation', () => {
   assert.match(jsx, /router\.patch\('\/settings\/profile'/);
-  assert.match(request, /ProfileFieldPrivacy::keys\(\)/);
-  assert.match(request, /Rule::in\(\['public', 'community', 'private'\]\)/);
+  assert.match(request, /ProfileFieldPrivacy::validationRules\(\)/);
+  assert.match(read('app/Domain/Identity/Services/ProfileFieldPrivacy.php'), /Rule::in\(\['public', 'community', 'private'\]\)/);
   assert.match(controller, /'field_visibility'\s*,/);
   assert.match(migration, /\$table->jsonb\('field_visibility'\)/);
   assert.match(directories, /ProfileFieldPrivacy::visible/);

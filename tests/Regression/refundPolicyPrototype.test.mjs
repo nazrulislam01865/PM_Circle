@@ -10,7 +10,7 @@ test('Refund Policy preserves the public route and uses the shared homepage shel
     assert.match(read('routes/web.php'), /Route::inertia\('\/refund-policy', 'public\/PolicyNotice'\)->name\('refund-policy'\)/);
     assert.match(page, /<PublicLayout siteLayout homePrototype guideLayout banner=\{\{[^\n]*\}\}>/);
     assert.doesNotMatch(page, /fetch\(|axios\.|useEffect\(|router\.get\(|has not been published yet/);
-    assert.match(read('resources/js/components/home/v2/HomeFooter.tsx'), /'\/refund-policy', 'Refund Policy'/);
+    assert.ok(read('app/Support/Admin/SiteFooterContent.php').includes("$link('Refund Policy', '/refund-policy')"));
 });
 
 test('Prototype text, navigation and support destinations are present', () => {

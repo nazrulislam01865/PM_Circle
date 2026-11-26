@@ -38,15 +38,19 @@ final class OpenAiResponsesProvider implements AiProvider
         $diagnostic = ($context['_connection_diagnostic'] ?? false) === true;
         unset($context['_ai_feature_code'], $context['_connection_diagnostic']);
         $daily = in_array($feature, ['scenario_generate', 'daily_challenge_review'], true);
+        $careerReview = in_array($feature, ['resume_analyze', 'resume_rewrite', 'interview_answer_review'], true);
         $key = app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential($daily ? 'daily_challenge_api_key' : 'api_key');
         if (! is_string($key) || $key === '') {
             throw new AiFailure('PROVIDER_NOT_CONFIGURED', 503, retrySafe: true);
         }
         $client = Http::withToken($key)->acceptJson()
             ->timeout((int) config('pm-ai.timeout_seconds'));
+        if ($careerReview) {
+            $client->connectTimeout(4)->timeout(min(35, max(1, (int) config('pm-ai.timeout_seconds'))));
+        }
         // Daily Challenge generation and scoring keep their own Responses key.
         // Only their mandatory input/output safety checks reuse the Post Check Omni key.
-        $moderationClient = $feature === 'trend_draft'
+        $moderationClient = ($feature === 'trend_draft' || $careerReview)
             ? Http::withToken($key)->acceptJson()->connectTimeout(4)->timeout(8) : $client;
         if ($daily && $useExternalModeration) {
             $postCheckKey = app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential('post_check_api_key');
@@ -70,7 +74,7 @@ final class OpenAiResponsesProvider implements AiProvider
             }
             if (! $moderation->successful()) {
                 $code = $moderation->json('error.code');
-                throw new AiFailure(($feature === 'trend_draft' || $diagnostic) ? ProviderHttpFailure::moderationCode($moderation->status(), is_string($code) ? $code : null) : 'MODERATION_UNAVAILABLE', 503);
+                throw new AiFailure((in_array($feature, ['trend_draft', 'scenario_generate'], true) || $diagnostic) ? ProviderHttpFailure::moderationCode($moderation->status(), is_string($code) ? $code : null) : 'MODERATION_UNAVAILABLE', 503);
             }
             $flagged = $moderation->json('results.0.flagged');
             if (! is_bool($flagged)) {
@@ -91,9 +95,9 @@ final class OpenAiResponsesProvider implements AiProvider
                 'strict' => true, 'schema' => $schema,
             ]],
         ];
-        if (($isPmp || $daily) && str_starts_with($model, 'gpt-5-nano')) {
+        if (($isPmp || $daily || $careerReview) && str_starts_with($model, 'gpt-5-nano')) {
             $body['reasoning'] = ['effort' => $daily ? config('pm-ai.daily_challenge_reasoning_effort', 'minimal')
-                : config('pm-ai.pmp_reasoning_effort', 'minimal')];
+                : ($careerReview ? 'minimal' : config('pm-ai.pmp_reasoning_effort', 'minimal'))];
             $body['text']['verbosity'] = 'low';
         }
         try {
@@ -104,7 +108,7 @@ final class OpenAiResponsesProvider implements AiProvider
         }
         if (! $response->successful()) {
             if ($response->status() >= 500 || $response->status() === 408) throw new AiFailure('PROVIDER_STATUS_UNKNOWN', 503);
-            if ($feature === 'trend_draft' || $diagnostic) {
+            if (in_array($feature, ['trend_draft', 'scenario_generate'], true) || $diagnostic) {
                 $code = $response->json('error.code');
                 throw new AiFailure(ProviderHttpFailure::code($response->status(), is_string($code) ? $code : null), 503, retrySafe: in_array($response->status(), [401, 402, 403, 404, 429], true));
             }
@@ -151,7 +155,7 @@ final class OpenAiResponsesProvider implements AiProvider
             }
             if (! $outputModeration->successful()) {
                 $code = $outputModeration->json('error.code');
-                throw new AiFailure(($feature === 'trend_draft' || $diagnostic) ? ProviderHttpFailure::moderationCode($outputModeration->status(), is_string($code) ? $code : null) : 'MODERATION_UNAVAILABLE', 503, usage: $metered);
+                throw new AiFailure((in_array($feature, ['trend_draft', 'scenario_generate'], true) || $diagnostic) ? ProviderHttpFailure::moderationCode($outputModeration->status(), is_string($code) ? $code : null) : 'MODERATION_UNAVAILABLE', 503, usage: $metered);
             }
             $flagged = $outputModeration->json('results.0.flagged');
             if (! is_bool($flagged)) {

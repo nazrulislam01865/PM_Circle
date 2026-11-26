@@ -1,75 +1,103 @@
 import { Link, router } from '@inertiajs/react';
-import { ArrowRight, BarChart3, BookOpen, BriefcaseBusiness, CalendarDays, Check, ChevronDown, CirclePlay, Clock3, Code2, Factory, HardHat, HeartPulse, Landmark, Laptop, Layers3, Lightbulb, Mic2, MoreHorizontal, Play, Sparkles, Target, UsersRound } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
-import { InterviewCard, InterviewHeading, InterviewPage } from '@/components/interview/InterviewShared';
-import { dateLabel, interviewBase, practiceUrl, type InterviewHistory, type InterviewShell, type QuestionType } from '@/components/interview/types';
+import { useId, useRef, useState } from 'react';
+import { AdminChoice } from '@/components/admin/AdminChoice';
+import { JobDescriptionUpload } from '@/components/interview/JobDescriptionUpload';
+import { Brief, Difficulty, FlowPage, Intro, Wizard, professionFor, questionTopic } from '@/components/interview/InterviewFlow';
+import { InterviewCard } from '@/components/interview/InterviewShared';
+import { interviewApi, interviewBase, practiceUrl, type InterviewHistory, type InterviewShell, type QuestionType, type InterviewQuestion } from '@/components/interview/types';
 
 type Props = {
+    practiceDefaults?: Partial<Record<'industry' | 'role' | 'level' | 'count' | 'answerMode', string>>;
     shell: InterviewShell; industries: Record<string, string>; roles: Record<string, string>; experience: Record<string, string>;
     types: Record<string, string>; counts: Record<string, string>; modes: Record<string, string>;
     questionSets: { id: number; title: string; industry: string | null; role: string | null; experience: string | null }[];
-    recent: InterviewHistory[]; stats: { sessions: number; answered: number; last: string | null }; minutesPerQuestion: number;
+    recent: InterviewHistory[]; minutesPerQuestion: number;
 };
-const industryIcons = [Laptop, HardHat, Layers3, Factory, Landmark, HeartPulse, MoreHorizontal];
+// Use an existing active catalog entry only; administrator changes always take precedence.
+function preferredOption(options: Record<string, string>, preferred: string | undefined, fallback: string, alias?: string): string {
+    return preferred && Object.prototype.hasOwnProperty.call(options, preferred) ? preferred
+        : Object.entries(options).find(([, label]) => label === preferred)?.[0]
+        ?? (alias && Object.prototype.hasOwnProperty.call(options, alias) ? alias : fallback);
+}
+const experienceKeys: Record<string, string> = { Entry: 'entry', Junior: 'junior', 'Mid-level': 'mid', Senior: 'senior', Leadership: 'leadership' };
 
-export default function Index({ shell, industries, roles, experience, types: availableTypes, counts, modes, questionSets, recent, stats, minutesPerQuestion }: Props) {
-    const [industry, setIndustry] = useState(Object.keys(industries)[0] ?? '');
-    const [role, setRole] = useState(Object.keys(roles).includes('Project Manager') ? 'Project Manager' : (Object.keys(roles)[0] ?? ''));
-    const [level, setLevel] = useState(Object.keys(experience).includes('mid') ? 'mid' : (Object.keys(experience)[0] ?? ''));
+const focusAreas: Record<string, string[]> = {
+    'Project Management': ['delivery planning', 'risk and issue management', 'scope change', 'stakeholder communication', 'dependency management', 'project governance'],
+    'Business Analysis': ['requirements elicitation', 'process mapping', 'requirements traceability', 'acceptance criteria', 'UAT coordination', 'requirements prioritisation'],
+    'Scrum Master': ['team facilitation', 'impediment removal', 'Sprint Goals', 'retrospective improvement', 'team conflict', 'stakeholder collaboration'],
+    'Product Management': ['customer discovery', 'roadmap prioritisation', 'product metrics', 'experiment design', 'product strategy', 'cross-functional alignment'],
+    'Other': ['planning', 'communication', 'risk management', 'leadership', 'delivery', 'quality'],
+};
+function SelectField({ label, value, options, change, disabled }: { label: string; value: string; options: Record<string,string>; change: (v: string) => void; disabled: boolean }) {
+    const id = useId();
+    // Radix uses the empty string for the placeholder, never as an option value.
+    const allValue = '__all_eligible_sets__';
+    return <AdminChoice id={id} label={label} value={value || (Object.hasOwn(options, '') ? allValue : '')} options={Object.entries(options).map(([key, text]) => ({ value: key || allValue, label: text }))} disabled={disabled} onChange={next => change(next === allValue ? '' : next)}/>;
+}
+export default function Index({ shell, practiceDefaults = {}, industries, roles, experience, types: availableTypes, counts, modes, questionSets, recent, minutesPerQuestion }: Props) {
+    const [industry, setIndustry] = useState(() => preferredOption(industries, practiceDefaults.industry, 'software' in industries ? 'software' : Object.keys(industries)[0] ?? ''));
+    const [role, setRole] = useState(() => preferredOption(roles, practiceDefaults.role, 'Project Manager' in roles ? 'Project Manager' : Object.keys(roles)[0] ?? ''));
+    const [level, setLevel] = useState(() => preferredOption(experience, practiceDefaults.level, 'mid' in experience ? 'mid' : Object.keys(experience)[0] ?? '', experienceKeys[practiceDefaults.level ?? '']));
+    const profession = professionFor(roles[role] ?? role);
+    const professions = Object.fromEntries([...new Set(Object.values(roles).map(professionFor))].map(name => [name, name]));
+    const professionRoles = Object.fromEntries(Object.entries(roles).filter(([, label]) => professionFor(label) === profession));
     const typeNames = Object.keys(availableTypes);
-    const [types, setTypes] = useState<QuestionType[]>(typeNames.slice(0, 3));
+    const [types, setTypes] = useState<QuestionType[]>(typeNames);
     const countOptions = Object.keys(counts).map(Number);
-    const [count, setCount] = useState(countOptions.includes(10) ? 10 : (countOptions[0] ?? 0));
-    const [mode, setMode] = useState<'type' | 'speak' | 'both'>(('both' in modes ? 'both' : (Object.keys(modes)[0] ?? 'type')) as 'type' | 'speak' | 'both');
+    const [count, setCount] = useState(() => countOptions.includes(Number(practiceDefaults.count)) ? Number(practiceDefaults.count) : countOptions.includes(5) ? 5 : countOptions[0] ?? 0);
+    const [mode, setMode] = useState(() => preferredOption(modes, practiceDefaults.answerMode?.toLowerCase(), 'both' in modes ? 'both' : Object.keys(modes)[0] ?? 'type'));
+    const [requestedExperience, setRequestedExperience] = useState('');
+    const [jd, setJd] = useState(''); const [file, setFile] = useState('');
+    const [step, setStep] = useState(0); const [mix, setMix] = useState('recommended'); const [focus, setFocus] = useState<string[]>([]);
     const [setId, setSetId] = useState<number | null>(null);
     const eligibleSets = questionSets.filter(item => (!item.industry || item.industry === industry) && (!item.role || item.role === role) && (!item.experience || item.experience === level));
-    const [submitting, setSubmitting] = useState(false);
-    const [error, setError] = useState('');
-    const toggle = (type: QuestionType) => setTypes(previous => previous.includes(type) ? previous.length > 1 ? previous.filter(item => item !== type) : previous : [...previous, type]);
-    const start = (event: FormEvent) => {
-        event.preventDefault(); setError(''); setSubmitting(true);
-        router.post(`${interviewBase}/start`, { industry, role, experience: level, types, count, mode, question_set: eligibleSets.some(item => item.id === setId) ? setId : null }, {
-            preserveScroll: true,
-            onError: errors => { setError(Object.values(errors)[0] ?? 'Please review your selections.'); setSubmitting(false); },
-            onFinish: () => setSubmitting(false),
-        });
+    const [draft, setDraft] = useState<{ draft: string; questions: InterviewQuestion[] } | null>(null);
+    const [busy, setBusy] = useState(false); const [error, setError] = useState('');
+    const [uploading, setUploading] = useState(false); const [uploadError, setUploadError] = useState('');
+    const uploadLock = useRef(false);
+    const invalidate = () => { setDraft(null); setError(''); };
+    const payload = { industry, role, experience: level, types, count, mode, profession, requested_experience: requestedExperience || null, jd: jd || null, mix, focus: mix === 'focus' ? focus : [], question_set: eligibleSets.some(item => item.id === setId) ? setId : null };
+    const unavailable = !industry || !role || !level || !types.length || !count || !mode || !eligibleSets.length;
+    const generate = async () => { if (busy || unavailable) return; setBusy(true); setError(''); setDraft(null); try { setDraft(await interviewApi<{draft:string;questions:InterviewQuestion[]}>(`${interviewBase}/preview`, 'POST', payload)); } catch (e) { setError(e instanceof Error ? e.message : 'Unable to build the question set.'); } finally { setBusy(false); } };
+    const start = () => { if (!draft || busy) return; setBusy(true); setError(''); router.post(`${interviewBase}/start`, { ...payload, draft: draft.draft }, { onError: errors => { setError(Object.values(errors)[0] ?? 'Unable to start.'); setDraft(null); }, onFinish: () => setBusy(false) }); };
+    const attach = async (chosen: File) => {
+        if (busy || uploadLock.current) return;
+        uploadLock.current = true; setUploading(true); setBusy(true); setUploadError(''); invalidate();
+        try {
+            const data = new FormData(); data.append('file', chosen);
+            const response = await fetch(`${interviewBase}/jd-text`, { method: 'POST', credentials: 'same-origin', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '' }, body: data });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || typeof result.text !== 'string') throw new Error(result.errors?.file?.[0] ?? result.message ?? 'Unable to read attachment. Paste the job description instead.');
+            setJd(result.text); setFile(chosen.name);
+        } catch (e) { setUploadError(e instanceof Error ? e.message : 'Unable to read attachment.'); }
+        finally { uploadLock.current = false; setUploading(false); setBusy(false); }
     };
-    return <InterviewPage shell={shell}><InterviewHeading subtitle="Project management interview practice by industry, role, and experience level."/>
-        <div className="pm-interview-home-grid"><div className="pm-interview-home-main">
-            <div className="pm-interview-hero"><div><h2>Industry-Focused<br/>PM Interview Practice</h2><ul><li><Check size={17}/>Realistic PM interview questions by industry</li><li><Check size={17}/>Answer by typing or speaking</li><li><Check size={17}/>Review your answers and track practice progress</li></ul></div><div className="pm-interview-hero-image" aria-hidden="true"/></div>
-            <InterviewCard title="Start Your Interview Practice" icon={<CirclePlay size={23} fill="currentColor"/>} className="pm-interview-setup">
-                <form onSubmit={start}>
-                    <fieldset className="pm-interview-fieldset"><legend><span className="pm-interview-step">1</span><Layers3 size={18}/>Select Industry <b>*</b></legend>
-                        <div className="pm-interview-industry-grid">{Object.entries(industries).map(([key, label], i) => { const Icon = industryIcons[i] ?? MoreHorizontal; return <button type="button" key={key} className={`pm-interview-choice ${industry === key ? 'is-selected' : ''}`} aria-pressed={industry === key} onClick={() => setIndustry(key)}>{industry === key && <Check className="pm-interview-selected-mark" size={14}/>}<Icon size={22}/><span>{label}</span></button>; })}</div>
-                    </fieldset>
-                    <fieldset className="pm-interview-fieldset"><legend><span className="pm-interview-step">2</span><UsersRound size={18}/>Select PM Role <b>*</b></legend>
-                        <div className="pm-interview-role-grid">{Object.entries(roles).map(([key, label]) => <button key={key} type="button" className={`pm-interview-choice ${role === key ? 'is-selected' : ''}`} aria-pressed={role === key} onClick={() => setRole(key)}>{role === key && <Check size={15}/>}<span>{label}</span></button>)}</div>
-                    </fieldset>
-                    <div className="pm-interview-options-grid"><fieldset className="pm-interview-fieldset"><legend><span className="pm-interview-step">3</span><BarChart3 size={18}/>Experience Level <b>*</b></legend>
-                        <div className="pm-interview-experience-grid">{Object.entries(experience).map(([key, value]) => <button type="button" key={key} className={`pm-interview-choice ${level === key ? 'is-selected' : ''}`} aria-pressed={level === key} onClick={() => setLevel(key)}>{level === key && <Check size={14}/>}<span>{value}</span></button>)}</div>
-                    </fieldset><fieldset className="pm-interview-fieldset"><legend><span className="pm-interview-step">4</span><Layers3 size={18}/>Interview Type <b>*</b></legend>
-                        <div className="pm-interview-types-grid">{typeNames.map(item => <label className={`pm-interview-type ${types.includes(item) ? 'is-selected' : ''}`} key={item}><input type="checkbox" checked={types.includes(item)} onChange={() => toggle(item)}/><span>{availableTypes[item]}</span></label>)}</div>
-                    </fieldset></div>
-                    <div className="pm-interview-setup-footer"><div><label htmlFor="pm-interview-count"><BookOpen size={18}/>Number of Questions</label><div className="pm-interview-select-wrap"><select id="pm-interview-count" className="pm-input" value={count} onChange={e => setCount(Number(e.target.value))}>{countOptions.map(value => <option key={value} value={value}>{counts[String(value)]}</option>)}</select><ChevronDown size={16}/></div></div>
-                        <div><span className="pm-interview-label"><Clock3 size={18}/>Estimated Duration</span><p className="pm-interview-duration">≈ {count * minutesPerQuestion} minutes</p></div>
-                        <div><span className="pm-interview-label"><Mic2 size={18}/>Answer Mode</span><div className="pm-interview-radio-row">{Object.entries(modes).map(([value, text]) => <label key={value}><input type="radio" name="answer-mode" value={value} checked={mode === value} onChange={() => setMode(value as 'type' | 'speak' | 'both')}/>{text}</label>)}</div></div>
-                    </div>
-                    {eligibleSets.length > 0 && <label className="pm-interview-set-field" htmlFor="pm-interview-set"><span>Question set</span><select id="pm-interview-set" className="pm-input" value={eligibleSets.some(item => item.id === setId) ? (setId ?? '') : ''} onChange={e => setSetId(e.target.value ? Number(e.target.value) : null)}><option value="">Recommended mix (all eligible sets)</option>{eligibleSets.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>}
-                    {error && <p role="alert" className="pm-interview-error">{error}</p>}
-                    {(!Object.keys(roles).length || !typeNames.length || !countOptions.length || !eligibleSets.length) && <p role="alert" className="pm-interview-error">Interview practice is not available yet. Please contact the administrator.</p>}
-                    <button className="pm-button pm-interview-start" disabled={submitting || !Object.keys(roles).length || !typeNames.length || !countOptions.length || !eligibleSets.length} type="submit"><Play size={18} fill="currentColor"/>{submitting ? 'Starting interview…' : 'Start Interview Practice'}</button>
-                </form>
-            </InterviewCard>
-        </div><aside className="pm-interview-home-side">
-            <InterviewCard title="Your Previous Practice" icon={<BarChart3 size={21}/>} action={<Link href={`${interviewBase}/results`}>View All</Link>}>
-                {stats.sessions > 0 ? <><div className="pm-interview-mini-performance"><div className="pm-interview-donut pm-interview-practice-donut"><div><strong>{stats.sessions}</strong><small>sessions</small></div></div><div><strong>Practice History</strong><span className="pm-interview-status is-good"><Check size={16}/>Sessions Completed</span><small>Review your answers in My Results</small></div></div><div className="pm-interview-metrics"><div><CalendarDays size={19}/><strong>{stats.sessions}</strong><small>Practice Sessions</small></div><div><Target size={19}/><strong>{stats.answered}</strong><small>Questions Answered</small></div><div><BarChart3 size={19}/><strong>{dateLabel(stats.last)}</strong><small>Last Practice</small></div></div></>
-                    : <div className="pm-interview-side-empty"><BarChart3 size={35}/><strong>Your progress starts here</strong><p>Complete a practice interview to view your answers and history.</p></div>}
-            </InterviewCard>
-            <InterviewCard title="Popular Industry Practices" icon={<BarChart3 size={21}/>} action={<Link href="#start-practice" onClick={event => { event.preventDefault(); document.querySelector('.pm-interview-setup')?.scrollIntoView({ behavior: 'smooth' }); }}>View All</Link>}>
-                <div className="pm-interview-popular">{Object.entries(industries).slice(0, 4).map(([key, label]) => <button type="button" key={key} onClick={() => { setIndustry(key); document.querySelector('.pm-interview-setup')?.scrollIntoView({ behavior: 'smooth' }); }}><BriefcaseBusiness size={18}/><span>{label} – Project Management</span><CirclePlay size={19}/></button>)}</div>
-            </InterviewCard>
-            <div className="pm-interview-why"><Sparkles size={24}/><h3>Why Industry-Based Practice?</h3><p>Get role-relevant and industry-specific questions, realistic scenarios, that match real interview expectations.</p></div>
-            {recent.find(item => item.status === 'in_progress') && <InterviewCard title="Continue Practicing" icon={<Clock3 size={19}/>}><Link className="pm-button pm-button-outline" href={practiceUrl(recent.find(item => item.status === 'in_progress')!.id)}>Resume unfinished interview <ArrowRight size={17}/></Link></InterviewCard>}
-        </aside></div>
-    </InterviewPage>;
+    const reviewTarget = () => {
+        const title = jd.match(/^\s*(?:job\s*title|position|role|title)\s*[:–]\s*(.+)$/im)?.[1] ?? jd.trim().split('\n')[0] ?? '';
+        const foundRole = Object.entries(roles).sort((a,b) => b[1].length-a[1].length).find(([,label]) => title.toLowerCase().includes(label.toLowerCase()));
+        if (foundRole) { setRole(foundRole[0]); setFocus([]); }
+        const industryLine = jd.match(/^\s*industry\s*:\s*(.+)$/im)?.[1]?.trim();
+        const foundIndustry = Object.entries(industries).find(([, label]) => label.toLowerCase() === industryLine?.toLowerCase());
+        if (foundIndustry) setIndustry(foundIndustry[0]);
+        const years = jd.match(/\b(\d{1,2})(?:\s*(?:[-–—]|to)\s*(\d{1,2})|\s*(\+))?\s*(?:years?|yrs?)\b/i);
+        if (years) { const n = Number(years[1]); const key = n >= 10 ? 'leadership' : n >= 5 ? 'senior' : n >= 3 ? 'mid' : n >= 1 ? 'junior' : 'entry'; if (key in experience) setLevel(key); setRequestedExperience(`${years[1]}${years[2] ? '–'+years[2] : years[3] || ''} years`); }
+        setStep(1); invalidate();
+    };
+    const majority = Math.round(count * .6), small = Math.round(count * .2);
+    const buckets: [string, number][] = mix === 'common' ? [['Common questions', count]] : mix === 'focus' ? [['Focus-area questions', majority], ['Common questions', small], ['Role & industry scenarios', count - majority - small]] : [['Common questions', majority], ['Role & industry scenarios', count - majority]];
+    const rows: [string, string | number][] = [['Profession', profession], ['Role', roles[role] ?? role], ['Industry', industries[industry] ?? industry], ['Level', experience[level] ?? level], ['JD experience', requestedExperience || 'Unspecified']];
+    if (step === 1) rows.push(['Questions', count], ['Estimated time', `≈ ${count * minutesPerQuestion} min`]);
+    const unfinished = recent.find(item => item.status === 'in_progress');
+    return <FlowPage shell={shell} hero rail={<Brief rows={rows} previous={recent.find(item => item.status === 'completed')} resume={unfinished && <InterviewCard title="Continue practice"><Link className="pm-button pm-button-outline" href={practiceUrl(unfinished.id)}>Resume unfinished interview</Link></InterviewCard>}/> }>
+        <Wizard step={step} left={step === 1 && <button className="pm-button pm-button-outline" type="button" disabled={busy} onClick={() => { setStep(0); invalidate(); }}>Back</button>} right={step === 0 ? <button className="pm-button" disabled={busy || !industry || !role || !level} type="button" onClick={reviewTarget}>Continue to question setup</button> : <><button className={`pm-button ${draft ? 'pm-button-outline' : ''}`} disabled={busy || unavailable || (mix === 'focus' && !focus.length)} type="button" onClick={() => void generate()}>{busy ? 'Please wait…' : draft ? 'Rebuild set' : 'Generate question set'}</button>{draft && <button className="pm-button" disabled={busy} onClick={start}>Start practice</button>}</>}>
+            <fieldset className="pm-if-fieldset" disabled={busy}>
+            {step === 0 ? <><Intro title="Set your interview target" description="Choose the role you are preparing for. Add a job description if you have one."/><div className="pm-if-fields">
+                <SelectField disabled={busy} label="Industry" value={industry} options={industries} change={v => { setIndustry(v); invalidate(); }}/><SelectField disabled={busy} label="Profession" value={profession} options={professions} change={v => { setRole(Object.entries(roles).find(([, label]) => professionFor(label) === v)?.[0] ?? ''); setFocus([]); invalidate(); }}/><SelectField disabled={busy} label="Target role" value={role} options={professionRoles} change={v => { setRole(v); invalidate(); }}/><SelectField disabled={busy} label="Experience level" value={level} options={experience} change={v => { setLevel(v); invalidate(); }}/><label className="pm-if-field"><span>Experience requested <small>Optional</small></span><input className="pm-input" value={requestedExperience} maxLength={120} placeholder="e.g. 4–6 years" onChange={e => { setRequestedExperience(e.target.value); invalidate(); }}/></label></div>
+                <section className="pm-if-box"><h3>Job description <small>Optional</small></h3><label className="pm-if-field">Paste job description<textarea rows={5} className="pm-input pm-if-jd" value={jd} maxLength={12000} placeholder="Paste the job title, responsibilities and requirements…" onChange={e => { setJd(e.target.value); invalidate(); }}/></label><JobDescriptionUpload fileName={file} busy={uploading} disabled={busy} onSelect={chosen => void attach(chosen)} onInvalid={setUploadError} onRemove={() => { setFile(''); setUploadError(''); invalidate(); }}/>{uploadError && <p role="alert" className="pm-interview-error">{uploadError}</p>}<p className="pm-if-note">Text is extracted for question selection. Uploaded files are not retained. Scanned PDFs may require pasting text manually.</p></section></> : <><Intro title="Build your question set" description="Choose the mix, session length and how you want to answer."/><SelectField disabled={busy} label="Question mix" value={mix} options={{recommended:'Recommended Mix', common:'Common Interview Questions', focus:'Focus Areas'}} change={v => { setMix(v); invalidate(); }}/>{mix === 'focus' && <><p className="pm-if-note">Choose up to three focus areas.</p><div className="pm-if-picks">{(focusAreas[profession] ?? focusAreas.Other).map(item => <label key={item}><input type="checkbox" checked={focus.includes(item)} disabled={!focus.includes(item) && focus.length >= 3} onChange={() => { setFocus(old => old.includes(item) ? old.filter(v => v !== item) : [...old,item]); invalidate(); }}/>{item}</label>)}</div></>}
+                <div className="pm-if-box"><h3>Question mix preview</h3><dl className="pm-if-summary">{(draft ? [...new Set(draft.questions.map(q => q.bucket ?? 'Questions'))].map(bucket => [bucket, draft.questions.filter(q => (q.bucket ?? 'Questions') === bucket).length] as [string,number]) : buckets).map(([label, n]) => <div key={label}><dt>{label}</dt><dd>{n}</dd></div>)}</dl><p className="pm-if-note">{draft ? 'Actual catalog selection.' : 'Requested mix; availability depends on the active question catalog.'}</p></div>
+                <h3>Interview question types</h3><div className="pm-if-picks">{typeNames.map(item => <label key={item}><input type="checkbox" checked={types.includes(item)} onChange={() => { setTypes(old => old.includes(item) ? old.filter(v => v !== item) : [...old,item]); invalidate(); }}/>{availableTypes[item]}</label>)}</div><div className="pm-if-fields"><SelectField disabled={busy} label="Number of questions" value={String(count)} options={counts} change={v => { setCount(Number(v)); invalidate(); }}/><SelectField disabled={busy} label="Answer mode" value={mode} options={modes} change={v => { setMode(v); invalidate(); }}/></div>
+                {eligibleSets.length > 1 && <SelectField disabled={busy} label="Question set" value={String(eligibleSets.some(item => item.id === setId) ? setId : '')} options={{'':'All eligible sets', ...Object.fromEntries(eligibleSets.map(item => [String(item.id),item.title]))}} change={v => { setSetId(v ? Number(v) : null); invalidate(); }}/>}
+                {draft && <div className="pm-if-box"><div className="pm-if-between"><h3>Your question set</h3><span className="pm-if-tag">{draft.questions.length} questions · ≈ {draft.questions.length * minutesPerQuestion} min</span></div>{draft.questions.map((q,i) => <div className="pm-if-item" key={q.id}><strong>{i+1}. {questionTopic(q)}</strong> <span className="pm-if-note">· {q.type}</span> <Difficulty question={q}/></div>)}</div>}{unavailable && <p role="alert" className="pm-interview-error">Choose available options and at least one question type.</p>}</>}
+            </fieldset>{error && <p role="alert" className="pm-interview-error">{error}</p>}
+        </Wizard></FlowPage>;
 }

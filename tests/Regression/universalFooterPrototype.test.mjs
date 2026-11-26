@@ -39,9 +39,7 @@ test('no footer component displays the removed prototype attribution', () => {
     ]) {
         assert.doesNotMatch(read(path), /Homepage design mockup|Sample content/);
     }
-    const footer = read('resources/js/components/home/v2/HomeFooter.tsx');
-    for (const heading of ['Company', 'Learning', 'Community', 'Plans & Policies']) {
-        assert.match(footer, new RegExp(`title="${heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`));
-    }
-    assert.match(footer, /© PM Circle by ITQAN/);
+    const defaults = read('app/Support/Admin/SiteFooterContent.php');
+    for (const heading of ['Company', 'Learning', 'Community', 'Plans & Policies']) assert.ok(defaults.includes(`'title' => '${heading}'`));
+    assert.match(defaults, /© PM Circle by ITQAN/);
 });

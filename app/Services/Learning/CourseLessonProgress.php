@@ -15,6 +15,7 @@ final class CourseLessonProgress
     {
         $occurrences = [];
         return array_map(function (array $lesson) use (&$occurrences): array {
+            $placement = array_intersect_key($lesson, array_flip(['uid', 'section_title', 'topic_title', 'faq']));
             $lesson = array_filter(array_replace(['title' => '', 'body' => ''], array_intersect_key($lesson, array_flip([
                 'title', 'body', 'video_url', 'takeaway', 'when_to_apply', 'example', 'application', 'references',
             ]))), fn ($value) => is_string($value) && trim($value) !== '');
@@ -22,7 +23,7 @@ final class CourseLessonProgress
             ksort($lesson);
             $hash = hash('sha256', json_encode($lesson, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
             $occurrences[$hash] = ($occurrences[$hash] ?? 0) + 1;
-            return [...$lesson, 'key' => hash('sha256', $hash.':'.$occurrences[$hash])];
+            return [...$lesson, ...$placement, 'key' => hash('sha256', $hash.':'.$occurrences[$hash])];
         }, array_values($course->lessons ?? []));
     }
 
@@ -43,7 +44,7 @@ final class CourseLessonProgress
             if (! $done && $next === null) {
                 $next = $index + 1;
             }
-            $items[] = ['position' => $index + 1, 'title' => $lesson['title'], 'completed' => $done];
+            $items[] = ['position' => $index + 1, 'title' => $lesson['title'], 'completed' => $done, 'hasVideo' => ! empty($lesson['video_url'])];
         }
         $total = count($items);
         return ['lessons' => $items, 'completed' => $completed, 'total' => $total,

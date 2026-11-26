@@ -172,7 +172,7 @@
 .pm-events-shell .pm-v2-site-footer .pm-v2-container { width: var(--pm-v2-container-width); }
 .pm-guide-public-shell:not(.pm-events-shell) .pm-v2-site-footer .pm-v2-container { max-width: var(--pm-guide-container); }
 .pm-page-shell:has(.pm-learn-v3) .pm-v2-site-footer .pm-v2-container { width: var(--pm-v2-container-width); }
-.pm-v2-footer-grid { display: grid; grid-template-columns: 1.45fr repeat(4, minmax(0, 1fr)); gap: 2.75rem; align-items: start; }
+.pm-v2-footer-grid { display: grid; grid-template-columns: var(--pm-footer-desktop-columns, 1.45fr repeat(4, minmax(0, 1fr))); gap: 2.75rem; align-items: start; }
 /* IMPORTANT: never apply the link-column direction to the nested social navigation. */
 .pm-v2-footer-grid > nav { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s1); }
 .pm-v2-footer-grid h2 { color: var(--surface); font-size: var(--pm-v2-font-ui); line-height: var(--pm-guide-line-h4); font-weight: var(--bold); margin-bottom: var(--s2); }
@@ -197,3 +197,15 @@
 .pm-v2-footer-last { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s5); padding-top: var(--s3); border-top: 1px solid var(--pm-v2-footer-border); color: var(--surface); font-size: var(--pm-v2-font-caption); }
 
 .pm-v2-resume-icon img { width: 19px; height: 19px; object-fit: contain; }
+
+/* Configurable columns and bottom links keep the approved footer rail and tokens. */
+.pm-v2-footer-grid > nav, .pm-v2-footer-grid h2, .pm-v2-footer-grid a, .pm-v2-footer-last { min-width: 0; overflow-wrap: anywhere; }
+.pm-v2-footer-last nav { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); }
+.pm-v2-footer-last nav a { color: inherit; font-size: inherit; text-decoration: none; }
+.pm-v2-footer-last nav a:hover { text-decoration: underline; }
+.pm-v2-footer-legal > p { white-space: pre-line; overflow-wrap: anywhere; }
+.pm-v2-footer-identity > p { white-space: pre-line; overflow-wrap: anywhere; }
+.pm-v2-footer-legal > .pm-v2-footer-last:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+
+.pm-v2-footer-identity .pm-unified-footer-brand { max-width: 100%; }
+.pm-v2-footer-identity .pm-brand-copy { min-width: 0; overflow-wrap: anywhere; }

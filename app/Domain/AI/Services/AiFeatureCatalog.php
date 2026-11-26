@@ -14,6 +14,7 @@ final class AiFeatureCatalog
         'daily_challenge_review' => ['family' => 'feature:daily_challenge', 'min_plan' => 'free', 'chat' => false],
         'scenario_comment_review' => ['family' => 'feature:scenario', 'min_plan' => 'plus', 'chat' => false],
         'ask_ai' => ['family' => 'feature:ask_ai', 'min_plan' => 'plus', 'chat' => true],
+        'interview_answer_review' => ['family' => 'feature:interview', 'min_plan' => 'plus', 'chat' => false],
         'resume_analyze' => ['family' => 'feature:resume', 'min_plan' => 'pro', 'chat' => false],
         'resume_rewrite' => ['family' => 'feature:resume', 'min_plan' => 'pro', 'chat' => false],
         'scenario_generate' => ['family' => 'feature:editorial', 'min_plan' => 'staff', 'chat' => false],
@@ -66,6 +67,7 @@ final class AiFeatureCatalog
                 'strengths' => $strings(), 'gaps' => $strings(), 'next_actions' => $strings(),
                 'disclaimer' => $str(),
             ]),
+            'interview_answer_review' => $object(['summary' => $str(), 'strengths' => $strings(), 'improvements' => $strings(), 'suggested_answer' => $str()]),
             'resume_analyze' => $object(['strengths' => $strings(), 'improvements' => $strings(),
                 'role_alignment' => $str(), 'disclaimer' => $str()]),
             'resume_rewrite' => $object(['suggested_text' => $str(), 'reason' => $str()]),
@@ -84,6 +86,14 @@ final class AiFeatureCatalog
     public function validate(string $feature, array $result, ?array $rubric = null): array
     {
         $this->validateShape($result, $this->schema($feature));
+        if ($feature === 'interview_answer_review') {
+            foreach (['strengths', 'improvements'] as $field) {
+                if (count($result[$field]) < 1 || count($result[$field]) > 5 || collect($result[$field])->contains(fn ($item) => mb_strlen($item) > 500)) {
+                    throw new AiFailure('INVALID_AI_RESPONSE', 503);
+                }
+            }
+            if (mb_strlen($result['summary']) > 1500 || mb_strlen($result['suggested_answer']) > 4000) throw new AiFailure('INVALID_AI_RESPONSE', 503);
+        }
         if ($feature === 'scenario_generate') {
             $criteria = $result['rubric_criteria'];
             $keys = array_column($criteria, 'key');

@@ -20,7 +20,9 @@ final class CourseQuestionImporter
         'Correct Option', 'Explanation', 'Publish',
     ];
 
-    public function import(LearningCourse $course, UploadedFile $file, bool $publishAll): int
+    public const LESSON_HEADERS = [...self::HEADERS, 'Scenario Text', 'Scenario Video URL'];
+
+    public function import(LearningCourse $course, UploadedFile $file, bool $publishAll, ?string $lessonUid = null): int
     {
         $rows = match (strtolower($file->getClientOriginalExtension())) {
             'csv' => $this->csv($file->getRealPath()),
@@ -30,8 +32,14 @@ final class CourseQuestionImporter
         if (count($rows) < 2 || count($rows) > 501) {
             throw ValidationException::withMessages(['file' => 'Include a header and 1 to 500 questions.']);
         }
-        if (array_map('trim', $rows[0]) !== self::HEADERS) {
-            throw ValidationException::withMessages(['file' => 'Use the exact 13-column course question template.']);
+        $headers = array_map('trim', $rows[0]);
+        if (! in_array($headers, [self::HEADERS, self::LESSON_HEADERS], true)) {
+            throw ValidationException::withMessages(['file' => 'Use the course or lesson question template.']);
+        }
+        $width = count($headers);
+        $target = $lessonUid ? collect($course->lessons ?? [])->firstWhere('uid', $lessonUid) : null;
+        if ($lessonUid && (! $target || empty($target['section_title']) || empty($target['topic_title']))) {
+            throw ValidationException::withMessages(['lesson_uid' => 'Choose a saved lesson linked to a curriculum topic.']);
         }
         $curriculum = collect($course->outline ?? [])
             ->mapWithKeys(fn (array $section) => [$section['title'] => $section['topics'] ?? []])->all();
@@ -40,9 +48,9 @@ final class CourseQuestionImporter
         $codes = [];
         foreach (array_slice($rows, 1) as $index => $row) {
             $line = $index + 2;
-            $row = array_pad($row, 13, '');
-            if (count($row) !== 13) {
-                throw ValidationException::withMessages(['file' => "Row {$line}: expected 13 columns."]);
+            $row = array_pad($row, $width, '');
+            if (count($row) !== $width) {
+                throw ValidationException::withMessages(['file' => "Row {$line}: expected {$width} columns."]);
             }
             $row = array_map(static fn ($cell): string => trim((string) $cell), $row);
             if (implode('', $row) === '') {
@@ -54,9 +62,19 @@ final class CourseQuestionImporter
                 }
             }
             [$code, $section, $topic, $kind, $difficulty, $prompt, $a, $b, $c, $d, $correct, $explanation, $publish] = $row;
+            if ($target) {
+                if (($section !== '' && $section !== $target['section_title']) || ($topic !== '' && $topic !== $target['topic_title'])) {
+                    throw ValidationException::withMessages(['file' => "Row {$line}: section or topic does not match the selected lesson."]);
+                }
+                $section = $target['section_title'];
+                $topic = $target['topic_title'];
+            }
             $publish = strtolower($publish);
             $data = [
                 'course_id' => $course->id,
+                'lesson_uid' => $lessonUid,
+                'scenario_text' => ($row[13] ?? '') ?: null,
+                'scenario_video_url' => ($row[14] ?? '') ?: null,
                 'code' => $code,
                 'section_title' => $section,
                 'topic_title' => $topic,
@@ -74,6 +92,8 @@ final class CourseQuestionImporter
                 'topic_title' => ['required', 'string', 'max:200', Rule::in($curriculum[$section] ?? [])],
                 'kind' => ['required', Rule::in(array_intersect($choices['course_question_kind'], ['question', 'scenario']))],
                 'difficulty' => ['required', Rule::in(array_intersect($choices['course_question_difficulty'], ['Easy', 'Moderate', 'Hard']))],
+                'scenario_text' => ['nullable', 'string', 'max:10000'],
+                'scenario_video_url' => ['nullable', 'url:https', 'max:2000'],
                 'prompt' => ['required', 'string', 'max:10000'],
                 'options.*' => ['required', 'string', 'max:3000'],
                 'correct_option' => ['required', Rule::in(['A', 'B', 'C', 'D'])],
@@ -95,6 +115,16 @@ final class CourseQuestionImporter
         }
         try {
             return DB::transaction(function () use ($course, $codes, $prepared): int {
+            $locked = LearningCourse::query()->whereKey($course->id)->lockForUpdate()->firstOrFail();
+            $curriculum = collect($locked->outline ?? [])->mapWithKeys(fn ($section) => [$section['title'] => $section['topics'] ?? []])->all();
+            foreach ($prepared as $row) {
+                if ($row['lesson_uid'] && ! collect($locked->lessons ?? [])->contains(fn ($lesson) => ($lesson['uid'] ?? null) === $row['lesson_uid'] && ($lesson['section_title'] ?? null) === $row['section_title'] && ($lesson['topic_title'] ?? null) === $row['topic_title'])) {
+                    throw ValidationException::withMessages(['file' => 'The selected lesson changed during import. Reload and retry.']);
+                }
+                if (! in_array($row['topic_title'], $curriculum[$row['section_title']] ?? [], true)) {
+                    throw ValidationException::withMessages(['file' => 'The curriculum changed during import. Reload and update the file.']);
+                }
+            }
             $existing = DB::table('learning_course_questions')->where('course_id', $course->id)
                 ->whereIn('code', array_keys($codes))->pluck('code');
             if ($existing->isNotEmpty()) {
@@ -182,8 +212,8 @@ final class CourseQuestionImporter
                     foreach (str_split($match[0] ?? '') as $letter) {
                         $column = $column * 26 + ord($letter) - 64;
                     }
-                    if ($column < 1 || $column > 13) {
-                        if ($column > 13) {
+                    if ($column < 1 || $column > 15) {
+                        if ($column > 15) {
                             throw ValidationException::withMessages(['file' => 'Excel file contains columns beyond the template.']);
                         }
                         continue;
@@ -203,7 +233,7 @@ final class CourseQuestionImporter
                     $cells[$column - 1] = $value;
                 }
                 if ($cells !== []) {
-                    $rows[] = array_replace(array_fill(0, 13, ''), $cells);
+                    $rows[] = array_replace(array_fill(0, max(array_keys($cells)) + 1, ''), $cells);
                 }
                 if (count($rows) > 501) {
                     break;

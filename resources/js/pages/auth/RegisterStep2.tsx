@@ -2,7 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { FileUp, Plus, X } from 'lucide-react';
 import { SignupPassword } from '@/components/onboarding/SignupControls';
 import { SignupPasswordRequirements, meetsPasswordRequirements } from '@/components/onboarding/SignupPasswordRequirements';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SignupButton, SignupField, SignupInput } from '@/components/onboarding/SignupControls';
 import { PMDropdown } from '@/components/pm/PMDropdown';
 import { OnboardingLayout } from '@/layouts/pm/OnboardingLayout';
@@ -17,8 +17,9 @@ type Props = {
     profile?: { role?: string | null; years_experience?: number | null; resume_scan_status?: string } | null;
     certifications?: Certification[];
     signupOptions?: Partial<SignupOptions>;
+    legalVersions?: {terms: string; privacy: string; terms_published: boolean; privacy_published: boolean; ready: boolean};
 };
-export default function RegisterStep2({ name = '', profile, certifications = [], isGuest = false, email, signupOptions = {} }: Props) {
+export default function RegisterStep2({ name = '', profile, certifications = [], isGuest = false, email, signupOptions = {}, legalVersions }: Props) {
     const [passwordVisible, setPasswordVisible] = useState(false);
     const [confirmationVisible, setConfirmationVisible] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
@@ -28,11 +29,20 @@ export default function RegisterStep2({ name = '', profile, certifications = [],
         password: '',
         password_confirmation: '',
         legal_acceptance: false,
+        terms_version: legalVersions?.terms ?? '',
+        privacy_version: legalVersions?.privacy ?? '',
         role: profile?.role || '',
         years_experience: profile?.years_experience != null ? String(profile.years_experience) : '',
         certifications: certifications.length ? certifications : [{ name: '', credential_number: '' }],
         resume: null as File | null,
     });
+    // Clear prior consent when a redirected validation response supplies newer versions.
+    useEffect(() => {
+        form.setData(data => data.terms_version === (legalVersions?.terms ?? '') && data.privacy_version === (legalVersions?.privacy ?? '')
+            ? data : {...data, terms_version: legalVersions?.terms ?? '', privacy_version: legalVersions?.privacy ?? '', legal_acceptance: false});
+    }, [legalVersions?.terms, legalVersions?.privacy]);
+    const termsHref = legalVersions?.terms_published ? `/terms?version=${legalVersions.terms}` : '/terms';
+    const privacyHref = legalVersions?.privacy_published ? `/privacy?version=${legalVersions.privacy}` : '/privacy';
     const updateCertification = (index: number, field: keyof Certification, value: string) => {
         form.setData('certifications', form.data.certifications.map((item, i) => i === index ? { ...item, [field]: value } : item));
     };
@@ -138,7 +148,7 @@ export default function RegisterStep2({ name = '', profile, certifications = [],
                 {isGuest && <div className="signup-legal">
                     <label className="signup-legal-label">
                         <input type="checkbox" checked={form.data.legal_acceptance} onChange={event => form.setData('legal_acceptance', event.target.checked)} required/>
-                        <span>I agree to the <Link href="/terms" target="_blank">Terms</Link> and <Link href="/privacy" target="_blank">Privacy Policy</Link>.</span>
+                        <span>I agree to the <a href={termsHref} target="_blank" rel="noopener noreferrer">Terms</a> and <a href={privacyHref} target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</span>
                     </label>
                     {form.errors.legal_acceptance && <p role="alert" className="signup-error">{form.errors.legal_acceptance}</p>}
                 </div>}

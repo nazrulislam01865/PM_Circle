@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { router } from '@inertiajs/react';
 
 export type ProfilePrivacyAudience = 'public' | 'community' | 'private';
@@ -6,6 +6,8 @@ export type ProfilePrivacyFieldGroup = {
     title: string;
     fields: Array<{ key: string; label: string }>;
 };
+
+export type ProfileGlobalVisibility = 'public' | 'members_only' | 'private';
 
 type PreviewAudience = 'visitor' | 'member' | 'employer';
 
@@ -97,62 +99,79 @@ function SavedVisibilityPreview({
     </section>;
 }
 
-export function ProfilePrivacyTab({ groups, initialVisibility, globalVisibility }: Props) {
-    const [choices, setChoices] = useState<Record<string, ProfilePrivacyAudience>>({ ...initialVisibility });
-    const [savedChoices, setSavedChoices] = useState<Record<string, ProfilePrivacyAudience>>({ ...initialVisibility });
-    const [saving, setSaving] = useState(false);
-    const [message, setMessage] = useState('');
-    const [error, setError] = useState('');
-
-    const changeChoice = (key: string, audience: ProfilePrivacyAudience) => {
-        setChoices((current) => ({ ...current, [key]: audience }));
-        setMessage('');
-        setError('');
-    };
-
-    const save = (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        setSaving(true);
-        setError('');
-        setMessage('');
-        router.patch('/settings/profile', { field_visibility: choices, tab: 'privacy' }, {
-            preserveScroll: true,
-            onSuccess: () => {
-                setSavedChoices({ ...choices });
-                setMessage('Privacy settings saved.');
-            },
-            onError: (errors) => {
-                setError(Object.values(errors)[0] || 'Could not save your privacy settings. Please try again.');
-            },
-            onFinish: () => setSaving(false),
-        });
-    };
-
-    return <div className="pm-privacy-layout">
-        <form className="pm-card pm-privacy-main" onSubmit={save} aria-labelledby="privacy-editor-heading">
+/** Shared privacy fields; supporting information is optional for embedded settings. */
+export function ProfilePrivacyEditor({ groups, choices, saved, globalVisibility, savedGlobalVisibility, disabled, onChange, onGlobalChange, children, showSidebar = true }: {
+    groups: ProfilePrivacyFieldGroup[];
+    choices: Record<string, ProfilePrivacyAudience>;
+    saved: Record<string, ProfilePrivacyAudience>;
+    globalVisibility: string;
+    savedGlobalVisibility: string;
+    disabled: boolean;
+    onChange: (key: string, audience: ProfilePrivacyAudience) => void;
+    onGlobalChange: (value: ProfileGlobalVisibility) => void;
+    children?: ReactNode;
+    showSidebar?: boolean;
+}) {
+    return <div className={`pm-privacy-layout${showSidebar ? '' : ' pm-privacy-layout--full'}`}>
+        <section className="pm-card pm-privacy-main" aria-labelledby="privacy-editor-heading">
             <div className="pm-privacy-intro">
                 <h2 id="privacy-editor-heading">Profile visibility</h2>
                 <p>Set who can see each field and section.</p>
             </div>
             <div className="pm-privacy-groups">
-                {groups.map((group) => <VisibilityFields
-                    key={group.title}
-                    group={group}
-                    choices={choices}
-                    onChange={changeChoice}
-                    disabled={saving}
-                />)}
+                <fieldset className="pm-privacy-fieldset" disabled={disabled}>
+                    <legend className="pm-privacy-legend">Profile audience</legend>
+                    <div className="pm-privacy-field-row">
+                        <label htmlFor="privacy-global" className="pm-privacy-field-label">Who can open your profile</label>
+                        <select id="privacy-global" className="pm-select pm-privacy-select" value={globalVisibility} onChange={event => onGlobalChange(event.target.value as ProfileGlobalVisibility)}>
+                            <option value="public">Public</option><option value="members_only">Community only</option><option value="private">Only me</option>
+                        </select>
+                    </div>
+                    <p className="pm-privacy-confidential pm-privacy-audience-note">Individual field choices can restrict, but cannot expand, your profile audience.</p>
+                </fieldset>
+                {groups.map(group => <VisibilityFields key={group.title} group={group} choices={choices} onChange={onChange} disabled={disabled}/>)}
             </div>
             <p className="pm-privacy-confidential">Your account contact details and uploaded CV are visible only to you.</p>
+            {children}
+        </section>
+        {showSidebar && <aside className="pm-privacy-aside" aria-label="Privacy information">
+            <VisibilityExplanation />
+            <SavedVisibilityPreview groups={groups} saved={saved} globalVisibility={savedGlobalVisibility} />
+        </aside>}
+    </div>;
+}
+
+export function ProfilePrivacyTab({ groups, initialVisibility, globalVisibility }: Props) {
+    const [choices, setChoices] = useState<Record<string, ProfilePrivacyAudience>>({ ...initialVisibility });
+    const [savedChoices, setSavedChoices] = useState<Record<string, ProfilePrivacyAudience>>({ ...initialVisibility });
+    const [audience, setAudience] = useState(globalVisibility);
+    const [savedAudience, setSavedAudience] = useState(globalVisibility);
+    const [saving, setSaving] = useState(false);
+    const [message, setMessage] = useState('');
+    const [error, setError] = useState('');
+    const dirty = audience !== savedAudience || Object.keys(choices).some(key => choices[key] !== savedChoices[key]);
+    const clearStatus = () => { setMessage(''); setError(''); };
+    const save = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        if (saving || !dirty) return;
+        setSaving(true); clearStatus();
+        router.patch('/settings/profile', { field_visibility: choices, visibility: audience, tab: 'privacy' }, {
+            preserveScroll: true,
+            onSuccess: () => { setSavedChoices({ ...choices }); setSavedAudience(audience); setMessage('Privacy settings saved.'); },
+            onError: errors => setError(Object.values(errors)[0] || 'Could not save your privacy settings. Please try again.'),
+            onFinish: () => setSaving(false),
+        });
+    };
+    return <form onSubmit={save}>
+        <ProfilePrivacyEditor groups={groups} choices={choices} saved={savedChoices} globalVisibility={audience} savedGlobalVisibility={savedAudience} disabled={saving}
+            onChange={(key, value) => { setChoices(current => ({ ...current, [key]: value })); clearStatus(); }}
+            onGlobalChange={value => { setAudience(value); clearStatus(); }}>
             {error && <p className="pm-privacy-error" role="alert">{error}</p>}
             {message && <p className="pm-privacy-success" role="status">{message}</p>}
-            <button type="submit" className="pm-btn pm-btn-primary pm-privacy-save" disabled={saving || !groups.length}>
-                {saving ? 'Saving...' : 'Save privacy settings'}
-            </button>
-        </form>
-        <aside className="pm-privacy-aside" aria-label="Privacy information">
-            <VisibilityExplanation />
-            <SavedVisibilityPreview groups={groups} saved={savedChoices} globalVisibility={globalVisibility} />
-        </aside>
-    </div>;
+            <div className="pm-privacy-actions">
+                <button type="button" className="pm-btn pm-btn-secondary pm-privacy-save" disabled={saving || !dirty} onClick={() => { setChoices({ ...savedChoices }); setAudience(savedAudience); clearStatus(); }}>Discard</button>
+                <button type="submit" className="pm-btn pm-btn-primary pm-privacy-save" disabled={saving || !dirty || !groups.length}>{saving ? 'Saving...' : 'Save privacy settings'}</button>
+            </div>
+        </ProfilePrivacyEditor>
+    </form>;
 }

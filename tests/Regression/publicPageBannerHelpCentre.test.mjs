@@ -11,8 +11,8 @@ test('the common public banner uses the approved simulator styles, semantic head
     assert.match(banner, /<nav className="pm-sim-breadcrumb" aria-label="Breadcrumb">/);
     assert.match(banner, /aria-current="page"/);
     assert.match(banner, /<h1 id=\{titleId\}>/);
-    assert.match(layout, /isGuest && banner && <PublicPageBanner/);
-    assert.match(layout, /value=\{isGuest && Boolean\(banner\)\}/);
+    assert.match(layout, /isPublicView && banner && <PublicPageBanner/);
+    assert.match(layout, /value=\{isPublicView && Boolean\(banner\)\}/);
     assert.match(banner, /usePublicPageBanner\(\) \? null/);
     assert.match(css, /var\(--pm-guide-text-h1\)/);
     assert.match(css, /var\(--pm-v2-container-width\)/);
@@ -20,11 +20,14 @@ test('the common public banner uses the approved simulator styles, semantic head
 });
 
 test('active public content routes use the common banner and retain original member headings', () => {
-    for (const path of ['public/About','public/Terms','public/Privacy','public/PolicyNotice','public/AiResumeAssistant','public/Support','public/Info','community/Feed','community/PostShow','members/Directory','members/Show','members/Unavailable','learning/CourseShow','learning/Catalog','scenarios/Index','scenarios/Show','events/Index','events/Show','trends/Index','trends/Show','exam/Browse','exam/Public','public/Pricing']) {
+    for (const path of ['public/About','public/PolicyNotice','public/AiResumeAssistant','public/Support','public/Info','community/Feed','community/PostShow','members/Directory','members/Show','members/Unavailable','learning/Catalog','scenarios/Index','scenarios/Show','events/Index','events/Show','trends/Index','trends/Show','exam/Browse','exam/Public','public/Pricing']) {
         assert.match(read(`resources/js/pages/${path}.tsx`), /<PublicLayout[^\n]*banner=\{\{/, path);
     }
+    assert.match(read('resources/js/components/pm/LegalPage.tsx'), /<PublicLayout[^\n]*banner=\{\{/);
     for (const path of ['learning/PublicCourseCatalog','learning/CourseWorkspace']) assert.match(read(`resources/js/components/${path}.tsx`), /<PublicLayout[^\n]*banner=\{\{/);
     assert.doesNotMatch(read('resources/js/pages/public/Home.tsx'), /banner=\{\{/);
+    assert.doesNotMatch(read('resources/js/pages/learning/CourseShow.tsx'), /<PublicLayout[^\n]*banner=/);
+    assert.match(read('resources/js/components/learning/CourseDetail.tsx'), /<h1 id="pm-course-detail-title">/);
 });
 
 test('guests reuse searchable Help Centre guides, with private support routes still member protected', () => {
@@ -37,10 +40,10 @@ test('guests reuse searchable Help Centre guides, with private support routes st
     assert.match(page, /if \(!publicView\) return <AccountPage/);
     assert.match(page, /publicView \? '\/contact' : '\/help-center\/contact'/);
     assert.match(page, /publicView \? <Link[^>]+href="\/login">Log in to view support requests/);
-    assert.match(page, /searchHelpGuides\(query\)/);
+    assert.match(page, /searchHelpGuides\(query, profileResumeImportsVisible\)/);
     assert.doesNotMatch(header, /help-center|Help Cent(?:re|er)/i);
     const footer = read('resources/js/components/home/v2/HomeFooter.tsx');
-    assert.match(footer, /prototypeLink\(support, '\/help-center', 'Help Centre'\)/);
+    assert.ok(read('app/Support/Admin/SiteFooterContent.php').includes("$link('Help Centre', '/help-center')"));
     assert.doesNotMatch(read('resources/css/pm-public-page-banner.css'), /help-center/);
     const protectedGroup = routes.slice(routes.lastIndexOf('Route::middleware(', routes.indexOf("Route::get('/help-center/guides'")), routes.indexOf("Route::post('/membership/temporary'"));
     assert.match(protectedGroup, /'auth'/);

@@ -41,6 +41,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'profileResumeImportsVisible' => (bool) config('pm-circle.profile_resume_imports_visible', false),
             'emailVerificationRequired' => config('pm-circle.email_verification_required'),
             'siteNavigation' => fn () => $request->is('admin', 'admin/*') ? null : \App\Support\Admin\SiteNavigation::links(),
             'siteFooter' => fn () => $request->is('admin', 'admin/*') ? null : \App\Support\Exam\PmpPublicContent::load()['footer'],
@@ -56,6 +57,11 @@ class HandleInertiaRequests extends Middleware
                     'is_admin' => (bool) $request->user()->is_admin,
                     'avatar_path' => $request->user()->is_admin ? null : $request->user()->loadMissing('profile')->profile?->avatar_path,
                     'avatar' => $request->user()->is_admin ? null : $request->user()->profile?->avatar_path,
+                    'settings' => [
+                        'anonymous_by_default' => (bool) ($request->user()->account_preferences['anon'] ?? false),
+                        'playback_speed' => $request->user()->account_preferences['speed'] ?? '1×',
+                        'show_captions' => (bool) ($request->user()->account_preferences['captions'] ?? true),
+                    ],
                 ] : null,
             ],
             'notificationRealtime' => fn () => $request->user() && ! $request->user()->is_admin ? [

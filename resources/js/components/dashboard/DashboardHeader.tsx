@@ -31,7 +31,7 @@ export function DashboardHeader({ name, avatar, isDemo, onMenu, compact = false 
         <div className="pm-dash-header-right">
             <NotificationBell/>
             <button type="button" className="pm-dash-account-button" onClick={() => setMenuOpen(value => !value)} aria-haspopup="menu" aria-expanded={menuOpen} aria-label="Account menu"><DashboardAvatar name={name} size={compact ? 32 : 40} demo={isDemo} src={avatar}/><ChevronDown size={17}/></button>
-            {menuOpen && <div className="pm-dash-account-menu" role="menu"><Link href="/settings/profile" role="menuitem" onClick={() => setMenuOpen(false)}><UserRound size={17}/> My profile</Link><Link href="/activity-log" role="menuitem" onClick={() => setMenuOpen(false)}><History size={17}/> Activity Log</Link><Link href="/settings/profile" role="menuitem" onClick={() => setMenuOpen(false)}><Settings2 size={17}/> Settings</Link><Link href="/logout" method="post" as="button" role="menuitem" onClick={() => setMenuOpen(false)}><LogOut size={17}/> Log out</Link></div>}
+            {menuOpen && <div className="pm-dash-account-menu" role="menu"><Link href="/settings/profile" role="menuitem" onClick={() => setMenuOpen(false)}><UserRound size={17}/> My profile</Link><Link href="/activity-log" role="menuitem" onClick={() => setMenuOpen(false)}><History size={17}/> Activity Log</Link><Link href="/settings/account" role="menuitem" onClick={() => setMenuOpen(false)}><Settings2 size={17}/> Settings</Link><Link href="/logout" method="post" as="button" role="menuitem" onClick={() => setMenuOpen(false)}><LogOut size={17}/> Log out</Link></div>}
         </div>
     </div>;
 }

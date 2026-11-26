@@ -35,10 +35,10 @@ test('all text roles refer to defined design tokens and existing shared controls
 test('public outline cannot serialize gated lesson content, answers, notes or resources', () => {
     const locked = controller.slice(controller.indexOf('if (! $enrolled)'), controller.indexOf('$records = $progress->records'));
     assert.match(locked, /'body' => '', 'key' => ''/);
-    assert.match(locked, /'notes' => '', 'question' => null, 'resources' => \[\]/);
+    assert.match(locked, /'notes' => '', 'question' => null, 'questions' => \[\], 'resources' => \[\]/);
     assert.match(controller, /\$access->ensureEnrolled\(\$request, \$record, \$plans\)/);
     assert.match(controller, /hash_equals\(\$current\['key'\], \$data\['lessonKey'\]\)/);
-    assert.match(controller, /first\(\['id', 'prompt', 'options'\]\)/);
+    assert.match(controller, /get\(\['id', 'prompt', 'options', 'scenario_text', 'scenario_video_url'\]\)/);
     assert.match(lesson, /props.canRead \? <LessonContent/);
 });
 
@@ -58,8 +58,8 @@ test('lesson actions handle server errors without raw Inertia dialogs and no unc
     for (const code of ['429','401','419','403','409','422']) assert.ok(lesson.includes(`response.status === ${code}`));
     assert.match(lesson, /lock.current = true/);
     assert.match(lesson, /Accept: 'application\/json'/);
-    assert.match(lesson, /AI lesson assistance is not currently available/);
-    assert.match(lesson, /Learner discussions are not currently available/);
-    assert.match(lesson, /No published PDF resources/);
+    assert.doesNotMatch(lesson, /Ask AI|lesson-ai-input/);
+    assert.match(lesson, /lesson\.faq\.map/);
+    assert.match(lesson, /No documents are published for this lesson/);
     assert.match(read('resources/js/pages/learning/CertificateShow.tsx'), /window.print\(\)/);
 });

@@ -65,12 +65,21 @@ final class AiRuntimeSettings
             'limit' => $row?->daily_budget_usd === null ? null : (float) $row->daily_budget_usd];
     }
 
+    /** A general OpenAI Responses key may be explicitly shared with Daily Challenge.
+     *  Dedicated moderation/extraction slots remain isolated; defaults never cross slots.
+     */
+    public static function explicitCredentialSlots(string $slot): array
+    {
+        return $slot === 'daily_challenge_api_key' ? [$slot, 'api_key'] : [$slot];
+    }
+
     /** Explicit per-operation selection, scoped to this worker invocation. */
     public function selectCredential(string $slot, int $id): bool
     {
         unset($this->overrides[$slot]);
         $row = DB::table('ai_workspace_credentials as c')->join('ai_workspace_providers as p', 'p.id', '=', 'c.provider_id')
-            ->where('c.id', $id)->where('c.slot', $slot)->where('c.enabled', true)->where('p.status', 'Active')
+            ->where('c.id', $id)->whereIn('c.slot', self::explicitCredentialSlots($slot))->where('c.enabled', true)->where('p.status', 'Active')
+            ->where('p.adapter', self::SLOTS[$slot]['provider'])
             ->first(['c.id', 'c.name', 'c.secret_encrypted', 'c.daily_budget_usd']);
         if (! $row) return false;
         $this->overrides[$slot] = ['secret' => Crypt::decryptString($row->secret_encrypted), 'name' => $row->name,

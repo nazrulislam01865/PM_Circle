@@ -9,7 +9,7 @@ export function SiteFooter({ member = false, pmpFooterContent, variant, homeEven
     const page = usePage<{ siteFooter?: PmpPublicContent['footer'] }>();
     const content = page.props.siteFooter ?? pmpFooterContent;
 
-    if (member) return shouldShowMemberFooter(page.url) ? <MemberFooter/> : null;
+    if (member) return shouldShowMemberFooter(page.url) && content ? <MemberFooter content={content}/> : null;
 
     // Existing Laravel shared props provide the cached footer. Avoid additional frontend requests.
     if (!shouldShowSiteFooter(page.url) || !content) return null;

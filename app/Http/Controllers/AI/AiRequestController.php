@@ -41,7 +41,7 @@ final class AiRequestController extends Controller
         } elseif (in_array($row->status, ['failed', 'cancelled', 'provider_status_unknown'], true)) {
             $response['code'] = $row->error_code ?: 'RECONCILING';
         }
-        return response()->json($response);
+        return response()->json($response)->header('Cache-Control', 'private, no-store');
     }
 
     public function features(Request $request, AiFeatureCatalog $catalog,
@@ -74,7 +74,9 @@ final class AiRequestController extends Controller
             'INSUFFICIENT_CREDITS' => 'Your available AI credit balance is insufficient.',
             'PRICE_CHANGED' => 'The credit price changed. Please review and confirm it again.',
             'NOT_ENTITLED' => 'Your membership does not include this AI feature.',
-            'CONSENT_REQUIRED' => 'Explicit permission is required for resume AI analysis.',
+            'ANSWER_CHANGED' => 'Your saved answer changed. Reopen it before requesting AI review.',
+            'ANSWER_REVIEW_NOT_READY' => 'Evaluate your answer before requesting AI review.',
+            'CONSENT_REQUIRED' => 'Explicit permission is required before sending content to AI.',
             default => 'This AI operation is unavailable. Please review its eligibility or try again later.',
         };
     }

@@ -40,7 +40,7 @@ export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onU
     onSubmissionStateChange?: (post: PostCheckPreview | null) => void;
     onSubmissionError?: () => void;
 }) {
-    const { auth } = usePage<{ auth?: { user?: { name: string; avatar_path?: string | null } | null } }>().props;
+    const { auth } = usePage<{ auth?: { user?: { name: string; avatar_path?: string | null; settings?: { anonymous_by_default?: boolean } } | null } }>().props;
     const name = auth?.user?.name ?? 'Member';
     const [identity, setIdentity] = useState('named');
     const [audience, setAudience] = useState('public');
@@ -60,6 +60,7 @@ export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onU
     const restoreDraftOnError = useRef(false);
     const editing = Boolean(editPost);
     const canAnonymous = plan === 'premium' || plan === 'pro';
+    const anonymousByDefault = canAnonymous && auth?.user?.settings?.anonymous_by_default === true;
 
     useEffect(() => {
         if (!open) return;
@@ -68,7 +69,7 @@ export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onU
             setBusy(false);
             return;
         }
-        setIdentity(editPost?.is_anonymous ? 'anonymous' : 'named');
+        setIdentity((editPost ? editPost.is_anonymous : anonymousByDefault) ? 'anonymous' : 'named');
         setAudience(editPost?.visibility === 'members' ? 'members' : 'public');
         setTopic(editPost?.topic ?? initialTopic);
         setBody(editPost?.body ?? '');
@@ -80,7 +81,7 @@ export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onU
         setBusy(false);
         setEmojiOpen(false);
         setError('');
-    }, [open, editPost, initialTopic]);
+    }, [open, editPost, initialTopic, anonymousByDefault]);
     useEffect(() => {
         if (!image) { setPreview(null); return; }
         const url = URL.createObjectURL(image);

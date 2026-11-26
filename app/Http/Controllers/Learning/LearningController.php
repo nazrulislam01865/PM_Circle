@@ -30,8 +30,11 @@ final class LearningController extends Controller
         }
 
         $user = $request->user();
-        $joined = $user && (int) $user->onboarding_step >= 3 && $user->hasVerifiedEmail();
-        $learning = $joined ? $overview->paths($user) : ['paths' => $overview->publicPaths(), 'courses' => $overview->publicPracticeModules()];
+        $joined = $user && ! $user->is_admin && $user->status === 'active' && (int) $user->onboarding_step >= 3 && $user->hasVerifiedEmail();
+        $legacyTab = $request->is('dashboard/learning') && in_array($request->query('tab'), ['paths', 'practice', 'exams'], true);
+        $learning = $legacyTab
+            ? ($joined ? $overview->paths($user) : ['paths' => $overview->publicPaths(), 'courses' => $overview->publicPracticeModules()])
+            : ['paths' => [], 'courses' => []];
 
         return Inertia::render('learning/Catalog', [
             // The catalog shares the homepage shell; do not build a dashboard shell.
@@ -39,6 +42,7 @@ final class LearningController extends Controller
             'paths' => $learning['paths'],
             'practiceModules' => $learning['courses'],
             'courses' => $catalog->all($joined ? $user : null),
+            'catalogSettings' => $legacyTab ? null : app(\App\Services\Learning\CatalogSettings::class)->get(),
             'isMember' => (bool) $joined,
             'memberTier' => $joined ? $plans->code($user) : 'free',
         ]);

@@ -43,14 +43,17 @@ test('every member submenu destination exists in the current routes; active sele
 
 test('member footer includes exact copyright and policy destinations; public footer and live exam exclusions remain', () => {
     const footer = read('resources/js/components/pm/MemberFooter.tsx');
-    assert.match(footer, /© PM Circle by ITQAN/);
+    const defaults = read('app/Support/Admin/SiteFooterContent.php');
+    assert.match(defaults, /© PM Circle by ITQAN/);
+    assert.match(footer, /content\.copyright_label/);
     for (const [href, label] of [['/terms','Terms'],['/privacy','Privacy'],['/refund-policy','Refund Policy']]) {
-        assert.ok(footer.includes(`href="${href}">${label}</Link>`));
+        assert.ok(defaults.includes(`$link('${label}', '${href}')`));
         assert.ok(read('routes/web.php').includes(`'${href}'`));
     }
-    assert.match(footer, /Trademark Notice/);
-    assert.match(footer, /<DialogDescription>\{trademarkNotice\}/);
-    assert.match(read('resources/js/components/home/v2/HomeFooter.tsx'), /\{trademarkNotice\}/);
+    assert.match(defaults, /Trademark Notice/);
+    assert.match(footer, /content\.member_links\.map/);
+    assert.match(footer, /<DialogDescription>\{content\.legal_notice\}/);
+    assert.match(read('resources/js/components/home/v2/HomeFooter.tsx'), /\{content\.legal_notice\}/);
     assert.equal(shouldShowMemberFooter('/dashboard'), true);
     assert.equal(shouldShowSiteFooter('/dashboard'), false);
     assert.equal(shouldShowMemberFooter('/exams/pmp/attempts/3'), false);

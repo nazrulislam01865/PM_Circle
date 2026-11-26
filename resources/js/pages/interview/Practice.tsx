@@ -1,127 +1,64 @@
-import { Link } from '@inertiajs/react';
-import { ArrowLeft, ArrowRight, BriefcaseBusiness, CheckCircle2, Clock3, FileText, Mic2, Pause, Play, RotateCcw, Square, Timer, XCircle } from 'lucide-react';
-import { useRef, useState } from 'react';
-import { InterviewHeading, InterviewPage, InterviewProgress } from '@/components/interview/InterviewShared';
-import { interviewApi, interviewBase, type InterviewAnswer, type InterviewQuestion, type InterviewSession, type InterviewShell } from '@/components/interview/types';
-import { useSpeechAnswer } from '@/components/interview/useSpeechAnswer';
-import { useInterviewCountdown } from '@/components/interview/useInterviewCountdown';
+import { InterviewAiReview } from '@/components/interview/InterviewAiReview';
+import { router } from '@inertiajs/react';
+import { Mic, Play, Square } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Brief, Difficulty, Feedback, FlowPage, Intro, Wizard, professionFor } from '@/components/interview/InterviewFlow';
+import { InterviewProgress } from '@/components/interview/InterviewShared';
+import { interviewApi, interviewBase, type InterviewAiOffer, type InterviewAnswer, type InterviewQuestion, type InterviewSession, type InterviewShell } from '@/components/interview/types';
+import { ANSWER_LIMIT, useSpeechAnswer } from '@/components/interview/useSpeechAnswer';
 
-type Props = { shell: InterviewShell; session: InterviewSession; questions: InterviewQuestion[]; answers: InterviewAnswer[] };
-const timeText = (seconds: number) => `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
-const saved = (answer?: InterviewAnswer) => Boolean(answer && ['submitted', 'evaluated', 'pending'].includes(answer.status));
-
-export default function Practice({ shell, session, questions, answers: initial }: Props) {
-    const [answers, setAnswers] = useState<InterviewAnswer[]>(initial);
-    const [index, setIndex] = useState(() => {
-        const first = questions.findIndex((_, position) => !saved(initial.find(answer => answer.position === position)));
-        return first === -1 ? Math.max(0, questions.length - 1) : first;
-    });
-    const [text, setText] = useState(() => initial.find(answer => answer.position === index)?.answer ?? '');
-    const [mode, setMode] = useState<'type' | 'speak'>(() => initial.find(item => item.position === index)?.mode === 'speak' || session.mode === 'speak' ? 'speak' : 'type');
-    const [busy, setBusy] = useState(false);
-    const [editingPosition, setEditingPosition] = useState<number | null>(null);
-    const [error, setError] = useState('');
-    const sending = useRef(false);
-    const speech = useSpeechAnswer(setText, text);
-    const timeRemaining = useInterviewCountdown(session);
-    const answer = answers.find(item => item.position === index);
-    const answered = saved(answer) && editingPosition !== index;
+type Props = { shell: InterviewShell; session: InterviewSession; questions: InterviewQuestion[]; answers: InterviewAnswer[]; aiReview?: InterviewAiOffer | null };
+const finished = (answer?: InterviewAnswer) => Boolean(answer && ['submitted', 'evaluated', 'pending', 'skipped'].includes(answer.status));
+export default function Practice({ shell, session, questions, answers: initial, aiReview }: Props) {
+    const [answers, setAnswers] = useState(initial);
+    const [index, setIndex] = useState(() => { const first = questions.findIndex((_, i) => !finished(initial.find(a => a.position === i))); return first === -1 ? Math.max(0, questions.length - 1) : first; });
+    const [text, setText] = useState(() => initial.find(a => a.position === index)?.answer ?? '');
+    const [mode, setMode] = useState<'type'|'speak'>(() => initial.find(a => a.position === index)?.mode === 'speak' ? 'speak' : 'type');
+    const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [playStatus, setPlayStatus] = useState('');
+    const drafts = useRef<Record<number, {text: string; mode: 'type' | 'speak'}>>({});
+    const sending = useRef(false); const speech = useSpeechAnswer(value => { setText(value); setMode(session.mode === 'type' ? 'type' : 'speak'); }, text);
+    const answer = answers.find(a => a.position === index); const question = questions[index];
+    const evaluated = answer?.status === 'evaluated' && text.trim() === (answer?.answer ?? '').trim();
+    const recording = speech.state !== 'idle';
+    const canDictate = speech.supported && speech.secure;
     const last = index === questions.length - 1;
-        const recording = speech.state === 'listening' || speech.state === 'requesting';
-
-    const navigate = (position: number) => {
-        speech.reset();
-        const existing = answers.find(item => item.position === position);
-        const draft = existing?.answer ?? '';
-        speech.replaceTranscript(draft);
-        if (existing?.mode === 'speak' || existing?.mode === 'type') setMode(existing.mode);
-        setIndex(position);
-        setEditingPosition(null);
-        setText(draft);
-        setError('');
+    useEffect(() => () => { if (typeof window !== 'undefined') window.speechSynthesis?.cancel(); }, []);
+    const stopPlayback = () => { window.speechSynthesis?.cancel(); setPlayStatus(''); };
+    const play = () => { stopPlayback(); if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') { setPlayStatus('Playback is not supported by this browser.'); return; } const utterance = new SpeechSynthesisUtterance(question.text); utterance.lang = 'en-US'; utterance.onend = () => setPlayStatus(''); utterance.onerror = () => setPlayStatus('Playback could not finish.'); setPlayStatus('Playing question…'); window.speechSynthesis.speak(utterance); };
+    const navigate = (i: number, skipped = false) => { drafts.current[index] = {text: skipped ? '' : text, mode}; stopPlayback(); speech.reset(); const existing = answers.find(a => a.position === i); const savedDraft = drafts.current[i]; const value = savedDraft?.text ?? existing?.answer ?? ''; speech.replaceTranscript(value); setText(value); setMode(savedDraft?.mode ?? (existing?.mode === 'speak' ? 'speak' : 'type')); setIndex(i); setError(''); };
+    const save = async (skip = false) => {
+        if (sending.current || recording || busy) return false;
+        if (!skip && !text.trim()) { setError('Enter an answer or choose Skip.'); return false; }
+        sending.current = true; setBusy(true); setError(''); stopPlayback();
+        try { const response = await interviewApi<{answer: InterviewAnswer}>(`${interviewBase}/sessions/${session.id}/answer`, 'POST', {position:index, answer:skip ? '' : text.trim(), mode, skip}); setAnswers(old => [...old.filter(a => a.position !== index), response.answer]); setText(response.answer.answer ?? ''); return true; }
+        catch (e) { setError(e instanceof Error ? e.message : 'Unable to save your answer.'); return false; }
+        finally { sending.current = false; setBusy(false); }
     };
-    const send = async () => {
-        if (busy || sending.current || answered || recording) return;
-        const content = text.trim();
-        if (content.length < 20) { setError('Please enter at least 20 characters before submitting your answer.'); return; }
-        sending.current = true;
-        speech.stop();
-        setBusy(true);
-        setError('');
-        try {
-            const result = await interviewApi<{ answer: InterviewAnswer }>(`${interviewBase}/sessions/${session.id}/answer`, 'POST', { position: index, answer: content, mode });
-            setAnswers(previous => [...previous.filter(item => item.position !== index), result.answer]);
-            setText(result.answer.answer ?? content);
-            setEditingPosition(null);
-        } catch (exception) {
-            setError(exception instanceof Error ? exception.message : 'Could not save your answer. Please try again.');
-        } finally { sending.current = false; setBusy(false); }
+    const advance = async (skip = false) => {
+        if (sending.current || recording || busy) return;
+        if (skip ? !(await save(true)) : !evaluated) { if (!skip) setError('Evaluate your answer before continuing, or choose Skip.'); return; }
+        if (!last) { navigate(index + 1, skip); return; }
+        setBusy(true); sending.current = true; setError('');
+        try { const response = await interviewApi<{url: string}>(`${interviewBase}/sessions/${session.id}/finish`, 'POST'); router.visit(response.url); }
+        catch (e) { setError(e instanceof Error ? e.message : 'Unable to finish your interview.'); }
+        finally { sending.current = false; setBusy(false); }
     };
-    const edit = () => {
-        speech.stop();
-        setEditingPosition(index);
-        setError('');
-    };
-    const cancelEdit = () => {
-        speech.reset();
-        const previous = answer?.answer ?? '';
-        speech.replaceTranscript(previous);
-        setText(previous);
-        setEditingPosition(null);
-        setError('');
-    };
-    const next = async () => {
-        if (busy || !answered) return;
-        if (!last) { navigate(index + 1); return; }
-        setBusy(true);
-        setError('');
-        try {
-            const result = await interviewApi<{ url: string }>(`${interviewBase}/sessions/${session.id}/finish`, 'POST');
-            window.location.assign(result.url);
-        } catch (exception) {
-            setError(exception instanceof Error ? exception.message : 'Could not finish the interview.');
-            setBusy(false);
-        }
-    };
-    // Always offer typing as an accessible fallback for unsupported microphones or browsers.
-    const allowType = true;
-    const allowSpeak = session.mode !== 'type';
-
-    return <InterviewPage shell={shell}><InterviewHeading/>
-        <section className="pm-interview-card pm-interview-practice-card">
-            <header className="pm-interview-practice-header"><div className="pm-interview-practice-title"><BriefcaseBusiness size={22}/><h2>{session.role} – Mock Interview</h2></div>
-                <div className="pm-interview-practice-meta"><span>Question {index + 1} of {questions.length}</span><InterviewProgress value={index + 1} max={questions.length}/><span className="pm-interview-time" role="timer" aria-label={`Interview time remaining: ${timeText(timeRemaining)}`} title="Live countdown from the interview start time. Question progress does not affect the timer."><Clock3 size={18}/>{timeText(timeRemaining)} left</span></div>
-            </header>
-            <div className="pm-interview-practice-content"><div className="pm-interview-question"><span>Q</span><h3>{questions[index].text}</h3></div>
-                <div className="pm-interview-answer-panel"><div className="pm-interview-answer-tabs" role="tablist" aria-label="Answer method">
-                    {allowType && <button role="tab" aria-selected={mode === 'type'} type="button" className={mode === 'type' ? 'is-active' : ''} onClick={() => { speech.stop(); setMode('type'); }}><FileText size={19}/>Type Answer</button>}
-                    {allowSpeak && <button role="tab" aria-selected={mode === 'speak'} type="button" className={mode === 'speak' ? 'is-active' : ''} onClick={() => { speech.replaceTranscript(text); setMode('speak'); }}><Mic2 size={19}/>Speak Answer</button>}
-                </div>
-                    {mode === 'type' ? <div className="pm-interview-type-box"><label htmlFor="pm-interview-answer" className="sr-only">Your interview answer</label><textarea id="pm-interview-answer" placeholder="Type your answer here..." maxLength={1000} value={text} disabled={answered || busy} onChange={event => setText(event.target.value)}/><span>{text.length} / 1000</span></div>
-                        : <div className="pm-interview-speech-panel">
-                            <div className="pm-interview-speech-main"><div className={`pm-interview-mic-orb ${speech.state === 'listening' ? 'is-listening' : ''}`}><Mic2 size={34}/></div>
-                                <div className="pm-interview-speech-activity"><p className="pm-interview-record-state"><span className={speech.state === 'listening' ? 'is-recording' : ''}/>{speech.state === 'requesting' ? 'Requesting microphone access...' : speech.state === 'listening' ? 'Listening and transcribing your answer...' : speech.state === 'paused' ? 'Recording paused' : 'Ready to record your answer'}</p>
-                                    <div className="pm-interview-waveform" aria-hidden="true">{speech.levels.map((level, bar) => <i key={bar} style={{ height: `${8 + Math.round(level * 44)}px` }}/>)}</div>
-                                    <div className="pm-interview-record-controls">{speech.state === 'idle' && <button className="pm-button pm-button-outline" disabled={answered || busy} type="button" onClick={() => { speech.replaceTranscript(text); void speech.start(); }}><Mic2 size={17}/>Start Recording</button>}
-                                        {speech.state === 'requesting' && <button type="button" className="pm-button pm-button-outline" onClick={speech.stop}>Cancel</button>}
-                                        {speech.state === 'listening' && <button className="pm-button pm-button-outline" onClick={speech.pause} type="button"><Pause size={16}/>Pause</button>}
-                                        {speech.state === 'paused' && <button className="pm-button pm-button-outline" onClick={speech.resume} type="button"><Play size={16}/>Resume</button>}
-                                        {(speech.state === 'listening' || speech.state === 'paused') && <button className="pm-button" onClick={speech.stop} type="button"><Square size={14} fill="currentColor"/>Stop &amp; Save</button>}
-                                    </div></div>
-                                <div className="pm-interview-speech-timer"><strong>{timeText(speech.elapsed)}</strong><span> / 03:00</span></div>
-                            </div>
-                            <div className="pm-interview-transcript"><div><h4><FileText size={17}/>Live Transcription (Auto)</h4><small><CheckCircle2 size={15}/>{recording ? 'Transcribing...' : 'Editable transcript'}</small></div>
-                                <label className="sr-only" htmlFor="pm-interview-transcript">Transcribed answer</label><textarea id="pm-interview-transcript" maxLength={1000} placeholder="Your transcribed answer will appear here. You can edit it before submitting." readOnly={recording} disabled={answered || busy} value={text} onChange={event => { setText(event.target.value); speech.replaceTranscript(event.target.value); }}/></div>
-                            <p className="pm-interview-voice-notice">The waveform reflects your live microphone input. PM Circle saves the transcript only; browser speech recognition may use its own speech service.</p>
-                            {speech.error && <p role="alert" className="pm-interview-error">{speech.error}</p>}
-                        </div>}
-                </div>
-                {answered ? <div className="pm-interview-answer-actions"><div className="pm-interview-saved"><CheckCircle2 size={19}/><span>Answer saved</span></div><div className="pm-interview-record-controls"><button type="button" className="pm-button pm-button-outline" onClick={edit} disabled={busy}><RotateCcw size={17}/>Edit Answer</button><button type="button" className="pm-button" onClick={() => void next()} disabled={busy}>{busy ? 'Please wait...' : last ? 'View My Results' : 'Next Question'}<ArrowRight size={18}/></button></div></div>
-                    : <div className="pm-interview-answer-actions"><button type="button" className="pm-button pm-button-outline" onClick={() => { if (editingPosition === index) cancelEdit(); else { speech.reset(); setText(''); } }} disabled={editingPosition !== index && (!text || busy)}><RotateCcw size={17}/>{editingPosition === index ? 'Cancel Edit' : mode === 'speak' ? 'Re-record Answer' : 'Clear Answer'}</button><button type="button" className="pm-button" onClick={() => void send()} disabled={busy || recording || text.trim().length < 20}>{busy ? 'Saving...' : mode === 'speak' ? 'Use This Answer' : 'Submit Answer'}<ArrowRight size={18}/></button></div>}
-                {error && <div role="alert" className="pm-interview-error"><XCircle size={16}/>{error}</div>}
-                <div className="pm-interview-practice-footer">{!answered && <div className="pm-interview-tip"><Timer size={19}/><span><strong>Tip:</strong> Keep it concise, highlight your key skills, experience, and what makes you a good fit for the role.</span></div>}
-                    <div className="pm-interview-question-links"><Link href={interviewBase}><ArrowLeft size={16}/>Interview Setup</Link>{index > 0 && <button type="button" onClick={() => navigate(index - 1)}><ArrowLeft size={16}/>Previous Question</button>}</div></div>
+    const rows: [string, string | number][] = [['Profession', session.profession || professionFor(session.role)], ['Role',session.roleLabel || session.role],['Industry', session.industryLabel || session.industry], ['Level',session.experienceLabel || session.experience], ['JD experience', session.requestedExperience || 'Unspecified'], ['Questions',session.count], ['Estimated time',`≈ ${Math.round(session.durationSeconds / 60)} min`]];
+    return <FlowPage shell={shell} rail={<Brief rows={rows} coaching/>}><Wizard step={2} left={index > 0 && <button type="button" className="pm-button pm-button-outline" disabled={busy || recording} onClick={() => navigate(index-1)}>Previous</button>} right={<><button type="button" className="pm-if-quiet" disabled={busy || recording || evaluated} onClick={() => void advance(true)}>Skip</button><button type="button" className={`pm-button ${evaluated ? '' : 'pm-button-outline'}`} disabled={busy || recording || !evaluated} onClick={() => void advance()}>{last ? 'Finish & see results' : 'Next question'}</button></>}>
+        <Intro title="Practice interview" description={`${session.roleLabel || session.role} · ${session.industryLabel || session.industry}`}/><div className="pm-if-between pm-if-question-meta"><strong>Question {index+1} of {questions.length}</strong><span className="pm-if-tag">{question.type}</span><Difficulty question={question}/></div><InterviewProgress value={index+1} max={questions.length}/><h3 className="pm-if-question">{question.text}</h3>
+        <div className="pm-if-strip"><button className="pm-button pm-button-outline" disabled={recording || busy} type="button" onClick={play}><Play size={15} fill="currentColor"/> Play question</button><button className="pm-if-quiet" type="button" onClick={stopPlayback}>Stop playback</button><span role="status" className="pm-if-note">{playStatus}</span></div>
+        <div className="pm-if-answer-editor">
+            <div className="pm-if-between"><label htmlFor="interview-answer" className="pm-if-field">Your answer</label><span className="pm-if-note" id="interview-answer-count">{text.length.toLocaleString()} / {ANSWER_LIMIT.toLocaleString()} characters</span></div>
+            <textarea id="interview-answer" className="pm-input pm-if-answer" rows={9} placeholder="Type your answer or use dictation…" maxLength={ANSWER_LIMIT} value={text} readOnly={recording} disabled={busy} aria-describedby="interview-answer-count interview-dictation-status" onChange={e => { setText(e.target.value); speech.replaceTranscript(e.target.value); }}/>
+            <div className="pm-if-answer-actions">
+                <button type="button" className={`pm-button pm-button-outline${recording ? ' is-recording' : ''}`} disabled={busy || !canDictate || speech.state === 'stopping'} onClick={() => { if (recording) speech.stop(); else { stopPlayback(); speech.replaceTranscript(text); speech.start(); } }}>{recording ? <Square size={16} aria-hidden="true"/> : <Mic size={16} aria-hidden="true"/>}{speech.state === 'requesting' ? 'Cancel dictation' : speech.state === 'stopping' ? 'Finishing dictation…' : recording ? 'Stop dictation' : 'Start dictation'}</button>
+                <button className="pm-button" type="button" disabled={busy || recording || !text.trim() || evaluated} onClick={() => void save()}>{busy ? 'Please wait…' : evaluated ? 'Answer evaluated' : 'Evaluate answer'}</button>
             </div>
-        </section>
-    </InterviewPage>;
+            <span className="pm-if-note pm-if-dictation-status" id="interview-dictation-status" role="status">{!speech.secure ? 'Microphone access requires HTTPS or localhost.' : !speech.supported ? 'Live dictation is unavailable in this browser. Try Chrome or Edge.' : speech.status}</span>
+            {speech.error && <p role="alert" className="pm-interview-error">{speech.error}</p>}
+        </div>
+        {evaluated && answer?.evaluation && <Feedback evaluation={answer.evaluation}/>}
+        {evaluated && answer && <InterviewAiReview key={`${answer.id}-${answer.revision}`} answer={answer} offer={aiReview} onReceipt={receipt => setAnswers(old => old.map(a => a.id === answer.id && a.revision === answer.revision ? {...a, ai_review: receipt} : a))}/>} {answer?.status === 'submitted' && <p className="pm-if-note">Previously saved answer. Evaluate again for practice feedback.</p>}
+        {error && <p role="alert" className="pm-interview-error">{error}</p>}
+    </Wizard></FlowPage>;
 }

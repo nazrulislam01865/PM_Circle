@@ -4,6 +4,7 @@ namespace App\Domain\Identity\Services;
 
 use App\Models\Profile;
 use App\Models\User;
+use Illuminate\Validation\Rule;
 
 /**
  * Per-field restrictions can narrow existing profile visibility, never expand it.
@@ -29,6 +30,18 @@ final class ProfileFieldPrivacy
         return $keys;
     }
 
+    /** Both account and profile editors accept the same complete, allowlisted map. */
+    public static function validationRules(): array
+    {
+        $keys = self::keys();
+        $rules = ['field_visibility' => ['sometimes', 'required', 'array:'.implode(',', $keys), 'size:'.count($keys)]];
+        foreach ($keys as $key) {
+            $rules['field_visibility.'.$key] = ['required_with:field_visibility', Rule::in(['public', 'community', 'private'])];
+        }
+
+        return $rules;
+    }
+
     /** @return array<string, string> */
     public static function defaults(Profile $profile): array
     {
@@ -38,7 +51,7 @@ final class ProfileFieldPrivacy
             default => 'community',
         };
 
-        return array_fill_keys(self::keys(), $default);
+        return array_replace(array_fill_keys(self::keys(), $default), ['research_work' => 'private', 'interests' => 'private']);
     }
 
     /** @return array<string, string> */

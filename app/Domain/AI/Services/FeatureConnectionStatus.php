@@ -13,12 +13,16 @@ use Throwable;
 /** Feature diagnostics use the production keys and never expose credentials or create user content. */
 final class FeatureConnectionStatus
 {
+    public const MEMBER_REVIEW_OPERATIONS = ['resume_analyze', 'resume_rewrite', 'interview_answer_review'];
+
     private function key(string $feature): ?string
     {
         return match ($feature) {
             'daily-challenge' => app(AiFeatureRouting::class)->primarySecret('scenario_generate', 'daily_challenge_api_key'),
+            'daily-challenge-review' => app(AiFeatureRouting::class)->primarySecret('daily_challenge_review', 'daily_challenge_api_key'),
             'pmp' => app(AiFeatureRouting::class)->primarySecret('pmp_explain', 'api_key'),
             'feed-moderation' => app(AiFeatureRouting::class)->primarySecret('feed_moderation', 'post_check_api_key'),
+            default => app(AiFeatureRouting::class)->primarySecret($this->featureCode($feature), 'api_key'),
         };
     }
 
@@ -31,8 +35,8 @@ final class FeatureConnectionStatus
     private function fingerprint(string $feature, ?string $model): string
     {
         return hash_hmac('sha256', json_encode([$feature, $model, $this->key($feature),
-            $this->verification($feature), app(AiFeatureRouting::class)->primaryAccounting(match ($feature) { 'daily-challenge' => 'scenario_generate', 'pmp' => 'pmp_explain', 'feed-moderation' => 'feed_moderation' }, match ($feature) { 'daily-challenge' => 'daily_challenge_api_key', 'pmp' => 'api_key', 'feed-moderation' => 'post_check_api_key' }), config('pm-ai.enabled'), config('pm-ai.endpoint'), in_array($model, app(\App\Domain\AI\Services\AiRuntimeSettings::class)->allowedModels(), true),
-            $feature === 'daily-challenge' ? [app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential('post_check_api_key'), config('pm-ai.editorial_enabled'), app()->environment('local') && config('pm-ai.daily_challenge_skip_generation_moderation')] : null,
+            $this->verification($feature), app(AiFeatureRouting::class)->primaryAccounting(match ($feature) { 'daily-challenge' => 'scenario_generate', 'daily-challenge-review' => 'daily_challenge_review', 'pmp' => 'pmp_explain', 'feed-moderation' => 'feed_moderation', default => $this->featureCode($feature) }, match ($feature) { 'daily-challenge', 'daily-challenge-review' => 'daily_challenge_api_key', 'pmp' => 'api_key', 'feed-moderation' => 'post_check_api_key', default => 'api_key' }), config('pm-ai.enabled'), config('pm-ai.endpoint'), in_array($model, app(\App\Domain\AI\Services\AiRuntimeSettings::class)->allowedModels(), true),
+            in_array($feature, ['daily-challenge', 'daily-challenge-review'], true) ? [app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential('post_check_api_key'), config('pm-ai.editorial_enabled'), app()->environment('local') && config('pm-ai.daily_challenge_skip_generation_moderation')] : null,
             $feature === 'pmp' ? config('pm-ai.pmp_external_moderation') : null,
             $feature === 'feed-moderation' ? config('pm-ai.post_check_enabled') : null,
         ]), (string) config('app.key'));
@@ -45,7 +49,7 @@ final class FeatureConnectionStatus
 
     private function base(string $feature, ?string $model): array
     {
-        $operation = match ($feature) { 'daily-challenge' => 'scenario_generate', 'pmp' => 'pmp_explain', 'feed-moderation' => 'feed_moderation' };
+        $operation = match ($feature) { 'daily-challenge' => 'scenario_generate', 'daily-challenge-review' => 'daily_challenge_review', 'pmp' => 'pmp_explain', 'feed-moderation' => 'feed_moderation', default => $this->featureCode($feature) };
         $slot = AiFeatureRouting::slot($operation);
         $routing = app(AiFeatureRouting::class);
         $runtime = app(AiRuntimeSettings::class);
@@ -57,11 +61,11 @@ final class FeatureConnectionStatus
         $configured = $available && filled($model);
         $health = app(AiWorkspaceCredentials::class)->healthFor($account, $slot);
         return [...$health, 'operation' => $operation, 'provider' => 'openai', 'label' => 'OpenAI', 'model' => $model, 'configured' => $configured,
-            'routing_target' => match ($feature) { 'daily-challenge' => 'daily_challenge_api_key', 'pmp' => 'api_key', 'feed-moderation' => 'post_check_api_key' },
+            'routing_target' => match ($feature) { 'daily-challenge', 'daily-challenge-review' => 'daily_challenge_api_key', 'pmp' => 'api_key', 'feed-moderation' => 'post_check_api_key', default => 'api_key' },
             'credential_name' => $name,
             'connected' => false, 'checked_at' => null, 'pending' => false, 'verification' => $this->verification($feature),
             'code' => $configured ? 'NOT_TESTED' : 'PROVIDER_NOT_CONFIGURED',
-            'message' => $configured ? 'Connection has not been checked recently. Select Test connection.' : 'No usable primary credential or model is assigned. Select a tested credential from AI Workspace in Manage connection.'];
+            'message' => $configured ? 'Credential assigned. Test this operation to verify the model and moderation.' : 'Select and save a compatible API credential, then test the operation.'];
     }
 
     public function status(string $feature, ?string $model, bool $featureEnabled = true): array
@@ -71,7 +75,13 @@ final class FeatureConnectionStatus
         if (! $featureEnabled || ! config('pm-ai.enabled') || ($feature === 'daily-challenge' && ! config('pm-ai.editorial_enabled')) || ($feature === 'feed-moderation' && ! config('pm-ai.post_check_enabled'))) {
             return [...$this->result($feature, $model, 'FEATURE_DISABLED'), 'checked_at' => null];
         }
-        return [...$base, ...(Cache::get($this->cacheKey($feature, $model)) ?? []), ...array_intersect_key($base, array_flip(['credential_name', 'credential_health_code', 'credential_checked_at']))];
+        $cached = Cache::get($this->cacheKey($feature, $model)) ?? [];
+        $health = $base['credential_health_code'];
+        if ($health && ! in_array($health, ['OPERATION_VERIFIED', 'RUNTIME_RECOVERED'], true)
+            && $base['credential_checked_at'] && (! isset($cached['checked_at']) || (($cached['connected'] ?? false) && \Illuminate\Support\Carbon::parse($base['credential_checked_at'])->gt(\Illuminate\Support\Carbon::parse($cached['checked_at']))))) {
+            return [...$base, 'code' => $health, 'message' => 'Latest credential check: '.str_replace('_', ' ', $health).'. Test the saved operation after resolving the issue.'];
+        }
+        return [...$base, ...$cached, ...array_intersect_key($base, array_flip(['credential_name', 'credential_health_code', 'credential_checked_at']))];
     }
 
     private function result(string $feature, ?string $model, ?string $code, ?string $checkedAt = null): array
@@ -120,7 +130,7 @@ final class FeatureConnectionStatus
 
     private function featureCode(string $feature): string
     {
-        return match ($feature) { 'daily-challenge' => 'scenario_generate', 'pmp' => 'pmp_explain' };
+        return match ($feature) { 'daily-challenge' => 'scenario_generate', 'daily-challenge-review' => 'daily_challenge_review', 'pmp' => 'pmp_explain', default => in_array($feature, self::MEMBER_REVIEW_OPERATIONS, true) ? $feature : throw new \InvalidArgumentException('Unknown diagnostic operation') };
     }
 
     public function test(string $feature, ?string $model, int $actorId): array
@@ -162,8 +172,19 @@ final class FeatureConnectionStatus
                 $instructions = $feature === 'daily-challenge'
                     ? 'Internal connection diagnostic only. Return a very short fictional project scenario with all required JSON fields. Include exactly two known facts, one topic, and two rubric criteria with unique lowercase keys and 5 points each. Do not publish anything.'
                     : 'Internal connection diagnostic only. Explain the synthetic completed question briefly in the required explanation field and set nextStep to null.';
+                if ($feature === 'daily-challenge-review') {
+                    $criteria = [['key' => 'risk', 'description' => 'Identify a delivery risk.', 'max_points' => 10]];
+                    $context = ['context' => ['scenario' => 'A fictional team faces a schedule delay.', 'answer' => 'Identify the risk and assign an owner.', 'rubric' => $criteria], 'rubric' => ['criteria' => $criteria, 'max_score' => 10], 'message' => null];
+                    $instructions = 'Internal diagnostic only. Evaluate the fictional answer using the supplied rubric. Return exactly one criterion with key risk and integer points from zero to ten, nonempty evidence, strengths, gaps, next_actions and disclaimer. Do not update any learner response.';
+                }
+                if (in_array($feature, self::MEMBER_REVIEW_OPERATIONS, true)) {
+                    $context = $feature === 'interview_answer_review'
+                        ? ['context' => ['question' => 'How would you manage a project risk?', 'candidate_answer' => 'I would identify a risk owner and track the mitigation plan.', 'role' => 'Project Manager', 'industry' => 'Software'], 'message' => null]
+                        : ['context' => ['resume_excerpt' => 'Coordinated a fictional project schedule and weekly risk reviews.', 'section' => 'Professional summary'], 'message' => null];
+                    $instructions = 'Internal connection diagnostic only. Use the fictional data to return brief, constructive educational feedback in every required schema field. Do not invent personal details or change scores.';
+                }
                 $uuid = (string) Str::uuid();
-                $maxOutput = 1024;
+                $maxOutput = in_array($feature, self::MEMBER_REVIEW_OPERATIONS, true) ? (int) $settings->max_output_tokens : 1024;
                 $id = DB::table('ai_requests')->insertGetId([
                     'request_uuid' => $uuid, 'feature_code' => $code, 'subject_type' => 'feature_connection_test',
                     'subject_id' => $actorId, 'client_key' => $fingerprint, 'status' => 'queued', 'model' => $model, 'provider' => 'openai',
@@ -175,7 +196,7 @@ final class FeatureConnectionStatus
                 app(AiBudgetService::class)->reserve($id, $code, $context, $prices, $maxOutput);
                 DB::afterCommit(function () use ($id, $feature): void {
                     try {
-                        ExecuteAiRequest::dispatch($id)->onQueue(config($feature === 'pmp' ? 'pm-ai.queue' : 'pm-ai.editorial_queue'));
+                        ExecuteAiRequest::dispatch($id)->onQueue(config($feature === 'daily-challenge' ? 'pm-ai.editorial_queue' : 'pm-ai.queue'));
                     } catch (Throwable) {
                         app(AiExecutionService::class)->fail($id, 'QUEUE_JOB_FAILED');
                     }
@@ -189,7 +210,7 @@ final class FeatureConnectionStatus
 
     public function assertCurrent(object $request, object $settings): void
     {
-        $feature = $request->feature_code === 'scenario_generate' ? 'daily-challenge' : 'pmp';
+        $feature = match ($request->feature_code) { 'scenario_generate' => 'daily-challenge', 'daily_challenge_review' => 'daily-challenge-review', 'pmp_explain' => 'pmp', default => $request->feature_code };
         if (! $settings->enabled || ! config('pm-ai.enabled') || ($feature === 'daily-challenge' && ! config('pm-ai.editorial_enabled'))
             || $settings->model !== $request->model || ! in_array($request->model, app(\App\Domain\AI\Services\AiRuntimeSettings::class)->allowedModels(), true)
             || $request->client_key !== $this->fingerprint($feature, $request->model)) {
@@ -199,7 +220,7 @@ final class FeatureConnectionStatus
 
     public function refreshCompleted(object $request): void
     {
-        $feature = $request->feature_code === 'scenario_generate' ? 'daily-challenge' : 'pmp';
+        $feature = match ($request->feature_code) { 'scenario_generate' => 'daily-challenge', 'daily_challenge_review' => 'daily-challenge-review', 'pmp_explain' => 'pmp', default => $request->feature_code };
         $this->testStatus($feature, $request->request_uuid, (int) $request->subject_id);
     }
 

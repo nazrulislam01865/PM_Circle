@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Onboarding\OnboardingController;
 use App\Models\HomePageContent;
 use App\Models\CommunityEvent;
-use App\Support\Home\HomeAiFeaturesContent;
+use App\Support\Home\HomepagePresentation;
 use App\Domain\Community\Services\EngagementStats;
 use App\Domain\Identity\Services\ProfileFieldPrivacy;
 use App\Domain\Identity\Services\MemberProfileAccess;
@@ -35,23 +35,24 @@ class HomeController extends Controller
         }
 
         $content = HomePageContent::query()->where('key', 'home')->first()?->content ?? [];
-        $content['ai_features'] = HomeAiFeaturesContent::withDefaults($content['ai_features'] ?? []);
+        $presentation = HomepagePresentation::resolve($content);
         $demo = app()->environment(['local', 'testing']) && config('pm-circle.demo_content_enabled');
-        $visible = fn (string $section): bool => data_get($content, 'sections.'.$section, true) !== false;
-        $scenarioId = data_get($content, 'scenario.featured_id');
-        $dailySettings = DB::table('daily_challenge_settings')->where('id', 1)->first();
+        $visible = fn (string $section): bool => $presentation[$section]['enabled'];
+        $scenarioId = $presentation['scenario']['featured_id'];
+        $dailySettings = $visible('scenario') ? DB::table('daily_challenge_settings')->where('id', 1)->first() : null;
         $dailyToday = $dailySettings?->enabled && $dailySettings?->auto_publish
             ? Scenario::query()->where('status', 'published')->where('ai_generated', true)
                 ->where('daily_slot', now('Asia/Dhaka')->toDateString())
                 ->where('published_at', '<=', now())
                 ->where('expires_at', '>', now())->value('id') : null;
         $scenarioId = $dailyToday ?: $scenarioId;
-        $featuredMembers = array_slice((array) data_get($content, 'members.featured_ids', []), 0, 3);
+        $featuredMembers = $presentation['members']['featured_ids'];
         $viewerId = auth()->user()?->is_admin === true ? null : auth()->id();
 
         $scenario = $visible('scenario') ? Scenario::query()->where('status', 'published')
-            ->when($scenarioId, fn ($query) => $query->whereKey($scenarioId))
+            ->when($scenarioId, fn ($query) => $query->orderByRaw('CASE WHEN id = ? THEN 0 ELSE 1 END', [$scenarioId]))
             ->where('published_at', '<=', now())
+            ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()))
             ->select(['id', 'slug', 'title', 'summary', 'topics'])
             ->withCount(['reactions as reactions_count' => fn ($query) => $query
                 ->whereIn('type', ReactionIconCatalog::allTypes())])
@@ -87,7 +88,7 @@ class HomeController extends Controller
                 'viewer_reaction' => DB::table('post_reactions')->select('type')
                     ->whereColumn('post_id', 'posts.id')->where('user_id', $viewerId)->limit(1),
             ]))
-            ->latest('posts.published_at')->limit(2)->get() : collect();
+            ->latest('posts.published_at')->limit((int) $presentation['community']['limit'])->get() : collect();
         PostReactionSummary::attach($posts);
         $posts->each(function (Post $post) use ($viewerId): void {
             $post->setAttribute('viewer_is_author', $viewerId !== null && $post->author_id === $viewerId);
@@ -103,7 +104,7 @@ class HomeController extends Controller
             ->when($featuredMembers !== [], fn ($query) => $query->whereIn('id', $featuredMembers))
             ->with(['profile' => fn ($query) => $query->where('visibility', 'public')->select('id', 'user_id', 'role', 'avatar_path', 'visibility', 'field_visibility')])
             ->when($demo && $featuredMembers === [], fn ($query) => $query->whereIn('email', data_get($content, 'members.demo_emails', [])))
-            ->latest('id')->limit(3)->get(['id', 'name', 'email']) : collect();
+            ->latest('id')->limit(2)->get(['id', 'name', 'email']) : collect();
         if ($featuredMembers !== []) {
             $memberOrder = array_flip($featuredMembers);
             $members = $members->sortBy(fn (User $member) => $memberOrder[$member->id] ?? PHP_INT_MAX)->values();
@@ -117,15 +118,15 @@ class HomeController extends Controller
 
         // The prototype uses a resume panel rather than a jobs list. Avoid an unused jobs query.
         // Published catalog previews only; one bounded query and no restricted lesson data.
-        $courses = $visible('pathway') ? LearningCourse::query()->where('is_published', true)
-            ->orderBy('sort_order')->orderBy('id')->limit(8)
+        $courses = $visible('courses') ? LearningCourse::query()->where('is_published', true)
+            ->orderBy('sort_order')->orderBy('id')->limit((int) $presentation['courses']['limit'])
             ->get(['slug', 'title', 'summary', 'category', 'level', 'minutes', 'thumbnail', 'cover_path', 'access_tier'])
             ->map(fn (LearningCourse $course) => $course->catalogData())->values() : collect();
 
         return Inertia::render('public/Home', [
             'courses' => $courses,
-            'events' => $visible('careers') ? CommunityEvent::query()->published()->upcoming()->orderBy('starts_at')->orderBy('id')->limit(3)->get(CommunityEvent::listingColumns())->map(fn (CommunityEvent $event) => $event->listingData()) : [],
-            'content' => $content,
+            'events' => $visible('events') ? CommunityEvent::query()->published()->upcoming()->orderBy('starts_at')->orderBy('id')->limit((int) $presentation['events']['limit'])->get(CommunityEvent::listingColumns())->map(fn (CommunityEvent $event) => $event->listingData()) : [],
+            'content' => $presentation,
             'isDemo' => $demo,
             'scenario' => $scenario,
             'posts' => $posts,

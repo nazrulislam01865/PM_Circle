@@ -49,12 +49,13 @@ final class CoursePracticeController extends Controller
         }
         $selected = $query->inRandomOrder()->limit($count)->get([
             'id', 'code', 'kind', 'section_title', 'topic_title', 'prompt', 'options',
-            'correct_option', 'explanation',
+            'correct_option', 'explanation', 'scenario_text', 'scenario_video_url',
         ]);
         $snapshot = $selected->map(fn (LearningCourseQuestion $question) => [
             'id' => $question->id, 'code' => $question->code, 'kind' => $question->kind,
             'section' => $question->section_title, 'topic' => $question->topic_title,
             'prompt' => $question->prompt, 'options' => $question->options,
+            'scenarioText' => $question->scenario_text, 'scenarioVideoUrl' => $question->scenario_video_url,
             'correct' => $question->correct_option, 'explanation' => $question->explanation,
         ])->all();
         $now = now();
@@ -81,6 +82,7 @@ final class CoursePracticeController extends Controller
                 'questions' => array_map(static fn (array $question): array => [
                     'id' => $question['id'], 'kind' => $question['kind'], 'section' => $question['section'],
                     'topic' => $question['topic'], 'prompt' => $question['prompt'], 'options' => $question['options'],
+                    'scenarioText' => $question['scenarioText'] ?? null, 'scenarioVideoUrl' => $question['scenarioVideoUrl'] ?? null,
                 ], $attempt->questions),
             ],
         ]);
@@ -144,6 +146,7 @@ final class CoursePracticeController extends Controller
         $questions = array_map(static fn (array $question): array => [
             'id' => $question['id'], 'kind' => $question['kind'], 'section' => $question['section'],
             'topic' => $question['topic'], 'prompt' => $question['prompt'], 'options' => $question['options'],
+                    'scenarioText' => $question['scenarioText'] ?? null, 'scenarioVideoUrl' => $question['scenarioVideoUrl'] ?? null,
             'correct' => $question['correct'], 'explanation' => $question['explanation'],
         ], $attempt->questions);
         return Inertia::render('learning/CoursePracticeResult', [

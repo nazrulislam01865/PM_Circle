@@ -36,7 +36,7 @@ final class CheckDailyChallengeAi extends Command
 
         $this->line('Gateway enabled: '.(config('pm-ai.enabled') ? 'yes' : 'no'));
         $this->line('Editorial enabled: '.(config('pm-ai.editorial_enabled') ? 'yes' : 'no'));
-        $this->line('Dedicated key configured: '.(filled(app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential('daily_challenge_api_key')) ? 'yes' : 'no'));
+        $this->line('Generation credential configured: '.(app(\App\Domain\AI\Services\AiFeatureRouting::class)->primaryConfigured('scenario_generate', 'daily_challenge_api_key') ? 'yes' : 'no'));
         $this->line('Post Check Omni key configured: '.(filled(app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential('post_check_api_key')) ? 'yes' : 'no'));
         $this->line('Publication (Asia/Dhaka): '.$settings->publish_time);
         $this->line('Auto-publish: '.($settings->auto_publish ? 'yes' : 'no'));

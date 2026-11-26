@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const read = file => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
-const terms = read('resources/js/pages/public/Terms.tsx');
+const terms = read('resources/js/components/pm/LegalPage.tsx');
+const defaults = JSON.parse(read('resources/legal/defaults.json')).terms;
 const style = read('resources/css/pm-terms.css');
 const tokens = read('resources/css/pm-design-tokens.css');
 const appStyles = read('resources/css/app.css');
@@ -11,14 +12,15 @@ const routes = read('routes/web.php');
 const layout = read('resources/js/layouts/pm/PublicLayout.tsx');
 
 test('Terms page is served by its existing public route with the shared homepage layout', () => {
-    assert.match(routes, /Route::inertia\('\/terms',\s*'public\/Terms'\)/);
+    assert.match(routes, /Route::get\('\/terms', \[[^\n]+LegalPageController::class, 'terms'\]/);
+    assert.match(read('resources/js/pages/public/Terms.tsx'), /<LegalPage legalPage=\{legalPage\} document="terms"/);
     assert.match(terms, /<PublicLayout siteLayout homePrototype guideLayout/);
     assert.match(layout, /<HomeHeader eventsVisible=\{homeEventsVisible\}\/>/);
     assert.match(layout, /<SiteFooter pricingPrototype=/);
     assert.doesNotMatch(terms, /fetch\(|axios\.|router\.get\(|useEffect\(/);
 });
 
-test('Prototype has all eleven numbered and linked sections without registration changes', () => {
+test('Original eleven sections and links are retained as the initial draft', () => {
     const expected = [
         'About these terms', 'Accounts and eligibility', 'Plans, purchases and refunds',
         'Learning content and exam practice', 'AI tools and career guidance',
@@ -26,11 +28,12 @@ test('Prototype has all eleven numbered and linked sections without registration
         'Events and third-party services', 'Service changes and account closure',
         'Consumer rights and disputes', 'Updates and contact',
     ];
-    for (const heading of expected) assert.ok(terms.includes(`title: '${heading}'`), `${heading} not found`);
+    assert.deepEqual(defaults.sections.map(section=>section.title), expected);
     assert.match(terms, /Draft for review · 22 November 2026/);
-    assert.match(terms, /aria-label="On this page"/);
+    assert.equal(defaults.toc_title, "On this page");
+    assert.match(terms, /aria-label=\{content.toc_title\}/);
     assert.match(terms, /href=\{`#\$\{section.id\}`\}/);
-    for (const href of ['/privacy', '/refund-policy', '/community', '/contact']) assert.ok(terms.includes(`href="${href}"`));
+    for (const href of ['/privacy', '/refund-policy', '/community', '/contact']) assert.ok(defaults.sections.some(section => section.body.includes(`](${href})`)));
     assert.doesNotMatch(terms, /href="\/register"|payment intent|terms_accepted/i);
 });
 

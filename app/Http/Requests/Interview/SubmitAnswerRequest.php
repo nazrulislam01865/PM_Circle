@@ -16,7 +16,8 @@ final class SubmitAnswerRequest extends FormRequest
     {
         return [
             'position' => ['required', 'integer', 'min:0', 'max:49'],
-            'answer' => ['required', 'string', 'min:20', 'max:6000'],
+            'skip' => ['sometimes', 'boolean'],
+            'answer' => ['required_unless:skip,true', 'nullable', 'string', 'max:6000'],
             'mode' => ['required', Rule::in(['type', 'speak'])],
         ];
     }

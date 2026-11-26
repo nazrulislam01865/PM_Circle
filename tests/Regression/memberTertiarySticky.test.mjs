@@ -7,7 +7,6 @@ const css = read('resources/css/pm-member-navigation.css');
 
 const pages = [
     ['Scenario Library', 'resources/js/pages/scenarios/Index.tsx', 'pm-challenge-tabs'],
-    ['My profile', 'resources/js/components/profile/ProfileWorkspaceHeader.tsx', 'pm-profile-nav-tabs'],
     ['PMP simulator dashboard', 'resources/js/components/exam/PmpWorkspacePanels.tsx', 'pm-pmp-tabs'],
 ];
 
@@ -18,6 +17,12 @@ for (const [name, file, baseClass] of pages) {
         assert.equal((source.match(/pm-member-tertiary-sticky/g) ?? []).length, 1);
     });
 }
+
+test('profile tabs use sticky navigation only outside the editors', () => {
+    const source = read('resources/js/components/profile/ProfileWorkspaceHeader.tsx');
+    assert.match(source, /const isEditor = tab === 'edit' \|\| tab === 'assistant'/);
+    assert.match(source, /<nav className=\{isEditor \? 'pm-profile-nav-tabs' : 'pm-profile-nav-tabs pm-member-tertiary-sticky'\}/);
+});
 
 test('member tabs remain below the existing primary and secondary navigation', () => {
     assert.match(css, /\.pm-member-shell \.pm-member-tertiary-sticky\s*\{[^}]*position:\s*sticky;[^}]*top:\s*calc\(var\(--header-height\) \+ var\(--pm-member-secondary-height\)\);/s);

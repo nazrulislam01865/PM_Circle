@@ -64,3 +64,20 @@
 .pm-career-settings-provider small { overflow-wrap: anywhere; }
 .pm-career-settings-dialog .pm-admin-field { display: grid; gap: var(--s2); }
 .pm-career-settings-dialog-actions { display: flex; flex-wrap: wrap; gap: var(--s2); }
+
+/* Connection settings must not inherit the compact horizontal settings-panel grid. */
+.pm-ai-connection-dialog { width:min(42rem,calc(100% - var(--s6))); max-width:calc(100% - var(--s6)); }
+.pm-ai-connection-dialog .pm-admin-field,
+.pm-career-settings-dialog .pm-ai-connection-picker .pm-admin-field { grid-template-columns:minmax(0,1fr); align-items:start; gap:var(--s1); }
+.pm-ai-connection-dialog .pm-admin-field > :is(small,.pm-error),
+.pm-career-settings-dialog .pm-ai-connection-picker .pm-admin-field > :is(small,.pm-error) { grid-column:1; }
+.pm-ai-connection-picker { display:grid; gap:var(--s3); min-width:0; }
+.pm-ai-connection-summary,.pm-ai-connection-selection { display:grid; gap:var(--s2); padding:var(--s3); border:1px solid var(--border); border-radius:var(--radius-card); background:var(--pm-guide-soft); min-width:0; overflow-wrap:anywhere; }
+.pm-ai-connection-summary-heading { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:var(--s2); }
+.pm-ai-connection-summary p { margin:0; }
+.pm-ai-connection-picker .pm-admin-choice-trigger { min-width:0; }
+.pm-ai-connection-picker .pm-admin-choice-trigger > span:first-child { white-space:normal; overflow-wrap:anywhere; }
+.pm-ai-connection-links { display:flex; flex-wrap:wrap; gap:var(--s3); font-size:var(--text-ui); color:var(--blue); }
+.pm-ai-connection-links a { text-decoration:underline; }
+.pm-ai-connection-footer { justify-content:flex-end; padding-top:var(--s3); border-top:1px solid var(--border); }
+.pm-ai-connection-dialog details summary { cursor:pointer; }

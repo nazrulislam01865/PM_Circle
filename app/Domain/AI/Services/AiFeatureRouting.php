@@ -119,8 +119,8 @@ final class AiFeatureRouting
                 $model = $route->backup_model ?: $request->model;
                 $price = $model === $request->model ? $prices : self::price($model);
                 // Disabled or incompatible backups cannot change the original request's safety policy.
-                if ($price && $backup->slot === self::slot($feature, $backup->adapter) && $this->compatible($feature, $backup->adapter, $model)) {
-                    $candidates[] = ['id' => (int) $route->backup_credential_id, 'slot' => $backup->slot, 'model' => $model, 'provider' => $backup->adapter, 'price' => $price];
+                if ($price && in_array($backup->slot, AiRuntimeSettings::explicitCredentialSlots(self::slot($feature, $backup->adapter)), true) && $this->compatible($feature, $backup->adapter, $model)) {
+                    $candidates[] = ['id' => (int) $route->backup_credential_id, 'slot' => self::slot($feature, $backup->adapter), 'model' => $model, 'provider' => $backup->adapter, 'price' => $price];
                     foreach (['input', 'output', 'cached'] as $key) $prices[$key] = max((float) $prices[$key], (float) $price[$key]);
                 }
             }
@@ -169,7 +169,7 @@ final class AiFeatureRouting
                 if (! $id) continue;
                 $key = $keys->get($id);
                 $candidateModel = $field === 'primary_credential_id' ? $model : $backupModel;
-                if (! $key || ! $key->enabled || $key->provider_status !== 'Active' || $key->health_code !== 'OPERATION_VERIFIED' || $key->slot !== self::slot($feature, $key->adapter) || ! $this->compatible($feature, $key->adapter, $candidateModel) || ($field === 'primary_credential_id' && $key->slot !== $slot)) {
+                if (! $key || ! $key->enabled || $key->provider_status !== 'Active' || $key->health_code !== 'OPERATION_VERIFIED' || ! in_array($key->slot, AiRuntimeSettings::explicitCredentialSlots(self::slot($feature, $key->adapter)), true) || ! $this->compatible($feature, $key->adapter, $candidateModel) || ($field === 'primary_credential_id' && ! in_array($key->slot, AiRuntimeSettings::explicitCredentialSlots($slot), true))) {
                     throw ValidationException::withMessages([$field => 'Choose a tested, enabled credential on a compatible active provider.']);
                 }
             }
@@ -182,8 +182,8 @@ final class AiFeatureRouting
                     if (array_key_exists($input, $data)) $values[$column] = $data[$input];
                 }
             }
-            if (in_array($feature, ['resume_analyze', 'resume_rewrite'], true)) {
-                if (! $row) throw ValidationException::withMessages(['primary_model' => 'Run the résumé AI migration first.']);
+            if (in_array($feature, ['resume_analyze', 'resume_rewrite', 'interview_answer_review'], true)) {
+                if (! $row) throw ValidationException::withMessages(['primary_model' => 'Run the AI feature migrations first.']);
                 $settings = [];
                 foreach (['enabled' => 'enabled', 'request_daily_limit' => 'daily_limit', 'output_token_limit' => 'max_output_tokens', 'credit_tariff' => 'credit_tariff'] as $input => $column) {
                     if (array_key_exists($input, $data)) $settings[$column] = $data[$input];

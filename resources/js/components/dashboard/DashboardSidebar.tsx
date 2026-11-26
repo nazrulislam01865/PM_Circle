@@ -9,7 +9,7 @@ import {
 import { Brand } from '@/components/pm/Brand';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import type { DashboardShellData } from '@/types/dashboard';
-import { memberSidebarActive, memberSidebarContains, memberSidebarGroups, type MemberSidebarItem, type MemberSidebarEntry } from './memberSidebarNavigation';
+import { memberSidebarActive, memberSidebarContains, memberSidebarGroups, memberSidebarHasAi, type MemberSidebarItem, type MemberSidebarEntry } from './memberSidebarNavigation';
 
 const icons = { home: Home, learning: CirclePlay, 'course-group': BookOpen, courses: LayoutGrid, certificates: Award, exams: ClipboardList, pmp: ClipboardCheck, scrum: FileCheck2,
     challenge: CalendarDays, profile: UserRound,
@@ -17,7 +17,12 @@ const icons = { home: Home, learning: CirclePlay, 'course-group': BookOpen, cour
     saved: Bookmark, plan: Crown, settings: Settings, activity: History, help: Info };
 
 function AiBadge() {
-    return <span className="pm-member-ai-badge" aria-label="AI"><Sparkle aria-hidden="true"/>AI</span>;
+    return <span className="pm-member-ai-badge" aria-hidden="true"><Sparkle aria-hidden="true"/>AI</span>;
+}
+
+function SidebarLabel({ item }: { item: Pick<MemberSidebarItem, 'id' | 'label'> }) {
+    const hasAi = memberSidebarHasAi(item.id);
+    return <><span className={hasAi ? 'pm-member-parent-label' : undefined}>{item.label}</span>{hasAi && <AiBadge/>}</>;
 }
 
 export function DashboardSidebar({ dashboard, open, close, collapsed, onToggle }: {
@@ -56,18 +61,17 @@ export function DashboardSidebar({ dashboard, open, close, collapsed, onToggle }
         const requiredPlan = item.id === 'resume' ? 'Pro' : 'Plus or Pro';
         const selected = active === item.id || (item.id === 'exams' && memberSidebarGroups[0].items.some(entry => entry.id === 'exams' && memberSidebarContains(entry, active)));
         const className = `pm-dash-nav-link${support ? ' pm-member-support-link' : ''}${nested ? ' pm-member-exam-child' : ''}${selected ? ' is-active' : ''}`;
-        const content = <><Icon className="pm-member-nav-icon" size={20} strokeWidth={1.9} aria-hidden="true"/><span className={item.id === 'exams' ? 'pm-member-parent-label' : undefined}>{item.label}</span>
-            {item.id === 'exams' && <AiBadge/>}
+        const content = <><Icon className="pm-member-nav-icon" size={20} strokeWidth={1.9} aria-hidden="true"/><SidebarLabel item={item}/>
             {locked && <LockKeyhole className="pm-dash-nav-lock" size={14} aria-hidden="true"/>}</>;
         if (locked) return <Dialog key={item.id}>
-            <DialogTrigger asChild><button type="button" className={className} aria-label={`${item.label} — ${requiredPlan} required`} title={`${requiredPlan} required`}>{content}</button></DialogTrigger>
+            <DialogTrigger asChild><button type="button" className={className} aria-label={`${item.label} — ${requiredPlan} required`} aria-description={memberSidebarHasAi(item.id) ? 'Includes AI features' : undefined} title={`${requiredPlan} required`}>{content}</button></DialogTrigger>
             <DialogContent className="pm-member-policy-dialog">
                 <DialogHeader><DialogTitle>{item.label}</DialogTitle><DialogDescription>This feature requires {requiredPlan}. View Plan &amp; usage to compare access.</DialogDescription></DialogHeader>
                 <DialogFooter><DialogClose asChild><button type="button" className="pm-button pm-button-outline">Close</button></DialogClose><DialogClose asChild><Link href="/membership" onClick={close} className="pm-button">View Plan &amp; usage</Link></DialogClose></DialogFooter>
             </DialogContent>
         </Dialog>;
         return <Link key={item.id} href={item.href} onClick={close} className={className}
-            aria-current={selected ? 'page' : undefined} aria-label={item.label} title={compact ? item.label : undefined}>{content}</Link>;
+            aria-current={selected ? 'page' : undefined} aria-label={item.label} aria-description={memberSidebarHasAi(item.id) ? 'Includes AI features' : undefined} title={compact ? item.label : undefined}>{content}</Link>;
     };
     const renderEntry = (entry: MemberSidebarEntry) => {
         if (!('children' in entry)) return renderItem(entry);
@@ -79,11 +83,11 @@ export function DashboardSidebar({ dashboard, open, close, collapsed, onToggle }
         const submenuId = `pm-member-${entry.id}-submenu`;
         return <div className="pm-member-exam-group" key={entry.id}>
             <button type="button" className={`pm-dash-nav-link pm-member-exam-toggle${(active === entry.id || (selected && !expanded)) ? ' is-active' : ''}`}
-                aria-label={entry.label} title={compact ? entry.label : undefined}
+                aria-label={entry.label} aria-description={memberSidebarHasAi(entry.id) ? 'Includes AI features' : undefined} title={compact ? entry.label : undefined}
                 aria-expanded={expanded} aria-controls={submenuId}
                 onClick={() => setExpandedSubmenus(previous => ({ ...previous, [entry.id]: !expanded }))}>
                 <Icon className="pm-member-nav-icon" size={20} strokeWidth={1.9} aria-hidden="true"/>
-                <span className="pm-member-parent-label">{entry.label}</span><AiBadge/><ChevronDown className="pm-member-exam-chevron" size={16} aria-hidden="true"/>
+                <SidebarLabel item={entry}/><ChevronDown className="pm-member-exam-chevron" size={16} aria-hidden="true"/>
             </button>
             <div id={submenuId} className="pm-member-exam-submenu" hidden={!expanded}>
                 {entry.children.map(item => renderItem(item, false, true))}

@@ -24,6 +24,6 @@ test('daily scenarios are scheduled, preserving previous drafts and scheduled pu
     const publisher = read('routes/console.php');
     const admin = read('resources/js/pages/admin/DailyChallenge.tsx');
     assert.match(executor, /\$status = 'scheduled';/);
-    assert.match(publisher, /whereIn\('status', \['scheduled', 'pending_review'\]\)/);
+    assert.match(publisher, /whereIn\('status', \['scheduled', 'pending_review', 'approved'\]\)/);
     assert.match(admin, /Scheduled \(automatic\)/);
 });

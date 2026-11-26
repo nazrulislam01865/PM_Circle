@@ -1,0 +1,9 @@
+# Daily Challenge status and recovery
+
+Based on Archive 6.zip. Generation status now offers Generate for unprepared current/upcoming dates, Retry generation for safely retryable failures, Publish now for due completed drafts, and View challenge for published records. Historical recovery is explicit: Retry to archive or Publish to archive creates a closed challenge without reopening past discussions. Historical entries are not automatically backfilled. Ambiguous provider outcomes and exhausted retry limits remain protected. Existing published data is never overwritten.
+
+Validated completed drafts publish without staff approval when automatic publication is enabled and the scheduled time is due. Publishing an existing validated payload does not need another provider request or a generation credential. New generation still requires valid AI configuration, moderation, budgets and running workers. The administrator must save changed guidance before initiating generation. The status table and guidance selections use shared admin tokens, inline selectable domains, searchable topics and responsive scrolling.
+
+Apply migration 2026_11_26_000008_add_daily_challenge_archive_recovery.php, then build frontend assets and restart workers. Preserve .env and existing private storage. No seeding or new dependencies required.
+
+Verification: 533/534 source regression checks (pre-existing PMP regression failure); 11/11 focused checks; four Chromium responsive React fixture checks using mocked router/connection primitives. PHP syntax checks passed. Full type checking reported two previously existing errors in profile and legal components. Laravel database integration tests are provided but were not executed (Composer dependencies unavailable). Live AI requests and full production build were not verified.

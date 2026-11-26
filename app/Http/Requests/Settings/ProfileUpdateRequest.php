@@ -23,15 +23,14 @@ class ProfileUpdateRequest extends FormRequest
         $rules = $this->profileRules($this->user()->id);
         // Privacy and contact controls send partial PATCH requests.
         // Validate a name/email when present, without requiring both on every PATCH.
-        $rules['name'] = ['sometimes', ...$rules['name']];
-        $rules['email'] = ['sometimes', ...$rules['email']];
-
-        $fieldRules = ['field_visibility' => ['sometimes', 'required', 'array', 'size:'.count(ProfileFieldPrivacy::keys())]];
-        foreach (ProfileFieldPrivacy::keys() as $key) {
-            $fieldRules['field_visibility.'.$key] = ['required_with:field_visibility', Rule::in(['public', 'community', 'private'])];
+        if (! $this->has('compact_details')) {
+            $rules['name'] = ['sometimes', ...$rules['name']];
+            $rules['email'] = ['sometimes', ...$rules['email']];
         }
 
-        return array_merge($rules, $fieldRules, $this->editorRules(), [
+        $fieldRules = ProfileFieldPrivacy::validationRules();
+
+        return array_merge($rules, $fieldRules, $this->editorRules(), $this->compactRules(), [
             // Basic-profile saves require a valid private contact number. Independent
             // privacy-only PATCH requests may omit it to preserve existing controls.
             'phone' => [
@@ -47,7 +46,7 @@ class ProfileUpdateRequest extends FormRequest
                 },
             ],
             'headline' => ['nullable', 'string', 'max:180'],
-            'role' => ['nullable', 'string', 'max:80'],
+            'role' => [Rule::requiredIf(fn (): bool => $this->has('compact_details')), 'nullable', 'string', 'max:80'],
             'industry' => ['nullable', 'string', 'max:120'],
             'country' => ['nullable', 'string', 'max:120'],
             'city' => ['nullable', 'string', 'max:120'],
@@ -64,6 +63,32 @@ class ProfileUpdateRequest extends FormRequest
         ]);
     }
 
+    /** Compact editor fields are profile summaries, not replacement record collections. */
+    private function compactRules(): array
+    {
+        if (! $this->has('compact_details')) {
+            return [];
+        }
+
+        return [
+            'compact_details' => ['required', 'array:current_organization,profile_photo_url,cover_photo_url,display_location,employment_period,responsibilities,selected_projects,degree,institution,certification,professional_development,public_speaking'],
+            'compact_details.current_organization' => ['required', 'string', 'max:160'],
+            'compact_details.profile_photo_url' => ['nullable', 'url:https', 'max:500'],
+            'compact_details.cover_photo_url' => ['nullable', 'url:https', 'max:500'],
+            'compact_details.display_location' => ['nullable', 'string', 'max:255'],
+            'compact_details.employment_period' => ['nullable', 'string', 'max:255'],
+            'compact_details.responsibilities' => ['nullable', 'string', 'max:4000'],
+            'compact_details.selected_projects' => ['nullable', 'string', 'max:4000'],
+            'compact_details.degree' => ['nullable', 'string', 'max:255'],
+            'compact_details.institution' => ['nullable', 'string', 'max:255'],
+            'compact_details.certification' => ['nullable', 'string', 'max:255'],
+            'compact_details.professional_development' => ['nullable', 'string', 'max:4000'],
+            'compact_details.public_speaking' => ['nullable', 'string', 'max:4000'],
+            'editor_details' => ['prohibited'],
+            'removed_entries' => ['prohibited'],
+        ];
+    }
+
     /** Allowlisted prototype fields. Nested arrays are bounded and validated server-side. */
     private function editorRules(): array
     {
@@ -71,17 +96,23 @@ class ProfileUpdateRequest extends FormRequest
             return [];
         }
 
+        if ($this->boolean('editor_details.resume_aligned')) {
+            return $this->alignedEditorRules();
+        }
+
         $rules = [
-            'editor_details' => ['required', 'array:current_organization,profile_photo_url,cover_photo_url,tools_software,delivery_methods,career,records'],
+            'editor_details' => ['required', 'array:current_organization,profile_photo_url,cover_photo_url,tools_software,delivery_methods,portfolio,github,career,records'],
             'editor_details.current_organization' => ['nullable', 'string', 'max:160'],
             'editor_details.profile_photo_url' => ['nullable', 'url:https', 'max:500'],
             'editor_details.cover_photo_url' => ['nullable', 'url:https', 'max:500'],
             'editor_details.tools_software' => ['nullable', 'string', 'max:1000'],
             'editor_details.delivery_methods' => ['nullable', 'string', 'max:500'],
+            'editor_details.portfolio' => ['nullable', 'string', 'max:255'],
+            'editor_details.github' => ['nullable', 'string', 'max:255'],
             'editor_details.career' => ['required', 'array:availability,target_roles,seniority,locations,work_arrangement,employment_type,notice_period,relocation'],
             'editor_details.career.availability' => ['required', Rule::in(['open', 'not_looking'])],
             'editor_details.career.relocation' => ['required', 'boolean'],
-            'editor_details.records' => ['required', 'array:experiences,projects,educations,certifications,courses,awards,publications,volunteering,languages,links'],
+            'editor_details.records' => ['required', 'array:experiences,projects,educations,certifications,courses,awards,publications,volunteering,languages,links,research,skill_groups,interests'],
             'removed_entries' => ['sometimes', 'array:experiences,projects,educations,certifications'],
         ];
 
@@ -90,16 +121,19 @@ class ProfileUpdateRequest extends FormRequest
         }
 
         $sets = [
-            'experiences' => ['job_title', 'organization', 'employment_type', 'location', 'work_arrangement', 'start_month', 'end_month', 'is_current', 'responsibilities', 'achievements'],
-            'projects' => ['title', 'role', 'organization', 'industry', 'start_month', 'end_month', 'status', 'scale', 'scope', 'outcomes', 'work_url'],
-            'educations' => ['degree', 'institution', 'field_of_study', 'location', 'start_month', 'end_month', 'is_current', 'grade', 'honours'],
-            'certifications' => ['name', 'issuing_organization', 'issue_month', 'expiry_month', 'does_not_expire', 'credential_number', 'verification_url'],
+            'experiences' => ['job_title', 'organization', 'employment_type', 'location', 'work_arrangement', 'start_month', 'end_month', 'is_current', 'responsibilities', 'achievements', 'technical', 'soft'],
+            'projects' => ['title', 'role', 'organization', 'industry', 'start_month', 'end_month', 'status', 'scale', 'scope', 'outcomes', 'work_url', 'location', 'team', 'technical', 'soft'],
+            'educations' => ['degree', 'institution', 'field_of_study', 'location', 'start_month', 'end_month', 'is_current', 'grade', 'honours', 'courses'],
+            'certifications' => ['name', 'issuing_organization', 'issue_month', 'expiry_month', 'does_not_expire', 'credential_number', 'verification_url', 'details'],
             'courses' => ['name', 'provider', 'completion_month', 'hours', 'evidence_url'],
             'awards' => ['name', 'organization', 'award_month', 'details'],
             'publications' => ['title', 'publisher', 'month', 'details', 'url'],
             'volunteering' => ['role', 'organization', 'start_month', 'end_month', 'is_current', 'contribution'],
             'languages' => ['name', 'proficiency'],
             'links' => ['label', 'url'],
+            'research' => ['title', 'location', 'team_role', 'period', 'description', 'technical', 'soft'],
+            'skill_groups' => ['category', 'skills'],
+            'interests' => ['title', 'description'],
         ];
         $required = [
             'experiences' => ['job_title', 'organization', 'start_month'],
@@ -109,10 +143,11 @@ class ProfileUpdateRequest extends FormRequest
             'courses' => ['name'], 'awards' => ['name'], 'publications' => ['title'],
             'volunteering' => ['role', 'organization'],
             'languages' => ['name'], 'links' => ['label', 'url'],
+            'research' => ['title'], 'skill_groups' => ['category'], 'interests' => ['title'],
         ];
         foreach ($sets as $section => $columns) {
             $prefix = 'editor_details.records.'.$section;
-            $rules[$prefix] = ['present', 'array', 'max:40'];
+            $rules[$prefix] = [in_array($section, ['research', 'skill_groups', 'interests'], true) ? 'sometimes' : 'present', 'array', 'max:40', 'list'];
             $rules[$prefix.'.*'] = ['required', 'array:id,'.implode(',', $columns)];
             if (in_array($section, ['experiences', 'projects', 'educations', 'certifications'], true)) {
                 $rules[$prefix.'.*.id'] = ['sometimes', 'nullable', 'integer', 'min:1'];
@@ -131,11 +166,64 @@ class ProfileUpdateRequest extends FormRequest
                         ? ['required', 'url:http,https', 'max:500'] : ['nullable', 'url:http,https', 'max:500'];
                 } else {
                     $rules[$path] = [in_array($column, $required[$section] ?? [], true) ? 'required' : 'nullable', 'string',
-                        in_array($column, ['responsibilities', 'achievements', 'scope', 'outcomes', 'honours', 'details', 'contribution'], true) ? 'max:4000' : 'max:255'];
+                        in_array($column, ['responsibilities', 'achievements', 'scope', 'outcomes', 'honours', 'details', 'contribution', 'courses', 'description', 'skills'], true) ? 'max:4000' : 'max:255'];
                 }
             }
         }
 
+        return $rules;
+    }
+
+    /** Exact CV-shaped profile fields. Legacy data is merged from the owned profile, never accepted as hidden inputs. */
+    private function alignedEditorRules(): array
+    {
+        $sets = [
+            'educations' => ['institution', 'location', 'degree', 'period', 'honours', 'courses'],
+            'experiences' => ['organization', 'location', 'job_title', 'period', 'responsibilities', 'technical', 'soft'],
+            'research' => ['title', 'location', 'team_role', 'period', 'description', 'technical', 'soft'],
+            'projects' => ['title', 'location', 'organization', 'period', 'scope', 'technical', 'soft', 'team'],
+            'skill_groups' => ['category', 'skills'],
+            'awards' => ['period', 'name', 'organization'],
+            'interests' => ['title', 'description'],
+            'languages' => ['name', 'proficiency'],
+            'certifications' => ['name', 'issuing_organization', 'period', 'details'],
+        ];
+        $required = [
+            'educations' => ['institution', 'degree'], 'experiences' => ['organization', 'job_title'],
+            'research' => ['title'], 'projects' => ['title'], 'skill_groups' => ['category'],
+            'awards' => ['name'], 'interests' => ['title'], 'languages' => ['name'], 'certifications' => ['name'],
+        ];
+        // Keep the existing column limits where the profile also writes relational records.
+        $limits = ['educations' => ['institution' => 180, 'degree' => 180],
+            'experiences' => ['organization' => 150, 'job_title' => 150],
+            'projects' => ['title' => 180], 'certifications' => ['name' => 100], 'languages' => ['name' => 50]];
+        $relational = ['educations', 'experiences', 'projects', 'certifications'];
+        $rules = [
+            'editor_details' => ['required', 'array:resume_aligned,portfolio,github,display_location,records'],
+            'editor_details.resume_aligned' => ['required', 'accepted'],
+            'editor_details.portfolio' => ['nullable', 'string', 'max:255'],
+            'editor_details.github' => ['nullable', 'string', 'max:255'],
+            'editor_details.display_location' => ['sometimes', 'nullable', 'string', 'max:241'],
+            'editor_details.records' => ['required', 'array:'.implode(',', array_keys($sets))],
+            'removed_entries' => ['sometimes', 'array:experiences,projects,educations,certifications'],
+        ];
+        foreach ($sets as $section => $columns) {
+            $prefix = 'editor_details.records.'.$section;
+            $hasId = in_array($section, $relational, true);
+            $allowed = [...$columns, ...($hasId ? ['id'] : []), ...($section === 'awards' ? ['source_index'] : [])];
+            $rules[$prefix] = ['present', 'array', $section === 'languages' ? 'max:20' : 'max:40', 'list'];
+            $rules[$prefix.'.*'] = ['required', 'array:'.implode(',', $allowed)];
+            if ($hasId) {
+                $rules[$prefix.'.*.id'] = ['sometimes', 'integer', 'min:1', 'distinct'];
+                $rules['removed_entries.'.$section] = ['sometimes', 'array', 'max:40'];
+                $rules['removed_entries.'.$section.'.*'] = ['integer', 'min:1', 'distinct'];
+            }
+            if ($section === 'awards') $rules[$prefix.'.*.source_index'] = ['sometimes', 'integer', 'min:0', 'max:39', 'distinct'];
+            foreach ($columns as $column) {
+                $limit = $limits[$section][$column] ?? (in_array($column, ['honours', 'courses', 'responsibilities', 'description', 'scope', 'skills', 'details'], true) ? 4000 : 255);
+                $rules[$prefix.'.*.'.$column] = [in_array($column, $required[$section], true) ? 'required' : 'nullable', 'string', 'max:'.$limit];
+            }
+        }
         return $rules;
     }
 

@@ -5,6 +5,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { ChevronDown, GraduationCap, Grid2X2, Layers3, List, Search, SlidersHorizontal, Target, Trophy } from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
 import { CourseCard, type CatalogCard } from '@/components/learning/CourseCard';
+import type { CatalogSettings } from '@/components/learning/catalogSettings';
 import { PublicCourseCatalog } from '@/components/learning/PublicCourseCatalog';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
 import type { DemoCourseData, LearningCourseCardData, LearningPathCardData, LearningShell } from '@/types/learning';
@@ -12,6 +13,7 @@ import { demoCourseHref, learningActivityHref, learningPathHref } from '@/types/
 
 type CatalogProps = {
     shell: LearningShell | null;
+    catalogSettings: CatalogSettings | null;
     paths: LearningPathCardData[];
     courses: DemoCourseData[];
     practiceModules: LearningCourseCardData[];
@@ -204,5 +206,5 @@ export default function Catalog(props: CatalogProps) {
     const memberView = url.split('?')[0] === '/dashboard/learning';
     const tab = new URLSearchParams(url.split('?')[1] || '').get('tab');
     const legacyTab = memberView && (tab === 'paths' || tab === 'practice' || tab === 'exams');
-    return legacyTab ? <LegacyCatalog key={tab} {...props} /> : <PublicCourseCatalog courses={props.courses} memberView={memberView} />;
+    return legacyTab ? <LegacyCatalog key={tab} {...props} /> : <PublicCourseCatalog courses={props.courses} memberView={memberView} settings={props.catalogSettings!} />;
 }

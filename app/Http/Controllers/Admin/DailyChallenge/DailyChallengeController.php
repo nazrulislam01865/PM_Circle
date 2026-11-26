@@ -35,12 +35,16 @@ final class DailyChallengeController extends Controller
         }
         return Inertia::render('admin/DailyChallenge', [
             'settings' => $settings,
+            'generationNotice' => $request->session()->get('daily_generation_notice'),
+            'today' => now('Asia/Dhaka')->toDateString(),
             'connection' => app(\App\Domain\AI\Services\FeatureConnectionStatus::class)->status('daily-challenge', $features->get('scenario_generate')?->model, (bool) $features->get('scenario_generate')?->enabled),
             'generationOptions' => DailyChallengeMasterData::options(),
+            'retryableErrors' => AiEditorialService::SCENARIO_RETRYABLE_ERRORS,
             'readiness' => [
                 'gateway' => (bool) config('pm-ai.enabled'),
                 'editorial' => (bool) config('pm-ai.editorial_enabled'),
-                'separate_key' => app(\App\Domain\AI\Services\AiFeatureRouting::class)->primaryConfigured('scenario_generate', 'daily_challenge_api_key'),
+                'separate_key' => app(\App\Domain\AI\Services\AiFeatureRouting::class)->configured('scenario_generate', 'daily_challenge_api_key'),
+                'moderation_key' => filled(app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential('post_check_api_key')),
                 'model' => 'gpt-5-nano',
                 'generation_feature' => (bool) ($features->get('scenario_generate')?->enabled)
                     && $features->get('scenario_generate')?->model === 'gpt-5-nano'
@@ -57,9 +61,11 @@ final class DailyChallengeController extends Controller
             'recent' => DB::table('scenarios')->where('ai_generated', true)
                 ->whereNotNull('daily_slot')->orderByDesc('id')->limit(20)
                 ->get(['id', 'title', 'daily_slot', 'slug', 'status', 'published_at', 'expires_at']),
-            'drafts' => DB::table('ai_editorial_drafts')->where('feature', 'scenario_generate')
-                ->orderByDesc('id')->limit(20)
-                ->get(['id', 'slot_key', 'status', 'publication_at', 'created_at']),
+            'drafts' => DB::table('ai_editorial_drafts as d')->leftJoin('ai_requests as r', 'r.id', '=', 'd.request_id')
+                ->where('d.feature', 'scenario_generate')->orderByDesc('d.slot_key')->limit(30)
+                ->select(['d.id', 'd.slot_key', 'd.status', 'd.publication_at', 'd.created_at',
+                    'd.generation_attempts', 'd.archive_recovery', 'r.status as request_status', 'r.error_code'])
+                ->selectRaw('CASE WHEN d.payload_encrypted IS NOT NULL THEN 1 ELSE 0 END AS has_payload')->get(),
         ]);
     }
 
@@ -88,7 +94,9 @@ final class DailyChallengeController extends Controller
             'generation_notes' => ['nullable', 'string', 'max:500'],
             'reason' => ['required', 'string', 'min:8', 'max:500'],
         ]);
-        if (($data['auto_publish'] || $data['auto_review']) && ! $data['enabled']) {
+        // Saving the enabled automation explicitly opts in to automatic publication.
+        $data['auto_publish'] = (bool) $data['enabled'];
+        if ($data['auto_review'] && ! $data['enabled']) {
             throw ValidationException::withMessages(['enabled' => 'Enable daily challenges first.']);
         }
         if ($data['enabled'] && ! $policy->isReady()) {
@@ -105,14 +113,14 @@ final class DailyChallengeController extends Controller
             $values['generation_domains'] = json_encode($data['generation_domains'], JSON_THROW_ON_ERROR);
             $values['generation_topics'] = json_encode($data['generation_topics'], JSON_THROW_ON_ERROR);
             DB::table('daily_challenge_settings')->where('id', 1)->update([...$values, 'updated_at' => now()]);
-            // Reclassify unpublished AI drafts only when automation changes. No approval
-            // is required while auto-publication is enabled; disabled slots remain reviewable.
-            if ((bool) $before->auto_publish !== (bool) $data['auto_publish']) {
+            // Legacy generated drafts need no staff approval. Pausing automation
+            // leaves ready drafts scheduled; publication itself checks the saved policy.
+            if ($data['auto_publish']) {
                 DB::table('ai_editorial_drafts')->where('feature', 'scenario_generate')
                     ->where('slot_key', 'like', 'daily-scenario:%')
-                    ->whereIn('status', ['scheduled', 'pending_review'])
+                    ->where('status', 'pending_review')->whereNotNull('payload_encrypted')
                     ->update([
-                        'status' => $data['auto_publish'] ? 'scheduled' : 'pending_review',
+                        'status' => 'scheduled',
                         'updated_at' => now(),
                     ]);
             }
@@ -171,17 +179,48 @@ final class DailyChallengeController extends Controller
         $data = $request->validate([
             'date' => ['required', 'date_format:Y-m-d'],
             'exact_title' => ['nullable', 'string', 'min:5', 'max:180'],
+            'archive_recovery' => ['sometimes', 'boolean'],
         ]);
-        if (! $policy->get()->enabled || ! $policy->isReady()) {
+        if (! $policy->get()->enabled || ! $policy->get()->auto_publish || ! $policy->isReady()) {
             throw ValidationException::withMessages(['date' => 'Enable and configure Daily Challenge AI first.']);
         }
         try {
-            $result = $editorial->queueScenarioSlot($data['date'], $data['exact_title'] ?? null);
+            $result = $editorial->queueScenarioSlot($data['date'], $data['exact_title'] ?? null, manual: true, actorId: $request->user()->id,
+                archiveRecovery: (bool) ($data['archive_recovery'] ?? false));
         } catch (AiFailure $e) {
-            throw ValidationException::withMessages(['date' => $e->safeCode]);
+            throw ValidationException::withMessages(['date' => match ($e->safeCode) {
+                'MODERATION_NOT_CONFIGURED' => 'Configure the Post Check moderation credential in AI Workspace first.',
+                'PAST_PUBLICATION_DATE' => 'Choose today or a future date.',
+                'PUBLICATION_WINDOW_CLOSED' => 'The publication window for this date has closed. Use archive recovery for an existing failed slot.',
+                'ARCHIVE_RECOVERY_NOT_ELIGIBLE' => 'Only existing failed challenges can be recovered into the archive.',
+                default => $e->safeCode,
+            }]);
         }
-        return back()->with('status', isset($result['request'])
-            ? 'Generation submitted with the selected Daily Challenge guidance.'
-            : 'This date already has a generation request. Existing slots are not overwritten.');
+        if (isset($result['retry_limit_reached']) || isset($result['blocked'])) {
+            throw ValidationException::withMessages(['date' => isset($result['retry_limit_reached'])
+                ? 'Retry limit reached for this slot. Review the AI request history before recovery.'
+                : 'This failed slot needs reconciliation or review before it can be regenerated.']);
+        }
+        return back()->with('daily_generation_notice', isset($result['request'])
+            ? ((bool) ($data['archive_recovery'] ?? false)
+                ? 'Recovery queued. Validated historical content will publish automatically as a closed archive entry.'
+                : 'Challenge generation queued. Validated content will publish automatically at the scheduled time.')
+            : 'This date already has a challenge or generation request. Nothing was overwritten.');
     }
+
+    public function publishDraft(Request $request, int $draft, AiAdminAccess $access,
+        AiEditorialService $editorial): RedirectResponse
+    {
+        $access->authorize($request->user(), 'ai.manage_editorial');
+        try {
+            $scenario = $editorial->publishAutomatedScenario($draft, $request->user()->id);
+        } catch (AiFailure $failure) {
+            throw ValidationException::withMessages(['date' => $failure->safeCode]);
+        }
+        if (! $scenario) {
+            throw ValidationException::withMessages(['date' => 'This challenge is not ready or not due. Check the saved automation settings and refresh its status.']);
+        }
+        return back()->with('daily_generation_notice', 'Challenge published. Historical entries remain closed.');
+    }
+
 }

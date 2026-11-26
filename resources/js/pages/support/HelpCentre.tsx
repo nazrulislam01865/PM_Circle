@@ -1,12 +1,12 @@
 import type { ReactNode } from 'react';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { useState } from 'react';
 import { ArrowLeft, ChevronRight, Search, UserRound, BookOpen, ClipboardCheck, Sparkles, UsersRound, CreditCard } from 'lucide-react';
 import { AccountPage } from '@/components/account/AccountPage';
 import { FormField } from '@/components/pm/FormField';
-import { helpGuides, searchHelpGuides } from '@/components/account/helpGuides';
+import { helpGuides, searchHelpGuides, visibleHelpGuides } from '@/components/account/helpGuides';
 
 const icons = [UserRound, BookOpen, ClipboardCheck, Sparkles, UsersRound, CreditCard];
 
@@ -28,11 +28,12 @@ function HelpPage({ publicView, title, description, children }: { publicView: bo
 }
 
 export default function HelpCentre({ publicView = false }: { publicView?: boolean }) {
+    const { profileResumeImportsVisible } = usePage<{ profileResumeImportsVisible?: boolean }>().props;
     const [query, setQuery] = useState('');
     const [selected, setSelected] = useState<{topic: string; article: string} | null>(null);
-    const topic = helpGuides.find(g => g.id === selected?.topic);
+    const topic = visibleHelpGuides(profileResumeImportsVisible).find(g => g.id === selected?.topic);
     const article = topic?.articles.find(a => a.id === selected?.article);
-    const matches = searchHelpGuides(query);
+    const matches = searchHelpGuides(query, profileResumeImportsVisible);
     const count = matches.reduce((total, g) => total + g.articles.length, 0);
     const choose = (topic: string, article: string) => {
         setSelected({topic, article});

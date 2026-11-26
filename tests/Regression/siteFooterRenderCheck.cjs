@@ -1,0 +1,32 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const Module = require('node:module');
+const {execFileSync}=require('node:child_process');
+// Standalone rendering fixture. Inertia links, icon shapes and Radix dialog primitives are stubbed.
+const root = path.resolve(__dirname, '../..');
+const local = Module.createRequire(path.join(root,'package.json'));
+const ts = local('typescript');
+const React = local('react');
+const { renderToStaticMarkup } = local('react-dom/server');
+const baseResolve=Module._resolveFilename;
+const baseLoad=Module._load;
+Module._resolveFilename=function(id,parent,...args){if(id.startsWith('@/')) id=path.join(root,'resources/js',id.slice(2)); return baseResolve.call(this,id,parent,...args);};
+Module._load=function(id,parent,...args){if(id==='lucide-react') return new Proxy({}, {get:()=>({size,...props})=>React.createElement('svg',props)}); if(id==='@/components/ui/dialog') return Object.fromEntries(['Dialog','DialogClose','DialogContent','DialogDescription','DialogFooter','DialogHeader','DialogTitle','DialogTrigger'].map(key=>[key,({children})=>React.createElement('div',null,children)])); if(id==='@inertiajs/react') return {Link:({href,children,...props})=>React.createElement('a',{href,...props},children)};return baseLoad.call(this,id,parent,...args);};
+for(const ext of ['.ts','.tsx']) Module._extensions[ext]=function(mod,file){mod._compile(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText,file);};
+const {HomeFooter}=local('./resources/js/components/home/v2/HomeFooter.tsx');
+const {MemberFooter}=local('./resources/js/components/pm/MemberFooter.tsx');
+const {safeFooterHref}=local('./resources/js/components/pm/FooterIdentity.tsx');
+const content=JSON.parse(execFileSync('php',['-r','require "app/Support/Admin/SiteFooterContent.php"; $c=require "config/pmp-public.php"; echo json_encode(App\\Support\\Admin\\SiteFooterContent::fromLegacy($c["footer"]));'],{cwd:root,encoding:'utf8'}));
+const render=(Component,data)=>renderToStaticMarkup(React.createElement(Component,{content:data}));
+let checks=0;
+function check(name,fn){fn();checks++;console.log('PASS',name);}
+check('default public columns, links, copyright and social order',()=>{const html=render(HomeFooter,content); for(const col of ['Company','Learning','Community','Plans &amp; Policies']) assert.ok(html.includes(`<h2>${col}</h2>`));assert.match(html,/\/exam-simulator\/pmp\/details#learner-testimonials/);assert.match(html,/© PM Circle by ITQAN/);assert.ok(html.indexOf('aria-label="Facebook"')<html.indexOf('aria-label="Instagram"'));assert.ok(html.indexOf('aria-label="Instagram"')<html.indexOf('aria-label="YouTube"'));assert.ok(html.indexOf('aria-label="YouTube"')<html.indexOf('aria-label="LinkedIn"'));});
+check('custom columns are added, reordered, hidden and deleted without fallback',()=>{const data={...content,columns:[{title:'Second column',visible:true,links:[{label:'Custom support',href:'/contact'}]},{title:'Hidden column',visible:false,links:[{label:'Hidden link',href:'/about'}]},{title:'First column',visible:true,links:[{label:'External link',href:'https://example.org'}]},{title:'Empty column',visible:true,links:[]}]};const html=render(HomeFooter,data);assert.ok(html.indexOf('Second column')<html.indexOf('First column'));assert.match(html,/href="\/contact"/);assert.match(html,/href="https:\/\/example.org"/);assert.doesNotMatch(html,/Hidden column|Hidden link|Empty column|>Company</);});
+check('dynamic brand, logo, social icons and bottom links',()=>{const data={...content,brand_name:'New Brand',brand_tagline:'New byline',brand_logo:'/storage/homepage/new.png',brand_href:'/about',description:'New description',socials:[{label:'Custom social',href:'https://example.org/me',icon:'globe',image:'/storage/homepage/icon.png'},{label:'Deleted social',href:'',icon:'facebook',image:''}],notice_label:'New notice',legal_notice:'New legal text',copyright_label:'New copyright',bottom_links:[{label:'Footer contact',href:'/contact'}]};const html=render(HomeFooter,data);for(const x of ['New Brand','New byline','new.png','New description','Custom social','icon.png','New notice','New legal text','New copyright','Footer contact'])assert.ok(html.includes(x),x);assert.doesNotMatch(html,/Deleted social|aria-label="Facebook"/);});
+check('empty configuration hides public footer entirely',()=>{const data={...content,show_brand:false,show_about:false,show_social:false,show_legal:false,columns:[],socials:[],bottom_links:[]};assert.equal(render(HomeFooter,data),'');});
+check('member footer uses saved policy links and copyright',()=>{const data={...content,member_links:[{label:'New member link',href:'/about'}],copyright_label:'New copyright',member_notice_label:'Custom notice'};const html=render(MemberFooter,data);assert.match(html,/New member link/);assert.match(html,/New copyright/);assert.match(html,/Custom notice/);assert.doesNotMatch(html,/Refund Policy/);});
+check('member footer can be disabled',()=>{assert.equal(render(MemberFooter,{...content,show_member_footer:false}),'');});
+check('unsafe href rejected by preview helper',()=>{for(const href of ['javascript:alert(1)','//evil.example','http://example.com','https://u:p@example.com','/\\evil.example','/foo bar']) assert.equal(safeFooterHref(href),false,href);for(const href of ['/about','/#pm-v2-ai','https://example.org/path'])assert.equal(safeFooterHref(href),true,href);});
+check('saved text escapes HTML',()=>{const html=render(HomeFooter,{...content,description:'<script>alert(1)</script>'});assert.doesNotMatch(html,/<script>/);assert.match(html,/&lt;script&gt;/);});
+console.log(`${checks}/${checks} passed`);

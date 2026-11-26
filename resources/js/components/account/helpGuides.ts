@@ -218,9 +218,13 @@ export const helpGuides = [
 ];
 
 /** Search the static approved guide catalog without sending member queries to the server. */
-export function searchHelpGuides(query: string) {
+export function visibleHelpGuides(profileResumeImportsVisible = false) {
+    return helpGuides.map(group => ({ ...group, articles: group.articles.filter(article => profileResumeImportsVisible || group.id !== "ai" || article.id !== "1") }));
+}
+
+export function searchHelpGuides(query: string, profileResumeImportsVisible = false) {
     const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    return helpGuides.map(group => ({ ...group, articles: group.articles.filter(article =>
+    return visibleHelpGuides(profileResumeImportsVisible).map(group => ({ ...group, articles: group.articles.filter(article =>
         words.every(word => `${group.name} ${article.title} ${article.steps.join(' ')}`.toLowerCase().includes(word)))
     })).filter(group => group.articles.length > 0);
 }

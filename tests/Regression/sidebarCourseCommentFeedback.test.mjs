@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
-import { memberSidebarGroups, memberSidebarActive, memberSidebarContains } from '../../resources/js/components/dashboard/memberSidebarNavigation.ts';
+import { memberSidebarGroups, memberSidebarActive, memberSidebarContains, memberSidebarHasAi } from '../../resources/js/components/dashboard/memberSidebarNavigation.ts';
 const read = path => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 test('course navigation groups all three destinations without imposing exam entitlements', () => {
     const [courses, exams, challenge] = memberSidebarGroups[0].items;
@@ -18,11 +18,13 @@ test('course navigation groups all three destinations without imposing exam enti
 test('AI badges and independent accessible submenus reuse central styles', () => {
     const sidebar = read('resources/js/components/dashboard/DashboardSidebar.tsx');
     const css = read('resources/css/pm-member-sidebar-restore.css');
-    assert.match(sidebar, /<span className="pm-member-parent-label">\{entry.label\}<\/span><AiBadge\/>/);
+    assert.match(sidebar, /<SidebarLabel item=\{entry\}\/>/);
+    assert.match(sidebar, /<SidebarLabel item=\{item\}\/>/);
+    assert.match(sidebar, /hasAi && <AiBadge\/>/);
     assert.match(sidebar, /aria-controls=\{submenuId\}/);
     assert.match(sidebar, /\[entry.id\]: !expanded/);
     assert.match(css, /\.is-collapsed .*\.pm-member-ai-badge \{ display: none/);
-    assert.match(css, /font: var\(--semibold\) var\(--text-xs\)\/var\(--line-ui\) var\(--font-ui\)/);
+    assert.match(css, /font: var\(--semibold\) var\(--pm-member-ai-badge-text\)\/var\(--line-ui\) var\(--font-ui\)/);
     assert.doesNotMatch(read('resources/js/components/home/v2/HomeHeader.tsx'), /AI learning tools/);
     assert.doesNotMatch(read('resources/js/components/dashboard/MemberHomeHeader.tsx'), /href="\/simulators\/project"/);
 });
@@ -59,4 +61,18 @@ test('new comments never enter manual review; uncertain results are hidden witho
     assert.match(job, /check_status = 'approved'/);
     assert.match(read('app/Models/Comment.php'), /orWhere\('check_status', 'approved'\)/);
     assert.doesNotMatch(read('resources/js/components/community/CommentComposer.tsx'), /awaiting an administrator review/);
+});
+
+
+test('AI markers are limited to the six approved sidebar destinations and smaller than menu labels', () => {
+    const entries = memberSidebarGroups.flatMap(group => group.items.flatMap(item => 'children' in item ? [item, ...item.children] : [item]));
+    assert.deepEqual(entries.filter(item => memberSidebarHasAi(item.id)).map(item => item.id), ['course-group', 'exams', 'challenge', 'resume', 'interview', 'community']);
+    assert.equal(memberSidebarHasAi('home'), false);
+    assert.equal(memberSidebarHasAi('help'), false);
+    const tokens = read('resources/css/pm-design-tokens.css');
+    const css = read('resources/css/pm-member-sidebar-restore.css');
+    const size = name => Number(tokens.match(new RegExp(`--${name}:\\s*([\\d.]+)rem;`))[1]);
+    assert.ok(size('pm-member-ai-badge-text') < size('text-ui'));
+    assert.ok(size('pm-member-ai-badge-icon') < size('icon'));
+    assert.match(css, /\.pm-member-ai-badge svg \{[^}]*width: var\(--pm-member-ai-badge-icon\); height: var\(--pm-member-ai-badge-icon\)/);
 });

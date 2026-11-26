@@ -87,6 +87,7 @@ final class AiWorkspaceController extends Controller
             $href = $daily ? '/admin/ai/daily-challenge' : (str_starts_with($code, 'pmp_') ? '/admin/ai/pmp-settings' : ($code === 'trend_draft' ? '/admin/ai/career-trends' : '/admin/ai/usage-management'));
             $result[] = ['code' => $code, 'name' => match ($code) {
                 'scenario_generate' => 'Daily Challenge Generation', 'daily_challenge_review' => 'Daily Challenge Review',
+                'interview_answer_review' => 'Interview Preparation · Answer review',
                 'resume_analyze' => 'AI Resume Assistant · Analysis', 'resume_rewrite' => 'AI Resume Assistant · Writing suggestions',
                 'pmp_explain' => 'PMP Exam Explanation', 'pmp_followup' => 'PMP Exam Follow-up', 'trend_draft' => 'Career Trends',
                 default => ucwords(str_replace('_', ' ', $code)),
@@ -228,12 +229,13 @@ final class AiWorkspaceController extends Controller
         $slot = $operation['slot'];
         $selected = $operation['primary_credential_id'];
         $profiles = app(AiWorkspaceProviders::class)->rows();
-        $rows = collect($credentials->rows($profiles, $slot));
-        $default = $rows->first(fn ($row) => $row['slot_active']);
+        $rows = collect($credentials->rows($profiles, AiRuntimeSettings::explicitCredentialSlots($slot)));
+        $default = $rows->first(fn ($row) => $row['slot'] === $slot && $row['slot_active'] && $row['enabled'] && $row['provider_status'] === 'Active');
         $options = $rows->filter(fn ($row) => $row['source'] === 'registry' && $row['enabled'] && $row['provider_status'] === 'Active')
             ->map(fn ($row) => [
                 'id' => $row['id'], 'name' => $row['name'], 'provider' => $row['provider_name'], 'provider_id' => (string) $row['provider_id'],
                 'suffix' => $row['suffix'], 'health_code' => $row['health_code'], 'checked_at' => $row['checked_at'],
+                'routing_target' => $row['routing_target'], 'shared' => $row['slot'] !== $slot,
                 'eligible' => $row['health_code'] === 'OPERATION_VERIFIED' && $row['checked_at'] && \Illuminate\Support\Carbon::parse($row['checked_at'])->gt(now()->subMinutes(15)),
             ])->values()->all();
         return response()->json([
@@ -241,6 +243,8 @@ final class AiWorkspaceController extends Controller
             'models' => $this->connectionModels($feature, $slot, $operation['model'], $routing),
             'selected' => $selected === null ? 'default' : (string) $selected,
             'default_name' => $default['name'] ?? null, 'credential_name' => $routing->primaryName($feature, $slot),
+            'connection' => in_array($feature, ['scenario_generate', 'daily_challenge_review'], true)
+                ? app(\App\Domain\AI\Services\FeatureConnectionStatus::class)->status($feature === 'scenario_generate' ? 'daily-challenge' : 'daily-challenge-review', $operation['model'], (bool) DB::table('ai_features')->where('code', $feature)->value('enabled')) : null,
             'credentials' => $options,
             'providers' => array_values(array_map(fn ($profile) => ['value' => (string) $profile['id'], 'label' => $profile['name']], array_filter($profiles, fn ($profile) => $profile['adapter'] === AiRuntimeSettings::SLOTS[$slot]['provider'] && $profile['status'] === 'Active'))),
         ])->header('Cache-Control', 'no-store');
@@ -301,7 +305,7 @@ final class AiWorkspaceController extends Controller
         abort_unless(in_array($feature, AiFeatureRouting::codes(), true), 404);
         $data = $request->validate(['primary_model' => ['required','string','max:80'], 'primary_credential_id' => ['nullable','integer','min:1'], 'backup_credential_id' => ['nullable','integer','min:1'], 'backup_model' => ['nullable','string','max:80'], 'strategy' => ['required',Rule::in(['primary_only','priority_failover'])], 'daily_usd' => ['sometimes','nullable','numeric','min:0','max:100000']]);
         if (array_key_exists('daily_usd', $data)) $access->authorize($request->user(), 'ai.manage_quotas');
-        if (in_array($feature, ['resume_extract', 'resume_analyze', 'resume_rewrite'], true)) {
+        if (in_array($feature, ['resume_extract', 'resume_analyze', 'resume_rewrite', 'interview_answer_review'], true)) {
             $extract = $feature === 'resume_extract';
             $data += $request->validate([
                 'enabled' => ['sometimes', 'boolean'],

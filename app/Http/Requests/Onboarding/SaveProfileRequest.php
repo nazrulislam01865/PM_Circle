@@ -43,6 +43,8 @@ class SaveProfileRequest extends FormRequest
                 'password' => ['required', 'string', SignupPasswordRules::rule(), 'confirmed'],
                 'password_confirmation' => ['required', 'string'],
                 'legal_acceptance' => ['accepted'],
+                'terms_version' => ['nullable', 'string', 'max:32'],
+                'privacy_version' => ['nullable', 'string', 'max:32'],
             ] : []),
         ];
     }

@@ -6,18 +6,23 @@ const read = path => readFileSync(new URL(`../../${path}`, import.meta.url), 'ut
 
 test('homepage Trends promotion appears once between resume and events, without changing their visibility', () => {
     const page = read('resources/js/pages/public/Home.tsx');
-    assert.equal((page.match(/<HomeTrends\s*\/>/g) || []).length, 1);
-    assert.match(page, /\{visible\('careers'\) && <HomeResume[^}]+\}[^}]+\}\s*<HomeTrends\/>\s*\{visible\('careers'\) && <HomeEvents/);
+    assert.equal((page.match(/<HomeTrends\b/g) || []).length, 1);
+    assert.ok(page.indexOf('<HomeResume ') < page.indexOf('<HomeTrends '));
+    assert.ok(page.indexOf('<HomeTrends ') < page.indexOf('<HomeEvents '));
+    for (const key of ['resume','trends','events']) assert.ok(page.includes(`visible('${key}')`));
     assert.match(page, /<PublicLayout siteLayout homePrototype/);
 });
 
 test('Trends promotion reuses approved copy, existing photo, action and route', () => {
     const section = read('resources/js/components/home/v2/HomeTrends.tsx');
-    assert.match(section, /<HomePhoto photo="leader" alt=""/);
-    assert.match(section, /<HomeAction href="\/pm-trends">Explore Trends<\/HomeAction>/);
-    assert.match(section, /Weekly updates on project management, business analysis, technology, AI and more\./);
+    const defaults = read('config/homepage-v2.php').split("'trends' =>")[1].split("'events' =>")[0];
+    assert.match(defaults, /'photo' => 'leader'/);
+    assert.match(defaults, /'button_url' => '\/pm-trends'/);
+    assert.match(defaults, /Weekly updates on project management, business analysis, technology, AI and more\./);
+    assert.match(section, /source=\{content.image\}/);
+    assert.match(section, /href=\{content.button_url\}/);
     assert.match(section, /aria-labelledby="pm-v2-trends-title"/);
-    assert.match(section, /id="pm-v2-trends-title">Trends/);
+    assert.match(section, /id="pm-v2-trends-title">\{content.heading\}/);
     assert.doesNotMatch(section, /fetch\(|router\.|useEffect|useState|style=/);
     assert.ok(existsSync(new URL('../../public/images/home/prototype/leader.webp', import.meta.url)));
     assert.match(read('routes/web.php'), /Route::inertia\('\/pm-trends', 'trends\/Index'\)/);

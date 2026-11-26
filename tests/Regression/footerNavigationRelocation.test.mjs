@@ -13,7 +13,7 @@ test('footer editor belongs to Navigation control without duplicating Homepage c
     assert.doesNotMatch(homeSections, /key: 'footer'/);
     assert.doesNotMatch(homepage, /selected === 'footer'/);
     assert.match(sidebar, /base === '\/admin\/navigation'/);
-    assert.match(sidebar, /<span>Shared site footer<\/span>/);
+    assert.match(sidebar, /<span>Footer control<\/span>/);
     assert.match(sidebar, /href="\/admin\/footer"/);
     assert.match(sidebar, /active === '\/admin\/navigation' \|\| active === '\/admin\/footer'/);
     assert.match(sidebar, /active === '\/admin\/homepage';/);
@@ -25,5 +25,7 @@ test('footer storage and access remain unchanged; previous homepage footer links
     assert.match(controller, /if \(\$requested === 'footer'\)/);
     assert.match(controller, /to_route\('admin\.footer\.edit'\)/);
     assert.match(read('routes/web.php'), /Route::get\('\/footer', \[SiteFooterController::class, 'edit'\]\)/);
-    assert.match(read('resources/js/components/admin/catalog-groups.ts'), /key: 'footer_menu'/);
+    assert.doesNotMatch(read('resources/js/components/admin/catalog-groups.ts'), /key: 'footer_menu'/);
+    assert.doesNotMatch(read('resources/js/components/admin/pmp-public-sections.ts'), /key: 'footer'/);
+    assert.match(read('app/Http/Controllers/Admin/MasterDataController.php'), /query\('category'\) === 'footer_menu'/);
 });

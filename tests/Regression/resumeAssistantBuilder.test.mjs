@@ -10,7 +10,7 @@ const service=read('app/Domain/Identity/Services/ResumeAssistantProfile.php');
 const validation=read('app/Http/Requests/Settings/ResumeAssistantRequest.php');
 test('builder uses shared member shell and central UI control roles',()=>{
     assert.match(page,/<MemberDashboardLayout dashboard=\{memberShell\}>/);
-    assert.match(page,/<FormField label=/);
+    assert.match(page,/<FormField (?:key=\{key\} )?label=/);
     assert.match(preview,/<ProgressBar value=\{score\}/);
     assert.match(page,/<ProfileWorkspaceHeader tab="assistant"/);
     assert.match(css,/var\(--text-h3\)/);
@@ -51,7 +51,7 @@ test('import and AI reuse existing private backend paths with explicit consent',
     assert.match(ai,/Use suggestion in draft/);
 });
 test('actual résumé template section order and private persistence contract',()=>{
-    const form=read('resources/js/components/profile/ResumeDocumentFields.tsx');
+    const form=read('resources/js/components/profile/resumeFieldSchema.ts');
     const document=read('app/Domain/Identity/Services/ResumeDocument.php');
     const model=read('app/Models/Profile.php');
     const exportView=read('resources/views/profile/resume-export.blade.php');

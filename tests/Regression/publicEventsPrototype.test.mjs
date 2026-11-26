@@ -63,7 +63,7 @@ test('header Events navigation and footer Events fallback open new listing from 
     const footer = read('resources/js/components/home/v2/HomeFooter.tsx');
     assert.match(header, /<Link href="\/events" onClick=\{close\}>Events<\/Link>/);
     assert.doesNotMatch(header, /eventsHref|#pm-v2-events-title/);
-    assert.match(footer, /\{ href: '\/events', label: 'Events' \}/);
+    assert.ok(read('app/Support/Admin/SiteFooterContent.php').includes("$link('Events', '/events')"));
     assert.doesNotMatch(footer, /Homepage design mockup|Sample content/);
 });
 

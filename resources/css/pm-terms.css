@@ -98,3 +98,6 @@
     .pm-refund-page .pm-terms-main { padding-block: var(--pm-guide-s6); }
     .pm-refund-page .pm-terms-toc ul { columns: 1; }
 }
+
+/* A document with no contents links uses the same rail without an empty column. */
+.pm-terms-page .pm-terms-grid.pm-terms-grid-no-toc { grid-template-columns: minmax(0, 1fr); }

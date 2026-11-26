@@ -18,19 +18,14 @@
 .pm-resume-suggest { display: inline-flex; align-items: center; gap: var(--s2); justify-self: start; min-height: var(--control-touch); padding: 0 var(--s1); color: var(--blue); background: transparent; border: 0; font: var(--pm-guide-weight-control) var(--text-ui)/var(--line-ui) var(--font-ui); cursor: pointer; }
 .pm-resume-suggest:disabled { color: var(--muted); cursor: default; }
 .pm-resume-suggest:hover:not(:disabled) { text-decoration: underline; }
-.pm-resume-jump { border-bottom: 0; padding-bottom: 0; }
-.pm-resume-jump strong { font: var(--pm-guide-weight-control) var(--text-ui)/var(--line-ui) var(--font-ui); color: var(--ink); }
-.pm-resume-jump nav { display: flex; flex-wrap: wrap; gap: var(--s1); }
-.pm-resume-jump a { background: var(--blue-soft); color: var(--blue); border-radius: var(--radius-control); padding: var(--s1) var(--s2); font: var(--regular) var(--text-ui)/var(--line-ui) var(--font-ui); text-decoration: none; }
-.pm-resume-jump a:hover { text-decoration: underline; }
 .pm-resume-field-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: var(--s3) var(--s4); align-items: start; }
 .pm-resume-builder .pm-field { min-width: 0; margin: 0; display: grid; align-content: start; gap: var(--s1); }
 .pm-resume-builder .pm-field label { margin: 0; font: var(--pm-guide-weight-control) var(--text-ui)/var(--line-ui) var(--font-ui); }
 .pm-resume-builder .pm-field :is(input,textarea) { width: 100%; min-width: 0; }
 .pm-resume-builder .pm-field textarea { min-height: var(--pm-control-dimension-112px); }
 .pm-resume-builder .pm-field small { color: var(--muted); font-size: var(--text-sm); margin: 0; }
-.pm-resume-builder .pm-resume-editor-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s3); border-top: 1px solid var(--border); }
-.pm-resume-editor-footer > div:first-child { flex: 1 1 16rem; min-width: 0; }
+.pm-resume-builder .pm-resume-editor-footer { border-top: 1px solid var(--divider); }
+.pm-resume-editor-footer > div:first-child { flex: 1 1 auto; min-width: 0; }
 .pm-resume-editor-footer .pm-resume-builder-actions { margin-inline-start: auto; justify-content: flex-end; }
 .pm-resume-builder-aside { min-width: 0; display: grid; gap: var(--s4); align-content: start; }
 .pm-resume-quality { padding: var(--s4); display: grid; gap: var(--s2); }
@@ -104,7 +99,7 @@
 .pm-resume-extract-summary dd { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
 /* One scroll container for the entire rail. Intrinsic rows keep every A4 page
    reachable instead of shrinking a preview card into a clipped grid track. */
-.pm-resume-builder { --pm-resume-rail-top: calc(var(--header-height) + var(--pm-member-offer-top, 0px) + var(--pm-resume-tabs-height, var(--control-touch)) + var(--s3)); }
+.pm-resume-builder { --pm-resume-rail-top: var(--pm-profile-editor-offset); }
 .pm-resume-builder-aside {
     position: sticky;
     top: var(--pm-resume-rail-top);
@@ -123,3 +118,8 @@
 @media (max-height: 36rem) {
     .pm-resume-builder-aside { position: static; max-height: none; overflow: visible; scrollbar-gutter: auto; }
 }
+
+/* Hidden overflow on the editor card would trap the viewport-sticky footer. */
+.pm-resume-builder-card.pm-resume-editor { overflow: visible; }
+.pm-resume-editor > .pm-resume-import-head { border-radius: var(--radius-card) var(--radius-card) 0 0; }
+.pm-resume-editor .pm-resume-suggest { margin-top: var(--space-1); }

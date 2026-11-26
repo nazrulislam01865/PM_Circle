@@ -1,10 +1,11 @@
+import { QuestionScenario } from '@/components/learning/QuestionScenario';
 import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeft, ArrowRight, Clock3, Flag, Send } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
 
-type Question = { id: number; kind: string; section: string; topic: string; prompt: string; options: Record<string, string> };
+type Question = { id: number; kind: string; section: string; topic: string; prompt: string; scenarioText?: string | null; scenarioVideoUrl?: string | null; options: Record<string, string> };
 type Props = { course: { title: string; slug: string }; attempt: { id: number; expiresAt: string; serverNow: string; answers: Record<string, string>; questions: Question[] } };
 const timeLabel = (remaining: number) => `${String(Math.floor(remaining / 3600)).padStart(2, '0')}:${String(Math.floor((remaining % 3600) / 60)).padStart(2, '0')}:${String(remaining % 60).padStart(2, '0')}`;
 
@@ -74,7 +75,7 @@ export default function CoursePractice({ course, attempt }: Props) {
             <div className="pm-course-quiz-progress" role="progressbar" aria-label="Answered questions" aria-valuenow={answered} aria-valuemin={0} aria-valuemax={attempt.questions.length}><span style={{ width: `${answered / attempt.questions.length * 100}%` }}/></div>
             <div className="pm-course-quiz-layout"><section className="pm-system-card pm-course-quiz-question">
                 <div className="pm-course-quiz-question-meta"><strong>Question {index + 1} of {attempt.questions.length}</strong><span>{question.kind === 'scenario' ? 'Scenario-based' : 'Multiple choice'}</span><span>{question.section} · {question.topic}</span></div>
-                <h2>{question.prompt}</h2>
+                <QuestionScenario key={question.id} text={question.scenarioText} videoUrl={question.scenarioVideoUrl}/><h2>{question.prompt}</h2>
                 <fieldset disabled={saving || submitting || seconds <= 0}><legend className="pm-course-quiz-sr">Choose one answer</legend><div className="pm-course-quiz-options">{Object.entries(question.options).map(([letter, label]) => <label key={letter} className={`pm-course-quiz-option ${answers[String(question.id)] === letter ? 'is-selected' : ''}`}><input type="radio" name={`practice-question-${question.id}`} checked={answers[String(question.id)] === letter} onChange={() => { void choose(letter); }}/><strong>{letter}.</strong><span>{label}</span></label>)}</div></fieldset>
                 {savingError && <p className="pm-course-quiz-error" role="alert">{savingError}</p>}
                 <div className="pm-course-quiz-actions"><button type="button" className="pm-course-quiz-quiet" aria-pressed={flagged.includes(question.id)} onClick={() => setFlagged(old => old.includes(question.id) ? old.filter(id => id !== question.id) : [...old, question.id])}><Flag size={17}/>{flagged.includes(question.id) ? 'Unmark' : 'Mark for review'}</button><div><button type="button" className="pm-course-quiz-quiet" disabled={index === 0} onClick={() => setIndex(old => old - 1)}><ArrowLeft size={17}/> Previous</button><button type="button" className="pm-system-button" disabled={index >= attempt.questions.length - 1} onClick={() => setIndex(old => old + 1)}>Next <ArrowRight size={17}/></button></div></div>

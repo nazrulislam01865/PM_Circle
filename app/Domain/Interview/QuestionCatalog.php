@@ -121,7 +121,7 @@ final class QuestionCatalog
             ?? config('pm-interview.minutes_per_question', 2));
     }
 
-    public function select(string $industry, string $role, string $experience, array $types, int $count, ?int $setId = null): array
+    public function select(string $industry, string $role, string $experience, array $types, int $count, ?int $setId = null, array $options = []): array
     {
         $query = DB::table('interview_questions as q')
             ->join('interview_question_sets as s', 's.id', '=', 'q.set_id')
@@ -133,23 +133,35 @@ final class QuestionCatalog
         if ($setId !== null) {
             $query->where('s.id', $setId);
         }
-        // Rank per question type in SQL. Only the requested number from each type
-        // is fetched into PHP, even if the admin bank grows to thousands of entries.
-        $ranked = $query->select(['q.id', 'q.type', 'q.text'])
+        if (($options['mix'] ?? null) === 'common') {
+            $query->whereNull('s.industry')->whereNull('s.role')->whereNull('s.experience')
+                ->where('q.text', 'not like', '%{industry}%')->where('q.text', 'not like', '%{scenario}%');
+        }
+        // Rank per type in SQL; the optional preview uses a bounded candidate pool.
+        // The old start endpoint retains the original deterministic catalog order.
+        $ranked = $query->select(['q.id', 'q.type', 'q.text', 's.industry', 's.role', 's.experience'])
             ->selectRaw('ROW_NUMBER() OVER (PARTITION BY q.type ORDER BY
                 CASE WHEN s.industry IS NOT NULL THEN 0 ELSE 1 END,
                 CASE WHEN s.role IS NOT NULL THEN 0 ELSE 1 END,
                 CASE WHEN s.experience IS NOT NULL THEN 0 ELSE 1 END,
                 s.sort_order, q.sort_order, q.id) as question_rank');
         $rows = DB::query()->fromSub($ranked, 'eligible')
-            ->where('question_rank', '<=', $count)->orderBy('question_rank')
-            ->get(['id', 'type', 'text']);
+            ->where('question_rank', '<=', $options ? min(200, $count * 4) : $count)->orderBy('question_rank')
+            ->get(['id', 'type', 'text', 'industry', 'role', 'experience']);
 
-        $industryLabel = DB::table('master_data_options')->where('category', 'interview_industry')->where('value', $industry)->value('label') ?? $industry;
+        $industryLabel = $options['industry_label'] ?? DB::table('master_data_options')->where('category', 'interview_industry')->where('value', $industry)->value('label') ?? $industry;
+        $roleLabel = $options['role_label'] ?? $role;
         $groups = $rows->groupBy('type');
+        if ($options) {
+            $terms = PracticeRubric::keywords(implode(' ', $options['focus'] ?? []).' '.($options['jd'] ?? ''));
+            $groups = $groups->map(function ($group) use ($terms) {
+                // Only the bounded candidate pool is shuffled; keyword matches take precedence.
+                return $group->shuffle()->sortByDesc(fn ($q) => 100 * ((int) ($q->industry !== null) + (int) ($q->role !== null) + (int) ($q->experience !== null)) + min(99, count(array_intersect($terms, PracticeRubric::keywords($q->text)))))->values();
+            });
+        }
         $selected = [];
         $used = [];
-        for ($index = 0; count($selected) < $count; $index++) {
+        for ($index = 0; count($selected) < ($options ? min(200, $count * 4) : $count); $index++) {
             $added = false;
             foreach ($types as $type) {
                 $question = $groups->get($type, collect())->get($index);
@@ -158,7 +170,7 @@ final class QuestionCatalog
                 // Persist an immutable copy: subsequent admin edits never modify a live session.
                 $prompt = strtr($question->text, [
                     '{industry}' => $industryLabel,
-                    '{role}' => $role,
+                    '{role}' => $roleLabel,
                     '{scenario}' => self::SCENARIOS[$industry] ?? ('a '.strtolower($industryLabel).' project'),
                 ]);
                 if ($type !== 'General' && in_array($experience, ['senior', 'leadership'], true)) {
@@ -169,9 +181,56 @@ final class QuestionCatalog
                 if (isset($used[$question->id])) continue;
                 $used[$question->id] = true;
                 $selected[] = ['id' => 'bank-'.$question->id, 'type' => $type, 'text' => $prompt];
-                if (count($selected) === $count) break;
+                if ($options) {
+                    $selected[array_key_last($selected)]['contextual'] = $question->industry !== null || $question->role !== null || $question->experience !== null
+                        || str_contains($question->text, '{industry}') || str_contains($question->text, '{scenario}');
+                }
+                if (count($selected) === ($options ? min(200, $count * 4) : $count)) break;
             }
             if (! $added) break;
+        }
+        if ($options) {
+            $focusTerms = PracticeRubric::keywords(implode(' ', $options['focus'] ?? []));
+            $mix = $options['mix'] ?? 'recommended';
+            $common = fn ($q) => ! $q['contextual'];
+            $focus = fn ($q) => (bool) array_intersect($focusTerms, PracticeRubric::keywords($q['text']));
+            $buckets = ['Common questions' => [], 'Role & industry scenarios' => [], 'Focus-area questions' => []];
+            foreach ($selected as $q) {
+                $bucket = $mix === 'focus' && $focus($q) ? 'Focus-area questions' : ($common($q) ? 'Common questions' : 'Role & industry scenarios');
+                $buckets[$bucket][] = $q + ['bucket' => $bucket];
+            }
+            if ($mix === 'focus' && empty($buckets['Focus-area questions'])) {
+                throw ValidationException::withMessages(['focus' => 'No published questions match those focus areas. Choose another focus area or question mix.']);
+            }
+            $majority = (int) round($count * .6);
+            $small = (int) round($count * .2);
+            $quotas = match ($mix) {
+                'common' => ['Common questions' => $count],
+                'focus' => ['Focus-area questions' => $majority, 'Common questions' => $small, 'Role & industry scenarios' => $count - $majority - $small],
+                default => ['Common questions' => $majority, 'Role & industry scenarios' => $count - $majority],
+            };
+            $selected = [];
+            foreach ($quotas as $bucket => $quota) {
+                $selected = array_merge($selected, array_splice($buckets[$bucket], 0, $quota));
+            }
+            // A sparse administrator catalog may not meet the requested mix. Report actual counts; do not invent questions.
+            if ($mix !== 'common') {
+                foreach ($buckets as $bucket => $remaining) {
+                    $selected = array_merge($selected, array_slice($remaining, 0, max(0, $count - count($selected))));
+                }
+            }
+            foreach ($selected as &$q) {
+                unset($q['contextual']);
+                $q['difficulty'] = in_array($experience, ['senior', 'leadership'], true) ? ($q['type'] === 'Situational' ? 'Hard' : 'Medium') : ($q['type'] === 'Situational' || $q['type'] === 'Technical' ? 'Medium' : 'Easy');
+                $topics = ['risk' => 'Risk and issue management', 'scope' => 'Scope change', 'stakeholder' => 'Stakeholder communication', 'dependenc' => 'Dependency management', 'schedule' => 'Delivery planning', 'milestone' => 'Delivery planning', 'release' => 'Release planning', 'budget' => 'Budget control', 'quality' => 'Quality management', 'conflict' => 'Team conflict', 'agile' => 'Agile delivery', 'requirements' => 'Requirements management', 'leadership' => 'Leadership'];
+                foreach ($topics as $term => $label) {
+                    if (str_contains(strtolower($q['text']), $term)) { $q['topic'] = $label; break; }
+                }
+                if ($q['bucket'] === 'Role & industry scenarios') {
+                    $q['text'] .= ' Frame your answer for '.$industryLabel.' and the '.$roleLabel.' role.';
+                }
+            }
+            unset($q);
         }
         if (count($selected) < $count) {
             throw ValidationException::withMessages(['count' => 'This question selection has only '.count($selected).' available questions. Choose fewer questions, more types, or another set.']);

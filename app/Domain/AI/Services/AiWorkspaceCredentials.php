@@ -9,28 +9,28 @@ use Illuminate\Validation\ValidationException;
 
 final class AiWorkspaceCredentials
 {
-    public function rows(?array $providerProfiles = null, ?string $slotFilter = null): array
+    public function rows(?array $providerProfiles = null, string|array|null $slotFilter = null): array
     {
-        $assignments = DB::table('ai_workspace_slots')->when($slotFilter, fn ($query) => $query->where('slot', $slotFilter))->pluck('credential_id', 'slot');
+        $assignments = DB::table('ai_workspace_slots')->when($slotFilter, fn ($query) => $query->whereIn('slot', (array) $slotFilter))->pluck('credential_id', 'slot');
         $primaries = DB::table('ai_workspace_feature_routes')->whereNotNull('primary_credential_id')->pluck('primary_credential_id')->map(fn ($id) => (int) $id)->all();
         $profiles = $providerProfiles === null ? DB::table('ai_workspace_providers')->get(['id', 'name', 'adapter', 'status', 'is_default']) : collect($providerProfiles)->map(fn ($profile) => (object) $profile);
         $defaults = $profiles->where('is_default', true)->keyBy('adapter');
         $byId = $profiles->keyBy('id');
-        $rows = DB::table('ai_workspace_credentials')->when($slotFilter, fn ($query) => $query->where('slot', $slotFilter))->orderBy('slot')->orderBy('priority')->orderBy('id')->get([
+        $rows = DB::table('ai_workspace_credentials')->when($slotFilter, fn ($query) => $query->whereIn('slot', (array) $slotFilter))->orderBy('slot')->orderBy('priority')->orderBy('id')->get([
             'id', 'name', 'slot', 'suffix', 'enabled', 'health_code', 'checked_at', 'provider_id', 'priority', 'daily_budget_usd', 'pool_label',
         ])->map(fn ($row) => [...(array) $row, 'id' => (string) $row->id,
-            'status' => ! $row->enabled ? 'Disabled' : ((int) $assignments[$row->slot] === (int) $row->id || in_array((int) $row->id, $primaries, true) ? 'Active' : 'Standby'),
+            'status' => ! $row->enabled ? 'Disabled' : ((int) $assignments->get($row->slot) === (int) $row->id || in_array((int) $row->id, $primaries, true) ? 'Active' : 'Standby'),
             'provider_name' => $byId->get($row->provider_id)?->name, 'provider_status' => $byId->get($row->provider_id)?->status,
-            'slot_active' => (int) $assignments[$row->slot] === (int) $row->id, 'source' => 'registry', 'provider' => AiRuntimeSettings::SLOTS[$row->slot]['provider'],
+            'slot_active' => (int) $assignments->get($row->slot) === (int) $row->id, 'source' => 'registry', 'provider' => AiRuntimeSettings::SLOTS[$row->slot]['provider'],
             'pool' => $row->pool_label ?? AiRuntimeSettings::SLOTS[$row->slot]['pool'], 'routing_target' => AiRuntimeSettings::SLOTS[$row->slot]['name']])->all();
         foreach (AiRuntimeSettings::SLOTS as $slot => $metadata) {
-            if ($slotFilter !== null && $slot !== $slotFilter) continue;
+            if ($slotFilter !== null && ! in_array($slot, (array) $slotFilter, true)) continue;
             $environmentKey = config('pm-ai.'.$slot);
             $configured = is_string($environmentKey) && $environmentKey !== '';
             $default = $defaults->get($metadata['provider']);
             $rows[] = [...$metadata, 'provider_id' => $default?->id, 'provider_name' => $default?->name, 'provider_status' => $default?->status, 'id' => 'env:'.$slot, 'slot' => $slot, 'suffix' => $configured && strlen($environmentKey) >= 12 ? substr($environmentKey, -4) : null, 'priority' => null, 'daily_budget_usd' => null,
-                'enabled' => $configured, 'status' => ! $configured ? 'Not configured' : ($assignments[$slot] || $default?->status !== 'Active' ? 'Standby' : 'Active'),
-                'slot_active' => $configured && ! $assignments[$slot] && $default?->status === 'Active', 'source' => 'environment', 'routing_target' => $metadata['name'], ...($configured ? Cache::get($this->environmentCacheKey($slot), ['health_code' => null, 'checked_at' => null]) : ['health_code' => null, 'checked_at' => null])];
+                'enabled' => $configured, 'status' => ! $configured ? 'Not configured' : ($assignments->get($slot) || $default?->status !== 'Active' ? 'Standby' : 'Active'),
+                'slot_active' => $configured && ! $assignments->get($slot) && $default?->status === 'Active', 'source' => 'environment', 'routing_target' => $metadata['name'], ...($configured ? Cache::get($this->environmentCacheKey($slot), ['health_code' => null, 'checked_at' => null]) : ['health_code' => null, 'checked_at' => null])];
         }
         return $rows;
     }

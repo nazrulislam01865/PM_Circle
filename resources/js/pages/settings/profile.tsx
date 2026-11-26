@@ -103,7 +103,7 @@ type ProfilePageProps = {
 };
 
 export default function Profile({ activeTab: initialTab = 'overview', profileData, profileReward, privacyFieldGroups = [], canUseAssistant }: ProfilePageProps) {
-    const { memberShell } = usePage<{ memberShell?: DashboardShellData }>().props;
+    const { memberShell, profileResumeImportsVisible } = usePage<{ memberShell?: DashboardShellData; profileResumeImportsVisible?: boolean }>().props;
 
     const dashboardShell: DashboardShellData = memberShell || {
         plan: 'free',
@@ -155,10 +155,11 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
     const resumeUploadRef = useRef<HTMLInputElement>(null);
 
     const changeTab = (tab: ProfileTab) => {
+        if (tab === 'imports' && !profileResumeImportsVisible) return;
         if (tab !== 'assistant') setCurrentTab(tab);
         router.visit(ProfileController.edit.url({ query: { tab } }), {
             preserveState: false,
-            preserveScroll: true,
+            preserveScroll: currentTab !== 'edit' && tab !== 'edit' && tab !== 'assistant',
             replace: true,
         });
     };
@@ -209,7 +210,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                 {/* Hidden File Inputs */}
                 <input type="file" ref={coverInputRef} onChange={(event) => prepareImage(event, 'cover')} accept="image/jpeg,image/png,image/webp" className="hidden" aria-hidden="true" />
                 <input type="file" ref={fileInputRef} onChange={(event) => prepareImage(event, 'avatar')} accept="image/jpeg,image/png,image/webp" className="hidden" aria-hidden="true" />
-                <input type="file" ref={resumeUploadRef} onChange={handleResumeUpload} accept=".pdf,.docx" className="hidden" aria-hidden="true" />
+                {profileResumeImportsVisible && <input type="file" ref={resumeUploadRef} onChange={handleResumeUpload} accept=".pdf,.docx" className="hidden" aria-hidden="true" />}
 
                 <ProfileImageCropDialog file={pendingPhoto?.file || null} kind={pendingPhoto?.kind || 'avatar'}
                     onCancel={() => setPendingPhoto(null)} onConfirm={uploadCroppedImage} />
@@ -412,12 +413,12 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                         <div className="min-w-0 flex-1">
                                             <div className="pm-doc-name truncate">{profileData.resume?.original_name || 'No resume uploaded'}</div>
                                             <div className="pm-doc-meta">
-                                                {profileData.resume ? `Updated ${profileData.resume.updated_at} / ${profileData.resume.file_size_formatted}` : 'Upload a PDF or Word document to get started.'}
+                                                {profileData.resume ? `Updated ${profileData.resume.updated_at} / ${profileData.resume.file_size_formatted}` : (profileResumeImportsVisible ? 'Upload a PDF or Word document to get started.' : '')}
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-2">
+                                    {profileResumeImportsVisible && <div className="grid grid-cols-2 gap-2">
                                         <button
                                             type="button"
                                             className="pm-btn pm-btn-secondary pm-btn-sm"
@@ -432,7 +433,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                         >
                                             Manage resume
                                         </button>
-                                    </div>
+                                    </div>}
                                 </div>
                             </div>
 
@@ -480,13 +481,13 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                             educations: profileData.educations.map(item => ({ ...item })),
                             certifications: profileData.certifications.map(item => ({ ...item })),
                         }}
-                        onImport={() => changeTab('imports')}
+                        onImport={profileResumeImportsVisible ? () => changeTab('imports') : undefined}
                         onCancel={() => changeTab('overview')}
                     />
                 )}
 
                 {/* Resume & imports is isolated so overview/edit share persisted profile data only. */}
-                {currentTab === 'imports' && (
+                {profileResumeImportsVisible && currentTab === 'imports' && (
                     <ResumeImportsTab
                         resume={profileData.resume}
                         importData={profileData.import}

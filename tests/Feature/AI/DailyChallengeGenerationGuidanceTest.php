@@ -23,9 +23,11 @@ final class DailyChallengeGenerationGuidanceTest extends TestCase
     {
         parent::setUp();
         Queue::fake();
+        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-11-26 09:00:00', 'Asia/Dhaka'));
         config()->set('pm-ai.enabled', true);
         config()->set('pm-ai.editorial_enabled', true);
         config()->set('pm-ai.daily_challenge_api_key', 'synthetic-daily-key');
+        config()->set('pm-ai.post_check_api_key', 'synthetic-moderation-key');
         config()->set('pm-ai.global_daily_budget_usd', 5);
         config()->set('pm-ai.editorial_budget_usd', 1);
         config()->set('pm-ai.allowed_models', ['gpt-5-nano']);

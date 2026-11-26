@@ -1,13 +1,14 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { ArrowRight, Check, FileText } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { QuestionScenario } from '@/components/learning/QuestionScenario';
 import { CourseProgress, CourseWorkspace, CourseWorkspacePanel } from '@/components/learning/CourseWorkspace';
 import { courseLearningRoot, courseLessonHref, demoCourseHref, type CourseLesson, type CourseLessonProgress, type DemoCourseDetailData, type CourseResourceData } from '@/types/learning';
 
-type Question = { id: number; prompt: string; options: Record<string, string> };
+type Question = { id: number; prompt: string; options: Record<string, string>; scenarioText?: string | null; scenarioVideoUrl?: string | null };
 type Feedback = { correct: boolean; correctOption: string; explanation: string | null };
-type Props = { course: Omit<DemoCourseDetailData, 'lessons'>; lesson: CourseLesson; progress: CourseLessonProgress; notes: string; question: Question | null; resources: (CourseResourceData & { isPdf: boolean })[]; canRead: boolean };
-const sections = [['lesson-reading', 'Lesson'], ['lesson-overview', 'Overview'], ['lesson-notes', 'My notes'], ['lesson-ai', 'AI assistant'], ['lesson-qa', 'Learner Q&A'], ['lesson-pdfs', 'Download lesson PDFs']] as const;
+type Props = { course: Omit<DemoCourseDetailData, 'lessons'>; lesson: CourseLesson; progress: CourseLessonProgress; notes: string; question: Question | null; questions?: Question[]; resources: (CourseResourceData & { isPdf: boolean })[]; canRead: boolean };
+const sections = [['lesson-reading', 'Lesson'], ['lesson-overview', 'Overview'], ['lesson-notes', 'My notes'], ['lesson-qa', 'Lesson Q&A'], ['lesson-pdfs', 'Lesson documents']] as const;
 
 async function lessonRequest<T>(url: string, body: Record<string, unknown>): Promise<T> {
     const csrf = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
@@ -23,13 +24,16 @@ async function lessonRequest<T>(url: string, body: Record<string, unknown>): Pro
     throw new Error('The request could not be completed. Please try again.');
 }
 
-function LessonContent({ course, lesson, progress, notes, question, resources }: Props) {
-    const root = courseLearningRoot(usePage().url);
+function LessonContent({ course, lesson, progress, notes, question: legacyQuestion, questions, resources }: Props) {
+    const page = usePage<{ auth?: { user?: { settings?: { playback_speed?: string; show_captions?: boolean } } } }>();
+    const root = courseLearningRoot(page.url);
+    const videoPreferences = page.props.auth?.user?.settings;
     const base = `${demoCourseHref(course.slug)}/lessons/${lesson.position}`;
     const detail = `${root}/courses/${encodeURIComponent(course.slug)}`;
     const [active, setActive] = useState<string>('lesson-reading');
-    const [choice, setChoice] = useState('');
-    const [feedback, setFeedback] = useState<Feedback | null>(null);
+    const knowledgeChecks = questions ?? (legacyQuestion ? [legacyQuestion] : []);
+    const [choices, setChoices] = useState<Record<number,string>>({});
+    const [feedback, setFeedback] = useState<Record<number,Feedback>>({});
     const [note, setNote] = useState(notes);
     const [savedNote, setSavedNote] = useState(notes);
     const [message, setMessage] = useState('');
@@ -48,7 +52,7 @@ function LessonContent({ course, lesson, progress, notes, question, resources }:
         catch (e) { setError(e instanceof TypeError ? 'Connection unavailable. Please try again.' : e instanceof Error ? e.message : 'Network error. Please try again.'); }
         finally { lock.current = false; setBusy(null); }
     };
-    const check = () => { if (question && choice) void perform<Feedback>('check', { question: question.id, option: choice }, setFeedback); };
+    const check = (question: Question) => { const choice = choices[question.id]; if (choice) void perform<Feedback>(`check`, { question: question.id, option: choice }, next => setFeedback(old => ({...old, [question.id]:next}))); };
     const saveNotes = () => { const submitted = note; void perform<{ message: string }>('notes', { notes: submitted }, () => { setSavedNote(submitted); setMessage('Notes saved.'); }); };
     const continueTo = (next: CourseLessonProgress) => {
         if (next.completed === next.total) router.visit(`${root}/my-learning`);
@@ -63,32 +67,38 @@ function LessonContent({ course, lesson, progress, notes, question, resources }:
         }
         void perform<CourseLessonProgress>('complete', {}, next => { setStatus(next); continueTo(next); });
     };
-    const pdfs = resources.filter(resource => resource.isPdf);
+    const documents = resources.filter(resource => resource.kind === 'file');
     const inlineError = (action: string) => error && errorAction === action ? <p className="pm-course-lesson-error" role="alert">{error}</p> : null;
-    const refs = resources.filter(resource => resource.kind === 'link' && resource.section === lesson.title);
+    const refs = resources.filter(resource => resource.kind === 'link');
     const resourceUrl = (id: number) => `${demoCourseHref(course.slug)}/resources/${id}`;
     const safeVideo = lesson.video_url && /^https:\/\//i.test(lesson.video_url) ? lesson.video_url : null;
     return <CourseWorkspace lesson title={course.title} description={`Lesson ${lesson.position} of ${progress.total}`}><Head title={`${lesson.title} | ${course.title}`}/>
         <div className="pm-course-lesson-grid"><div className="pm-course-workspace-panel pm-course-lesson-main">
-            <nav className="pm-course-lesson-tabs" aria-label="Lesson sections">{sections.map(([id, label]) => <button type="button" key={id} className={`pm-guide-button is-outline${active === id ? ' is-active' : ''}`} aria-pressed={active === id} onClick={() => jump(id)}>{label}</button>)}</nav>
-            <section id="lesson-reading" className="pm-course-lesson-reading"><div className="pm-course-lesson-meta"><span className="pm-learn-v3-pill is-free">Reading</span><span>· Lesson {lesson.position}</span>{currentDone && <span className="pm-learn-v3-pill is-free"><Check size={14}/> Completed</span>}</div><h2>{lesson.title}</h2>
-                {safeVideo && !videoFailed && <video className="pm-course-lesson-video" controls preload="metadata" src={safeVideo} onError={() => setVideoFailed(true)} aria-label={`${lesson.title} video`}/>}
+            <nav className="pm-course-lesson-tabs" aria-label="Lesson sections">{sections.filter(([id]) => id !== 'lesson-qa' || !!lesson.faq?.length).map(([id, label]) => <button type="button" key={id} className={`pm-guide-button is-outline${active === id ? ' is-active' : ''}`} aria-pressed={active === id} onClick={() => jump(id)}>{label}</button>)}</nav>
+            <section id="lesson-reading" className="pm-course-lesson-reading"><div className="pm-course-lesson-meta"><span className="pm-learn-v3-pill is-free">{safeVideo ? 'Video & reading' : 'Reading'}</span><span>· Lesson {lesson.position}</span>{currentDone && <span className="pm-learn-v3-pill is-free"><Check size={14}/> Completed</span>}</div><h2>{lesson.title}</h2>
+                {safeVideo && !videoFailed && <video className="pm-course-lesson-video" controls preload="metadata" src={safeVideo} onLoadedMetadata={event => {
+                    const video = event.currentTarget;
+                    const rate = Number.parseFloat(videoPreferences?.playback_speed ?? '1');
+                    if ([1, 1.25, 1.5, 2].includes(rate)) video.playbackRate = rate;
+                    for (const track of Array.from(video.textTracks)) {
+                        if (track.kind === 'captions' || track.kind === 'subtitles') track.mode = videoPreferences?.show_captions === false ? 'disabled' : 'showing';
+                    }
+                }} onError={() => setVideoFailed(true)} aria-label={`${lesson.title} video`}/>}
                 {videoFailed && <p className="pm-course-lesson-notice" role="status">The video could not be loaded. Continue with the lesson reading below.</p>}
                 <p className="pm-course-lesson-copy">{lesson.body}</p>
             </section>
-            <CourseWorkspacePanel className="pm-course-lesson-section"><h3 id="lesson-check">Knowledge check</h3>{question ? <><fieldset disabled={busy !== null}><legend>{question.prompt}</legend><div className="pm-course-lesson-options">{Object.entries(question.options).map(([key, text]) => <label key={key}><input type="radio" name="knowledge-check" checked={choice === key} onChange={() => { setChoice(key); setFeedback(null); }}/><span>{text}</span></label>)}</div></fieldset><div className="pm-course-workspace-actions"><button type="button" disabled={!choice || busy !== null} className="pm-guide-button is-outline" onClick={check}>{busy === 'check' ? 'Checking…' : 'Check answer'}</button></div>{inlineError('check')}{feedback && <div className={`pm-course-lesson-feedback ${feedback.correct ? 'is-correct' : 'is-incorrect'}`} role="status"><strong>{feedback.correct ? 'Correct answer' : `Correct option: ${feedback.correctOption}`}</strong>{feedback.explanation && <p>{feedback.explanation}</p>}</div>}</> : <p className="pm-learn-v3-meta">No knowledge check is published for this lesson yet. <Link href={detail}>View course practice and resources</Link>.</p>}</CourseWorkspacePanel>
+            {knowledgeChecks.length > 0 && <CourseWorkspacePanel className="pm-course-lesson-section"><h3 id="lesson-check">Knowledge check</h3>{knowledgeChecks.map((question, index) => <section key={question.id} className="pm-course-lesson-section">{knowledgeChecks.length > 1 && <h4>Question {index+1} of {knowledgeChecks.length}</h4>}<QuestionScenario key={question.id} text={question.scenarioText} videoUrl={question.scenarioVideoUrl}/><fieldset disabled={busy !== null}><legend>{question.prompt}</legend><div className="pm-course-lesson-options">{Object.entries(question.options).map(([key, text]) => <label key={key}><input type="radio" name={`knowledge-check-${question.id}`} checked={choices[question.id] === key} onChange={() => {setChoices(old => ({...old,[question.id]:key})); setFeedback(old => {const next = {...old}; delete next[question.id]; return next;});}}/><span><strong>{key}.</strong> {text}</span></label>)}</div></fieldset><div className="pm-course-workspace-actions"><button type="button" disabled={!choices[question.id] || busy !== null} className="pm-guide-button is-outline" onClick={() => check(question)}>{busy === 'check' ? 'Checking…' : 'Check answer'}</button></div>{feedback[question.id] && <div className={`pm-course-lesson-feedback ${feedback[question.id].correct ? 'is-correct' : 'is-incorrect'}`} role="status"><strong>{feedback[question.id].correct ? 'Correct answer' : `Correct option: ${feedback[question.id].correctOption}`}</strong>{feedback[question.id].explanation && <p>{feedback[question.id].explanation}</p>}</div>}</section>)}{inlineError('check')}</CourseWorkspacePanel>}
             <CourseWorkspacePanel className="pm-course-lesson-section"><div id="lesson-overview"><h3>Overview</h3><p>{course.overview || course.summary}</p></div>
                 {([['Key takeaway', lesson.takeaway], ['When to apply it', lesson.when_to_apply], ['Example scenario', lesson.example], ['Learning references', lesson.references]] as const).map(([title, content]) => content ? <div key={title}><h4>{title}</h4><p className="pm-course-lesson-copy">{content}</p></div> : null)}
                 {refs.length > 0 && <div><h4>Learning references</h4><ul>{refs.map(resource => <li key={resource.id}><a href={resourceUrl(resource.id)} target="_blank" rel="noopener noreferrer">{resource.title}</a></li>)}</ul></div>}
             </CourseWorkspacePanel>
             {lesson.application && <section className="pm-course-lesson-notice"><h3>Apply what you learned</h3><p className="pm-course-lesson-copy">{lesson.application}</p></section>}
             <section className="pm-course-lesson-section pm-course-lesson-divided" id="lesson-notes"><h2>My notes</h2><label className="pm-guide-field-label" htmlFor="course-lesson-notes">Your private lesson notes</label><textarea className="pm-guide-control" id="course-lesson-notes" rows={4} maxLength={10000} value={note} onChange={event => setNote(event.target.value)} disabled={busy !== null}/><div className="pm-course-workspace-actions"><button type="button" className="pm-guide-button is-outline" disabled={note === savedNote || busy !== null} onClick={saveNotes}>{busy === 'notes' ? 'Saving…' : 'Save notes'}</button>{note !== savedNote && <span className="pm-learn-v3-meta">Unsaved changes</span>}</div>{inlineError('notes')}{message && <p role="status">{message}</p>}</section>
-            <section className="pm-course-lesson-section pm-course-lesson-divided" id="lesson-ai"><h2>AI lesson assistant</h2><p className="pm-learn-v3-meta">AI lesson assistance is not currently available.</p><label className="pm-guide-field-label" htmlFor="lesson-ai-input">Ask about this topic</label><input className="pm-guide-control" id="lesson-ai-input" placeholder="e.g. Can you explain this with an example?" disabled/><div className="pm-course-workspace-actions"><button type="button" className="pm-guide-button" disabled>Ask AI</button></div></section>
-            <section className="pm-course-lesson-section pm-course-lesson-divided" id="lesson-qa"><h2>Learner Q&amp;A</h2><p className="pm-learn-v3-meta">Learner discussions are not currently available for this lesson.</p></section>
-            <section className="pm-course-lesson-section pm-course-lesson-divided" id="lesson-pdfs"><h2>Download lesson PDFs</h2>{pdfs.length ? <div className="pm-course-lesson-files">{pdfs.map(resource => <a key={resource.id} href={resourceUrl(resource.id)} className="pm-guide-button is-outline"><FileText size={16}/>{resource.title}</a>)}</div> : <p className="pm-learn-v3-meta">No published PDF resources are available for this course.</p>}</section>
+            {!!lesson.faq?.length && <section className="pm-course-lesson-section pm-course-lesson-divided" id="lesson-qa"><h2>Lesson Q&amp;A</h2>{lesson.faq.map((pair,index) => <CourseWorkspacePanel key={index}><details><summary>{pair.question}</summary><p className="pm-course-lesson-copy">{pair.answer}</p></details></CourseWorkspacePanel>)}</section>}
+            <section className="pm-course-lesson-section pm-course-lesson-divided" id="lesson-pdfs"><h2>Lesson documents</h2>{documents.length ? <div className="pm-course-lesson-files">{documents.map(resource => <a key={resource.id} href={resourceUrl(resource.id)} className="pm-guide-button is-outline"><FileText size={16}/>{resource.title}</a>)}</div> : <p className="pm-learn-v3-meta">No documents are published for this lesson.</p>}</section>
             <div className="pm-course-lesson-status" aria-live="polite">{inlineError('complete')}</div>
             <footer className="pm-course-lesson-footer"><Link className="pm-guide-button is-outline" href={detail}>Course details</Link><button type="button" className="pm-guide-button" disabled={busy !== null} onClick={complete}>{busy === 'complete' ? 'Saving progress…' : currentDone ? status.completed === status.total ? lesson.position < status.total ? 'Review next lesson' : 'Back to My Learning' : 'Continue learning' : 'Complete & continue'}<ArrowRight size={16}/></button></footer>
-        </div><aside className="pm-course-lesson-sidebar pm-course-workspace-panel" aria-label="Course content"><h2>Course content</h2><CourseProgress {...status}/><ol className="pm-course-lesson-list">{status.lessons.map(item => <li key={item.position}><Link className={`pm-course-lesson-item${item.position === lesson.position ? ' is-active' : ''}`} href={courseLessonHref(root, course.slug, item.position)} aria-current={item.position === lesson.position ? 'step' : undefined}><strong>{item.title}</strong><span>Lesson {item.position} · {item.completed ? 'Completed' : 'Reading & practice'}</span></Link>{item.position === lesson.position && <ul><li><button type="button" onClick={() => jump('lesson-reading')}>Lesson reading</button></li>{question && <li><button type="button" onClick={() => jump('lesson-check')}>Knowledge check</button></li>}<li><button type="button" onClick={() => jump('lesson-qa')}>Learner Q&amp;A</button></li></ul>}</li>)}</ol></aside></div>
+        </div><aside className="pm-course-lesson-sidebar pm-course-workspace-panel" aria-label="Course content"><h2>Course content</h2><CourseProgress {...status}/><ol className="pm-course-lesson-list">{status.lessons.map(item => <li key={item.position}><Link className={`pm-course-lesson-item${item.position === lesson.position ? ' is-active' : ''}`} href={courseLessonHref(root, course.slug, item.position)} aria-current={item.position === lesson.position ? 'step' : undefined}><strong>{item.title}</strong><span>Lesson {item.position} · {item.completed ? 'Completed' : item.hasVideo ? 'Video & reading' : 'Reading'}</span></Link>{item.position === lesson.position && <ul><li><button type="button" onClick={() => jump('lesson-reading')}>Lesson reading</button></li>{knowledgeChecks.length > 0 && <li><button type="button" onClick={() => jump('lesson-check')}>Knowledge check</button></li>}{!!lesson.faq?.length && <li><button type="button" onClick={() => jump('lesson-qa')}>Lesson Q&amp;A</button></li>}</ul>}</li>)}</ol></aside></div>
     </CourseWorkspace>;
 }
 function LockedLesson({ course, lesson, progress }: Props) {

@@ -27,7 +27,7 @@ test('previous homepage rail is restored while other public-page dimensions rema
 test('discussion composer uses the pencil icon with unchanged click behavior', () => {
     const community = read('resources/js/components/home/v2/HomeCommunity.tsx');
     assert.match(community, /import \{[^}]*\bPencil\b[^}]*\} from 'lucide-react'/);
-    assert.match(community, /<Pencil aria-hidden="true"\/> Start a discussion/);
+    assert.match(community, /<Pencil aria-hidden="true"\/> \{content.community.compose_label\}/);
     assert.match(community, /onClick=\{\(\) => onJoin\('start a discussion'\)\}/);
     assert.doesNotMatch(community, /<Plus /);
 });
@@ -49,9 +49,9 @@ test('footer groups, social icons and event link share existing admin data and v
     assert.match(footer, /eventsVisible = true/);
     assert.match(footer, /aiVisible = true/);
     assert.doesNotMatch(footer, /pm-v2-footer-payments/);
-    assert.match(footer, /show_legal !== false/);
-    assert.match(footer, /FooterSocial content=\{content\} compact prototypeOrder/);
-    assert.match(footer, /href: '\/events'/);
+    assert.match(footer, /content\.show_legal/);
+    assert.match(footer, /FooterSocial content=\{content\} compact/);
+    assert.ok(read('app/Support/Admin/SiteFooterContent.php').includes("$link('Events', '/events')"));
     assert.doesNotMatch(footer, /href: '\/#pm-v2-events-title'/);
     assert.match(read('resources/js/components/pm/SiteFooter.tsx'), /eventsVisible=\{homeEventsVisible\}/);
 });

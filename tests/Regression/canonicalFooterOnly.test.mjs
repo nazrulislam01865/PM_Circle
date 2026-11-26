@@ -26,10 +26,12 @@ test('home page, other public pages, member pages, auth pages and admin preview 
 test('footer has one set of prototype labels with no old mockup copy', () => {
     const home = read('resources/js/components/home/v2/HomeFooter.tsx');
     for (const title of ['Company', 'Learning', 'Community', 'Plans & Policies']) {
-      assert.ok(home.includes(`title="${title}"`));
+      assert.ok(read('app/Support/Admin/SiteFooterContent.php').includes(`'title' => '${title}'`));
     }
     assert.doesNotMatch(home, /pm-v2-footer-payments/);
-    assert.match(home, /Learn project management, practise for certification, and connect with peers\./);
+    assert.match(read('app/Support/Admin/SiteFooterContent.php'), /Learn project management, practise for certification, and connect with peers\./);
+    assert.match(home, /content\.description/);
+    assert.match(home, /columns\.map/);
     assert.doesNotMatch(home, /Homepage design mockup|Sample content/);
 });
 
@@ -38,7 +40,7 @@ test('footer styles are independent of old footer and align with page content ra
     assert.match(css, /\.pm-v2-site-footer \{[^}]*background: var\(--pm-v2-footer-bg\)/);
     assert.match(css, /\.pm-events-shell \.pm-v2-site-footer \.pm-v2-container/);
     assert.match(css, /\.pm-home-v2-shell \.pm-v2-site-footer \.pm-v2-container/);
-    assert.match(css, /\.pm-v2-footer-grid \{[^}]*grid-template-columns: 1\.45fr repeat\(4/);
+    assert.match(css, /\.pm-v2-footer-grid \{[^}]*grid-template-columns: var\(--pm-footer-desktop-columns, 1\.45fr repeat\(4/);
     assert.match(read('resources/css/pm-design-tokens.css'), /--pm-guide-footer: #0d223d;/);
     assert.match(read('resources/css/pm-learning-public.css'), /\.pm-learn-v3-wrap\s*\{\s*width: var\(--pm-v2-container-width\)/);
 });

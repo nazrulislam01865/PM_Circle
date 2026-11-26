@@ -111,7 +111,7 @@ final class UpdatePmpPublicPageRequest extends FormRequest
             'content.testimonials.items.*.role' => $text,
             'content.testimonials.items.*.quote' => $body,
             'content.testimonials.items.*.image' => $icon,
-            ...\App\Support\Admin\SiteFooterValidation::rules('content.footer'),
+            'content.footer' => ['exclude'],
         ];
     }
 

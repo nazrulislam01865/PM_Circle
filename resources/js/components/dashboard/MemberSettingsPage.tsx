@@ -12,10 +12,10 @@ export function MemberSettingsPage({ active, children }: { active: 'security' | 
     return <MemberDashboardLayout dashboard={shell}>
         <div className="pm-member-settings">
             <header className="pm-member-settings-heading">
-                <h1>Settings</h1><p>Manage your account and preferences.</p>
+                <h1>Account settings</h1><p>Manage your account and preferences.</p>
             </header>
             <nav className="pm-member-settings-tabs" aria-label="Account settings">
-                <Link href="/settings/profile" >My profile</Link>
+                <Link href="/settings/account">All settings</Link>
                 <Link href="/settings/security" className={active === 'security' ? 'is-active' : ''} aria-current={active === 'security' ? 'page' : undefined}>Security</Link>
                 <Link href="/settings/appearance" className={active === 'appearance' ? 'is-active' : ''} aria-current={active === 'appearance' ? 'page' : undefined}>Appearance</Link>
             </nav>

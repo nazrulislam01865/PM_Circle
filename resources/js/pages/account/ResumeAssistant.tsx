@@ -7,34 +7,35 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { ResumeAiReview, type ResumeAiProps } from '@/components/profile/ResumeAiReview';
 import { ResumeDraftPreview, ResumeQuality, sampleResume, type ResumeExtra, type ResumeFields } from '@/components/profile/ResumeDraftPreview';
 import { exportResumeDraft, type ResumeExportFormat } from '@/components/profile/resumeExport';
+import type { ResumeLongField, ResumeSectionId } from '@/components/profile/resumeFieldSchema';
+import { ProfileSectionJump } from '@/components/profile/ProfileSectionJump';
 import { ProfileWorkspaceHeader } from '@/components/profile/ProfileWorkspaceHeader';
-import { contactFields, resumeSections, ResumeRepeatableSection, sampleDocument, type ResumeDocument, type ResumeContactKey } from '@/components/profile/ResumeDocumentFields';
+import { contactFields, resumeIdentityFields, resumeSectionNavigation, resumeSections, ResumeRepeatableSection, sampleDocument, type ResumeDocument, type ResumeContactKey } from '@/components/profile/ResumeDocumentFields';
 import type { DashboardShellData } from '@/types/dashboard';
 import '../../../css/pm-resume-assistant.css';
 
-const sections = [['basic','Basic details'],['summary','Personal Profile'],...resumeSections.map(section=>[section.id,section.title] as const)] as const;
-type Section = typeof sections[number][0];
+const jumpSections = resumeSectionNavigation;
+type Section = typeof jumpSections[number]['id'];
+type SuggestionTarget = { label: string; text: string } & ({kind:'summary'} | {kind:'entry'; section:ResumeSectionId; index:number; field:ResumeLongField});
 type Draft = Partial<ResumeFields> & { version: string; document?: ResumeDocument };
 type Extracted = { fields: Partial<ResumeFields>; document: Partial<ResumeDocument>; warnings: string[]; source_text: string };
 type Props = ResumeAiProps & { profile: { fields: ResumeFields; version: string; extra: ResumeExtra; document: ResumeDocument }; draft: Draft | null; aiExtractionEnabled?: boolean };
-const labels: Record<keyof ResumeFields, string> = { name:'Full name',email:'Email',role:'Current role',company:'Company',location:'Location',summary:'Summary',period:'Employment period',responsibilities:'Responsibilities',skills:'Skills',degree:'Degree',institution:'Institution',certification:'Certification' };
+const labels: Record<keyof ResumeFields, string> = { ...Object.fromEntries(resumeIdentityFields) as Record<typeof resumeIdentityFields[number][0],string>, company:'Company',summary:'Summary',period:'Employment period',responsibilities:'Responsibilities',skills:'Skills',degree:'Degree',institution:'Institution',certification:'Certification' };
 const limits: Record<keyof ResumeFields, number> = { name:255,email:255,role:80,company:150,location:241,summary:2000,period:110,responsibilities:4000,skills:5000,degree:180,institution:180,certification:100 };
 
 function EditorSection({ id, icon, children }: { id: Section; icon: ReactNode; children: ReactNode }) {
-    return <section className="pm-resume-editor-section" id={`resume-${id}`} aria-labelledby={`resume-${id}-title`}><h3 id={`resume-${id}-title`}>{icon}{sections.find(section=>section[0]===id)?.[1]}</h3>{children}</section>;
+    return <section className="pm-resume-editor-section" id={`resume-${id}`} aria-labelledby={`resume-${id}-title`}><h3 id={`resume-${id}-title`}>{icon}{jumpSections.find(section=>section.id===id)?.label}</h3>{children}</section>;
 }
 
-// Match the actual shared tab height and keep the rail inside its editor at the footer.
+// Follow the shared measured section navigation and keep the preview rail inside its editor at the footer.
 function bindResumeRail(builder: HTMLDivElement) {
-    const tabs=builder.parentElement?.querySelector<HTMLElement>('.pm-profile-nav-tabs');
+    const tabs=builder.querySelector<HTMLElement>('.pm-profile-section-jump');
     const grid=builder.querySelector<HTMLElement>('.pm-resume-builder-grid');
     const aside=builder.querySelector<HTMLElement>('.pm-resume-builder-aside');
     if (!tabs || !grid || !aside) return;
     let frame=0;
     const sync=()=>{
         frame=0;
-        const height=`${tabs.getBoundingClientRect().height}px`;
-        if(builder.style.getPropertyValue('--pm-resume-tabs-height')!==height) builder.style.setProperty('--pm-resume-tabs-height',height);
         const style=getComputedStyle(aside);
         if(style.position!=='sticky') return;
         const top=Number.parseFloat(style.top);
@@ -49,11 +50,11 @@ function bindResumeRail(builder: HTMLDivElement) {
     window.addEventListener('scroll',schedule,{passive:true});
     window.addEventListener('resize',schedule);
     sync();
-    return ()=>{observer?.disconnect();window.removeEventListener('scroll',schedule);window.removeEventListener('resize',schedule);if(frame)cancelAnimationFrame(frame);builder.style.removeProperty('--pm-resume-tabs-height');builder.style.removeProperty('--pm-resume-grid-space');};
+    return ()=>{observer?.disconnect();window.removeEventListener('scroll',schedule);window.removeEventListener('resize',schedule);if(frame)cancelAnimationFrame(frame);builder.style.removeProperty('--pm-resume-grid-space');};
 }
 
 export default function ResumeAssistant({ profile, draft, resumes, features, aiExtractionEnabled = false }: Props) {
-    const { memberShell } = usePage<{ memberShell: DashboardShellData }>().props;
+    const { memberShell, profileResumeImportsVisible } = usePage<{ memberShell: DashboardShellData; profileResumeImportsVisible?: boolean }>().props;
     const [data,setData] = useState<ResumeFields>(()=>Object.fromEntries(Object.entries(profile.fields).map(([key,value])=>[key, String(draft && key in draft ? draft[key as keyof ResumeFields] ?? '' : value ?? '')])) as ResumeFields);
     const [cv,setCv] = useState<ResumeDocument>(()=>draft?.document ?? profile.document);
     const [version,setVersion] = useState(draft?.version ?? profile.version);
@@ -75,7 +76,7 @@ export default function ResumeAssistant({ profile, draft, resumes, features, aiE
     const [errors,setErrors] = useState<Record<string,string>>({});
     const [message,setMessage] = useState('');
     const [busy,setBusy] = useState(false);
-    const [aiSection,setAiSection] = useState<'summary'|'responsibilities'|'analysis'|null>(null);
+    const [aiSection,setAiSection] = useState<SuggestionTarget|'analysis'|null>(null);
     const [uploadFile,setUploadFile] = useState<File|null>(null);
     const [extracted,setExtracted] = useState<Extracted|null>(null);
     const [uploadError,setUploadError] = useState('');
@@ -135,31 +136,41 @@ export default function ResumeAssistant({ profile, draft, resumes, features, aiE
         setMessage('Extracted details added to your draft. Review all fields before saving or submitting.');
         document.getElementById('resume-basic')?.scrollIntoView({block:'start'});
     };
-    const field = (key:keyof ResumeFields, multiline=false, hint?:string) => <FormField label={labels[key]} htmlFor={`resume-field-${key}`} error={errors[key]} hint={hint}>
+    const field = (key:keyof ResumeFields, multiline=false, hint?:string) => <FormField key={key} label={labels[key]} htmlFor={`resume-field-${key}`} error={errors[key]} hint={hint}>
         {multiline ? <textarea className="pm-textarea" id={`resume-field-${key}`} rows={3} maxLength={limits[key]} disabled={busy} value={data[key]} aria-invalid={!!errors[key]} aria-describedby={errors[key]?`resume-field-${key}-error`:hint?`resume-field-${key}-hint`:undefined} onChange={event=>update(key,event.target.value)}/> : <input className="pm-input" id={`resume-field-${key}`} type={key==='email'?'email':'text'} maxLength={limits[key]} disabled={busy} readOnly={key==='email'&&!sample} value={data[key]} aria-invalid={!!errors[key]} aria-describedby={errors[key]?`resume-field-${key}-error`:hint?`resume-field-${key}-hint`:undefined} onChange={event=>update(key,event.target.value)}/>}
     </FormField>;
-    const suggest = (section:'summary'|'responsibilities') => <button type="button" className="pm-resume-suggest" onClick={()=>setAiSection(section)} disabled={busy||sample}><Sparkles aria-hidden="true"/> Suggest with AI</button>;
+    const suggestSummary = () => <button type="button" className="pm-resume-suggest" onClick={()=>setAiSection({kind:'summary',label:'Professional summary',text:data.summary})} disabled={busy||sample||data.summary.trim().length<2} title={data.summary.trim().length<2?'Enter your own details before requesting a suggestion.':undefined}><Sparkles aria-hidden="true"/> Suggest with AI</button>;
+    const applySuggestion = (target: SuggestionTarget, text: string) => {
+        if (target.kind === 'summary') update('summary',text.slice(0,limits.summary));
+        else {
+            setCv(old=>({...old,[target.section]:old[target.section].map((row,i)=>i===target.index ? {...row,[target.field]:text.slice(0,4000)} : row)}));
+            setErrors(old=>({...old,[`document.${target.section}.${target.index}.${target.field}`]:''}));
+            setMessage('');
+        }
+        setAiSection(null);
+    };
     const stale=version!==profile.version;
     const updateContact=(key:ResumeContactKey,value:string)=>{setCv(old=>({...old,[key]:value}));setMessage('');setErrors(old=>({...old,[`document.${key}`]:''}));};
     return <MemberDashboardLayout dashboard={memberShell}><Head title="AI Resume Assistant — PM Circle"/>
         <div className="pm-profile-page">
-            <ProfileWorkspaceHeader tab="assistant" memberId={memberShell.member.id} canUseAssistant onTab={tab=>router.visit(`/settings/profile?tab=${tab}`,{preserveScroll:true,replace:true})}/>
+            <ProfileWorkspaceHeader tab="assistant" memberId={memberShell.member.id} canUseAssistant onTab={tab=>router.visit(`/settings/profile?tab=${tab}`,{preserveScroll:false,replace:true})}/>
             <div className="pm-resume-builder" ref={builderRef}>
+            {!previewOnly && <ProfileSectionJump sections={jumpSections} targetPrefix="resume-" label="Résumé sections"/>}
             <div className="pm-resume-builder-notice" role="status"><Info aria-hidden="true"/>{sample?'Demo workspace · Fictional sample data. Changes stay in this browser.':'Private workspace · Review your draft before submitting.'}</div>
             {stale && !sample && <div className="pm-resume-builder-notice" role="alert">Your saved draft predates a profile update. <button type="button" className="pm-button pm-button-outline" onClick={reset}>Reload profile details</button></div>}
-            {previewOnly ? <div className="pm-resume-preview-only" id="resume-full-preview"><button type="button" className="pm-button pm-button-outline" onClick={()=>setPreviewOnly(false)}>Back to editor</button>{!sample&&<div className="pm-resume-builder-actions"><button type="button" className="pm-button pm-button-outline" disabled={busy||!!exporting} onClick={()=>exportCurrent('pdf')}>{exporting==='pdf'?'Preparing…':'Print / Save as PDF'}</button><button type="button" className="pm-button pm-button-outline" disabled={busy||!!exporting} onClick={()=>exportCurrent('word')}>{exporting==='word'?'Preparing…':'Download Word résumé'}</button></div>}{exportError&&<p className="pm-error" role="alert">{exportError}</p>}<ResumeDraftPreview data={data} document={cv}/><Link href="/settings/profile?tab=imports" className="pm-button pm-button-outline">Manage uploaded résumé</Link></div> : <div className="pm-resume-builder-grid">
+            {previewOnly ? <div className="pm-resume-preview-only" id="resume-full-preview"><button type="button" className="pm-button pm-button-outline" onClick={()=>setPreviewOnly(false)}>Back to editor</button>{!sample&&<div className="pm-resume-builder-actions"><button type="button" className="pm-button pm-button-outline" disabled={busy||!!exporting} onClick={()=>exportCurrent('pdf')}>{exporting==='pdf'?'Preparing…':'Print / Save as PDF'}</button><button type="button" className="pm-button pm-button-outline" disabled={busy||!!exporting} onClick={()=>exportCurrent('word')}>{exporting==='word'?'Preparing…':'Download Word résumé'}</button></div>}{exportError&&<p className="pm-error" role="alert">{exportError}</p>}<ResumeDraftPreview data={data} document={cv}/>{profileResumeImportsVisible && <Link href="/settings/profile?tab=imports" className="pm-button pm-button-outline">Manage uploaded résumé</Link>}</div> : <>
+                <div className="pm-resume-builder-grid">
                 <div className="pm-resume-builder-card pm-resume-editor">
                     <section className="pm-resume-editor-section pm-resume-import-head"><h3><Upload aria-hidden="true"/> Import your résumé</h3><p className="pm-resume-builder-meta">Use a sample CV to test the import and review workflow, or enter your details manually.</p><div className="pm-resume-import-actions"><div className="pm-resume-builder-actions"><input ref={input} type="file" accept=".pdf,.docx" hidden onChange={choose}/><button type="button" className="pm-button pm-button-outline" disabled={busy} onClick={()=>input.current?.click()}><Upload aria-hidden="true"/> Choose PDF or DOCX</button><button type="button" className="pm-button" disabled={busy} onClick={()=>{if(!sample)realDraft.current={fields:data,document:cv};setSample(true);setData({...sampleResume});setCv(sampleDocument());setErrors({});setMessage('');}}>Use sample CV</button><button type="button" className="pm-resume-suggest" disabled={busy} onClick={()=>{if(sample){setData(realDraft.current?.fields??profile.fields);setCv(realDraft.current?.document??profile.document);realDraft.current=null;setSample(false);setErrors({});setMessage('');}document.getElementById('resume-field-name')?.focus();}}>Enter manually <ArrowRight aria-hidden="true"/></button></div><p className="pm-resume-builder-meta">Sample CV data is fictional. Extraction fills your draft without changing your saved profile.</p></div>{errors.upload && <p className="pm-error" role="alert">{errors.upload}</p>}{message.startsWith('Extracted details')&&<p role="status" className="pm-resume-builder-meta">{message}</p>}</section>
-                    <div className="pm-resume-editor-section pm-resume-jump"><strong>Jump to section</strong><nav aria-label="Résumé sections">{sections.map(([id,label])=><a key={id} href={`#resume-${id}`}>{label}</a>)}</nav></div>
-                    <EditorSection id="basic" icon={<UserRound aria-hidden="true"/>}><div className="pm-resume-field-grid">{field('name')}{field('email',false,'Change your account email in Edit profile.')}{field('role')}{field('location',false,'City, Country')}{contactFields.map(([key,label])=><FormField key={key} label={label} htmlFor={`resume-contact-${key}`} error={errors[`document.${key}`]}><input id={`resume-contact-${key}`} className="pm-input" maxLength={255} disabled={busy} value={cv[key]??''} onChange={e=>updateContact(key,e.target.value)}/></FormField>)}</div></EditorSection>
-                    <EditorSection id="summary" icon={<FileText aria-hidden="true"/>}>{field('summary',true)}{suggest('summary')}</EditorSection>
-                    {resumeSections.map(section=><EditorSection key={section.id} id={section.id} icon={<FileText aria-hidden="true"/>}><ResumeRepeatableSection section={section} rows={cv[section.id]} errors={errors} disabled={busy} onChange={rows=>{setCv(old=>({...old,[section.id]:rows}));setErrors(old=>Object.fromEntries(Object.entries(old).filter(([key])=>!key.startsWith(`document.${section.id}.`))));setMessage('');}}/>{section.id==='experience'&&cv.experience.length>0&&suggest('responsibilities')}</EditorSection>)}
-                    <section className="pm-resume-editor-section pm-resume-editor-footer" aria-label="Résumé draft actions"><div><p className="pm-resume-builder-meta">{sample?'Sample data cannot be submitted.':'Submitting updates basic profile details and saves the full CV privately. Manage public profile records in Edit profile.'}</p>{message&&<p role="status" className="pm-resume-builder-meta">{message}</p>}{Object.entries(errors).filter(([key,value])=>value&&key!=='upload').length>0&&<p role="alert" className="pm-error">{Object.values(errors).find(Boolean)}</p>}</div><div className="pm-resume-builder-actions"><button type="button" className="pm-button pm-button-outline" disabled={busy||sample} onClick={()=>save('draft')}>Save draft</button><button type="button" className="pm-button" disabled={busy||sample||stale} onClick={()=>setSubmitConfirm(true)}>{busy?'Saving…':'Submit profile'}</button></div></section>
+                    <EditorSection id="basic" icon={<UserRound aria-hidden="true"/>}><div className="pm-resume-field-grid">{resumeIdentityFields.map(([key])=>field(key,false,key==='email'?'Change your account email in Edit profile.':key==='location'?'City, Country':undefined))}{contactFields.map(([key,label])=><FormField key={key} label={label} htmlFor={`resume-contact-${key}`} error={errors[`document.${key}`]}><input id={`resume-contact-${key}`} className="pm-input" maxLength={255} disabled={busy} value={cv[key]??''} onChange={e=>updateContact(key,e.target.value)}/></FormField>)}</div></EditorSection>
+                    <EditorSection id="summary" icon={<FileText aria-hidden="true"/>}>{field('summary',true)}{suggestSummary()}</EditorSection>
+                    {resumeSections.map(section=><EditorSection key={section.id} id={section.id} icon={<FileText aria-hidden="true"/>}><ResumeRepeatableSection section={section} rows={cv[section.id]} errors={errors} disabled={busy} suggestionsDisabled={sample} onSuggest={(index,field,label,text)=>setAiSection({kind:'entry',section:section.id,index,field,label,text})} onChange={rows=>{setCv(old=>({...old,[section.id]:rows}));setErrors(old=>Object.fromEntries(Object.entries(old).filter(([key])=>!key.startsWith(`document.${section.id}.`))));setMessage('');}}/></EditorSection>)}
+                    <section className="pm-resume-editor-footer pm-profile-editor-actions" aria-label="Résumé draft actions"><div><p className="pm-resume-builder-meta">{sample?'Sample data cannot be submitted.':'Review your draft before submitting.'}</p>{message&&<p role="status" className="pm-resume-builder-meta">{message}</p>}{Object.entries(errors).filter(([key,value])=>value&&key!=='upload').length>0&&<p role="alert" className="pm-error">{Object.values(errors).find(Boolean)}</p>}</div><div className="pm-resume-builder-actions"><button type="button" className="pm-button pm-button-outline" disabled={busy} onClick={()=>router.visit('/settings/profile?tab=overview')}>Cancel</button><button type="button" className="pm-button pm-button-outline" disabled={busy||sample} onClick={()=>save('draft')}>Save draft</button><button type="button" className="pm-button" disabled={busy||sample||stale} onClick={()=>setSubmitConfirm(true)}>{busy?'Saving…':'Submit profile'}</button></div></section>
                 </div>
                 <aside className="pm-resume-builder-aside" aria-label="Résumé quality and preview" tabIndex={0}>
                     <ResumeQuality data={data} document={cv}/>{features.some(feature=>feature.code==='resume_analyze')&&<button type="button" className="pm-button pm-button-outline" disabled={busy||sample} onClick={()=>setAiSection('analysis')}><Sparkles aria-hidden="true"/> Review résumé with AI</button>}<button type="button" className="pm-button pm-button-outline" onClick={()=>{editorScroll.current=window.scrollY;setExportError('');setPreviewOnly(true);}}>View full résumé</button><ResumeDraftPreview data={data} document={cv}/>
                 </aside>
-            </div>}
+            </div></>}
             </div>
         </div>
         <Dialog open={submitConfirm} onOpenChange={setSubmitConfirm}><DialogContent className="pm-resume-builder-dialog"><DialogHeader><DialogTitle>Submit profile</DialogTitle><DialogDescription>Apply basic details to your PM Circle profile and save your complete CV privately. Public experience, education, credentials and privacy settings are preserved.</DialogDescription></DialogHeader><div className="pm-resume-builder-actions"><button type="button" className="pm-button pm-button-outline" onClick={()=>setSubmitConfirm(false)}>Cancel</button><button type="button" className="pm-button" disabled={busy||sample||stale} onClick={()=>save('submit')}>Submit profile</button></div></DialogContent></Dialog>
@@ -178,6 +189,11 @@ export default function ResumeAssistant({ profile, draft, resumes, features, aiE
                 <div className="pm-resume-builder-actions pm-resume-dialog-footer"><button type="button" className="pm-button pm-button-outline" disabled={busy} onClick={()=>{setUploadFile(null);setExtracted(null);}}>Cancel</button><button type="button" className="pm-button" disabled={busy} onClick={extracted?applyExtracted:upload}>{busy?'Extracting…':extracted?'Use extracted details':useAiExtraction?'Extract with AI':'Extract résumé'}</button></div>
             </DialogContent>
         </Dialog>
-        <Dialog open={aiSection!==null} onOpenChange={open=>{if(!open)setAiSection(null);}}><DialogContent className="pm-resume-builder-dialog"><DialogHeader><DialogTitle>{aiSection==='analysis'?'Review résumé with AI':'Suggest with AI'}</DialogTitle><DialogDescription>Choose your current editable draft or a saved uploaded résumé. Verify suggestions before using them. Experience suggestions apply to the first work experience entry.</DialogDescription></DialogHeader>{sample?<p>Return to your own résumé before requesting AI assistance.</p>:aiSection&&<ResumeAiReview key={aiSection} resumes={resumes} features={features} currentDraft={JSON.stringify({role:data.role,company:data.company,summary:data.summary,experience:aiSection==='responsibilities'?cv.experience.slice(0,1):cv.experience,education:cv.education,projects:cv.projects,research:cv.research,skills:cv.skills,certifications:cv.certifications,achievements:cv.achievements,languages:cv.languages,interests:cv.interests})} initialSection={aiSection==='analysis'?'':aiSection==='summary'?'Professional summary':'Responsibilities'} onSuggestion={aiSection==='analysis'?undefined:text=>{if(aiSection==='summary')update('summary',text.slice(0,limits.summary));else setCv(old=>({...old,experience:old.experience.length?old.experience.map((row,i)=>i===0?{...row,description:text.slice(0,4000)}:row):[{description:text.slice(0,4000)}]}));setAiSection(null);}}/>}</DialogContent></Dialog>
+        <Dialog open={aiSection!==null} onOpenChange={open=>{if(!open)setAiSection(null);}}>
+            <DialogContent className="pm-resume-builder-dialog">
+                <DialogHeader><DialogTitle>{aiSection==='analysis'?'Review résumé with AI':'Suggest with AI'}</DialogTitle><DialogDescription>{aiSection==='analysis'?'Choose your current editable draft or a saved uploaded résumé. Verify the review against your original CV.':`Improve ${aiSection?.label??'this field'}. Review the suggestion before applying it to this field only.`}</DialogDescription></DialogHeader>
+                {sample?<p>Return to your own résumé before requesting AI assistance.</p>:aiSection==='analysis'?<ResumeAiReview key="analysis" resumes={resumes} features={features} currentDraft={JSON.stringify({role:data.role,company:data.company,summary:data.summary,experience:cv.experience,education:cv.education,projects:cv.projects,research:cv.research,skills:cv.skills,certifications:cv.certifications,achievements:cv.achievements,languages:cv.languages,interests:cv.interests})}/>:aiSection&&<ResumeAiReview key={aiSection.kind==='summary'?'summary':`${aiSection.section}-${aiSection.index}-${aiSection.field}`} resumes={[]} features={features} draftOnly currentDraft={aiSection.text} initialSection={aiSection.label} onSuggestion={text=>applySuggestion(aiSection,text)}/>}
+            </DialogContent>
+        </Dialog>
     </MemberDashboardLayout>;
 }

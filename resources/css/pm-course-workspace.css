@@ -71,5 +71,10 @@
 @container course-workspace (max-width: 31rem) { .pm-course-workspace-grid { grid-template-columns: minmax(0,1fr); } .pm-course-workspace-actions > .pm-guide-button { flex: 1 1 auto; } .pm-course-lesson-tabs .pm-guide-button { flex: 1 1 auto; } }
 @media print { .pm-course-certificate-print { max-width: none; margin: 0; padding: 0; } .pm-course-certificate-print .pm-course-print-actions { display: none; } .pm-course-certificate-print .pm-course-certificate-sheet { break-inside: avoid; margin: 0; min-height: 165mm; } }
 
-.pm-course-workspace .pm-course-learning-path-link { margin-block-start: var(--s4); }
 @container course-workspace (max-width: 31rem) { .pm-course-lesson-video { aspect-ratio: 16 / 9; } }
+
+/* Scenario content uses the same lesson text and video primitives. */
+.pm-course-question-scenario { min-width: 0; margin-block: var(--s3); }
+.pm-course-question-scenario .pm-course-lesson-video { aspect-ratio: 16 / 9; max-height: 28rem; }
+
+.pm-course-lesson-section > .pm-course-lesson-section + .pm-course-lesson-section { border-top: 1px solid var(--pm-guide-line); padding-top: var(--s3); }

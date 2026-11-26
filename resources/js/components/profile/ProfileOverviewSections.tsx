@@ -5,9 +5,10 @@ import {
     Users,
 } from 'lucide-react';
 import {
-    definitions, initialRecords,
-    type CollectionKey, type Field, type ProfileData, type RowData,
-} from './ProfileEditorPrototype';
+    definitions, initialRecords, alignedBasic, alignedCollections, alignedDefinitions, alignedRecords,
+    type CollectionKey, type CompactDetailKey, type Field, type ProfileData, type RowData,
+} from './profileResumeFields';
+import { resumeBasicFields } from './resumeFieldSchema';
 
 type Props = {
     profile: ProfileData;
@@ -18,13 +19,16 @@ type Props = {
 
 const headings: Array<{ key: CollectionKey; icon: typeof Briefcase }> = [
     { key: 'experiences', icon: Briefcase },
+    { key: 'research', icon: FileText },
     { key: 'projects', icon: FileText },
     { key: 'educations', icon: GraduationCap },
     { key: 'certifications', icon: Shield },
+    { key: 'skill_groups', icon: Sparkles },
     { key: 'courses', icon: BookOpen },
     { key: 'awards', icon: Award },
     { key: 'publications', icon: FileText },
     { key: 'volunteering', icon: Users },
+    { key: 'interests', icon: Sparkles },
     { key: 'languages', icon: Languages },
     { key: 'links', icon: LinkIcon },
 ];
@@ -95,20 +99,34 @@ function OverviewCard({ title, icon: Icon, onEdit, children }: {
     </section>;
 }
 
-function CollectionCard({ type, icon, rows, featuredProjectId, originalProjects, onEdit }: {
+function CollectionCard({ type, icon, rows, featuredProjectId, originalProjects, onEdit, compact, aligned = false }: {
     type: CollectionKey;
     icon: typeof Briefcase;
     rows: RowData[];
     featuredProjectId?: number;
     originalProjects: RowData[];
+    compact?: Partial<Record<CompactDetailKey, string | null>>;
+    aligned?: boolean;
     onEdit?: () => void;
 }) {
-    const definition = definitions[type];
+    const definition = aligned ? alignedDefinitions[type as keyof typeof alignedDefinitions] : definitions[type];
+    const displayFields = (row: RowData) => !aligned && row.period !== undefined && ['educations','experiences','projects','certifications','awards'].includes(type)
+        ? [...definition.fields.filter(field => !['start_month','end_month','issue_month','expiry_month','award_month','is_current','does_not_expire'].includes(field.key)), {key:'period',label:'Period'}] : definition.fields;
     const ordered = type === 'projects' && featuredProjectId
         ? [...rows].sort((a, b) => Number(b.id === featuredProjectId) - Number(a.id === featuredProjectId))
         : rows;
+    const summaryFields: Partial<Record<CollectionKey, { key: CompactDetailKey; label: string }[]>> = {
+        experiences: [{ key: 'employment_period', label: 'Employment period' }, { key: 'responsibilities', label: 'Responsibilities' }],
+        projects: [{ key: 'selected_projects', label: 'Selected projects summary' }],
+        educations: [{ key: 'degree', label: 'Degree' }, { key: 'institution', label: 'Institution' }],
+        certifications: [{ key: 'certification', label: 'Self-reported certification' }],
+        courses: [{ key: 'professional_development', label: 'Professional development summary' }],
+        publications: [{ key: 'public_speaking', label: 'Public speaking' }],
+    };
+    const summary = (summaryFields[type] ?? []).filter(field => Boolean(compact?.[field.key]?.trim()));
     return <OverviewCard title={definition.title} icon={icon} onEdit={onEdit}>
-        {ordered.length === 0
+        {summary.length > 0 && <ReadOnlyFields fields={summary} record={compact ?? {}} />}
+        {ordered.length === 0 && summary.length > 0 ? null : ordered.length === 0
             ? <p className="pm-profile-empty">No {definition.title.toLowerCase()} added yet.</p>
             : <div className="pm-overview-records">
                 {ordered.map((record, index) => {
@@ -127,7 +145,7 @@ function CollectionCard({ type, icon, rows, featuredProjectId, originalProjects,
                                         {Number(original.team_size) > 0 && <span>Team size: <strong>{original.team_size}</strong></span>}
                                         {Number(original.delivery_months) > 0 && <span>Delivery: <strong>{original.delivery_months} months</strong></span>}
                                     </div>}
-                                <ReadOnlyFields fields={definition.fields} record={record} omit={['title']} />
+                                <ReadOnlyFields fields={displayFields(record)} record={record} omit={['title']} />
                             </div>
                             {workSample && <a className="pm-btn pm-btn-secondary pm-btn-sm pm-overview-work-link" href={workSample}
                                 target="_blank" rel="noopener noreferrer">View work sample ↗</a>}
@@ -139,7 +157,7 @@ function CollectionCard({ type, icon, rows, featuredProjectId, originalProjects,
                                 <h4>{String(record[definition.titleField] ?? definition.itemTitle)}</h4>
                             </div>
                         </div>
-                        <ReadOnlyFields fields={definition.fields} record={record} omit={[definition.titleField]} />
+                        <ReadOnlyFields fields={displayFields(record)} record={record} omit={[definition.titleField]} />
                     </article>;
                 })}
             </div>}
@@ -148,11 +166,29 @@ function CollectionCard({ type, icon, rows, featuredProjectId, originalProjects,
 
 /** The signed-in owner's overview: it mirrors the editor's persisted fields, without new reads. */
 export function ProfileOverviewSections({ profile, featuredProjectId, onEdit, visibleFields }: Props) {
-    const canSee = (field: string) => visibleFields === undefined || visibleFields.includes(field);
+    // Owner overview mirrors exactly the editable profile sections, not the private CV.
+    if (visibleFields === undefined) {
+        const basic = alignedBasic(profile);
+        const records = alignedRecords(profile);
+        const basicFields: Field[] = resumeBasicFields.map(([key,label])=>({key,label, ...(key === 'linkedin' || key === 'portfolio' || key === 'github' ? {type:'url' as const} : {})}));
+        return <>
+            <OverviewCard title="Basic details" icon={UserCheck} onEdit={onEdit}>
+                <p className="pm-overview-private-note">Only you can see these contact details on this page.</p>
+                <ReadOnlyFields fields={basicFields} record={basic} />
+            </OverviewCard>
+            <OverviewCard title="Personal Profile" icon={Sparkles} onEdit={onEdit}>
+                {basic.about ? <p className="pm-overview-about">{basic.about}</p> : <p className="pm-profile-empty">No summary added yet.</p>}
+            </OverviewCard>
+            {alignedCollections.map(key => <CollectionCard key={key} type={key} icon={headings.find(item => item.key === key)?.icon ?? FileText}
+                rows={records[key]} featuredProjectId={featuredProjectId} originalProjects={profile.projects} onEdit={onEdit} aligned />)}
+        </>;
+    }
+    const canSee = (field: string) => visibleFields.includes(field);
     const collectionPrivacy: Record<CollectionKey, string> = {
         experiences: 'experience', projects: 'selected_projects', educations: 'education', certifications: 'certifications_and_licences',
         courses: 'courses_and_professional_development', awards: 'awards_and_honours', publications: 'publications_and_speaking',
         volunteering: 'volunteering', languages: 'languages', links: 'portfolio_and_links',
+        research: 'research_work', skill_groups: 'core_skills', interests: 'interests',
     };
     const details = profile.editor_details;
     const records = initialRecords(profile);
@@ -180,18 +216,13 @@ export function ProfileOverviewSections({ profile, featuredProjectId, onEdit, vi
     const shownCareer = careerFields.filter(field => canSee(careerPrivacy[field.key]));
     const career: RowData = {
         availability: canSee('availability') ? (profile.open_to_opportunities ? 'open' : 'not_looking') : undefined,
-        ...(visibleFields === undefined ? { relocation: false } : {}),
+        
         ...details?.career,
     };
 
     return <>
         {shownBasic.length > 0 && <OverviewCard title="Basic details" icon={UserCheck} onEdit={onEdit}>
             <ReadOnlyFields fields={shownBasic} record={basic} />
-        </OverviewCard>}
-        {visibleFields === undefined && <OverviewCard title="Contact details" icon={MapPin} onEdit={onEdit}>
-            <p className="pm-overview-private-note">Only you can see these contact details on this page.</p>
-            <ReadOnlyFields fields={[{ key: 'email', label: 'Contact email' }, { key: 'phone', label: 'Contact phone with country code' }]}
-                record={{ email: profile.email, phone: profile.phone }} />
         </OverviewCard>}
         {['professional_summary', 'core_skills', 'tools_and_software', 'delivery_methods'].some(canSee) && <OverviewCard title="About & skills" icon={Sparkles} onEdit={onEdit}>
             {canSee('professional_summary') && (profile.about
@@ -205,7 +236,10 @@ export function ProfileOverviewSections({ profile, featuredProjectId, onEdit, vi
                 record={{ tools_software: details?.tools_software, delivery_methods: details?.delivery_methods }} />
         </OverviewCard>}
         {headings.filter(({ key }) => canSee(collectionPrivacy[key])).map(({ key, icon }) => <CollectionCard key={key} type={key} icon={icon} rows={records[key]}
-            featuredProjectId={featuredProjectId} originalProjects={profile.projects} onEdit={onEdit} />)}
+            featuredProjectId={featuredProjectId} originalProjects={profile.projects} onEdit={onEdit} compact={details?.compact} />)}
+        {canSee('portfolio_and_links') && (details?.portfolio || details?.github) && <OverviewCard title="Professional links" icon={LinkIcon}>
+            <ReadOnlyFields fields={[{ key: 'portfolio', label: 'Portfolio', type: 'url' }, { key: 'github', label: 'GitHub', type: 'url' }]} record={{ portfolio: details?.portfolio, github: details?.github }} />
+        </OverviewCard>}
         {shownCareer.length > 0 && <OverviewCard title="Career preferences" icon={Briefcase} onEdit={onEdit}>
             <ReadOnlyFields fields={shownCareer} record={career} />
         </OverviewCard>}

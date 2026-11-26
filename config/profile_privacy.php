@@ -22,7 +22,7 @@ return [
             'title' => 'About & skills',
             'fields' => [
                 ['key' => 'professional_summary', 'label' => 'Professional summary'],
-                ['key' => 'core_skills', 'label' => 'Core skills (comma-separated)'],
+                ['key' => 'core_skills', 'label' => 'Core skills & skill categories'],
                 ['key' => 'tools_and_software', 'label' => 'Tools and software'],
                 ['key' => 'delivery_methods', 'label' => 'Delivery methods'],
             ],
@@ -31,6 +31,8 @@ return [
             'title' => 'Professional sections',
             'fields' => [
                 ['key' => 'experience', 'label' => 'Experience'],
+                ['key' => 'research_work', 'label' => 'Research work'],
+                ['key' => 'interests', 'label' => 'Interests'],
                 ['key' => 'selected_projects', 'label' => 'Selected projects'],
                 ['key' => 'education', 'label' => 'Education'],
                 ['key' => 'certifications_and_licences', 'label' => 'Certifications & licences'],

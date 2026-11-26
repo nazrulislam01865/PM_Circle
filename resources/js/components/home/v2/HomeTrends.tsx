@@ -1,14 +1,15 @@
 import { HomePhoto } from './HomePhoto';
 import { HomeAction } from './HomeUi';
+import type { HomepagePresentation } from '@/types/homepage-presentation';
 
 /** Public homepage promotion for the existing Trends listing. */
-export function HomeTrends() {
+export function HomeTrends({content}: {content: HomepagePresentation['trends']}) {
     return <section className="pm-v2-container pm-v2-trends-banner" aria-labelledby="pm-v2-trends-title">
-        <HomePhoto photo="leader" alt="" className="pm-v2-trends-photo"/>
+        <HomePhoto photo={content.photo} source={content.image} alt="" className="pm-v2-trends-photo"/>
         <div className="pm-v2-trends-copy">
-            <h2 id="pm-v2-trends-title">Trends</h2>
-            <p>Weekly updates on project management, business analysis, technology, AI and more.</p>
+            <h2 id="pm-v2-trends-title">{content.heading}</h2>
+            <p>{content.description}</p>
         </div>
-        <HomeAction href="/pm-trends">Explore Trends</HomeAction>
+        <HomeAction href={content.button_url}>{content.button_label}</HomeAction>
     </section>;
 }

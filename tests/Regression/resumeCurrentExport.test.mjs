@@ -39,7 +39,8 @@ test('editor footer owns actions and aligns them to the right',()=>{
     assert.match(aside,/ResumeQuality/);assert.match(aside,/ResumeDraftPreview/);
 });
 test('sticky rail accounts for actual profile tabs and editor bottom, and never shrinks document pages',()=>{
-    assert.match(page,/tabs.getBoundingClientRect\(\).height/);
+    assert.match(page,/builder.querySelector<HTMLElement>\('\.pm-profile-section-jump'\)/);
+    assert.match(read('resources/js/components/profile/ProfileSectionJump.tsx'),/panel.getBoundingClientRect\(\).height/);
     assert.match(page,/grid.getBoundingClientRect\(\).bottom/);
     assert.match(page,/requestAnimationFrame\(sync\)/);
     assert.match(page,/removeEventListener\('scroll',schedule\)/);

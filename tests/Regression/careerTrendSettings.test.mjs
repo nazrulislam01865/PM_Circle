@@ -75,6 +75,6 @@ test('provider is pinned for queued Trends requests, test is metered and never p
     const page = read('resources/js/pages/admin/CareerTrendSettings.tsx');
     assert.match(page, /while \(result.pending/);
     assert.match(page, /<ConnectionDialogContent/);
-    assert.match(read('resources/js/components/admin/ai/ConnectionControls.tsx'), /'Connected'\) : connection.code === 'NOT_TESTED' \? 'Not tested'/);
+    assert.match(read('resources/js/components/admin/ai/ConnectionControls.tsx'), /connection.code === 'NOT_TESTED' \? 'Assigned · Test required'/);
     assert.match(read('routes/web.php'), /career-trends\/connection-test\/\{uuid\}/);
 });

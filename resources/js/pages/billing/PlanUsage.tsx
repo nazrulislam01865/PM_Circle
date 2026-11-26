@@ -12,7 +12,7 @@ type Props = {
 };
 const fmt = (n?: number) => n === undefined ? '—' : Number(n).toLocaleString();
 const date = (s?: string | null) => s ? new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeZone: 'Asia/Dhaka' }).format(new Date(s.replace(' ', 'T') + (/Z$|[+-]\d\d:\d\d$/.test(s) ? '' : 'Z'))) : '—';
-const labels: Record<string, string> = {pmp_explain: 'PMP question explanations', pmp_followup: 'PMP follow-up questions', resume_analyze: 'AI Resume Assistant — analysis', resume_rewrite: 'AI Resume Assistant — rewrite', daily_challenge_review: 'Daily Challenge feedback', scenario_review: 'Scenario review', scenario_comment_review: 'Scenario comment review', ask_ai: 'Ask AI'};
+const labels: Record<string, string> = {interview_answer_review: 'Interview Preparation — AI answer review', pmp_explain: 'PMP question explanations', pmp_followup: 'PMP follow-up questions', resume_analyze: 'AI Resume Assistant — analysis', resume_rewrite: 'AI Resume Assistant — rewrite', daily_challenge_review: 'Daily Challenge feedback', scenario_review: 'Scenario review', scenario_comment_review: 'Scenario comment review', ask_ai: 'Ask AI'};
 export default function PlanUsage({ plan, access, tokens, usage, periodStart, periodEnd, credits, examAttempts, interviewSessions, interviewEnabled }: Props) {
     const status = plan.status === 'cancel_at_term_end' ? 'Cancels at term end' : plan.source === 'complimentary' ? 'Complimentary access' : 'Active';
     return <AccountPage title="Plan & usage" description="Review your membership, AI usage and feature access.">

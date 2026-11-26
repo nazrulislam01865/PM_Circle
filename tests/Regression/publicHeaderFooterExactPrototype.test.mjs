@@ -49,14 +49,14 @@ test('all prototype header links resolve to declared public destinations', () =>
 test('homepage footer retains the screenshot copy and existing admin visibility toggles', () => {
     const footer = read('resources/js/components/home/v2/HomeFooter.tsx');
     for (const label of ['Company', 'Learning', 'Community', 'Plans & Policies', 'About Us', 'Testimonials', 'Trends', 'Help Centre', 'Courses', 'AI Tools', 'Community Feed', 'Daily Challenge', 'Events', 'Community Guidelines', 'Compare Plans', 'How to Purchase', 'Privacy Policy', 'Terms and Conditions', 'Refund Policy']) {
-        assert.ok(footer.includes(`'${label}'`) || footer.includes(`"${label}"`), `Missing ${label}`);
+        assert.ok(read('app/Support/Admin/SiteFooterContent.php').includes(`'${label}'`), `Missing ${label}`);
     }
-    assert.match(footer, /Learn project management, practise for certification, and connect with peers\./);
-    assert.match(footer, /Trademark notice\./);
+    assert.match(read('app/Support/Admin/SiteFooterContent.php'), /Learn project management, practise for certification, and connect with peers\./);
+    assert.match(read('app/Support/Admin/SiteFooterContent.php'), /Trademark notice\./);
     assert.match(read('resources/js/components/pm/trademarkNotice.ts'), /PMP®, CAPM®, PMI-ACP® and PMI-PBA®/);
-    assert.match(footer, /\{trademarkNotice\}/);
-    assert.match(footer, /© PM Circle by ITQAN/);
-    assert.match(footer, /content\.show_legal !== false/);
+    assert.match(footer, /\{content\.legal_notice\}/);
+    assert.match(read('app/Support/Admin/SiteFooterContent.php'), /© PM Circle by ITQAN/);
+    assert.match(footer, /content\.show_legal/);
     assert.doesNotMatch(footer, /pm-v2-footer-payments/);
     assert.doesNotMatch(footer, /Homepage design mockup · Sample content/);
 });

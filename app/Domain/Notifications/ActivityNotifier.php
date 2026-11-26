@@ -73,6 +73,20 @@ final class ActivityNotifier
         if ($recipientId <= 0 || $recipientId === $actorId) return;
 
         try {
+            // Only optional social activity uses these preferences; transactional mail and admin alerts are untouched.
+            $recipient = User::query()->whereKey($recipientId)->first(['id', 'account_preferences']);
+            if (! $recipient) return;
+            $preferences = $recipient->account_preferences ?? [];
+            $challenge = str_starts_with($eventKey, 'scenario-');
+            if (($preferences['inapp'] ?? true) === false
+                || ($preferences[$challenge ? 'challengeNotify' : 'communityNotify'] ?? true) === false) return;
+            if (($preferences['quiet'] ?? false) === true) {
+                $start = $preferences['quietStart'] ?? '22:00';
+                $end = $preferences['quietEnd'] ?? '07:00';
+                $zone = $preferences['timezone'] ?? 'Asia/Dhaka';
+                $time = now($zone)->format('H:i');
+                if ($start !== $end && ($start < $end ? $time >= $start && $time < $end : $time >= $start || $time < $end)) return;
+            }
             // Database-level uniqueness protects against double requests and retried moderation jobs.
             $inserted = DB::table('notifications')->insertOrIgnore([
                 'id' => (string) Str::uuid(),

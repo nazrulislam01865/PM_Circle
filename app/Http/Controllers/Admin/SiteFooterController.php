@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateSiteFooterRequest;
 use App\Models\HomePageContent;
 use App\Support\Admin\HomepageMasterData;
+use App\Support\Admin\SiteFooterContent;
 use App\Support\Exam\PmpPublicContent;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -31,12 +32,6 @@ final class SiteFooterController extends Controller
     public function update(UpdateSiteFooterRequest $request): RedirectResponse
     {
         $validated = $request->validated();
-        foreach (['social', 'social_icons'] as $group) {
-            foreach ($validated['footer'][$group] as $network => $value) {
-                $validated['footer'][$group][$network] = $value ?? '';
-            }
-        }
-
         DB::transaction(function () use ($validated, $request): void {
             $record = HomePageContent::query()->where('key', PmpPublicContent::KEY)->lockForUpdate()->first();
             if ((int) ($record?->revision ?? 0) !== (int) $validated['version']) {
@@ -44,7 +39,7 @@ final class SiteFooterController extends Controller
             }
             $content = $record?->content ?? [];
             // Preserve every unrelated PMP field exactly as stored.
-            $content['footer'] = $validated['footer'];
+            $content[SiteFooterContent::KEY] = $validated['footer'];
             $record ??= new HomePageContent(['key' => PmpPublicContent::KEY]);
             $record->forceFill([
                 'content' => $content,

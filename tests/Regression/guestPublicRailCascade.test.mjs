@@ -14,7 +14,7 @@ test('guest content, header and shared footer use a rule stronger than the legac
     assert.match(css, /\.pm-app\.pm-page-shell\.pm-guest-public-shell > \.pm-v2-header \.pm-v2-header-inner/);
     assert.match(css, /\.pm-app\.pm-page-shell\.pm-guest-public-shell > \.pm-v2-site-footer \.pm-v2-container/);
     assert.match(app, /@import '\.\/pm-public-layout-consistency\.css';/);
-    assert.match(layout, /isGuest \? ' pm-guest-public-shell'/);
+    assert.match(layout, /isPublicView \? ' pm-guest-public-shell'/);
 });
 
 test('guest course canvas matches the shared catalog while the rail and footer are preserved', () => {

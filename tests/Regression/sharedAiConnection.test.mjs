@@ -6,7 +6,7 @@ test('all four AI settings share the Career Trends connection card and dialog co
     const ui = read('resources/js/components/admin/ai/ConnectionControls.tsx');
     for (const name of ['pm-career-settings-integration', 'pm-career-settings-provider', 'pm-career-settings-status', 'pm-career-settings-dialog-actions', 'pm-admin-button-primary', 'pm-admin-button-quiet']) assert.ok(ui.includes(name));
     assert.match(ui, /<AdminChoice/);
-    assert.match(ui, /disabled=\{testing \|\| retrySeconds > 0 \|\| routingBusy\}/);
+    assert.match(ui, /disabled=\{testing \|\| retrySeconds > 0 \|\| routingBusy \|\| testDisabled \|\| connection.configured === false\}/);
     assert.match(ui, /fixed \? 'Close' : 'Use selection'/);
     for (const file of ['resources/js/components/admin/ai/SettingsShared.tsx', 'resources/js/pages/admin/CareerTrendSettings.tsx']) {
         const source = read(file);

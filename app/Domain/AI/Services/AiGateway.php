@@ -106,6 +106,15 @@ final class AiGateway
             if ($duplicate) {
                 return $this->receipt($duplicate);
             }
+            if ($featureCode === 'interview_answer_review') {
+                $context = app(\App\Domain\Interview\InterviewAiReview::class)->context($user, $input['subject'], (bool) ($input['consent'] ?? false), true);
+                if (mb_strlen($context['context']['candidate_answer']) > (int) $feature->max_input_chars) throw new AiFailure('MESSAGE_TOO_LONG', 422);
+                if ($context['existing_review_id']) {
+                    $review = DB::table('ai_requests')->where('id', $context['existing_review_id'])->where('user_id', $user->id)
+                        ->where('feature_code', $featureCode)->first();
+                    if ($review && ! in_array($review->status, ['failed', 'cancelled'], true)) return $this->receipt($review);
+                }
+            }
             if ($feature->daily_limit !== null || $featureCode === 'daily_challenge_review') {
                 $usedToday = DB::table('ai_requests')->where('user_id', $user->id)
                     ->where('feature_code', $featureCode)
@@ -150,6 +159,9 @@ final class AiGateway
                 }
             }
             $this->credits->reserve($user->id, $requestId, (int) $feature->credit_tariff);
+            if ($featureCode === 'interview_answer_review') {
+                DB::table('interview_answers')->where('id', $context['subject_id'])->update(['ai_review_request_id' => $requestId]);
+            }
             if (in_array($featureCode, ['resume_analyze', 'resume_rewrite'], true)) {
                 DB::table('ai_resume_consents')->insert([
                     'user_id' => $user->id, 'resume_id' => $context['subject_id'],

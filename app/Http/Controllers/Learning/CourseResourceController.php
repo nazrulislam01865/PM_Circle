@@ -26,6 +26,6 @@ final class CourseResourceController extends Controller
         }
         abort_unless($resource->kind === 'file' && $resource->file_path
             && Storage::disk('local')->exists($resource->file_path), 404);
-        return Storage::disk('local')->download($resource->file_path, $resource->original_name ?: 'course-resource');
+        return Storage::disk('local')->download($resource->file_path, $resource->original_name ?: 'course-resource', ['X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store']);
     }
 }

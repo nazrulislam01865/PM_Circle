@@ -106,7 +106,7 @@ export default function PmpPublicPage({ content, version, selectedSection = 'her
             <div className="pm-admin-form-content pm-pmp-admin-fields">{children}</div>
         </div>;
     }
-    function listEdit(path: 'faq.items' | 'testimonials.items' | 'footer.explore_links' | 'footer.support_links', title: string, fields: EditorField[], max = 8) {
+    function listEdit(path: 'faq.items' | 'testimonials.items', title: string, fields: EditorField[], max = 8) {
         return repeater(path, title, fields, max, 'stacked');
     }
     function addPlanFeature() {
@@ -243,9 +243,6 @@ export default function PmpPublicPage({ content, version, selectedSection = 'her
                 {selected === 'testimonials' && frame('Testimonials', 'Enter approved learner names, quotes, and photos. Avoid publishing placeholder endorsements.', <>
                     {field('testimonials.heading', 'Heading')}
                     {repeater('testimonials.items', 'Learner testimonials', [{ key: 'name', label: 'Name' }, { key: 'role', label: 'Job title' }, { key: 'quote', label: 'Approved quote', kind: 'textarea' }, { key: 'image', label: 'Portrait', kind: 'image' }], 8)}
-                </>)}
-                {selected === 'footer' && frame('Shared public footer', 'Manage the one footer used across public pages.', <>
-                    <Link href="/admin/footer" className="pm-admin-button pm-admin-button-primary">Open footer editor <ExternalLink size={16}/></Link>
                 </>)}
             </section>
         </div>

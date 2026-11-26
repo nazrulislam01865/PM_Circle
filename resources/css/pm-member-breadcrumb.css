@@ -1,0 +1,38 @@
+/* One member rail, one non-sticky breadcrumb. Public and admin trails are untouched. */
+.pm-app.pm-member-sidebar-layout .pm-dash-body > .pm-member-breadcrumb {
+    margin: 0 0 var(--pm-guide-s4);
+    padding: 0;
+    width: 100%;
+    min-width: 0;
+    font-family: var(--pm-guide-font);
+    font-size: var(--pm-guide-text-meta);
+    font-weight: var(--regular);
+    line-height: var(--pm-guide-line-body);
+    color: var(--pm-guide-muted);
+}
+.pm-app.pm-member-sidebar-layout .pm-member-breadcrumb ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--pm-guide-s1) var(--pm-guide-s2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.pm-app.pm-member-sidebar-layout .pm-member-breadcrumb li {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--pm-guide-s2);
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+.pm-app.pm-member-sidebar-layout .pm-member-breadcrumb li > :is(a, span) { min-width: 0; }
+.pm-app.pm-member-sidebar-layout .pm-member-breadcrumb a { color: var(--pm-guide-blue); text-decoration: underline; text-underline-offset: 2px; }
+.pm-app.pm-member-sidebar-layout .pm-member-breadcrumb a:hover { color: var(--pm-guide-blue-hover); }
+.pm-app.pm-member-sidebar-layout .pm-member-breadcrumb-separator { flex: none; }
+/* Shared/public page components keep their original trails for guests. Only hide them
+   in a member shell that actually rendered its replacement (including older non-nav trails). */
+.pm-app.pm-member-sidebar-layout .pm-dash-body[data-member-breadcrumb="shared"] :is(nav[aria-label="Breadcrumb"]:not(.pm-member-breadcrumb), .pm-learn-crumb, .pm-member-post-page .pm-crumbs, .pm-settings-eyebrow) {
+    display: none;
+}

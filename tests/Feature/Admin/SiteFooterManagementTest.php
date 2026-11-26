@@ -43,78 +43,88 @@ final class SiteFooterManagementTest extends TestCase
         $before = PmpPublicContent::load();
         $revision = $this->version();
         $footer = $before['footer'];
-        $footer['about_heading'] = 'Our community';
-        $footer['explore_links'] = [['label' => 'Practice', 'href' => '/learning']];
-        $footer['payment_methods'] = [['label' => 'Bank Transfer']];
-        $footer['social']['linkedin'] = '';
-
+        $footer['description'] = 'Our community';
+        $footer['columns'] = [
+            ['title' => 'Our links', 'visible' => true, 'links' => [['label' => 'Practice', 'href' => '/learning']]],
+            ['title' => 'Hidden', 'visible' => false, 'links' => [['label' => 'Privacy', 'href' => '/privacy']]],
+        ];
+        $footer['socials'] = [['label' => 'Network', 'href' => 'https://example.org/profile', 'icon' => 'globe', 'image' => '']];
+        $footer['member_links'] = [['label' => 'Privacy', 'href' => '/privacy']];
         $this->put('/admin/footer', ['footer' => $footer, 'version' => $revision])->assertRedirect('/admin/footer');
         $saved = PmpPublicContent::load();
-        $this->assertSame('Our community', $saved['footer']['about_heading']);
-        $this->assertSame('Practice', $saved['footer']['explore_links'][0]['label']);
-        $this->assertSame('', $saved['footer']['social']['linkedin']);
+        $this->assertSame('Our community', $saved['footer']['description']);
+        $this->assertSame($footer['columns'], $saved['footer']['columns']);
+        $this->assertSame('Network', $saved['footer']['socials'][0]['label']);
+        $this->assertSame($footer['member_links'], $saved['footer']['member_links']);
         $this->assertSame($before['hero'], $saved['hero']);
         $this->assertSame($before['plans'], $saved['plans']);
         $this->assertSame($revision + 1, $this->version());
-
-        $footer['about_heading'] = 'Overwritten';
-        $this->put('/admin/footer', ['footer' => $footer, 'version' => $revision])
-            ->assertSessionHasErrors('version');
-        $this->assertSame('Our community', PmpPublicContent::load()['footer']['about_heading']);
+        $footer['description'] = 'Overwritten';
+        $this->put('/admin/footer', ['footer' => $footer, 'version' => $revision])->assertSessionHasErrors('version');
+        $this->assertSame('Our community', PmpPublicContent::load()['footer']['description']);
     }
 
     public function test_footer_rejects_unsafe_routes_and_external_social_urls(): void
     {
         $this->actingAs($this->admin());
         $footer = PmpPublicContent::defaults()['footer'];
-        $footer['legal_links'] = [['label' => 'Settings', 'href' => '/admin']];
-        $this->put('/admin/footer', ['footer' => $footer, 'version' => $this->version()])
-            ->assertSessionHasErrors('footer.legal_links.0.href');
+        foreach (['/admin', '//example.org', 'javascript:alert(1)', '/careers', 'http://example.org'] as $unsafe) {
+            $footer['bottom_links'] = [['label' => 'Invalid', 'href' => $unsafe]];
+            $this->put('/admin/footer', ['footer' => $footer, 'version' => $this->version()])->assertSessionHasErrors('footer.bottom_links.0.href');
+        }
+        $footer['bottom_links'] = [];
+        $footer['socials'][0]['href'] = 'javascript:alert(1)';
+        $this->put('/admin/footer', ['footer' => $footer, 'version' => $this->version()])->assertSessionHasErrors('footer.socials.0.href');
         $this->assertSame(0, HomePageContent::query()->where('key', PmpPublicContent::KEY)->count());
-
-        $footer = PmpPublicContent::defaults()['footer'];
-        $footer['social']['facebook'] = 'javascript:alert(1)';
-        $this->put('/admin/footer', ['footer' => $footer, 'version' => $this->version()])
-            ->assertSessionHasErrors('footer.social.facebook');
     }
 
-    public function test_footer_brand_payment_logos_and_visibility_settings_can_be_saved_without_changing_other_content(): void
+    public function test_all_lists_can_be_removed_and_stay_empty(): void
     {
         $this->actingAs($this->admin());
-        $before = PmpPublicContent::load();
-        $footer = $before['footer'];
+        $footer = PmpPublicContent::defaults()['footer'];
         $footer['brand_name'] = 'PM Circle Learning';
         $footer['brand_tagline'] = 'Learning community';
-        $footer['show_newsletter'] = false;
-        $footer['show_payments'] = false;
-        $footer['show_explore'] = false;
-        $footer['payment_methods'] = [['label' => 'bKash', 'image' => '']];
-
-        $this->put('/admin/footer', ['footer' => $footer, 'version' => $this->version()])
-            ->assertRedirect('/admin/footer');
-
-        $saved = PmpPublicContent::load();
-        $this->assertSame('PM Circle Learning', $saved['footer']['brand_name']);
-        $this->assertSame('Learning community', $saved['footer']['brand_tagline']);
-        $this->assertFalse($saved['footer']['show_newsletter']);
-        $this->assertFalse($saved['footer']['show_payments']);
-        $this->assertFalse($saved['footer']['show_explore']);
-        $this->assertSame('bKash', $saved['footer']['payment_methods'][0]['label']);
-        $this->assertSame($before['hero'], $saved['hero']);
+        foreach (['columns', 'socials', 'bottom_links', 'member_links'] as $field) {
+            $footer[$field] = [];
+        }
+        $footer['show_member_notice'] = false;
+        $this->put('/admin/footer', ['footer' => $footer, 'version' => $this->version()])->assertRedirect('/admin/footer');
+        $saved = PmpPublicContent::load()['footer'];
+        $this->assertSame('PM Circle Learning', $saved['brand_name']);
+        foreach (['columns', 'socials', 'bottom_links', 'member_links'] as $field) {
+            $this->assertSame([], $saved[$field]);
+        }
+        $this->assertFalse($saved['show_member_notice']);
     }
 
-    public function test_footer_rejects_external_brand_and_payment_logo_urls(): void
+    public function test_footer_rejects_external_logo_and_custom_icon_urls(): void
     {
         $this->actingAs($this->admin());
         $footer = PmpPublicContent::defaults()['footer'];
         $footer['brand_logo'] = 'https://example.org/logo.png';
-        $this->put('/admin/footer', ['footer' => $footer, 'version' => $this->version()])
-            ->assertSessionHasErrors('footer.brand_logo');
-
+        $this->put('/admin/footer', ['footer' => $footer, 'version' => $this->version()])->assertSessionHasErrors('footer.brand_logo');
         $footer['brand_logo'] = '';
-        $footer['payment_methods'][0]['image'] = 'https://example.org/payment.png';
-        $this->put('/admin/footer', ['footer' => $footer, 'version' => $this->version()])
-            ->assertSessionHasErrors('footer.payment_methods.0.image');
+        $footer['socials'][0]['image'] = 'https://example.org/icon.png';
+        $this->put('/admin/footer', ['footer' => $footer, 'version' => $this->version()])->assertSessionHasErrors('footer.socials.0.image');
     }
 
+    public function test_old_navigation_editor_redirects_and_cannot_create_footer_menu_options(): void
+    {
+        $this->actingAs($this->admin());
+        $this->get('/admin/navigation?category=footer_menu')->assertRedirect('/admin/footer');
+        $this->get('/admin/exam-simulator/pmp?section=footer')->assertRedirect('/admin/footer');
+        $this->post('/admin/navigation', ['category' => 'footer_menu', 'label' => 'Old menu', 'value' => '/about'])->assertSessionHasErrors('category');
+    }
+
+    public function test_legacy_footer_brand_and_social_configuration_are_preserved(): void
+    {
+        $legacy = config('pmp-public.footer');
+        $legacy['brand_name'] = 'Existing brand';
+        $legacy['social']['facebook'] = 'https://example.org/existing';
+        $legacy['show_trends'] = false;
+        $footer = PmpPublicContent::withDefaults(['footer' => $legacy])['footer'];
+        $this->assertSame('Existing brand', $footer['brand_name']);
+        $this->assertSame('https://example.org/existing', $footer['socials'][0]['href']);
+        $this->assertNotContains('Trends', array_column($footer['columns'][0]['links'], 'label'));
+    }
 }

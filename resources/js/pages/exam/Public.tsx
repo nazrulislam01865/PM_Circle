@@ -13,7 +13,7 @@ export default function PublicPmpExam({ content, sampleQuestion, sampleQuestions
     const { auth, rewardPromotion } = usePage<{ auth?: { user?: { is_admin?: boolean } | null }; rewardPromotion?: RewardPromotionData | null }>().props;
     const destination = auth?.user?.is_admin ? '/admin' : auth?.user ? '/membership' : '/register';
 
-    return <PublicLayout siteLayout homePrototype guideLayout active="/exam-simulator/pmp" homeOfferLabel={rewardPromotion?.discountLabel} pmpFooterContent={content.sections.footer ? content.footer : undefined} hideFooter={!content.sections.footer} banner={{title: content.sections.hero ? content.hero.title : 'PMP Exam Simulator', description: content.sections.hero ? content.hero.description : undefined, parents: [{label: 'Exam Simulator', href: '/exam-simulator/pmp'}], titleId: 'pm-pmp-public-title'}}>
+    return <PublicLayout siteLayout homePrototype guideLayout active="/exam-simulator/pmp" homeOfferLabel={rewardPromotion?.discountLabel} pmpFooterContent={content.footer} banner={{title: content.sections.hero ? content.hero.title : 'PMP Exam Simulator', description: content.sections.hero ? content.hero.description : undefined, parents: [{label: 'Exam Simulator', href: '/exam-simulator/pmp'}], titleId: 'pm-pmp-public-title'}}>
         <Head title="PMP Exam Simulator | PM Circle">
             <meta name="description" content="Explore PMP-style practice, a free sample question, simulator plan comparisons and study resources from PM Circle."/>
         </Head>

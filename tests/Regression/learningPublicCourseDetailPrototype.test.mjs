@@ -10,14 +10,14 @@ const learningCss = read('resources/css/pm-learning.css');
 const oldCss = read('resources/css/pm-learning-course-detail.css');
 
 test('shared course detail retains public and member shells and renders all sections', () => {
-    assert.match(page, /return <PublicLayout siteLayout=\{!memberView\} active="\/learning" banner=\{\{[^\n]*\}\}>/);
-    assert.doesNotMatch(page, /<PublicCourseDetail|pm-course-public|guideLayout/);
+    assert.match(page, /return <PublicLayout siteLayout guideLayout active="\/learning">/);
+    assert.doesNotMatch(page, /<PublicCourseDetail|pm-course-public/);
     assert.match(page, /<CourseDetailHero course=\{course\}/);
     assert.match(page, /<CourseDetailTabs onChange=\{jump\}/);
     assert.match(page, /<CourseDetailOverview course=\{course\}/);
     assert.match(page, /<CourseDetailCurriculum course=\{course\}/);
     assert.match(page, /<CourseAccessCard course=\{course\}/);
-    assert.match(page, /<CourseProviderCard\s*\/>/);
+    assert.match(page, /<CourseProviderCard course=\{course\}\s*\/>/);
 });
 
 test('restoration retains original access controls, study tools, and server enrollment', () => {
@@ -51,20 +51,22 @@ test('prototype styles use existing central roles and shared guide controls', ()
     assert.match(oldCss, /@container course-detail/);
     assert.doesNotMatch(oldCss, /font-(?:size|weight|family):\s*(?:[0-9]|["'])/);
     assert.match(courseComponents, /pm-guide-button is-outline/);
-    assert.match(courseComponents, /pm-guide-control/);
+    assert.match(courseComponents, /<AdminChoice id="pm-course-practice-scope"/);
+    assert.match(courseComponents, /<AdminChoice id="pm-course-practice-topic"/);
+    assert.doesNotMatch(courseComponents, /<select\b/);
     assert.match(courseComponents, /onError=\{event =>/);
 });
 
-test('guests see public overview and illustrative samples, not protected practice or downloads', () => {
+test('guests see public overview and admin-authored examples, not protected practice or downloads', () => {
     assert.match(courseComponents, /isMember && <button/);
     assert.match(courseComponents, /practice.enabled \? canRead \?/);
     assert.match(courseComponents, /canRead \? <a href=\{`\/learning\/courses/);
-    assert.match(courseComponents, /not the scored question bank/);
-    assert.match(courseComponents, /not actual learner feedback/);
+    assert.match(courseComponents, /course\.presentation\.practice_examples/);
+    assert.doesNotMatch(courseComponents, /sampleMetrics|sample learner/);
     const controller = read('app/Http/Controllers/Learning/DemoCourseController.php');
     assert.match(controller, /! \$member->is_admin && \$member->status === 'active'/);
     assert.match(controller, /'body' => \$joined && \$enrolled && \$eligible \? \$lesson\['body'\] : null/);
-    assert.match(controller, /\$catalog->findPublished\(\$course\)/);
+    assert.match(controller, /\$catalog->findPublished\(\$course, true\)/);
     assert.doesNotMatch(controller, /LearningCourse::query\(\)/);
 });
 
@@ -77,4 +79,21 @@ test('course mutations handle HTTP and network errors and share the public URL',
     assert.match(page, /actionLock.current = true/);
     assert.match(courseComponents, /lock.current = true/);
     assert.match(page, /new URL\(demoCourseHref\(course.slug\), window.location.origin\)/);
+});
+
+
+test('detail hero restores the unboxed image and inline course heading from the prototype', () => {
+    assert.match(courseComponents, /<header className="pm-course-detail-hero"/);
+    assert.match(courseComponents, /<figure className="pm-course-detail-cover">[\s\S]*?<h1 id="pm-course-detail-title">/);
+    const hero = oldCss.match(/\.pm-course-detail-hero \{([^}]+)\}/)[1];
+    assert.match(hero, /align-items: start/);
+    assert.doesNotMatch(hero, /(?:background|border|padding):/);
+    assert.match(oldCss, /grid-template-areas: 'hero aside' 'main aside'/);
+    assert.match(oldCss, /aspect-ratio: 16 \/ 10/);
+});
+
+test('course cover centers vertically without changing its width or aspect ratio', () => {
+    assert.match(oldCss, /\.pm-course-detail-cover \{[^}]*align-self: center;[^}]*width: 100%;[^}]*min-width: 0;[^}]*height: auto;[^}]*aspect-ratio: 16 \/ 10/);
+    assert.match(oldCss, /\.pm-course-detail-cover img \{[^}]*position: absolute;[^}]*inset: 0;[^}]*width: 100%;[^}]*height: 100%;[^}]*object-fit: cover/);
+    assert.match(oldCss, /@container course-detail \(max-width: 34rem\) \{\s*\.pm-course-detail-hero \{[^}]*\}\s*\.pm-course-detail-cover \{ align-self: start; \}/);
 });

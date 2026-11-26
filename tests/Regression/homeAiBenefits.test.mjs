@@ -36,17 +36,17 @@ test('public homepage V2 follows approved prototype section order', () => {
     assert.equal(home.split('<HomeAiPractice ').length - 1, 1);
 });
 
-test('four cards retain the approved prototype defaults and are admin editable', () => {
-    const defaults = read('config/home-ai-features.php');
-    for (const phrase of [
-        'How AI helps you on PM Circle', 'Explore Plus plans',
-        'Exam Simulator', 'Ask AI about any question',
-        'Daily Challenge', 'A new AI challenge every day',
-        'Community Feed', 'AI helps keep the feed safe',
-        'Learn & Practice', 'Learn with AI support',
-    ]) assert.ok(defaults.includes(phrase), phrase);
-    assert.match(benefits, /href=\{content.button_url\}/);
-    assert.match(read('resources/js/pages/admin/Homepage.tsx'), /selected === 'ai_features'/);
+test('eight current AI cards have canonical defaults and are admin editable', () => {
+    const defaults = read('config/homepage-v2.php');
+    const ai = defaults.split("'ai_features' =>")[1].split("'resume' =>")[0];
+    assert.equal((ai.match(/'photo' =>/g) || []).length, 8);
+    assert.match(ai, /Explain exam answers/);
+    assert.match(ai, /Practise interviews/);
+    const current = read('resources/js/components/home/v2/HomeAiResume.tsx');
+    assert.match(current, /content.cards.map/);
+    assert.match(current, /href=\{card.href\}/);
+    assert.match(read('resources/js/components/admin/homepage-sections.ts'), /key: 'ai_features'/);
+
 });
 
 test('local WebP images remain lazy, accessible, and bandwidth efficient', () => {

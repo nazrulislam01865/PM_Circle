@@ -2,6 +2,7 @@ import { LinkedPagination } from '@/components/pm/Pagination';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { BookOpen, CheckCircle2, Clock3, Eye, Pencil, Plus, Search } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
+import { AdminChoice } from '@/components/admin/AdminChoice';
 import { AdminLayout } from '@/layouts/admin/AdminLayout';
 
 type CourseRow = {
@@ -48,13 +49,11 @@ export default function LearningCourses({ courses, filters, stats }: Props) {
         <section className="pm-admin-panel pm-course-admin-panel" aria-labelledby="course-bank-title">
             <div className="pm-course-admin-heading">
                 <div><h2 id="course-bank-title">All courses</h2><p>Published courses appear in the member library. Drafts remain private.</p></div>
-                <Link className="pm-admin-button pm-admin-button-primary" href="/admin/learning/courses/create"><Plus size={17}/> Add course</Link>
+                <div className="pm-course-admin-row-actions"><Link className="pm-admin-button" href="/admin/learning/courses/catalog-settings">Browse Courses settings</Link><Link className="pm-admin-button pm-admin-button-primary" href="/admin/learning/courses/create"><Plus size={17}/> Add course</Link></div>
             </div>
             <form className="pm-course-admin-filters" onSubmit={applyFilters} role="search">
                 <label className="pm-admin-field"><span>Search courses</span><input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Title, category or course link"/></label>
-                <label className="pm-admin-field"><span>Publication</span><select value={status} onChange={event => setStatus(event.target.value)}>
-                    <option value="all">All courses</option><option value="published">Published</option><option value="draft">Drafts</option>
-                </select></label>
+                <AdminChoice id="course-library-publication" label="Publication" value={status} options={[{value:'all',label:'All courses'},{value:'published',label:'Published'},{value:'draft',label:'Drafts'}]} onChange={setStatus}/>
                 <button type="submit" className="pm-admin-button pm-admin-button-quiet"><Search size={17}/> Filter</button>
                 <button type="button" className="pm-admin-button" onClick={() => { setSearch(''); setStatus('all'); router.get('/admin/learning/courses'); }}>Clear</button>
             </form>
@@ -73,6 +72,7 @@ export default function LearningCourses({ courses, filters, stats }: Props) {
                         <td><div className="pm-course-admin-row-actions">
                             <Link title={`Edit ${course.title}`} aria-label={`Edit ${course.title}`} className="pm-admin-button" href={`/admin/learning/courses/${course.id}/edit`}><Pencil size={15}/> Edit</Link>
                             <Link className="pm-admin-button" href={`/admin/learning/courses/${course.id}/content`}>Questions & resources</Link>
+                            <Link className="pm-admin-button" href={`/admin/learning/courses/${course.id}/reviews`}>Reviews</Link>
                             {course.isPublished && <Link title="View course" aria-label={`View ${course.title}`} className="pm-course-admin-icon-button" href={`/learning/courses/${encodeURIComponent(course.slug)}`}><Eye size={17}/></Link>}
                             <button type="button" className="pm-course-admin-toggle" onClick={() => toggle(course)} disabled={changing !== null} aria-label={`${course.isPublished ? 'Unpublish' : 'Publish'} ${course.title}`}>
                                 {changing === course.id ? 'Updating…' : course.isPublished ? 'Unpublish' : 'Publish'}

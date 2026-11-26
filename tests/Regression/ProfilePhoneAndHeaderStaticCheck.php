@@ -36,7 +36,7 @@ $assert(str_contains($request, 'Rule::requiredIf') && str_contains($request, "'p
     'Full profile updates require a valid phone on the server without blocking unrelated partial updates');
 $prototype = $read('resources/js/components/profile/ProfileEditorPrototype.tsx');
 $assert(str_contains($prototype, 'digits.length < 7')
-    && str_contains($prototype, 'Contact phone with country code')
+    && str_contains($prototype, "key === 'phone' ? 'tel'")
     && str_contains($prototype, 'aria-invalid={Boolean(error)}')
     && str_contains($prototype, 'Full name is required.'),
     'Prototype phone editor validates input client-side and exposes accessible errors');

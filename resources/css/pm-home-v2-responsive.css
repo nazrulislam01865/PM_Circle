@@ -157,3 +157,11 @@
     .pm-v2-events-heading-actions { width: 100%; justify-content: space-between; gap: var(--s2); }
     .pm-home-v2 .pm-v2-community-sidebar { grid-template-columns: minmax(0,1fr); align-items: start; }
 }
+
+/* Homepage editor allows a different number of slides and quick links. */
+.pm-home-v2 .pm-v2-hero-tabs-variable { display: flex; flex-wrap: wrap; justify-content: center; }
+.pm-home-v2 .pm-v2-hero-tabs-inner button { min-width: 0; overflow-wrap: anywhere; }
+.pm-home-v2 .pm-v2-quick-links-variable > div { grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--pm-guide-card-min-width, 12rem)), 1fr)); }
+.pm-home-v2 .pm-v2-skill-icon img { width: 70%; height: 70%; object-fit: contain; }
+.pm-home-v2 .pm-v2-join-section { padding-bottom: var(--s8); }
+.pm-home-v2 .pm-v2-events-section:has(+ .pm-v2-join-section) { padding-bottom: 0 !important; }

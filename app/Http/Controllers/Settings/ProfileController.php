@@ -44,6 +44,9 @@ class ProfileController extends Controller
     {
         $user = $request->user();
         $activeTab = $request->query('tab', 'overview');
+        if ($activeTab === 'imports' && ! config('pm-circle.profile_resume_imports_visible', false)) {
+            return redirect()->route('profile.edit', ['tab' => 'overview']);
+        }
         if ($activeTab === 'assistant') {
             // Preserve the verification and onboarding middleware on the original assistant route.
             if (! $user->hasVerifiedEmail() || $user->onboarding_step < 3) {
@@ -133,7 +136,7 @@ class ProfileController extends Controller
                 'languages' => $profile->languages ?? [],
                 'editor_details' => in_array($activeTab, ['edit', 'overview'], true) ? ($profile->editor_details ?? []) : [],
                 'plan_label' => ucfirst($plan).' member',
-                'location_label' => implode(', ', array_filter([$profile->city, $profile->country])),
+                'location_label' => $profile->editor_details['compact']['display_location'] ?? implode(', ', array_filter([$profile->city, $profile->country])),
                 'status_label' => $profile->open_to_opportunities ? 'Open to opportunities' : 'Not actively looking',
                 'completeness' => $completenessScore,
                 'insights' => [
@@ -166,7 +169,7 @@ class ProfileController extends Controller
         $user = $request->user();
         $validated = $request->validated();
 
-        if (array_key_exists('editor_details', $validated)) {
+        if (array_key_exists('editor_details', $validated) || array_key_exists('compact_details', $validated)) {
             app(\App\Domain\Identity\Services\ProfileEditorSaveService::class)->save($user, $validated);
             Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile details updated successfully.')]);
 

@@ -22,7 +22,7 @@ test('help search, guide navigation and support actions use shared components an
     assert.match(page, /pm-account-quick-answer/);
     assert.match(page, /pm-account-step-number/);
     assert.match(page, /className="pm-button pm-button-outline" href="\/help-center\/requests"/);
-    assert.match(page, /searchHelpGuides\(query\)/);
+    assert.match(page, /searchHelpGuides\(query, profileResumeImportsVisible\)/);
 });
 
 test('plan usage and support uploads use a centrally styled native progress indicator', () => {

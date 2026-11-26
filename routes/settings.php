@@ -1,13 +1,16 @@
 <?php
 
 use App\Http\Controllers\Settings\ProfileController;
+use App\Http\Controllers\Settings\AccountSettingsController;
 use App\Http\Controllers\Settings\ProfileEntryController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'pm.member'])->group(function () {
-    Route::redirect('settings', '/settings/profile');
+    Route::redirect('settings', '/settings/account');
+    Route::get('settings/account', [AccountSettingsController::class, 'edit'])->middleware(['verified', 'pm.onboarded'])->name('account-settings.edit');
+    Route::patch('settings/account', [AccountSettingsController::class, 'update'])->middleware(['verified', 'pm.onboarded', 'throttle:20,1'])->name('account-settings.update');
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');

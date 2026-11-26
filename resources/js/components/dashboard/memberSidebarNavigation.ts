@@ -28,10 +28,17 @@ export const memberSidebarGroups: { title: string; items: MemberSidebarEntry[] }
     ] },
     { title: 'Account', items: [
         { id: 'plan', label: 'Plan & usage', href: '/membership' },
-        { id: 'settings', label: 'Settings', href: '/settings/security' },
+        { id: 'settings', label: 'Settings', href: '/settings/account' },
         { id: 'activity', label: 'Activity log', href: '/activity-log' },
     ] },
 ];
+
+/** Presentation-only marker for modules that include AI functionality. */
+const aiSidebarIds: ReadonlySet<MemberSidebarId> = new Set(['course-group', 'exams', 'challenge', 'resume', 'interview', 'community']);
+
+export function memberSidebarHasAi(id: MemberSidebarId): boolean {
+    return aiSidebarIds.has(id);
+}
 
 export function memberSidebarContains(entry: MemberSidebarEntry, id: MemberSidebarId | undefined): boolean {
     return entry.id === id || ('children' in entry && entry.children.some(child => child.id === id));
@@ -44,7 +51,8 @@ export function memberSidebarActive(url: string): MemberSidebarId | undefined {
     if (path === '/dashboard' || path === '/dashboard/home') return parsed.searchParams.get('view') === 'community' ? 'community' : 'home';
     if (within('/dashboard/learning/certificates') || within('/learning/certificates') || ((path === '/learning' || path === '/dashboard/learning') && parsed.searchParams.get('tab') === 'certificates')) return 'certificates';
     if (within('/dashboard/learning/my-learning') || within('/learning/my-learning') || /\/courses\/[^/]+\/lessons\/\d+$/.test(path)) return 'learning';
-    if (within('/dashboard/learning')) return within('/dashboard/learning/courses') || parsed.searchParams.get('tab') === 'courses' ? 'courses' : 'learning';
+    if (path === '/dashboard/learning') return ['my-learning', 'paths', 'practice', 'exams'].includes(parsed.searchParams.get('tab') ?? '') ? 'learning' : 'courses';
+    if (within('/dashboard/learning')) return within('/dashboard/learning/courses') ? 'courses' : 'learning';
     if (within('/learning')) return (path === '/learning' && parsed.searchParams.get('tab') !== 'my-learning') || within('/learning/courses') ? 'courses' : 'learning';
     if (within('/dashboard/daily-challenge') || within('/daily-challenge') || within('/scenarios')) return 'challenge';
     if (path === '/simulators' || path === '/exam-simulator') return 'exams';

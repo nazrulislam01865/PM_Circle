@@ -13,3 +13,9 @@
 .pm-public-breadcrumb-parent { display: inline-flex; flex-wrap: wrap; gap: var(--pm-guide-s2); min-width: 0; }
 .pm-guest-public-shell .pm-public-help-content { padding-block: var(--pm-guide-s8) var(--pm-guide-s12); }
 .pm-guest-public-shell .pm-challenge-heading-row { justify-content: flex-end; }
+
+/* The opt-in course banner fits the existing member content rail. */
+.pm-app.pm-member-sidebar-layout .pm-dash-body .pm-public-page-banner {
+    padding-inline: var(--pm-guide-card-padding);
+    border-radius: var(--pm-guide-radius-card);
+}

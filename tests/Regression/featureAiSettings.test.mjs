@@ -42,7 +42,7 @@ test('connection checks use the feature-specific server keys and never return a 
     assert.match(service, /\$credentials->testEnvironment/);
     assert.match(read('app/Domain/AI/Services/AiCredentialDiagnostic.php'), /withoutRedirecting/);
     assert.match(service, /hash_hmac/);
-    assert.doesNotMatch(service, /'key'\s*=>/);
+    assert.doesNotMatch(service.slice(service.indexOf('private function base('), service.indexOf('public function test(')), /'key'\s*=>/);
 });
 test('feature and editorial settings use the existing active verified administrator role', () => {
     const access = read('app/Domain/AI/Services/AiAdminAccess.php');

@@ -83,6 +83,9 @@ Route::middleware(['auth', 'pm.admin', 'verified'])->prefix('admin')->name('admi
     Route::patch('/post-reports/{report}', [PostModerationController::class, 'update'])->middleware('throttle:30,1')->whereNumber('report')->name('post-reports.update');
     Route::get('/profile-rewards', [ProfileRewardSettingsController::class, 'edit'])->name('profile-rewards.edit');
     Route::put('/profile-rewards', [ProfileRewardSettingsController::class, 'update'])->middleware('throttle:10,1')->name('profile-rewards.update');
+    Route::get('/legal/{document}', [\App\Http\Controllers\Admin\LegalPageController::class, 'edit'])->whereIn('document', ['terms', 'privacy'])->name('legal.edit');
+    Route::put('/legal/{document}', [\App\Http\Controllers\Admin\LegalPageController::class, 'update'])->whereIn('document', ['terms', 'privacy'])->middleware('throttle:20,1')->name('legal.update');
+    Route::post('/legal/{document}/publish', [\App\Http\Controllers\Admin\LegalPageController::class, 'publish'])->whereIn('document', ['terms', 'privacy'])->middleware('throttle:5,1')->name('legal.publish');
     Route::get('/homepage', [HomepageController::class, 'edit'])->name('homepage.edit');
     Route::get('/footer', [SiteFooterController::class, 'edit'])->name('footer.edit');
     Route::put('/footer', [SiteFooterController::class, 'update'])->middleware('throttle:20,1')->name('footer.update');
@@ -105,7 +108,12 @@ Route::middleware(['auth', 'pm.admin', 'verified'])->prefix('admin')->name('admi
     Route::get('/learning/courses/{course}/edit', [LearningCourseController::class, 'edit'])->whereNumber('course')->name('learning-courses.edit');
     Route::put('/learning/courses/{course}', [LearningCourseController::class, 'update'])->middleware('throttle:20,1')->whereNumber('course')->name('learning-courses.update');
     Route::patch('/learning/courses/{course}/publish', [LearningCourseController::class, 'toggle'])->middleware('throttle:20,1')->whereNumber('course')->name('learning-courses.publish');
+    Route::get('/learning/courses/questions/lesson-template', [LearningCourseContentController::class, 'lessonQuestionTemplate'])->name('learning-courses.questions.lesson-template');
+    Route::get('/learning/courses/catalog-settings', [\App\Http\Controllers\Admin\LearningCatalogSettingsController::class, 'edit'])->name('learning-courses.catalog-settings');
+    Route::put('/learning/courses/catalog-settings', [\App\Http\Controllers\Admin\LearningCatalogSettingsController::class, 'update'])->middleware('throttle:20,1')->name('learning-courses.catalog-settings.update');
     Route::get('/learning/courses/questions/template', [LearningCourseContentController::class, 'template'])->name('learning-courses.questions.template');
+    Route::get('/learning/courses/{course}/reviews', [\App\Http\Controllers\Admin\LearningCourseReviewController::class, 'index'])->whereNumber('course')->name('learning-courses.reviews');
+    Route::patch('/learning/courses/{course}/reviews/{review}', [\App\Http\Controllers\Admin\LearningCourseReviewController::class, 'update'])->middleware('throttle:30,1')->whereNumber(['course', 'review'])->name('learning-courses.reviews.update');
     Route::get('/learning/courses/{course}/content', [LearningCourseContentController::class, 'index'])->whereNumber('course')->name('learning-courses.content');
     Route::put('/learning/courses/{course}/practice-settings', [LearningCourseContentController::class, 'settings'])->middleware('throttle:20,1')->whereNumber('course')->name('learning-courses.practice-settings');
     Route::post('/learning/courses/{course}/questions', [LearningCourseContentController::class, 'question'])->middleware('throttle:30,1')->whereNumber('course')->name('learning-courses.questions.store');
@@ -176,8 +184,8 @@ Route::post('/join/step/2', [OnboardingController::class, 'saveProfile'])->middl
 Route::post('/api/auth/send-verification-code', [EmailVerificationCodeController::class, 'sendCode'])->middleware(['pm.member:true', 'throttle:15,1']);
 Route::post('/api/auth/verify-code', [EmailVerificationCodeController::class, 'verifyCode'])->middleware(['pm.member:true', 'throttle:30,1']);
 Route::inertia('/about', 'public/About')->name('about');
-Route::inertia('/terms', 'public/Terms')->name('terms');
-Route::inertia('/privacy', 'public/Privacy')->name('privacy');
+Route::get('/terms', [\App\Http\Controllers\PublicSite\LegalPageController::class, 'terms'])->name('terms');
+Route::get('/privacy', [\App\Http\Controllers\PublicSite\LegalPageController::class, 'privacy'])->name('privacy');
 // Static public support destinations for the PMP footer; no APIs or database queries.
 Route::get('/help-center', [\App\Http\Controllers\Account\SupportController::class, 'entry'])->name('help-center');
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
@@ -239,7 +247,9 @@ Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded', 'throttle:60
 
 Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded'])->group(function () {
     Route::get('/interview-preparation', [InterviewController::class, 'index'])->name('interview.index');
-    Route::post('/interview-preparation/start', [InterviewController::class, 'start'])->middleware('throttle:10,1')->name('interview.start');
+    Route::post('/interview-preparation/preview', [InterviewController::class, 'preview'])->middleware('throttle:10,1')->block(15, 10)->name('interview.preview');
+    Route::post('/interview-preparation/jd-text', [InterviewController::class, 'jdText'])->middleware('throttle:10,1')->name('interview.jd-text');
+    Route::post('/interview-preparation/start', [InterviewController::class, 'start'])->middleware('throttle:10,1')->block(15, 10)->name('interview.start');
     Route::get('/interview-preparation/sessions/{session}', [InterviewController::class, 'practice'])->whereNumber('session')->name('interview.practice');
     Route::post('/interview-preparation/sessions/{session}/answer', [InterviewController::class, 'submit'])->middleware('throttle:15,1')->whereNumber('session')->name('interview.answer');
     Route::get('/interview-preparation/sessions/{session}/answers/{position}', [InterviewController::class, 'answerStatus'])->middleware('throttle:60,1')->whereNumber('session')->whereNumber('position')->name('interview.answer.status');
@@ -309,6 +319,7 @@ Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded'])->group(func
     Route::put('/learning/courses/{course}/practice/{attempt}/answer', [CoursePracticeController::class, 'answer'])->middleware('throttle:120,1')->whereNumber('attempt')->name('learning.courses.practice.answer');
     Route::post('/learning/courses/{course}/practice/{attempt}/submit', [CoursePracticeController::class, 'submit'])->middleware('throttle:15,1')->whereNumber('attempt')->name('learning.courses.practice.submit');
     Route::get('/learning/courses/{course}/practice/{attempt}/result', [CoursePracticeController::class, 'result'])->whereNumber('attempt')->name('learning.courses.practice.result');
+    Route::post('/learning/courses/{course}/reviews', [\App\Http\Controllers\Learning\CourseReviewController::class, 'store'])->middleware('throttle:5,1')->name('learning.courses.reviews.store');
     Route::get('/learning/courses/{course}/resources/{resource}', [CourseResourceController::class, 'open'])->middleware('throttle:40,1')->whereNumber('resource')->name('learning.courses.resources.open');
     Route::get('/learning/skills-check', [LearningController::class, 'skillsCheck'])->name('learning.skills-check');
     Route::get('/learning/starting-point-result', [LearningController::class, 'startingPointResult'])->name('learning.starting-point-result');
@@ -434,14 +445,16 @@ Route::middleware(['auth', 'pm.admin', 'verified', 'throttle:60,1'])
         Route::put('/feed-moderation', [$featureSettings, 'updateFeed'])->name('feed-moderation.update');
         Route::post('/feed-moderation/test', [$featureSettings, 'testModeration'])->withoutMiddleware('throttle:60,1')->middleware('throttle:admin-ai-diagnostic')->name('feed-moderation.test');
         Route::post('/feature-connection/{feature}', [$featureSettings, 'connection'])
-            ->whereIn('feature', ['daily-challenge', 'pmp', 'feed-moderation'])->withoutMiddleware('throttle:60,1')->middleware('throttle:admin-ai-diagnostic')->name('feature-connection');
+            ->whereIn('feature', ['daily-challenge', 'daily-challenge-review', 'pmp', 'feed-moderation', 'resume_analyze', 'resume_rewrite', 'interview_answer_review'])->withoutMiddleware('throttle:60,1')->middleware('throttle:admin-ai-diagnostic')->name('feature-connection');
         Route::get('/feature-connection/{feature}/{uuid}', [$featureSettings, 'connectionStatus'])
-            ->whereIn('feature', ['daily-challenge', 'pmp'])->whereUuid('uuid')->withoutMiddleware('throttle:60,1')->middleware('throttle:admin-ai-diagnostic-status')->name('feature-connection.status');
+            ->whereIn('feature', ['daily-challenge', 'daily-challenge-review', 'pmp', 'resume_analyze', 'resume_rewrite', 'interview_answer_review'])->whereUuid('uuid')->withoutMiddleware('throttle:60,1')->middleware('throttle:admin-ai-diagnostic-status')->name('feature-connection.status');
         $daily = \App\Http\Controllers\Admin\DailyChallenge\DailyChallengeController::class;
         Route::get('/daily-challenge', [$daily, 'index'])->name('daily-challenge.index');
         Route::put('/daily-challenge', [$daily, 'update'])->name('daily-challenge.update');
         Route::post('/daily-challenge/generate', [$daily, 'generate'])
             ->middleware('throttle:5,1')->name('daily-challenge.generate');
+        Route::post('/daily-challenge/drafts/{draft}/publish', [$daily, 'publishDraft'])
+            ->whereNumber('draft')->middleware('throttle:5,1')->name('daily-challenge.drafts.publish');
         Route::put('/daily-challenge/{scenario}/expires', [$daily, 'expire'])
             ->whereNumber('scenario')->name('daily-challenge.expires');
         Route::get('/editorial', [$editorial, 'index'])->name('editorial');

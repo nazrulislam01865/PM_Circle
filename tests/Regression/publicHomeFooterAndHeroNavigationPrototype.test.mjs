@@ -6,6 +6,7 @@ const read = path => readFileSync(new URL(`../../${path}`, import.meta.url), 'ut
 
 test('homepage quick links open the verified public Laravel pages', () => {
     const hero = read('resources/js/components/home/v2/HomeHero.tsx');
+    const defaults = read('config/homepage-v2.php').split("'quick_links' =>")[1].split("'certification' =>")[0];
     const routes = read('routes/web.php');
     for (const [label, href] of [
         ['Courses by experience level', '/learning'],
@@ -13,7 +14,8 @@ test('homepage quick links open the verified public Laravel pages', () => {
         ['Peer discussions', '/community'],
         ['Community events', '/events'],
     ]) {
-        assert.ok(hero.includes(`href="${href}">${label}</Link>`), `${label} should open ${href}`);
+        assert.ok(defaults.includes(`'label' => '${label}'`) && defaults.includes(`'href' => '${href}'`));
+        assert.match(hero, /href=\{item.href\}>\{item.label\}/);
         assert.ok(routes.includes(`'${href}'`), `missing ${href} route`);
     }
     assert.doesNotMatch(hero, /href="#pm-v2-events-title"/);
@@ -29,9 +31,9 @@ test('homepage footer uses screenshot-matching links and the approved social ico
     const footer = read('resources/js/components/home/v2/HomeFooter.tsx');
     for (const label of ['About Us', 'Testimonials', 'Trends', 'Help Centre', 'Exam Simulator', 'Courses', 'AI Tools',
         'Community Feed', 'Daily Challenge', 'Events', 'Community Guidelines', 'Compare Plans', 'How to Purchase', 'Privacy Policy', 'Terms and Conditions', 'Refund Policy']) {
-        assert.ok(footer.includes(`'${label}'`), `missing ${label}`);
+        assert.ok(read('app/Support/Admin/SiteFooterContent.php').includes(`'${label}'`), `missing ${label}`);
     }
     assert.doesNotMatch(footer, /pm-v2-footer-payments/);
-    assert.match(footer, /\{trademarkNotice\}/);
-    assert.match(footer, /FooterSocial content=\{content\} compact prototypeOrder/);
+    assert.match(footer, /\{content\.legal_notice\}/);
+    assert.match(footer, /FooterSocial content=\{content\} compact/);
 });

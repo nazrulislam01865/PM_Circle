@@ -16,7 +16,7 @@ final class DemoCourseController extends Controller
 {
     public function show(Request $request, string $course, DemoCourseCatalog $catalog, CurrentMemberPlan $plans, CourseLessonProgress $progress): Response
     {
-        $courseModel = $catalog->findPublished($course);
+        $courseModel = $catalog->findPublished($course, true);
         abort_unless($courseModel, 404);
         $record = $catalog->detailData($courseModel);
         $member = $request->user();
@@ -33,12 +33,13 @@ final class DemoCourseController extends Controller
                 ->where('is_published', true)->selectRaw('section_title, topic_title, COUNT(*) AS total')
                 ->groupBy('section_title', 'topic_title')->get()->groupBy('section_title')
             : collect();
+        $lessonTitles = collect($record['lessons'])->filter(fn ($lesson) => ! empty($lesson['uid']))->pluck('title', 'uid');
         $resources = \App\Models\LearningCourseResource::query()->where('course_id', $courseModel->id)
             ->where('is_published', true)->orderBy('section_title')->orderBy('title')
-            ->get(['id', 'title', 'section_title', 'description', 'kind'])
+            ->get(['id', 'title', 'section_title', 'lesson_uid', 'description', 'kind'])
             ->map(fn ($resource) => [
                 'id' => $resource->id, 'title' => $resource->title,
-                'section' => $resource->section_title, 'description' => $resource->description,
+                'section' => $resource->section_title, 'lessonTitle' => $resource->lesson_uid ? $lessonTitles->get($resource->lesson_uid) : null, 'description' => $resource->description,
                 'kind' => $resource->kind,
             ])->all();
         $practice = [
@@ -62,6 +63,7 @@ final class DemoCourseController extends Controller
                 ...collect($record)->except('lessons')->all(),
                 'lessons' => collect($record['lessons'])->map(fn ($lesson) => [
                     'title' => $lesson['title'],
+                    'sectionTitle' => $lesson['section_title'] ?? null, 'topicTitle' => $lesson['topic_title'] ?? null,
                     'hasVideo' => ! empty($lesson['video_url']),
                     // Server-side gate: no lesson body leaks before enrollment or after a downgrade.
                     'body' => $joined && $enrolled && $eligible ? $lesson['body'] : null,
@@ -75,6 +77,9 @@ final class DemoCourseController extends Controller
             'memberTier' => $tier,
             'practice' => $practice,
             'resources' => $resources,
+            'reviews' => $courseModel->public_review_count ? $courseModel->reviews()->where('is_published', true)
+                ->orderByDesc('updated_at')->limit(10)->get(['id', 'rating', 'body'])->all() : [],
+            'ownReview' => $joined && $enrolled && $eligible ? $courseModel->reviews()->where('user_id', $member->id)->first(['rating', 'body', 'is_published']) : null,
             'nextLesson' => $joined && $enrolled && $eligible
                 ? $progress->summary($progress->lessons($courseModel), $progress->records($member, $courseModel->id))['next']
                 : 1,

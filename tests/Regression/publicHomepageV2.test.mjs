@@ -9,12 +9,12 @@ test('public-home prototype composition respects administrator visibility and sh
     for (const component of ['HomeHero', 'HomeCertification', 'HomeCourses', 'HomeCommunity', 'HomeAiPractice', 'HomeResume', 'HomeEvents']) {
         assert.match(page, new RegExp(`<${component}\\b`), component);
     }
-    for (const section of ['hero', 'pathway', 'ai_features', 'scenario', 'community', 'members', 'skills', 'careers']) {
+    for (const section of ['hero', 'quick_links', 'certification', 'courses', 'ai_features', 'scenario', 'community', 'members', 'skills', 'resume', 'trends', 'events', 'join']) {
         assert.ok(page.includes(`visible('${section}')`), section);
     }
     assert.match(page, /<PublicLayout siteLayout homePrototype/);
     const layout = read('resources/js/layouts/pm/PublicLayout.tsx');
-    assert.match(layout, /const showHomeHeader = homePrototype \|\| isGuest/);
+    assert.match(layout, /const showHomeHeader = homePrototype \|\| isPublicView/);
     assert.match(layout, /showHomeHeader \? <HomeHeader eventsVisible=\{homeEventsVisible\}\/> : <SiteHeader/);
     assert.match(layout, /homePrototype \? 'home' : footerVariant/);
 });
@@ -33,10 +33,10 @@ test('the V2 post card reuses existing moderation-safe display and engagement se
 test('homepage reads only bounded published catalog and upcoming event data', () => {
     const controller = read('app/Http/Controllers/PublicSite/HomeController.php');
     assert.match(controller, /LearningCourse::query\(\)->where\('is_published', true\)/);
-    assert.match(controller, /->limit\(8\)/);
+    assert.match(controller, /->limit\(\(int\) \$presentation\['courses'\]\['limit'\]\)/);
     assert.match(controller, /->catalogData\(\)/);
     const events = read('resources/js/components/home/v2/HomeEvents.tsx');
-    assert.match(controller, /CommunityEvent::query\(\)->published\(\)->upcoming\(\).*->limit\(3\)/);
+    assert.match(controller, /CommunityEvent::query\(\)->published\(\)->upcoming\(\).*->limit\(\(int\) \$presentation\['events'\]\['limit'\]\)/);
     assert.match(events, /eventHref\(item.slug\)/);
     assert.doesNotMatch(events, /homeEventPreviews|addPreview/);
     assert.doesNotMatch(events, /router\.(post|put|delete)|fetch\(/);

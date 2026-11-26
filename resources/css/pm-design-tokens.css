@@ -1233,6 +1233,10 @@
     --pm-interview-card-gap: var(--s4);
     --pm-interview-hero-height: 10.75rem;
     --pm-interview-score-size: var(--donut);
+    --pm-interview-flow-hero: #102641;
+    --pm-interview-flow-hero-height: 10rem;
+    --pm-interview-flow-jd-height: 8rem;
+    --pm-interview-flow-answer-height: 12rem;
 }
 
 /* Shared marketing/contact footer tokens, defined once for both footer variants. */
@@ -1290,6 +1294,9 @@
     --pm-dash-bg: var(--canvas);
     --pm-member-sidebar-expanded-width: 15.125rem; /* Member navigation prototype: 242px. */
     --pm-member-sidebar-collapsed-width: 80px;
+    /* Compact AI markers deliberately sit below the standard menu type role. */
+    --pm-member-ai-badge-text: .6875rem;
+    --pm-member-ai-badge-icon: .625rem;
     --pm-member-header-height: var(--header-height);
     --pm-member-sidebar-width: var(--pm-member-sidebar-expanded-width);
 }
@@ -1530,4 +1537,33 @@
     --achievement-challengeReviews-light: #328883;
     --achievement-challengeReviews-dark: #225452;
     --achievement-challengeReviews-edge: #b6e9d9;
+}
+
+/* Opt-in dark palette for the account settings preview; other workspaces retain their approved theme. */
+.pm-settings-theme-dark {
+    --pm-settings-dark-action: #075db3;
+    --pm-guide-ink: #e6effe;
+    --pm-guide-body-color: #d4e1f1;
+    --pm-guide-muted: #a8bdd6;
+    --pm-guide-blue: #82b9ff;
+    --pm-guide-blue-hover: #a9cfff;
+    --pm-guide-line: #344963;
+    --pm-guide-control-line: #7890ad;
+    --pm-guide-soft: #1e324a;
+    --pm-guide-pale: #243c58;
+    --pm-guide-error: #ffb3bc;
+    --pm-guide-green: #9ee2c5;
+    --surface: #18283c;
+    --canvas: var(--pm-guide-soft);
+    --ink: var(--pm-guide-ink);
+    --muted: var(--pm-guide-muted);
+    --blue: var(--pm-guide-blue);
+    --blue-soft: var(--pm-guide-pale);
+    --border: var(--pm-guide-line);
+    --control-border: var(--pm-guide-control-line);
+    --track: #344963;
+    --green: var(--pm-guide-green);
+    --red: var(--pm-guide-error);
+    --red-soft: #492832;
+    --focus: var(--pm-guide-blue);
 }

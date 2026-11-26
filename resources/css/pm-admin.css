@@ -669,3 +669,16 @@
 .pm-admin-nav-group-button{width:100%;border:0;background:transparent;text-align:left;cursor:pointer}
 .pm-admin-nav-group-button>svg{flex:none}
 .pm-admin-nav-group-button:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+.pm-admin-homepage-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
+
+.pm-course-admin-repeat-card-head > .pm-course-admin-row-actions { flex-wrap: wrap; }
+.pm-course-admin-repeat-card > .pm-admin-button { justify-self: start; }
+.pm-course-editor-nav { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.pm-course-admin-editor > section[id] { scroll-margin-top: var(--s6); }
+
+.pm-legal-link-destination { overflow-wrap: anywhere; color: var(--muted); }
+
+.pm-footer-admin-editor { min-inline-size: 0; }
+.pm-footer-admin-editor .pm-admin-repeat-card { display: grid; gap: var(--s3); min-width: 0; }
+.pm-footer-admin-preview > .pm-member-footer { grid-column: auto; grid-row: auto; }

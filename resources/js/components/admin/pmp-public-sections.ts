@@ -10,5 +10,4 @@ export const pmpPublicSections: readonly { key: PmpPublicSection; title: string 
     { key: 'faq', title: 'FAQ' },
     { key: 'video', title: 'Video stories' },
     { key: 'testimonials', title: 'Testimonials' },
-    { key: 'footer', title: 'Footer' },
 ];

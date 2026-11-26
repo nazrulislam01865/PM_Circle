@@ -76,6 +76,9 @@ final class AiSubjectContext
                     'member_response' => mb_substr($record->body, 0, 6500),
                     'rubric' => json_decode($rubric->criteria_json, true)], 'message' => null];
         }
+        if ($feature === 'interview_answer_review') {
+            return app(\App\Domain\Interview\InterviewAiReview::class)->context($user, $subject, $consent);
+        }
         if (in_array($feature, ['resume_analyze', 'resume_rewrite'], true)) {
             if (! $consent) {
                 throw new AiFailure('CONSENT_REQUIRED', 422);
@@ -84,7 +87,11 @@ final class AiSubjectContext
                 // The member explicitly supplies their own private editor snapshot; it is data, never instructions.
                 if (isset($subject['resume_id'])) throw new AiFailure('SUBJECT_NOT_ACCESSIBLE', 422);
                 $section = trim((string) ($subject['section'] ?? ''));
-                if ($feature === 'resume_rewrite' && ! in_array($section, ['Professional summary', 'Responsibilities'], true)) throw new AiFailure('RESUME_SECTION_REQUIRED', 422);
+                if ($feature === 'resume_rewrite' && ! in_array($section, [
+                    'Professional summary', 'Responsibilities', 'Education highlights', 'Education courses',
+                    'Research details', 'Project details', 'Skills', 'Interest details',
+                    'Language proficiency', 'Certification details',
+                ], true)) throw new AiFailure('RESUME_SECTION_REQUIRED', 422);
                 $limit = $feature === 'resume_analyze' ? 18000 : 5000;
                 $text = trim((string) $message);
                 if (mb_strlen($text) < 2 || mb_strlen($text) > $limit) throw new AiFailure('MESSAGE_TOO_LONG', 422);

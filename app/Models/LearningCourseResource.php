@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 final class LearningCourseResource extends Model
 {
     protected $fillable = [
-        'course_id', 'title', 'section_title', 'description', 'kind', 'url',
+        'course_id', 'lesson_uid', 'title', 'section_title', 'description', 'kind', 'url',
         'file_path', 'original_name', 'is_published',
     ];
 

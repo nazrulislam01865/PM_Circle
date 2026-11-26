@@ -218,4 +218,33 @@ final class DailyChallengeAiTest extends TestCase
         $this->expectException(AiFailure::class);
         app(AiFeatureCatalog::class)->validate('daily_challenge_review', $answer, $rubric);
     }
+
+    public function test_marked_historical_draft_is_published_as_closed_without_review(): void
+    {
+        $this->enable();
+        $date = now('Asia/Dhaka')->subDays(3)->toDateString();
+        $id = $this->draft($date);
+        DB::table('ai_editorial_drafts')->where('id', $id)->update(['publication_at' => now()->subDays(3)]);
+        $this->artisan('daily-challenge:publish')->assertExitCode(0);
+        $this->assertDatabaseMissing('scenarios', ['daily_slot' => $date]);
+        DB::table('ai_editorial_drafts')->where('id', $id)->update(['archive_recovery' => true]);
+        $this->artisan('daily-challenge:publish')->assertExitCode(0);
+        $this->assertDatabaseHas('scenarios', ['daily_slot' => $date, 'status' => 'closed']);
+        $this->assertDatabaseHas('ai_editorial_drafts', ['id' => $id, 'status' => 'published', 'reviewed_by' => null]);
+        $this->artisan('daily-challenge:publish')->assertExitCode(0);
+        $this->assertSame(1, DB::table('scenarios')->where('daily_slot', $date)->count());
+    }
+
+    public function test_already_generated_content_can_publish_when_generation_key_is_missing(): void
+    {
+        $this->enable();
+        $date = now('Asia/Dhaka')->toDateString();
+        $id = $this->draft($date);
+        config()->set('pm-ai.daily_challenge_api_key', null);
+        app(\App\Domain\AI\Services\AiRuntimeSettings::class)->forget();
+        $this->artisan('daily-challenge:publish')->assertExitCode(0);
+        $this->assertDatabaseHas('ai_editorial_drafts', ['id' => $id, 'status' => 'published']);
+        $this->assertDatabaseHas('scenarios', ['daily_slot' => $date, 'status' => 'published']);
+    }
+
 }

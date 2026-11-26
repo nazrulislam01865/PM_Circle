@@ -66,9 +66,9 @@ export default function MasterData({ categories, options, selectedCategory, navi
     }
 
     return <AdminLayout active={base} selectedCatalogCategory={selectedCategory} title={navigation ? 'Navigation control' : 'Master data'}
-        subtitle={navigation ? 'Manage the public header and footer menu labels, links, order and visibility.' : 'Manage dropdown choices. Homepage icon images are uploaded individually in Homepage control.'}>
+        subtitle={navigation ? 'Manage public header menu labels, links, order and visibility.' : 'Manage dropdown choices. Homepage icon images are uploaded individually in Homepage control.'}>
         <section className="pm-admin-panel pm-admin-master-intro">{navigation ? <Link2 size={22} aria-hidden="true"/> : <Database size={22} aria-hidden="true"/>}
-            <div><h2>{category?.label ?? 'Select a category'}</h2><p>{navigation ? 'Manage header and footer links. External and administrative URLs are not accepted.' : category && !category.can_add ? 'You can rename, reorder or deactivate these options. Their internal values are fixed because course access, questions and resource handling depend on them.' : 'Only active values appear in the relevant forms. Homepage icons are uploaded on each item.'}</p></div>
+            <div><h2>{category?.label ?? 'Select a category'}</h2><p>{navigation ? 'Manage header links. External and administrative URLs are not accepted.' : category && !category.can_add ? 'You can rename, reorder or deactivate these options. Their internal values are fixed because course access, questions and resource handling depend on them.' : 'Only active values appear in the relevant forms. Homepage icons are uploaded on each item.'}</p></div>
             <span className="pm-admin-catalog-count">{rows.filter(row => row.is_active).length} active</span>
         </section>
         {notice && <p className="pm-admin-notice pm-admin-notice-success" role="status"><CheckCircle2 size={18}/>{notice}</p>}

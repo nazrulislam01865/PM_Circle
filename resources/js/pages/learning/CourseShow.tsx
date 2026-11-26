@@ -1,4 +1,3 @@
-import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import {
@@ -7,7 +6,7 @@ import {
     CourseDetailOverview, CourseDetailTabs, CourseProviderCard, courseActionError, type CourseDetailTab,
 } from '@/components/learning/CourseDetail';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
-import type { CoursePracticeSettings, CourseResourceData, DemoCourseDetailData } from '@/types/learning';
+import type { CoursePracticeSettings, CourseResourceData, DemoCourseDetailData, CourseReview, OwnCourseReview } from '@/types/learning';
 import { demoCourseHref } from '@/types/learning';
 
 type CourseShowProps = {
@@ -21,9 +20,11 @@ type CourseShowProps = {
     practice: CoursePracticeSettings;
     resources: CourseResourceData[];
     nextLesson?: number;
+    reviews?: CourseReview[];
+    ownReview?: OwnCourseReview | null;
 };
 
-export default function CourseShow({ course, isMember, isAuthenticated, eligible, enrolled, saved, memberTier, practice, resources, nextLesson = 1 }: CourseShowProps) {
+export default function CourseShow({ course, isMember, isAuthenticated, eligible, enrolled, saved, memberTier, practice, resources, nextLesson = 1, reviews = [], ownReview }: CourseShowProps) {
     const [submitting, setSubmitting] = useState(false);
     const [saving, setSaving] = useState(false);
     const [shareStatus, setShareStatus] = useState('');
@@ -32,6 +33,7 @@ export default function CourseShow({ course, isMember, isAuthenticated, eligible
     const actionLock = useRef(false);
     const canRead = isMember && enrolled && eligible;
     const memberView = usePage().url.split('?')[0].startsWith('/dashboard/learning/courses/');
+    const isAdmin = usePage<{ auth?: { user?: { is_admin?: boolean } | null } }>().props.auth?.user?.is_admin === true;
     const root = memberView ? '/dashboard/learning' : '/learning';
     const url = memberView ? `${root}/courses/${encodeURIComponent(course.slug)}` : demoCourseHref(course.slug);
 
@@ -83,14 +85,14 @@ export default function CourseShow({ course, isMember, isAuthenticated, eligible
         }
     };
 
-    return <PublicLayout siteLayout={!memberView} active="/learning" banner={{title: course.title, description: course.summary, parents: [{label: 'Browse courses', href: '/learning'}], titleId: 'pm-course-detail-title'}}>
+    return <PublicLayout siteLayout guideLayout active="/learning">
         <Head title={`${course.title} | Learn & Practice`} />
         <div className="pm-course-detail pm-guide-public-shell">
             <div className="pm-container pm-course-detail-inner">
-                <LegacyPageHeading><nav className="pm-course-detail-breadcrumb" aria-label="Breadcrumb">
+                <nav className="pm-course-detail-breadcrumb" aria-label="Breadcrumb">
                     <Link href={memberView ? `${root}?tab=courses` : root}>Browse courses</Link><span aria-hidden="true">/</span>
                     <span aria-current="page">{course.title}</span>
-                </nav></LegacyPageHeading>
+                </nav>
                 <div className="pm-course-detail-grid">
                     <CourseDetailHero course={course} isMember={isMember} saved={saved} saving={saving || submitting} onSave={toggleSave} onShare={share} shareStatus={shareStatus} saveError={saveError} />
                     <div className="pm-course-detail-main">
@@ -98,14 +100,14 @@ export default function CourseShow({ course, isMember, isAuthenticated, eligible
                         <CourseDetailOverview course={course} />
                         <CourseDetailCurriculum course={course} canRead={canRead} lessonRoot={root} />
                         <CourseDetailPracticePanel course={course} practice={practice} canRead={canRead} />
-                        <CourseDetailExtraPanel active="reviews" course={course} practice={practice} />
+                        <CourseDetailExtraPanel active="reviews" course={course} practice={practice} reviews={reviews} ownReview={ownReview} canRead={canRead} />
                         <CourseDetailExtraPanel active="questions" course={course} practice={practice} />
                         <CourseDetailResourcesPanel course={course} resources={resources} canRead={canRead} lessonRoot={root} />
                     </div>
                     <aside className="pm-course-detail-aside" aria-label="Course enrollment and provider">
-                        <CourseAccessCard course={course} isMember={isMember} isAuthenticated={isAuthenticated}
+                        <CourseAccessCard course={course} practice={practice} resources={resources} isMember={isMember} isAuthenticated={isAuthenticated} isAdmin={isAdmin}
                             eligible={eligible} enrolled={enrolled} memberTier={memberTier} submitting={submitting || saving} error={enrollmentError} lessonHref={course.lessons.length ? `${url}/lessons/${nextLesson}` : undefined} onEnroll={enroll} onViewCurriculum={() => jump('curriculum')} />
-                        <CourseProviderCard />
+                        <CourseProviderCard course={course} />
                     </aside>
                 </div>
             </div>

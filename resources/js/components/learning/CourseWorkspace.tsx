@@ -26,9 +26,8 @@ export function CourseWorkspacePanel({ children, className = '' }: { children: R
 }
 
 export function CourseWorkspaceEmpty({ isMember, title, description }: { isMember: boolean; title: string; description: string }) {
-    const root = courseLearningRoot(usePage().url);
     const authenticated = Boolean(usePage<{ auth?: { user?: unknown } }>().props.auth?.user);
-    return <CourseWorkspacePanel className="pm-course-workspace-empty"><h2>{title}</h2><p>{description}</p><div className="pm-course-workspace-actions">{isMember ? <Link href={root} className="pm-guide-button">Browse courses</Link> : <><Link href={authenticated ? '/join/step/2' : '/login'} className="pm-guide-button">{authenticated ? 'Finish joining' : 'Sign in'}</Link>{!authenticated && <Link href="/register" className="pm-guide-button is-outline">Join the community</Link>}<Link href="/learning" className="pm-guide-button is-outline">Browse courses</Link></>}</div></CourseWorkspacePanel>;
+    return <CourseWorkspacePanel className="pm-course-workspace-empty"><h2>{title}</h2><p>{description}</p><div className="pm-course-workspace-actions">{isMember ? <Link href="/learning" className="pm-guide-button">Browse courses</Link> : <><Link href={authenticated ? '/join/step/2' : '/login'} className="pm-guide-button">{authenticated ? 'Finish joining' : 'Sign in'}</Link>{!authenticated && <Link href="/register" className="pm-guide-button is-outline">Join the community</Link>}<Link href="/learning" className="pm-guide-button is-outline">Browse courses</Link></>}</div></CourseWorkspacePanel>;
 }
 
 export function EnrolledCourseCard({ course, root }: { course: EnrolledCourse; root: string }) {

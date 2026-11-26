@@ -74,4 +74,23 @@ final class ResumeAiWorkspaceIntegrationTest extends TestCase
         $this->assertNull($result['subject_id']);
         $this->assertSame('Managed delivery schedules.', $result['context']['resume_excerpt']);
     }
+    public function test_editor_rewrite_targets_are_explicit_and_field_scoped(): void
+    {
+        $user = User::factory()->create();
+        $context = app(AiSubjectContext::class);
+        $labels = ['Professional summary', 'Responsibilities', 'Education highlights', 'Education courses',
+            'Research details', 'Project details', 'Skills', 'Interest details', 'Language proficiency', 'Certification details'];
+        foreach ($labels as $section) {
+            $result = $context->resolve($user, 'resume_rewrite', ['draft' => true, 'section' => $section], 'Original field text.', true);
+            $this->assertSame('resume_editor_draft', $result['subject_type']);
+            $this->assertSame($section, $result['context']['section']);
+            $this->assertSame('Original field text.', $result['context']['resume_excerpt']);
+        }
+        try {
+            $context->resolve($user, 'resume_rewrite', ['draft' => true, 'section' => 'Account email'], 'Original field text.', true);
+            $this->fail('Unexpected rewrite targets must be rejected.');
+        } catch (AiFailure $error) {
+            $this->assertSame('RESUME_SECTION_REQUIRED', $error->safeCode);
+        }
+    }
 }

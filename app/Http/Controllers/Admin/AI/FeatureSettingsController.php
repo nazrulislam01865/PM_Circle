@@ -123,11 +123,13 @@ final class FeatureSettingsController extends Controller
 
     public function connection(Request $request, string $feature, AiAdminAccess $access, FeatureConnectionStatus $connection): JsonResponse
     {
-        $access->authorize($request->user(), $feature === 'daily-challenge' ? 'ai.manage_editorial' : 'ai.manage_features');
+        $access->authorize($request->user(), in_array($feature, ['daily-challenge', 'daily-challenge-review'], true) ? 'ai.manage_editorial' : 'ai.manage_features');
         $model = match ($feature) {
             'daily-challenge' => DB::table('ai_features')->where('code', 'scenario_generate')->value('model'),
+            'daily-challenge-review' => DB::table('ai_features')->where('code', 'daily_challenge_review')->value('model'),
             'pmp' => DB::table('ai_features')->where('code', 'pmp_explain')->value('model'),
             'feed-moderation' => $this->feedModel(),
+            default => DB::table('ai_features')->where('code', $feature)->value('model'),
         };
         $result = $connection->test($feature, $model, $request->user()->id);
         $access->audit($request->user()->id, 'feature.connection.test', 'ai_connection_test', $request->user()->id, null,
@@ -137,7 +139,7 @@ final class FeatureSettingsController extends Controller
 
     public function connectionStatus(Request $request, string $feature, string $uuid, AiAdminAccess $access, FeatureConnectionStatus $connection): JsonResponse
     {
-        $access->authorize($request->user(), $feature === 'daily-challenge' ? 'ai.manage_editorial' : 'ai.manage_features');
+        $access->authorize($request->user(), in_array($feature, ['daily-challenge', 'daily-challenge-review'], true) ? 'ai.manage_editorial' : 'ai.manage_features');
         return response()->json($connection->testStatus($feature, $uuid, $request->user()->id));
     }
 }

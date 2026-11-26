@@ -22,11 +22,16 @@ export type DemoCourseData = {
     thumbnail: number;
     coverUrl?: string | null;
     accessTier: 'free' | 'paid';
+    rating?: number | null; reviewCount?: number; learnerCount?: number;
     enrolled: boolean;
     saved: boolean;
 };
+export type CoursePresentation = { type: string; tags: string[]; provider_name: string; provider_description: string; faq: {question: string; answer: string}[]; practice_examples: {question: string; answer: string}[] };
+export type CourseReview = { id: number; rating: number; body: string };
+export type OwnCourseReview = { rating: number; body: string; is_published: boolean };
 export type DemoCourseDetailData = Omit<DemoCourseData, 'enrolled' | 'saved'> & {
-    lessons: { title: string; body: string | null; hasVideo?: boolean }[];
+    lessons: { title: string; body: string | null; hasVideo?: boolean; sectionTitle?: string | null; topicTitle?: string | null }[];
+    presentation?: CoursePresentation;
     overview?: string;
     objectives?: string[];
     outline?: { title: string; topics: string[] }[];
@@ -36,7 +41,7 @@ export type CoursePracticeSettings = {
     sections: { title: string; available: number; topics: { title: string; available: number }[] }[];
 };
 export type CourseResourceData = {
-    id: number; title: string; section: string; description: string | null;
+    id: number; title: string; section: string; lessonTitle?: string | null; description: string | null;
     kind: 'link' | 'file';
 };
 export const demoCourseHref = (slug: string) => `/learning/courses/${encodeURIComponent(slug)}`;
@@ -67,10 +72,10 @@ export const learningPathHref = (slug: string) => `/learning/${slug}`;
 export const learningActivityHref = (slug: string, module: number, activity: number) =>
     `${learningPathHref(slug)}/modules/${module}/activities/${activity}`;
 
-export type CourseLessonSummary = { position: number; title: string; completed: boolean };
+export type CourseLessonSummary = { position: number; title: string; completed: boolean; hasVideo?: boolean };
 export type CourseLessonProgress = { lessons: CourseLessonSummary[]; completed: number; total: number; percent: number; next: number };
 export type EnrolledCourse = Omit<DemoCourseData, 'enrolled' | 'saved'> & Omit<CourseLessonProgress, 'lessons'> & { eligible: boolean; certificate: string | null };
 export type CourseCertificate = { reference: string; memberName: string; courseTitle: string; issuedAt: string };
-export type CourseLesson = CourseLessonSummary & { key: string; body: string; video_url?: string | null; takeaway?: string | null; when_to_apply?: string | null; example?: string | null; application?: string | null; references?: string | null };
+export type CourseLesson = CourseLessonSummary & { key: string; body: string; video_url?: string | null; takeaway?: string | null; when_to_apply?: string | null; example?: string | null; application?: string | null; references?: string | null; faq?: { question: string; answer: string }[] };
 export const courseLearningRoot = (url: string) => url.startsWith('/dashboard/learning') ? '/dashboard/learning' : '/learning';
 export const courseLessonHref = (root: string, slug: string, position: number) => `${root}/courses/${encodeURIComponent(slug)}/lessons/${position}`;

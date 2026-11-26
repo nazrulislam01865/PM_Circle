@@ -15,7 +15,7 @@ final class PmpPublicContent
 
     public static function defaults(): array
     {
-        return config('pmp-public');
+        return self::withDefaults([]);
     }
 
     /** Shared cached content: public page and shared site footer use the same read. */
@@ -36,7 +36,11 @@ final class PmpPublicContent
     /** Merge named objects but replace repeatable lists in full (including removed rows). */
     public static function withDefaults(array $content): array
     {
-        return self::merge(self::defaults(), $content);
+        $legacy = self::merge(config('pmp-public'), $content);
+        $legacy['footer'] = $content[\App\Support\Admin\SiteFooterContent::KEY] ?? \App\Support\Admin\SiteFooterContent::fromLegacy($legacy['footer']);
+        unset($legacy[\App\Support\Admin\SiteFooterContent::KEY]);
+
+        return $legacy;
     }
 
     private static function merge(array $defaults, array $content): array

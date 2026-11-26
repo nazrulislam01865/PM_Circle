@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Actions\Fortify\CreateNewUser;
 use App\Models\User;
 use App\Support\SignupVerificationMode;
+use App\Support\Legal\LegalPages;
 use App\Support\Onboarding\SignupMasterData;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -65,6 +66,7 @@ class OnboardingController extends Controller
             if (! $email) return to_route('join.account');
             return Inertia::render('auth/RegisterStep2', [
                 'isGuest' => true, 'email' => $email, 'name' => '', 'profile' => null, 'certifications' => [],
+                'legalVersions' => LegalPages::acceptance(),
                 'signupOptions' => SignupMasterData::options(),
             ]);
         }
@@ -97,6 +99,8 @@ class OnboardingController extends Controller
                     'password' => $data['password'],
                     'password_confirmation' => $data['password_confirmation'],
                     'legal_acceptance' => $data['legal_acceptance'],
+                    'terms_version' => $data['terms_version'] ?? null,
+                    'privacy_version' => $data['privacy_version'] ?? null,
                 ]);
                 $action->execute($user, $data, $resumePath);
                 return $user;

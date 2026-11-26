@@ -60,14 +60,25 @@ final class CourseLearningController extends Controller
             return Inertia::render('learning/Lesson', [
                 'course' => [...$record->catalogData(), 'overview' => $record->overview, 'objectives' => $record->objectives ?? []],
                 'lesson' => ['title' => $current['title'], 'position' => $lesson, 'completed' => false, 'body' => '', 'key' => ''],
-                'progress' => $progress->summary($lessons, collect()), 'notes' => '', 'question' => null, 'resources' => [],
+                'progress' => $progress->summary($lessons, collect()), 'notes' => '', 'question' => null, 'questions' => [], 'resources' => [],
                 'canRead' => false,
             ]);
         }
         $records = $progress->records($request->user(), $record->id);
         $summary = $progress->summary($lessons, $records);
-        $question = $record->practice_enabled ? $this->question($record, $current)->first(['id', 'prompt', 'options']) : null;
+        $questions = $this->question($record, $current)->get(['id', 'prompt', 'options', 'scenario_text', 'scenario_video_url'])->map(fn ($question) => [
+            'id' => $question->id, 'prompt' => $question->prompt, 'options' => $question->options,
+            'scenarioText' => $question->scenario_text, 'scenarioVideoUrl' => $question->scenario_video_url,
+        ])->all();
         $resources = LearningCourseResource::query()->where('course_id', $record->id)->where('is_published', true)
+            ->where(function ($query) use ($current): void {
+                $query->where(function ($section) use ($current): void {
+                    $section->whereNull('lesson_uid')->where('section_title', $current['section_title'] ?? $current['title']);
+                });
+                if (! empty($current['uid'])) {
+                    $query->orWhere('lesson_uid', $current['uid']);
+                }
+            })
             ->orderBy('section_title')->orderBy('title')->get(['id', 'title', 'section_title', 'description', 'kind', 'original_name'])
             ->map(fn ($resource) => ['id' => $resource->id, 'title' => $resource->title, 'section' => $resource->section_title,
                 'description' => $resource->description, 'kind' => $resource->kind,
@@ -76,7 +87,7 @@ final class CourseLearningController extends Controller
             'course' => [...$record->catalogData(), 'overview' => $record->overview, 'objectives' => $record->objectives ?? []],
             'lesson' => [...$current, 'position' => $lesson, 'completed' => $summary['lessons'][$lesson - 1]['completed']],
             'progress' => $summary, 'notes' => $records->get($current['key'])?->notes ?? '',
-            'question' => $question ? ['id' => $question->id, 'prompt' => $question->prompt, 'options' => $question->options] : null,
+            'question' => $questions[0] ?? null, 'questions' => $questions,
             'resources' => $resources, 'canRead' => true,
         ]);
     }
@@ -98,7 +109,6 @@ final class CourseLearningController extends Controller
     public function check(Request $request, string $course, int $lesson, CurrentMemberPlan $plans, CourseAccess $access, CourseLessonProgress $progress): JsonResponse
     {
         [$record, $current] = $this->authorizedLesson($request, $course, $lesson, $plans, $access, $progress);
-        abort_unless($record->practice_enabled, 403);
         $data = $request->validate(['question' => ['required', 'integer'], 'option' => ['required', 'in:A,B,C,D']]);
         $question = $this->question($record, $current)->whereKey($data['question'])->firstOrFail();
         return response()->json(['correct' => $question->correct_option === $data['option'], 'correctOption' => $question->correct_option,
@@ -129,7 +139,20 @@ final class CourseLearningController extends Controller
     private function question(LearningCourse $course, array $lesson): \Illuminate\Database\Eloquent\Builder
     {
         return LearningCourseQuestion::query()->where('course_id', $course->id)->where('is_published', true)
-            ->where('topic_title', $lesson['title'])->orderBy('id');
+            ->where(function ($query) use ($course, $lesson): void {
+                $query->whereRaw('1 = 0');
+                if (! empty($lesson['uid'])) {
+                    $query->orWhere('lesson_uid', $lesson['uid']);
+                }
+                if ($course->practice_enabled) {
+                    $query->orWhere(function ($legacy) use ($lesson): void {
+                        $legacy->whereNull('lesson_uid')->where('topic_title', $lesson['topic_title'] ?? $lesson['title']);
+                        if (! empty($lesson['section_title'])) {
+                            $legacy->where('section_title', $lesson['section_title']);
+                        }
+                    });
+                }
+            })->orderBy('id');
     }
 
     private function certificateData(object $row): array

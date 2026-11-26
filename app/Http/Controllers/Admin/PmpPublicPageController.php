@@ -45,8 +45,15 @@ final class PmpPublicPageController extends Controller
                 throw ValidationException::withMessages(['version' => 'Another administrator saved this page. Reload to review the latest changes.']);
             }
             $record ??= new HomePageContent(['key' => PmpPublicContent::KEY]);
+            $content = $validated['content'];
+            // The shared footer has its own editor. Never overwrite its saved data here.
+            foreach (['footer', \App\Support\Admin\SiteFooterContent::KEY] as $key) {
+                if (array_key_exists($key, $record->content ?? [])) {
+                    $content[$key] = $record->content[$key];
+                }
+            }
             $record->forceFill([
-                'content' => $validated['content'],
+                'content' => $content,
                 'revision' => (int) ($record->revision ?? 0) + 1,
                 'updated_by' => $request->user()->getKey(),
             ])->save();

@@ -15,10 +15,10 @@ const courseStyles = read('resources/css/pm-learning-course-detail.css');
 
 test('every logged-out PublicLayout uses the exact homepage navigation and its styling shell', () => {
     assert.match(layout, /const isGuest = !auth\?\.user;/);
-    assert.match(layout, /const showHomeHeader = homePrototype \|\| isGuest;/);
+    assert.match(layout, /const showHomeHeader = homePrototype \|\| isPublicView;/);
     assert.match(layout, /showHomeHeader \? <HomeHeader eventsVisible=\{homeEventsVisible\}\/> : <SiteHeader/);
     assert.match(layout, /showHomeHeader \? ' pm-home-v2-shell'/);
-    assert.match(layout, /isGuest \? ' pm-guest-public-shell'/);
+    assert.match(layout, /isPublicView \? ' pm-guest-public-shell'/);
     assert.doesNotMatch(layout, /fetch\(|axios\.|router\.get\(/);
 });
 
@@ -54,14 +54,14 @@ test('all site footers use the approved homepage component, without legacy wordi
     assert.doesNotMatch(siteFooter, /<PmpPublicFooter/);
     for (const text of ['Company', 'Learning', 'Community', 'Plans & Policies',
         'Learn project management, practise for certification, and connect with peers.', 'Trademark notice.']) {
-        assert.ok(footer.includes(text), `${text} missing in reference footer`);
+        assert.ok(read('app/Support/Admin/SiteFooterContent.php').includes(text), `${text} missing in initial footer`);
     }
     assert.doesNotMatch(footer, /Homepage design mockup|Sample content/);
 });
 
 test('guest course detail aligns to the approved public rail without changing course logic', () => {
     assert.match(courseStyles, /\.pm-guest-public-shell \.pm-course-detail-inner \{ width: var\(--pm-v2-container-width\); \}/);
-    assert.match(course, /<PublicLayout siteLayout=\{!memberView\}/);
+    assert.match(course, /<PublicLayout siteLayout guideLayout active="\/learning">/);
     assert.match(course, /<CourseDetailCurriculum course=\{course\} canRead=\{canRead\}/);
     assert.match(course, /<CourseAccessCard course=\{course\}/);
     assert.match(course, /router\.post\(`\$\{url\}\/enroll`/);

@@ -238,17 +238,20 @@
     border-width: 4px;
 }
 
-/* Own-profile Overview only: preserve the public profile and editor media layouts. */
-.pm-profile-page--overview .pm-profile-top-bar { align-items: center; gap: var(--s4); }
-.pm-profile-page--overview .pm-profile-top-actions .pm-btn,
-.pm-profile-page--overview .pm-profile-completeness-action {
+/* Shared workspace header actions: the same control role on every profile tab. */
+.pm-profile-page .pm-profile-workspace-header .pm-profile-top-actions .pm-btn {
     font: var(--pm-guide-weight-control) var(--text-ui)/var(--line-ui) var(--font-ui);
     min-height: var(--control-touch);
     padding: var(--s2) var(--pm-guide-button-pad-inline);
     border-radius: var(--radius-control);
 }
-.pm-profile-page--overview .pm-profile-tab-item {
+
+/* Own-profile Overview only: preserve the public profile and editor media layouts. */
+.pm-profile-page--overview .pm-profile-completeness-action {
     font: var(--pm-guide-weight-control) var(--text-ui)/var(--line-ui) var(--font-ui);
+    min-height: var(--control-touch);
+    padding: var(--s2) var(--pm-guide-button-pad-inline);
+    border-radius: var(--radius-control);
 }
 .pm-profile-page--overview .pm-profile-main-col,
 .pm-profile-page--overview .pm-profile-side-col { gap: var(--s4); min-width: 0; }

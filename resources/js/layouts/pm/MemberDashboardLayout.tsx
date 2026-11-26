@@ -7,16 +7,21 @@ import { HomeOfferBar } from '@/components/home/v2/HomeHero';
 import { RewardOfferProvider } from '@/components/rewards/RewardOfferDialog';
 import type { DashboardShellData } from '@/types/dashboard';
 import { SiteFooter } from '@/components/pm/SiteFooter';
+import { MemberBreadcrumb } from '@/components/dashboard/MemberBreadcrumb';
+import { memberBreadcrumbs, type BreadcrumbFallback } from '@/components/dashboard/memberBreadcrumbs';
 import { NotificationCenterProvider } from '@/components/notifications/NotificationCenter';
 
 /** Single authenticated shell: one header, one sidebar, one footer on every member route. */
-export function MemberDashboardLayout({ dashboard, children, variant = 'dashboard', fullWidth = false }: {
+export function MemberDashboardLayout({ dashboard, children, variant = 'dashboard', fullWidth = false, breadcrumbFallback }: {
     dashboard: DashboardShellData;
     children: ReactNode;
     variant?: 'dashboard' | 'learning' | 'learning-catalog' | 'member-home';
     fullWidth?: boolean;
+    breadcrumbFallback?: BreadcrumbFallback;
 }) {
-    const { rewardPromotion } = usePage<{ rewardPromotion?: { discountLabel: string } | null }>().props;
+    const page = usePage<{ rewardPromotion?: { discountLabel: string } | null }>();
+    const { rewardPromotion } = page.props;
+    const breadcrumbs = memberBreadcrumbs(page.url, page.props, breadcrumbFallback);
     const [navigationOpen, setNavigationOpen] = useState(false);
     const [navigationCollapsed, setNavigationCollapsed] = useState(readSidebarPreference);
     const toggleSidebar = () => {
@@ -32,7 +37,7 @@ export function MemberDashboardLayout({ dashboard, children, variant = 'dashboar
             <MemberCompactHeader dashboard={dashboard} onOpenNavigation={() => setNavigationOpen(true)} onExpandNavigation={navigationCollapsed ? toggleSidebar : undefined}/>
             <div className="pm-dashboard-layout">
                 <div className="pm-dash-workspace">
-                    <main id="main-content" className="pm-dash-body">{children}</main>
+                    <main id="main-content" className="pm-dash-body" data-member-breadcrumb={breadcrumbs.length ? "shared" : undefined}><MemberBreadcrumb items={breadcrumbs}/>{children}</main>
                 </div>
             </div>
             <SiteFooter member/>

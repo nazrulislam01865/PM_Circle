@@ -1,7 +1,7 @@
 import { router } from '@inertiajs/react';
 import { WorkspaceConnectionPicker } from './WorkspaceConnectionPicker';
 import { X, CheckCircle2, Circle } from 'lucide-react';
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { ConnectionDialogContent, IntegrationCard, type ConnectionDisplay } from './ConnectionControls';
 import { useDiagnosticTest } from './useDiagnosticTest';
 import { AdminChoice } from '@/components/admin/AdminChoice';
@@ -35,6 +35,16 @@ export function ConnectionPanel({ feature, connection, detail, dialogRef: extern
     const [routingBusy, setRoutingBusy] = useState(false);
     const operations = feature === 'daily-challenge' ? [{ value: 'scenario_generate', label: 'Daily Challenge generation' }, { value: 'daily_challenge_review', label: 'Daily Challenge review' }] : feature === 'pmp' ? [{ value: 'pmp_explain', label: 'Question explanation' }, { value: 'pmp_followup', label: 'Follow-up tutoring' }] : [{ value: 'feed_moderation', label: 'Feed moderation' }];
     const [tested, setTested] = useState<Connection | null>(null);
+    const [activeOperation, setActiveOperation] = useState('scenario_generate');
+    const [operationConnection, setOperationConnection] = useState<Connection | null>(null);
+    const [operationReady, setOperationReady] = useState(false);
+    const [reviewTested, setReviewTested] = useState<Connection | null>(null);
+    const isDaily = feature === 'daily-challenge';
+    const review = isDaily && activeOperation === 'daily_challenge_review';
+    const diagnostic = review ? 'daily-challenge-review' : feature;
+    const onOperationState = useCallback((code: string, saved: Connection | null | undefined, canTest: boolean) => {
+        setActiveOperation(code); setOperationConnection(saved ?? null); setOperationReady(canTest); setReviewTested(null);
+    }, []);
     const { busy, retrySeconds, begin, finish, rateLimited } = useDiagnosticTest();
     const [error, setError] = useState('');
     const localRef = useRef<HTMLDialogElement>(null);
@@ -44,25 +54,26 @@ export function ConnectionPanel({ feature, connection, detail, dialogRef: extern
     // A new Inertia settings response supersedes local diagnostics for the old saved configuration.
     useEffect(() => { setTested(null); setError(''); }, [connection]);
     const status = tested && tested.model === connection.model ? tested : connection;
+    const dialogStatus = review ? (reviewTested ?? operationConnection ?? { ...connection, connected:false, configured:false, credential_name:null, code:'NOT_TESTED', message:'Loading saved answer-review connection…' }) : (isDaily ? tested ?? operationConnection ?? status : status);
     async function test() {
-        if (routingBusy) return;
+        if (routingBusy || (isDaily && (!operationReady || !dialogStatus.configured))) return;
         if (!begin()) return;
         setError('');
         const controller = new AbortController(); abortTest.current = controller;
         try {
-            const response = await fetch(`/admin/ai/feature-connection/${feature}`, { method: 'POST', credentials: 'same-origin', signal: controller.signal, headers: { Accept: 'application/json', 'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '', 'X-Requested-With': 'XMLHttpRequest' } });
+            const response = await fetch(`/admin/ai/feature-connection/${diagnostic}`, { method: 'POST', credentials: 'same-origin', signal: controller.signal, headers: { Accept: 'application/json', 'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '', 'X-Requested-With': 'XMLHttpRequest' } });
             if (rateLimited(response)) return;
             if (!response.ok) throw new Error(`Unable to check connection (${response.status}).`);
             let result: Connection = await response.json();
-            setTested(result);
+            (review ? setReviewTested : setTested)(result);
             const started = Date.now();
             while (result.pending && result.request_id && !controller.signal.aborted) {
                 if (Date.now() - started > 180_000) throw new Error('Test still pending. Check the AI queue and test again to resume the pending request.');
                 await new Promise(resolve => setTimeout(resolve, 3000));
-                const poll = await fetch(`/admin/ai/feature-connection/${feature}/${encodeURIComponent(result.request_id)}`, { credentials: 'same-origin', signal: controller.signal, headers: { Accept: 'application/json' } });
+                const poll = await fetch(`/admin/ai/feature-connection/${diagnostic}/${encodeURIComponent(result.request_id)}`, { credentials: 'same-origin', signal: controller.signal, headers: { Accept: 'application/json' } });
                 if (rateLimited(poll)) return;
                 if (!poll.ok) throw new Error(`Unable to read test status (${poll.status}).`);
-                result = await poll.json(); setTested(result);
+                result = await poll.json(); (review ? setReviewTested : setTested)(result);
             }
         } catch (e) { if (!controller.signal.aborted) setError(e instanceof Error ? e.message : 'Unable to check connection.'); }
         finally { if (!controller.signal.aborted) finish(); }
@@ -70,9 +81,9 @@ export function ConnectionPanel({ feature, connection, detail, dialogRef: extern
     const hint = feature === 'feed-moderation'
         ? (connection.verification === 'moderation' ? 'Test sends a harmless text sample to the existing Omni moderation endpoint. No post or comment is created.' : 'Test runs a small synthetic Responses request and any configured moderation preflight, using the existing moderation and global budgets. No post or comment is created.')
         : 'Test runs a small, budgeted generation request using the saved primary model and its existing moderation policy. It does not create a challenge, exam attempt or member credit charge.';
-    return <Panel title="AI integration"><IntegrationCard connection={status} provider="openai" detail={detail} onManage={() => { setOpen(true); dialog.current?.showModal(); }}/>
-        <dialog ref={dialog} onClose={() => setOpen(false)} className="pm-career-settings-dialog" aria-labelledby={`${feature}-connection-title`}><div className="pm-career-settings-dialog-head"><h2 id={`${feature}-connection-title`}>Manage connection</h2><button type="button" className="pm-admin-button" aria-label="Close dialog" onClick={() => dialog.current?.close()}><X size={18}/></button></div>
-            <ConnectionDialogContent id={`${feature}-provider`} provider="openai" options={[{value:'openai',label:'OpenAI'}]} onChange={() => {}} fixed connection={status} portalContainer={dialog.current} testing={busy} retrySeconds={retrySeconds} error={error} onTest={test} onClose={() => dialog.current?.close()} routingBusy={routingBusy} hint={`${hint} Test connection checks the saved ${feature === 'daily-challenge' ? 'generation' : feature === 'pmp' ? 'explanation' : 'moderation'} route. Other operations can be assigned above and tested at credential level.`}>{open && <WorkspaceConnectionPicker operations={operations} portalContainer={dialog.current} disabled={busy} onBusy={setRoutingBusy} onHealthChanged={() => { setTested(null); router.reload({only:['connection']}); }} onSaved={(code, model) => { setTested(null); setError(''); onRouteSaved?.(code, model); router.reload({ only: feature === 'daily-challenge' ? ['connection', 'readiness'] : feature === 'pmp' ? ['connection', 'features', 'models'] : ['connection'] }); }}/>}</ConnectionDialogContent>
+    return <Panel title="AI integration"><IntegrationCard connection={status} provider="openai" detail={detail} onManage={() => { setActiveOperation('scenario_generate'); setOperationReady(false); setOperationConnection(null); setReviewTested(null); setOpen(true); dialog.current?.showModal(); }}/>
+        <dialog ref={dialog} onClose={() => setOpen(false)} className="pm-career-settings-dialog pm-ai-connection-dialog" aria-labelledby={`${feature}-connection-title`}><div className="pm-career-settings-dialog-head"><h2 id={`${feature}-connection-title`}>Manage connection</h2><button type="button" className="pm-admin-button" aria-label="Close dialog" onClick={() => dialog.current?.close()}><X size={18}/></button></div>
+            <ConnectionDialogContent id={`${feature}-provider`} provider="openai" options={[{value:'openai',label:'OpenAI'}]} onChange={() => {}} fixed connection={dialogStatus} testDisabled={isDaily && !operationReady} testLabel={isDaily ? (review ? 'Test answer review' : 'Test generation') : 'Test connection'} operationLabel={isDaily ? (review ? 'Answer review' : 'Daily Challenge generation') : undefined} portalContainer={dialog.current} testing={busy} retrySeconds={retrySeconds} error={error} onTest={test} onClose={() => dialog.current?.close()} routingBusy={routingBusy} hint={`${hint} ${isDaily ? 'Tests the selected saved operation.' : 'Tests the saved primary route.'}`}>{open && <WorkspaceConnectionPicker operations={operations} onOperationState={isDaily ? onOperationState : undefined} portalContainer={dialog.current} disabled={busy} onBusy={setRoutingBusy} onHealthChanged={() => { setTested(null); router.reload({only:['connection']}); }} onSaved={(code, model) => { setTested(null); setReviewTested(null); setError(''); onRouteSaved?.(code, model); router.reload({ only: feature === 'daily-challenge' ? ['connection', 'readiness'] : feature === 'pmp' ? ['connection', 'features', 'models'] : ['connection'] }); }}/>}</ConnectionDialogContent>
         </dialog>
     </Panel>;
 }

@@ -16,7 +16,6 @@ final class HomepageMasterData
     // Navigation links are managed separately from dropdown-only master data.
     public const NAVIGATION_GROUPS = [
         'header_menu' => 'Header menu',
-        'footer_menu' => 'Footer menu',
     ];
 
     public const DROPDOWN_GROUPS = [
@@ -29,12 +28,13 @@ final class HomepageMasterData
         'career_trend_target_level' => 'Career Trends target levels',
     ];
 
-    public const GROUPS = self::NAVIGATION_GROUPS + self::DROPDOWN_GROUPS;
+    // Retain historical footer destinations as suggestions, not a separate editable menu.
+    public const GROUPS = self::NAVIGATION_GROUPS + ['footer_menu' => 'Footer destinations'] + self::DROPDOWN_GROUPS;
 
     /** Signup choices share the existing admin master-data editor, not the homepage editor. */
     public static function editableDropdownGroups(): array
     {
-        return self::DROPDOWN_GROUPS + self::CAREER_TREND_GROUPS + SignupMasterData::GROUPS + CourseMasterData::GROUPS + InterviewMasterData::GROUPS + DailyChallengeMasterData::GROUPS;
+        return self::CAREER_TREND_GROUPS + SignupMasterData::GROUPS + CourseMasterData::GROUPS + InterviewMasterData::GROUPS + DailyChallengeMasterData::GROUPS;
     }
 
     // Icons are implemented in the existing frontend and require a code release to add a new kind.

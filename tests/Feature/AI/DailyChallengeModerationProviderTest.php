@@ -144,7 +144,7 @@ final class DailyChallengeModerationProviderTest extends TestCase
             ], app(AiFeatureCatalog::class)->schema('scenario_generate'), 1700);
             $this->fail('A denied Omni moderation must block generation.');
         } catch (AiFailure $error) {
-            $this->assertSame('MODERATION_UNAVAILABLE', $error->safeCode);
+            $this->assertSame('MODERATION_PERMISSION_DENIED', $error->safeCode);
         }
         Http::assertNotSent(fn ($request) => str_ends_with($request->url(), '/responses'));
     }

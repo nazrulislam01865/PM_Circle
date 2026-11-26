@@ -12,7 +12,7 @@ final class CourseAccess
     public function canRead(Request $request, LearningCourse $course, CurrentMemberPlan $plans): bool
     {
         $user = $request->user();
-        if (! $course->is_published || ! $user || $user->is_admin || $user->onboarding_step < 3 || ! $user->hasVerifiedEmail()) {
+        if (! $course->is_published || ! $user || $user->is_admin || $user->status !== 'active' || $user->onboarding_step < 3 || ! $user->hasVerifiedEmail()) {
             return false;
         }
         if ($course->access_tier !== 'free' && ! in_array($plans->code($user), ['plus', 'pro'], true)) {

@@ -24,7 +24,7 @@ export default function Show({ member, overview, posts, activeTab, following, is
     const profile = { ...overview.profile, email: '', phone: '' };
     const href = `/members/${member.id}`;
     const postsHref = (cursor?: string | null) => `${href}?tab=posts${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`;
-    const location = [profile.city, profile.country].filter(Boolean).join(', ');
+    const location = profile.editor_details?.compact?.display_location ?? [profile.city, profile.country].filter(Boolean).join(', ');
     const refreshPosts = () => router.reload({ only: ['posts'] });
     const follow = () => !canInteract ? router.visit('/login') : router.visit(`${href}/follow`, { method: following ? 'delete' : 'post', preserveScroll: true });
     return <PublicLayout active="/members" banner={{title: 'Member profile', currentLabel: member.name, parents: [{label: 'Members', href: '/members'}]}}>

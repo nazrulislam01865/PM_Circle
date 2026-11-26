@@ -1,13 +1,10 @@
 /** Navigation control manages site-wide header/footer menus only. */
 export const navigationGroups = [
     { key: 'header_menu', label: 'Header menu' },
-    { key: 'footer_menu', label: 'Footer menu' },
 ] as const;
 
 /** Master data manages non-icon selections; homepage icons are uploaded per item. */
 export const dropdownGroups = [
-    { key: 'careers_location', label: 'Job locations' },
-    { key: 'careers_type', label: 'Employment types' },
     { key: 'career_trend_topic', label: 'Career Trends topics' },
     { key: 'career_trend_target_level', label: 'Career Trends target levels' },
     { key: 'signup_role', label: 'Signup roles' },

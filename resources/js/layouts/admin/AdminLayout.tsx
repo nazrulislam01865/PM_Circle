@@ -55,6 +55,11 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
         { title: 'Community events', href: '/admin/events' },
         { title: 'Manage rewards', href: '/admin/profile-rewards' },
         { title: 'Homepage control', href: '/admin/homepage' },
+        { title: 'About Us control', href: '/admin/public-pages/about' },
+        { title: 'Trends page control', href: '/admin/public-pages/trends' },
+        { title: 'Compare Plans control', href: '/admin/public-pages/compare-plans' },
+        { title: 'Refund Policy control', href: '/admin/public-pages/refund-policy' },
+        { title: 'Trend reports', href: '/admin/trend-reports' },
         { title: 'Terms and Conditions', href: '/admin/legal/terms' },
         { title: 'Privacy Policy', href: '/admin/legal/privacy' },
         { title: 'PMP questions', href: '/admin/exam-simulator/pmp/questions' },
@@ -245,6 +250,7 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
                     <BookOpen size={18} aria-hidden="true"/><span>Course library</span>
                 </Link>
                 <Link href="/admin/learning/courses/catalog-settings" aria-current={isCatalogSettings ? 'page' : undefined} className={`pm-admin-nav-link ${isCatalogSettings ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}><PanelTop size={18} aria-hidden="true"/><span>Browse Courses control</span></Link>
+                {[{href: '/admin/public-pages/about', title: 'About Us control'}, {href: '/admin/public-pages/trends', title: 'Trends page control'}, {href: '/admin/public-pages/compare-plans', title: 'Compare Plans control'}, {href: '/admin/public-pages/refund-policy', title: 'Refund Policy control'}, {href: '/admin/trend-reports', title: 'Trend reports'}].map(item => <Link key={item.href} href={item.href} aria-current={active === item.href ? 'page' : undefined} className={`pm-admin-nav-link ${active === item.href ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}><PanelTop size={18} aria-hidden="true"/><span>{item.title}</span></Link>)}
                 <Link href="/admin/events" aria-current={active === '/admin/events' ? 'page' : undefined} className={`pm-admin-nav-link ${active === '/admin/events' ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}><CalendarDays size={18} aria-hidden="true"/><span>Community events</span></Link>
                 <Link href="/admin/legal/terms" aria-current={active === '/admin/legal/terms' ? 'page' : undefined} className={`pm-admin-nav-link ${active === '/admin/legal/terms' ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}><ClipboardCheck size={18} aria-hidden="true"/><span>Terms and Conditions</span></Link>
                 <Link href="/admin/legal/privacy" aria-current={active === '/admin/legal/privacy' ? 'page' : undefined} className={`pm-admin-nav-link ${active === '/admin/legal/privacy' ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}><ClipboardCheck size={18} aria-hidden="true"/><span>Privacy Policy</span></Link>

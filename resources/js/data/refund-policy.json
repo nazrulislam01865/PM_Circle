@@ -1,0 +1,59 @@
+{
+  "banner": {
+    "title": "Refund Policy",
+    "description": "Monthly plan payments, cancellations and purchase support."
+  },
+  "navigation": {
+    "title": "On this page",
+    "enabled": true
+  },
+  "monthly-plan-payments": {
+    "title": "Monthly plan payments",
+    "navigationTitle": "Monthly plan payments",
+    "paragraphs": [
+      {
+        "text": "Completed monthly plan payments are non-refundable, including if you change your mind, use only part of your plan, or cancel during a paid month. This policy applies to PM Circle’s monthly subscription plans.",
+        "linkLabel": "",
+        "href": ""
+      }
+    ]
+  },
+  "cancel-your-plan": {
+    "title": "Cancel your plan any time",
+    "navigationTitle": "Cancel your plan",
+    "paragraphs": [
+      {
+        "text": "You can cancel at any time. To avoid the next charge on a renewing plan, cancel before the next renewal date. You can continue using your paid features until the end of the period you have already paid for. Cancellation does not generate a prorated refund.",
+        "linkLabel": "",
+        "href": ""
+      },
+      {
+        "text": "If you need help cancelling, contact PM Circle support through ITQAN Consulting.",
+        "linkLabel": "contact PM Circle support through ITQAN Consulting",
+        "href": "/contact"
+      }
+    ]
+  },
+  "payment-and-access-issues": {
+    "title": "Payment and access issues",
+    "navigationTitle": "Payment and access issues",
+    "paragraphs": [
+      {
+        "text": "If you were charged but your plan did not activate, you cannot access the features you paid for, or you see a billing error, report the issue. Include your account email, payment date and order or transaction reference. We will check the payment and resolve any confirmed billing or activation issue.",
+        "linkLabel": "report the issue",
+        "href": "/contact"
+      }
+    ]
+  },
+  "consumer-rights": {
+    "title": "Consumer rights",
+    "navigationTitle": "Consumer rights",
+    "paragraphs": [
+      {
+        "text": "Any refund or other remedy required by applicable law remains available. See the Terms and Conditions for more on purchases and plan access.",
+        "linkLabel": "Terms and Conditions",
+        "href": "/terms"
+      }
+    ]
+  }
+}

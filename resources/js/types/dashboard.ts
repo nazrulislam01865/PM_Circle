@@ -25,9 +25,16 @@ export type DashboardData = {
     postChecks: import('@/components/community/PostCheckCard').PostCheckFeedData;
     posts: DashboardPost[]; feedTab: DashboardTab;
     feedScopeCounts: import('@/components/community/FeedScopeTabs').FeedScopeCounts;
-    feedPage: { next_cursor: string | null; has_more: boolean };
+    feedPage: { next_cursor: string | null; previous_cursor?: string | null; has_more: boolean };
     virtualFeedEnabled: boolean;
+    boundedFeedEnabled?: boolean;
+    featureAccess?: { examSimulator: boolean; pmp: boolean; resume: boolean; resumeMinimum: string };
 };
 
 /** Minimal authenticated chrome props for feature pages. */
 export type DashboardShellData = Pick<DashboardData, "plan" | "isDemo" | "member"> & { featureAccess?: { examSimulator: boolean; pmp: boolean; resume: boolean; resumeMinimum: string } };
+
+export type DashboardFeedData = Pick<DashboardData, 'posts' | 'feedPage' | 'feedTab'>;
+export type DashboardStatistics = Pick<DashboardData, 'learning' | 'overview'>;
+export type DashboardIdentity = Omit<DashboardData, keyof DashboardFeedData | keyof DashboardStatistics | 'planUsage' | 'postChecks' | 'feedScopeCounts'>;
+export type DashboardFeedProps = DashboardIdentity & DashboardFeedData & Pick<DashboardData, 'postChecks' | 'feedScopeCounts'>;

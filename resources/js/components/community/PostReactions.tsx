@@ -40,7 +40,7 @@ export function PostReactionSummary({ postId, total, counts, onRefresh }: {
     if (total < 1) return null;
 
     return <>
-        <button type="button" className="pm-post-reaction-summary" onClick={() => setOpen(true)}
+        <button data-feed-pin={open || undefined} type="button" className="pm-post-reaction-summary" onClick={() => setOpen(true)}
             aria-label={`View ${total} ${total === 1 ? 'reaction' : 'reactions'} and members`}>
             <span className="pm-post-reaction-stack" aria-hidden="true">
                 {displayed.map(({ type }) => <ReactionMark key={type} type={type}/>)}

@@ -43,6 +43,15 @@ class Comment extends Model
                 \App\Domain\Community\Services\EngagementStats::applyComment($comment->post_id, 1);
             }
         });
+        static::updated(static function (self $comment): void {
+            if (! $comment->wasChanged('check_status') || $comment->deleted_at !== null
+                || $comment->getRawOriginal('deleted_at') !== null) return;
+            $before = $comment->getRawOriginal('check_status');
+            $wasVisible = $before === null || $before === 'approved';
+            \App\Domain\Community\Services\EngagementStats::applyComment(
+                $comment->post_id, (int) $comment->isVisible() - (int) $wasVisible,
+            );
+        });
         static::deleting(function (self $comment): void {
             $comment->wasActiveBeforeDeletion = $comment->deleted_at === null && $comment->isVisible();
         });

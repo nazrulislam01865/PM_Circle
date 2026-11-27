@@ -42,7 +42,7 @@ export function TrendReportRow({ article }: { article: TrendArticle }) {
             <HomePhoto photo={fallback} source={article.thumbnail} alt=""/>
         </Link>
         <div className="pm-public-trends-copy">
-            <p className="pm-public-trends-meta"><strong>{article.category}</strong><span> · Sample report</span></p>
+            <p className="pm-public-trends-meta"><strong>{article.category}</strong><span> · {article.sample ? 'Sample report' : article.classification}</span></p>
             <h2><Link href={trendArticleHref(article.slug)}>{article.title}</Link></h2>
             <p className="pm-public-trends-summary">{article.summary}</p>
             <p className="pm-public-trends-meta">Published on PM Circle {article.date}{article.sources?.length ? <> · Source: {article.sources.map((source, index) => <span key={source.url}>{index > 0 ? ', ' : ''}<a href={source.url} target="_blank" rel="noopener noreferrer">{source.title}</a></span>)}</> : null}</p>

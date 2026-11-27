@@ -75,7 +75,11 @@ final class EngagementStats
             // Column names come exclusively from the server-owned reaction vocabulary.
             $updates[$name] = DB::raw($name.($delta > 0 ? ' + ' : ' - ').abs((int) $delta));
         }
-        $affected = DB::table('post_engagement_stats')->where('post_id', $postId)->update($updates);
+        $query = DB::table('post_engagement_stats')->where('post_id', $postId);
+        foreach ($changes as $name => $delta) {
+            if ($delta < 0) $query->where($name, '>=', -$delta);
+        }
+        $affected = $query->update($updates);
         if ($affected !== 1) {
             throw new RuntimeException('Post engagement statistics are missing. Verify the backfill before opening writes.');
         }
@@ -111,18 +115,23 @@ final class EngagementStats
             ->join('posts', 'posts.id', '=', 'reactions.post_id')
             ->where('reactions.user_id', $userId)->where('posts.author_id', '!=', $userId)
             ->select('reactions.post_id', 'reactions.type')->get();
-        foreach ($reactions as $reaction) {
-            self::applyReaction((int) $reaction->post_id, $reaction->type, null);
-        }
-
         $commentCounts = DB::table('comments')
             ->join('posts', 'posts.id', '=', 'comments.post_id')
             ->where('comments.author_id', $userId)->where('posts.author_id', '!=', $userId)
             ->whereNull('comments.deleted_at')
+            ->where(fn ($query) => $query->whereNull('comments.check_status')->orWhere('comments.check_status', 'approved'))
             ->groupBy('comments.post_id')
             ->selectRaw('comments.post_id, COUNT(*) AS total')->get();
-        foreach ($commentCounts as $row) {
-            self::applyComment((int) $row->post_id, -(int) $row->total);
+        $byPost = $reactions->groupBy('post_id');
+        $byCommentPost = $commentCounts->keyBy('post_id');
+        $postIds = $byPost->keys()->merge($byCommentPost->keys())->unique()->sort(SORT_NUMERIC);
+        foreach ($postIds as $postId) {
+            foreach ($byPost->get($postId, []) as $reaction) {
+                self::applyReaction((int) $postId, $reaction->type, null);
+            }
+            if ($row = $byCommentPost->get($postId)) {
+                self::applyComment((int) $postId, -(int) $row->total);
+            }
         }
     }
 }

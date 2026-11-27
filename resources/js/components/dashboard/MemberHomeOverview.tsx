@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { ArrowRight, Check, ClipboardList, Crown, Eye, LockKeyhole, Wallet } from 'lucide-react';
 import { ProfileCompletionReward } from '@/components/rewards/ProfileCompletionReward';
 import { DashboardAvatar } from '@/components/dashboard/DashboardAvatar';
-import type { DashboardData } from '@/types/dashboard';
+import type { DashboardData, DashboardIdentity, DashboardStatistics } from '@/types/dashboard';
 
 import { BadgeMedal } from '@/components/achievements/AchievementCards';
 
@@ -22,9 +22,11 @@ function OverviewSummaryCard({ title, icon, status, children, href, action }: {
 }
 
 /** One compact, data-backed sidebar for the logged-in homepage. */
-export function MemberHomeOverview({ dashboard }: { dashboard: DashboardData }) {
-    const { member, learning, overview, planUsage } = dashboard;
-    const planLabel = { free: 'Free plan', plus: 'Plus plan', pro: 'Pro plan' }[planUsage.plan];
+export function MemberHomeOverview({ dashboard, statistics, planUsage }: { dashboard: DashboardIdentity;
+    statistics?: DashboardStatistics; planUsage?: DashboardData['planUsage'] }) {
+    const { member } = dashboard;
+    const { learning, overview } = statistics ?? {};
+    const planLabel = planUsage ? { free: 'Free plan', plus: 'Plus plan', pro: 'Pro plan' }[planUsage.plan] : '';
     const memberType = dashboard.plan === 'premium' ? 'Plus member' : dashboard.plan === 'pro' ? 'Pro member' : 'Free member';
 
     return <>
@@ -44,14 +46,16 @@ export function MemberHomeOverview({ dashboard }: { dashboard: DashboardData }) 
 
         <ProfileCompletionReward reward={dashboard.reward} />
 
-        <section className="pm-dash-card pm-member-overview-card pm-member-home-badges">
+        {overview ? <section className="pm-dash-card pm-member-overview-card pm-member-home-badges">
             <div className="pm-member-overview-heading"><h2>Earned badges</h2><Link href="/dashboard/features/achievements" className="pm-member-overview-heading-link">View all <ArrowRight size={17} aria-hidden="true" /></Link></div>
             {overview.badges.length > 0 ? <div className="pm-member-overview-badges">
                 {overview.badges.map(badge => <div className="pm-member-overview-badge pm-ach-home-badge" key={badge.id}><BadgeMedal badge={badge}/><span>{badge.name}</span></div>)}
             </div> : <p className="pm-member-overview-empty">No activity badges earned yet.</p>}
         </section>
 
-        <OverviewSummaryCard title="Plan & usage" icon={<Wallet aria-hidden="true" />}
+        : <SummaryPending title="Earned badges" prop="statistics" />}
+
+        {planUsage ? <><OverviewSummaryCard title="Plan & usage" icon={<Wallet aria-hidden="true" />}
             status={<span className="pm-member-overview-summary-pill">{planLabel}</span>}
             href="/membership" action="View usage">
             <p className="pm-member-overview-summary-copy">{planUsage.tokensRemaining !== null
@@ -70,7 +74,9 @@ export function MemberHomeOverview({ dashboard }: { dashboard: DashboardData }) 
             </div>
         </OverviewSummaryCard>
 
-        <section className="pm-dash-card pm-member-overview-card pm-member-home-insights">
+        </> : <><SummaryPending title="Plan & usage" prop="planUsage"/><SummaryPending title="Practice & results" prop="planUsage"/></>}
+
+        {overview && learning ? <><section className="pm-dash-card pm-member-overview-card pm-member-home-insights">
             <h2>Profile insights</h2>
             <div className="pm-member-overview-metrics is-two">
                 <div><strong>{overview.insights.last30}</strong><span>Views in 30 days</span></div>
@@ -104,5 +110,13 @@ export function MemberHomeOverview({ dashboard }: { dashboard: DashboardData }) 
             </div>
             <Link href="/activity-log" className="pm-member-overview-link">View activity <ArrowRight size={17} aria-hidden="true" /></Link>
         </section>
+        </> : <>{['Profile insights', 'Your learning', 'Exam syllabus', 'Community contribution'].map(title => <SummaryPending key={title} title={title} prop="statistics"/>)}</>}
     </>;
+}
+
+function SummaryPending({ title, prop }: { title: string; prop: 'statistics' | 'planUsage' }) {
+    return <section className="pm-dash-card pm-member-overview-card" aria-label={title} style={{ minHeight: 104 }}>
+        <h2>{title}</h2><p className="pm-member-overview-empty">Summary not loaded yet.</p>
+        <button type="button" className="pm-member-overview-link" onClick={() => router.reload({ only: [prop] })}>Retry summary</button>
+    </section>;
 }

@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import { ImagePlus, Send, Smile, X } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { CommentFeedback } from './CommentFeedback';
@@ -21,6 +22,8 @@ const emojis = ['🙂', '😊', '❤️', '👍', '👏', '🙌', '🎉', '🤝'
 const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const maxFileBytes = 5 * 1024 * 1024;
 const commentDrafts = new Map<number, string>();
+const MAX_DRAFTS = 24;
+let draftViewer = 0;
 
 /** Shared post/discussion comment editor. Scenario replies provide a text-submit callback; post comments use their existing media endpoint. */
 export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc, canInteract, onJoin, onCreated, onSubmitText, onCancel, replyToName, compact = false, allowMedia = true, maxLength = 3000 }: {
@@ -38,6 +41,8 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
     replyToName?: string;
     compact?: boolean;
 }) {
+    const viewer = usePage<{ auth?: { user?: { id: number } | null } }>().props.auth?.user?.id ?? 0;
+    if (draftViewer !== viewer) { commentDrafts.clear(); draftViewer = viewer; }
     const [body, setBody] = useState(() => compact || postId === undefined ? '' : (commentDrafts.get(postId) ?? ''));
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
@@ -52,6 +57,15 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
     const photoInput = useRef<HTMLInputElement>(null);
     const editor = useRef<HTMLTextAreaElement>(null);
     const isReply = parentId !== null;
+    const rememberDraft = (value: string) => {
+        if (compact || postId === undefined || !viewer) return true;
+        if (!value) { commentDrafts.delete(postId); return true; }
+        if (!commentDrafts.has(postId) && commentDrafts.size >= MAX_DRAFTS) {
+            setError('Save or clear another comment draft before starting a new one.');
+            return false;
+        }
+        commentDrafts.set(postId, value); return true;
+    };
     const trimmedLength = Array.from(body.trim()).length;
     const valid = trimmedLength <= maxLength && (trimmedLength >= 2 || (allowMedia && Boolean(file) && trimmedLength === 0));
 
@@ -68,11 +82,14 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
         if (!pendingReview || postId === undefined) return;
         let live = true;
         let settled = false;
+        let inFlight = false;
+        const abort = new AbortController();
         const poll = async () => {
-            if (settled) return;
+            if (settled || inFlight || document.visibilityState === 'hidden') return;
+            inFlight = true;
             try {
                 const response = await fetch(`/posts/${postId}/comments/${pendingReview.id}/check-status`, {
-                    credentials: 'same-origin', headers: { Accept: 'application/json' },
+                    credentials: 'same-origin', signal: abort.signal, headers: { Accept: 'application/json' },
                 });
                 if (!response.ok || !live || settled) return;
                 const result = await response.json() as {
@@ -100,10 +117,11 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
                     setPendingReview(null);
                 }
             } catch { /* The next poll retries; never expose unchecked comments. */ }
+            finally { inFlight = false; }
         };
         void poll();
         const timer = window.setInterval(() => { void poll(); }, 6000);
-        return () => { live = false; window.clearInterval(timer); };
+        return () => { live = false; abort.abort(); window.clearInterval(timer); };
     }, [pendingReview, postId]);
 
     const retryFailedReview = async () => {
@@ -180,14 +198,14 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
         } finally { setBusy(false); }
     };
 
-    return <form className={`pm-comment-compose${compact ? ' pm-comment-compose--reply' : ''}`} onSubmit={event => { void submit(event); }} aria-label={isReply ? `Reply to ${replyToName ?? 'comment'}` : 'Write a comment'}>
+    return <form data-feed-pin={Boolean(body || file || busy || pendingReview || failedComment) || undefined} className={`pm-comment-compose${compact ? ' pm-comment-compose--reply' : ''}`} onSubmit={event => { void submit(event); }} aria-label={isReply ? `Reply to ${replyToName ?? 'comment'}` : 'Write a comment'}>
         <Avatar name={avatarName} src={avatarSrc} size={compact ? 32 : 38} />
         <div className="pm-comment-compose-field">
             {isReply && <div className="pm-comment-reply-context"><span>Reply to {replyToName ?? 'comment'}</span><button type="button" onClick={onCancel} aria-label="Cancel reply"><X size={15}/></button></div>}
             <textarea ref={editor} aria-label={isReply ? 'Write a reply' : 'Add a comment'}
                 placeholder={isReply ? `Reply to ${replyToName ?? 'comment'}...` : 'Write a comment...'}
                 maxLength={maxLength} rows={compact ? 1 : 2} value={body}
-                onChange={event => { setBody(event.target.value); if (!compact && postId !== undefined) commentDrafts.set(postId, event.target.value); }} readOnly={!canInteract}
+                onChange={event => { if (rememberDraft(event.target.value)) setBody(event.target.value); }} readOnly={!canInteract}
                 onFocus={() => { if (!canInteract) onJoin(isReply ? 'reply to a comment' : 'comment on a post'); }}/>
             {allowMedia && preview && <div className="pm-comment-media-preview"><img src={preview} alt="Selected attachment preview"/><span>{file?.name}</span><button type="button" onClick={() => setFile(null)} aria-label="Remove image"><X size={17}/></button></div>}
             <div className="pm-comment-compose-toolbar">
@@ -203,7 +221,7 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
                     <Send size={16} aria-hidden="true"/>{busy ? 'Sending...' : isReply ? 'Reply' : 'Comment'}
                 </button>
             </div>
-            {emojiOpen && <div className="pm-comment-emoji-list" role="group" aria-label="Choose an emoji">{emojis.map(emoji => <button key={emoji} type="button" aria-label={`Insert ${emoji}`} onClick={() => { setBody(previous => { const value = previous + emoji; if (!compact && postId !== undefined) commentDrafts.set(postId, value); return value; }); editor.current?.focus(); setEmojiOpen(false); }}>{emoji}</button>)}</div>}
+            {emojiOpen && <div className="pm-comment-emoji-list" role="group" aria-label="Choose an emoji">{emojis.map(emoji => <button key={emoji} type="button" aria-label={`Insert ${emoji}`} onClick={() => { const value = body + emoji; if (rememberDraft(value)) setBody(value); editor.current?.focus(); setEmojiOpen(false); }}>{emoji}</button>)}</div>}
             {(reviewNotice || error) && <div className="pm-comment-feedback-stack">
                 {reviewNotice && <CommentFeedback tone={failedComment ? 'warning' : pendingReview ? 'checking' : 'info'} message={reviewNotice}>
                     {failedComment && <button type="button" className="pm-button pm-button-outline pm-button-sm" onClick={() => void retryFailedReview()}>Retry check</button>}

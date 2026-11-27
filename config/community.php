@@ -1,6 +1,10 @@
 <?php
 
 return [
+    // Staging release switches: enable only after the performance acceptance gates.
+    'progressive_dashboard_enabled' => (bool) env('PMC_PROGRESSIVE_DASHBOARD_ENABLED', false),
+    'feed_performance_timing' => (bool) env('PMC_FEED_PERFORMANCE_TIMING', false),
+    'bounded_feed_enabled' => (bool) env('PMC_BOUNDED_FEED_ENABLED', false),
     // Published JPEG/PNG media is optimized in-place; moderation staging stays untouched.
     'media_variants_enabled' => (bool) env('PMC_MEDIA_VARIANTS_ENABLED', true),
     'media_variants_queue' => env('PMC_MEDIA_VARIANTS_QUEUE', 'default'),

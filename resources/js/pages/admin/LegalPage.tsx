@@ -51,7 +51,7 @@ function LegalEditor({ document, draft, revision, publishedVersion, history }: P
         const latest = page.props as Props;
         const data = {revision: latest.revision, content: latest.draft};
         form.setData(data);
-        form.defaults(data);
+        form.setDefaults(data);
         form.clearErrors();
         setConfirmed(false);
     };

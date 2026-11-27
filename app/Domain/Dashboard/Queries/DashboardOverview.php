@@ -12,63 +12,76 @@ use App\Domain\Billing\Queries\MemberFeatureAccess;
 use App\Domain\Billing\Services\ProfileCompletionRewardService;
 use App\Domain\Identity\Services\ProfileCompleteness;
 
-/** Read-only, privacy-limited projection. Demo figures never grant entitlements. */
+/** Independent read paths; demo figures never grant entitlements. */
 final class DashboardOverview
 {
-    public function forMember(User $user, ?string $previewPlan = null, string $feedTab = 'all', ?FeedQuery $feed = null): array
+    public function identity(User $user, ?string $previewPlan, string $actualPlan): array
     {
         $user->loadMissing('profile');
-
         $isDemo = app()->environment(['local', 'testing']) && config('pm-circle.demo_content_enabled');
-        $actualPlan = app(CurrentMemberPlan::class)->code($user);
-        $plan = $actualPlan === 'plus' ? 'premium' : $actualPlan;
-        // Preview plans never change actual entitlements or quota balances.
-        $examAccess = MemberFeatureAccess::allowsExamSimulator($actualPlan);
-        $tokens = $examAccess
-            ? app(PmpAiUsageReadModel::class)->summary($user, includeActivity: false)
-            : ['configured' => false];
         $preview = $isDemo && in_array($previewPlan, ['free', 'premium', 'pro'], true);
-        if ($preview) {
-            $plan = $previewPlan;
-        }
-
+        $plan = $preview ? $previewPlan : ($actualPlan === 'plus' ? 'premium' : $actualPlan);
         $profile = $user->profile;
         $completion = app(ProfileCompleteness::class)->percentage($user);
 
-        $feed ??= app(FeedQuery::class);
-        $feedPage = $feed->page($feedTab, 'All', null, $user, null, true);
-        $dashboardPosts = $feed->dashboardPosts($feedPage['data']);
-        $stats = app(MemberDashboardStats::class)->forMember($user);
-        $postChecks = app(PostCheckFeed::class)->forMember($user->id);
-        $scopeCounts = app(FeedTabAvailability::class)->forViewer($user);
-        $scopeCounts['restricted'] = $postChecks['restricted_count'];
-
         return [
-            'dashboard' => [
-                'plan' => $plan,
-                'isDemo' => $isDemo,
-                'isPreview' => $preview,
-                'member' => ['id' => $user->getKey(), 'name' => $user->name, 'role' => $profile?->role, 'avatar_path' => $profile?->avatar_path, 'completion' => $completion],
-                'reward' => app(ProfileCompletionRewardService::class)->forMember($user, $completion),
-                'scenario' => null,
-                'learning' => $stats['learning'],
-                'overview' => $stats['overview'],
-                'planUsage' => [
-                    'plan' => $actualPlan,
-                    'examAccess' => $examAccess,
-                    'tokensRemaining' => $tokens['configured'] && ($tokens['allocated'] ?? 0) > 0
-                        ? (int) $tokens['remaining'] : null,
-                ],
-                'posts' => $dashboardPosts,
-                'postChecks' => $postChecks,
-                'virtualFeedEnabled' => (bool) config('pm-circle.virtual_feed_enabled', true),
-                'feedPage' => [
-                    'next_cursor' => $feedPage['next_cursor'],
-                    'has_more' => $feedPage['has_more'],
-                ],
-                'feedTab' => $feedTab,
-                'feedScopeCounts' => $scopeCounts,
-            ],
+            'plan' => $plan, 'isDemo' => $isDemo, 'isPreview' => $preview,
+            'featureAccess' => app(MemberFeatureAccess::class)->forPlan($actualPlan),
+            'member' => ['id' => $user->getKey(), 'name' => $user->name, 'role' => $profile?->role,
+                'avatar_path' => $profile?->avatar_path, 'completion' => $completion],
+            'reward' => app(ProfileCompletionRewardService::class)->forMember($user, $completion),
+            'scenario' => null,
+            'virtualFeedEnabled' => (bool) config('pm-circle.virtual_feed_enabled', true),
+            'boundedFeedEnabled' => (bool) config('community.bounded_feed_enabled'),
         ];
+    }
+
+    public function feed(User $user, string $tab, ?FeedQuery $feed = null): array
+    {
+        $feed ??= app(FeedQuery::class);
+        $page = $feed->page($tab, 'All', null, $user, null, true);
+        return [
+            'posts' => $feed->dashboardPosts($page['data']),
+            'feedPage' => ['next_cursor' => $page['next_cursor'], 'previous_cursor' => $page['previous_cursor'], 'has_more' => $page['has_more']],
+            'feedTab' => $tab,
+        ];
+    }
+
+    public function checks(User $user): array
+    {
+        return app(PostCheckFeed::class)->forMember($user->id);
+    }
+
+    public function scopeCounts(User $user): array
+    {
+        return app(FeedTabAvailability::class)->forViewer($user);
+    }
+
+    public function planUsage(User $user, string $actualPlan): array
+    {
+        $examAccess = MemberFeatureAccess::allowsExamSimulator($actualPlan);
+        $tokens = $examAccess ? app(PmpAiUsageReadModel::class)->summary($user, includeActivity: false) : ['configured' => false];
+        return ['plan' => $actualPlan, 'examAccess' => $examAccess,
+            'tokensRemaining' => $tokens['configured'] && ($tokens['allocated'] ?? 0) > 0 ? (int) $tokens['remaining'] : null];
+    }
+
+    public function statistics(User $user): array
+    {
+        return app(MemberDashboardStats::class)->forMember($user);
+    }
+
+    /** Compatibility path for phased rollout and existing callers. */
+    public function forMember(User $user, ?string $previewPlan = null, string $feedTab = 'all', ?FeedQuery $feed = null): array
+    {
+        $actualPlan = app(CurrentMemberPlan::class)->code($user);
+        $checks = $this->checks($user);
+        return ['dashboard' => [
+            ...$this->identity($user, $previewPlan, $actualPlan),
+            ...$this->feed($user, $feedTab, $feed),
+            ...$this->statistics($user),
+            'planUsage' => $this->planUsage($user, $actualPlan),
+            'postChecks' => $checks,
+            'feedScopeCounts' => [...$this->scopeCounts($user), 'restricted' => $checks['restricted_count']],
+        ]];
     }
 }

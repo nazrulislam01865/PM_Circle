@@ -11,11 +11,12 @@ const baseScopes: { value: FeedScope; label: string }[] = [
 ];
 
 /** Only add private tabs when the member has at least one visible item in that list. */
-export function FeedScopeTabs({ active, hrefFor, counts = { saved: 0, hidden: 0 }, showRestricted = false }: {
+export function FeedScopeTabs({ active, hrefFor, counts = { saved: 0, hidden: 0 }, showRestricted = false, only }: {
     active: FeedScope;
     hrefFor: (scope: FeedScope) => string;
     counts?: FeedScopeCounts;
     showRestricted?: boolean;
+    only?: string[];
 }) {
     const scopes = [
         ...baseScopes,
@@ -30,6 +31,7 @@ export function FeedScopeTabs({ active, hrefFor, counts = { saved: 0, hidden: 0 
             className={`pm-feed-scope-tab ${active === scope.value ? 'active' : ''} ${scope.value === 'restricted' ? 'pm-feed-scope-restricted' : ''}`}
             aria-current={active === scope.value ? 'page' : undefined}
             preserveScroll
+            only={only}
         >{scope.value === 'restricted' && <LockKeyhole size={15} aria-hidden="true"/>}{scope.label}</Link>)}
     </nav>;
 }

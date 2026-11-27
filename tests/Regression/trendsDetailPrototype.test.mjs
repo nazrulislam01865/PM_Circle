@@ -1,8 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
-import { sampleTrendReports, trendArticles, trendArticleHref } from '../../resources/js/data/pm-trends.ts';
+import { trendArticleHref } from '../../resources/js/data/pm-trends.ts';
 const read = file => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
+const reports = JSON.parse(read('database/data/legacy-trend-reports.json'));
+const sampleTrendReports = reports.filter(report => report.listed);
+const trendArticles = reports.filter(report => !report.listed);
 const page = read('resources/js/pages/trends/Show.tsx');
 const css = read('resources/css/pm-trends-detail.css');
 const tokens = read('resources/css/pm-design-tokens.css');
@@ -38,14 +41,14 @@ test('report details use homepage layout, shared banner, controls, photos and th
 });
 
 test('existing report URLs and bookmark storage contract are preserved; share failures are handled', () => {
-    assert.match(page, /sampleTrendReports\.find.*\?\? trendArticles\.find/);
-    assert.match(page, /<ReportDetail key=\{slug\}/);
+    assert.match(read('app/Http/Controllers/PublicSite/ContentPagesController.php'), /TrendReports::published\(\)->where\('slug', \$slug\)/);
+    assert.match(page, /<ReportDetail key=\{article.slug\}/);
     assert.match(page, /window\.localStorage\.setItem\(`pm-trend-bookmark-\$\{slug\}`/);
     assert.match(page, /Could not update saved reports/);
     assert.match(page, /navigator\.share/);
     assert.match(page, /navigator\.clipboard\.writeText/);
     assert.match(page, /AbortError/);
-    assert.match(page, /Article not found/);
+    assert.match(read('app/Http/Controllers/PublicSite/ContentPagesController.php'), /abort_unless\(\$row, 404\)/);
     for (const report of [...sampleTrendReports, ...trendArticles]) assert.equal(trendArticleHref(report.slug), `/pm-trends/${report.slug}`);
 });
 
@@ -58,6 +61,7 @@ test('prototype comments are browser-local, bounded, plain-text and gated by the
     assert.match(page, /Could not save your comment/);
     assert.match(page, /href="#report-comments"/);
     assert.match(page, /\{comment\.text\}/);
-    assert.doesNotMatch(page, /dangerouslySetInnerHTML|fetch\(|axios\.|router\.post\(/);
-    assert.match(page, /More from Trends/);
+    assert.doesNotMatch(page, /fetch\(|axios\.|router\.post\(/);
+    assert.match(page, /settings.relatedTitle/);
+    assert.match(read('app/Domain/Trends/TrendReports.php'), /'html_input' => 'strip', 'allow_unsafe_links' => false/);
 });

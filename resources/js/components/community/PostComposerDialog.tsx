@@ -35,7 +35,7 @@ export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onU
     onClose: () => void;
     plan?: DashboardPlan;
     editPost?: EditablePost | null;
-    onUpdated?: (updated: { body: string; image_path: string | null }) => void;
+    onUpdated?: (updated: { body: string; image_path: string | null; status?: string }) => void;
     initialTopic?: PostComposerTopic;
     onSubmissionStateChange?: (post: PostCheckPreview | null) => void;
     onSubmissionError?: () => void;
@@ -124,10 +124,10 @@ export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onU
                     const result = await response.json().catch(() => null) as { errors?: Record<string, string[]> } | null;
                     throw new Error(result?.errors ? Object.values(result.errors)[0]?.[0] : response.status === 419 ? 'Session expired. Refresh and try again.' : 'Unable to update your post.');
                 }
-                const result = await response.json() as { body: string; image_path: string | null };
+                const result = await response.json() as { body: string; image_path: string | null; status?: string };
                 onUpdated?.(result);
                 onClose();
-                router.reload();
+                if (!onUpdated) router.reload();
             }).catch(reason => setError(reason instanceof Error ? reason.message : 'Unable to update the post.')).finally(() => setBusy(false));
         } else {
             payload.append('topic', topic);

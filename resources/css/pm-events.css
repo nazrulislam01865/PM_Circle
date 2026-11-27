@@ -66,6 +66,7 @@
 .pm-event-host-promo p { font-size: var(--pm-guide-text-body); color: var(--pm-event-on-dark); }
 .pm-event-host-promo .pm-guide-button { white-space: nowrap; }
 .pm-event-empty { padding: var(--pm-guide-s8) var(--pm-guide-s4); text-align: center; border: 1px solid var(--pm-guide-line); border-radius: var(--pm-guide-radius-card); }
+.pm-event-empty + .pm-event-host-promo { margin-top: var(--pm-guide-s6); }
 .pm-event-empty h3 { font-size: var(--pm-guide-text-h3); }
 .pm-event-empty p { margin: var(--pm-guide-s2) 0 var(--pm-guide-s4); }
 /* The event banner, body, shared header and footer use the exact same

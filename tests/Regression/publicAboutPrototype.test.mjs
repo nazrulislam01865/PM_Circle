@@ -8,27 +8,20 @@ test('About Us follows approved screenshot content, order and homepage shared sh
     const page = read('resources/js/pages/public/About.tsx');
     const route = read('routes/web.php');
     const publicLayout = read('resources/js/layouts/pm/PublicLayout.tsx');
-    assert.match(route, /Route::inertia\('\/about', 'public\/About'\)/);
+    const defaults = read('app/Support/Admin/PublicPageContent.php');
+    assert.match(route, /Route::get\('\/about', \[.*ContentPagesController::class, 'about'\]\)/);
     assert.match(page, /<PublicLayout siteLayout homePrototype guideLayout banner=\{\{[^\n]*\}\}>/);
     assert.match(publicLayout, /<HomeHeader eventsVisible=\{homeEventsVisible\}\/>/);
     assert.match(publicLayout, /<SiteFooter pricingPrototype=/);
-    assert.match(page, /<Head title="About PM Circle"\/>/);
+    assert.match(page, /<Head title=\{banner.title\}/);
     assert.match(page, /<nav className="pm-about-breadcrumb" aria-label="Breadcrumb">/);
-    assert.match(page, /<h1 id="pm-about-title">About PM Circle<\/h1>/);
-    assert.match(page, /Learn, practise and connect with people who manage projects\./);
-    const sections = ['Built around real project work', 'What you can do on PM Circle', 'Developed by ITQAN Consulting'];
-    assert.ok(sections.every((value, index) => index === 0 || page.indexOf(sections[index - 1]) < page.indexOf(value)));
-    for (const copy of [
-        'PM Circle by ITQAN Consulting is a learning and practice community for project professionals in Bangladesh.',
-        'Build practical skills in project planning, communication and delivery.',
-        'Work through realistic scenarios and prepare for certification with timed practice.',
-        'Discuss how others handle project challenges and join community events.',
-        'The platform draws on ITQAN’s work in project delivery, consulting and training.',
-        'Visit ITQAN Consulting',
-    ]) assert.ok(page.includes(copy), `Missing reference copy: ${copy}`);
-    for (const href of ["'/learning'", "'/simulators'", "'/events'"]) assert.ok(page.includes(`href: ${href}`));
-    assert.match(page, /href="https:\/\/www\.itqanconsulting\.com\/" target="_blank" rel="noopener noreferrer"/);
-    assert.match(page, /<AboutFeatureCard key=\{feature.title\} \{\.\.\.feature\}\/>/);
+    assert.match(page, /<h1 id="pm-about-title">\{banner.title\}<\/h1>/);
+    assert.match(defaults, /Learn, practise and connect with people who manage projects\./);
+    for (const copy of ['Built around real project work', 'What you can do on PM Circle', 'Developed by ITQAN Consulting', 'Visit ITQAN Consulting']) assert.ok(defaults.includes(copy));
+    assert.ok(page.indexOf('intro.enabled') < page.indexOf('features.enabled'));
+    assert.ok(page.indexOf('features.enabled') < page.indexOf('company.enabled'));
+    assert.match(page, /<AboutFeatureCard key=\{index\} \{\.\.\.feature\}\/>/);
+    assert.match(page, /safeLink\(href\)/);
     assert.doesNotMatch(page, /fetch\(|axios\.|useEffect\(|useState\(|new URLSearchParams\(/);
     assert.doesNotMatch(page, /<SiteFooter|<HomeFooter|<HomeHeader/);
 });

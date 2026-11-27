@@ -24,7 +24,7 @@ type Props = {
     canInteract?: boolean;
     onJoin?: (action: string) => void;
     onRemoved?: () => void;
-    onUpdated?: (updated: { body: string; image_path: string | null }) => void;
+    onUpdated?: (updated: { body: string; image_path: string | null; status?: string }) => void;
     onMuteChange?: (muted: boolean) => void;
     onHiddenChange?: (hidden: boolean) => void;
     authorName?: string;
@@ -71,7 +71,7 @@ export function PostActionMenu({ post, isOwner, muted = false, hidden = false, c
         else callback();
     };
     if (mobileOnly && !isMobile) return null;
-    return <div className={`pm-post-actions-root${mobileOnly ? ' pm-post-mobile-menu' : ''}`}>
+    return <div data-feed-pin={Boolean(reportOpen || deleteOpen || editOpen || busy) || undefined} className={`pm-post-actions-root${mobileOnly ? ' pm-post-mobile-menu' : ''}`}>
         <DropdownMenu>
             <DropdownMenuTrigger asChild><button type="button" className="pm-post-menu-trigger" aria-label={`More options for post by ${authorName}`}><Ellipsis size={21} aria-hidden="true"/></button></DropdownMenuTrigger>
             <DropdownMenuContent align="end" sideOffset={5} className="pm-post-menu-content">

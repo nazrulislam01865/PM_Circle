@@ -18,20 +18,21 @@
     /* Use the same outer rail as the banner; pm-public-trends-wrap owns width. */
     padding-block: var(--pm-guide-s6) var(--pm-guide-editorial-section-inset);
 }
-.pm-public-trends-page :is(.pm-public-trends-note,.pm-public-trends-count,.pm-public-trends-meta,.pm-public-trends-empty) { font-size: var(--pm-guide-text-meta); color: var(--pm-guide-muted); }
+.pm-public-trends-page :is(.pm-public-trends-count,.pm-public-trends-meta,.pm-public-trends-empty) { font-size: var(--pm-guide-text-meta); color: var(--pm-guide-muted); }
 .pm-public-trends-filters {
     display: grid;
-    grid-template-columns: minmax(0,2fr) minmax(0,1fr);
+    grid-template-columns: minmax(0,2fr) minmax(0,1fr) auto;
+    align-items: end;
     gap: var(--pm-guide-s3);
     padding: var(--pm-guide-s4);
-    margin-top: var(--pm-guide-s3);
+    margin-bottom: var(--pm-guide-s3);
     background: var(--pm-guide-soft);
     border: 1px solid var(--pm-guide-line);
     border-radius: var(--pm-guide-radius-card);
 }
+.pm-public-trends-filters > div { display: grid; min-width: 0; gap: var(--pm-guide-s1); }
 .pm-public-trends-filters label { display: grid; min-width: 0; gap: var(--pm-guide-s1); }
-.pm-public-trends-saved { display: flex; width: fit-content; align-items: center; gap: var(--pm-guide-s2); margin-block: var(--pm-guide-s3); cursor: pointer; }
-.pm-public-trends-saved input { appearance: auto; width: 1em; height: 1em; margin: 0; accent-color: var(--pm-guide-blue); cursor: pointer; flex: none; }
+.pm-public-trends-results-meta { display: flex; align-items: center; justify-content: space-between; gap: var(--pm-guide-s3); flex-wrap: wrap; }
 .pm-public-trends-rows { margin-top: var(--pm-guide-s1); }
 .pm-public-trends-row {
     display: grid;

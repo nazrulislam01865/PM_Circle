@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
 type Option = { id: number; label: string; votes_count: number };
-export function PostPoll({ postId, options, selected = null, canInteract, onJoin }: {
-    postId: number; options: Option[]; selected?: number | null; canInteract: boolean; onJoin?: (action: string) => void;
+export function PostPoll({ postId, options, selected = null, canInteract, onJoin, onVoteChanged }: {
+    postId: number; options: Option[]; selected?: number | null; canInteract: boolean; onJoin?: (action: string) => void; onVoteChanged?: (choice: number, options: Option[]) => void;
 }) {
     const [votes, setVotes] = useState(options);
     const [choice, setChoice] = useState<number | null>(selected);
@@ -22,11 +22,12 @@ export function PostPoll({ postId, options, selected = null, canInteract, onJoin
             if (!response.ok) throw new Error(response.status === 419 ? 'Session expired. Refresh and try again.' : 'Unable to save your vote.');
             const result = await response.json() as { viewer_vote: number; counts: Record<string, number> };
             setChoice(result.viewer_vote);
-            setVotes(previous => previous.map(option => ({ ...option, votes_count: Number(result.counts[String(option.id)] ?? 0) })));
+            const updated = votes.map(option => ({ ...option, votes_count: Number(result.counts[String(option.id)] ?? 0) }));
+            setVotes(updated); onVoteChanged?.(result.viewer_vote, updated);
         } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to save your vote.'); }
         finally { setBusy(false); }
     };
-    return <div className="pm-post-poll"><div className="pm-post-poll-options">{votes.map(option => <button type="button" key={option.id} disabled={busy} className={choice === option.id ? 'is-selected' : ''} aria-pressed={choice === option.id} onClick={() => { void vote(option.id); }}>
+    return <div data-feed-pin={busy || undefined} className="pm-post-poll"><div className="pm-post-poll-options">{votes.map(option => <button type="button" key={option.id} disabled={busy} className={choice === option.id ? 'is-selected' : ''} aria-pressed={choice === option.id} onClick={() => { void vote(option.id); }}>
         <span className="pm-post-poll-track" style={{ width: choice === null || total === 0 ? '0%' : `${Math.round(option.votes_count / total * 100)}%` }}/><span className="pm-post-poll-text">{option.label}</span>{choice !== null && <span className="pm-post-poll-percent">{total ? Math.round(option.votes_count / total * 100) : 0}%</span>}
     </button>)}</div><small>{total} {total === 1 ? 'vote' : 'votes'}</small>{error && <p role="alert" className="pm-post-action-error">{error}</p>}</div>;
 }

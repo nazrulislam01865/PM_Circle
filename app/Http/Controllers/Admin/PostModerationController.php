@@ -96,6 +96,8 @@ final class PostModerationController extends Controller
     {
         $data = $request->validate(['decision' => ['required', Rule::in(['approve', 'reject'])]]);
         DB::transaction(function () use ($comment, $data): void {
+            abort_if(config('community.engagement_write_gate'), 503, 'Community engagement is temporarily paused.', ['Retry-After' => '60']);
+            if (EngagementStats::writesEnabled()) EngagementStats::lockMember($comment->author_id);
             $locked = Comment::query()->whereKey($comment->id)->lockForUpdate()->firstOrFail();
             abort_unless($locked->check_status === 'pending_review', 404);
             $locked->check_status = $data['decision'] === 'approve' ? 'approved' : 'restricted';
@@ -103,7 +105,6 @@ final class PostModerationController extends Controller
             $locked->check_reason = $data['decision'] === 'approve' ? null
                 : ($locked->check_reason ?: 'Restricted after administrator review.');
             if ($data['decision'] === 'approve') {
-                EngagementStats::applyComment($locked->post_id, 1);
                 DB::afterCommit(static fn () => app(\App\Domain\Notifications\ActivityNotifier::class)
                     ->forComment($locked));
             }

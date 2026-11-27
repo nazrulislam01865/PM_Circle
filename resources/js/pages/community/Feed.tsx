@@ -159,7 +159,7 @@ export default function Feed({ posts, activeTopic, feedTab, feedScopeCounts, sea
                                 renderItem={(post, index) => <>
                                     <PostCard post={post} isGuest={isGuest} onJoin={setJoinAction}
                                         onReactionChange={(reaction, count, counts) => feed.updateItem(post.id, { viewer_reaction: reaction, reactions_count: count, reaction_breakdown: counts })}
-                                        onCommentAdded={() => feed.updateItem(post.id, { comments_count: post.comments_count + 1 })}
+                                        onCommentAdded={() => feed.updateItem(post.id, current => ({ comments_count: current.comments_count + 1 }))}
                                         onSavedChange={saved => {
                                             updateSaved(Boolean(post.viewer_saved), saved, Boolean(post.viewer_hidden));
                                             if (feedTab === 'saved' && !saved) {
@@ -172,8 +172,8 @@ export default function Feed({ posts, activeTopic, feedTab, feedScopeCounts, sea
                                             feed.removeItem(post.id);
                                             if (feedTab === 'hidden' && !hidden && counts.hidden <= 1) router.get('/community', { tab: 'all', ...(activeTopic !== 'All' ? { topic: activeTopic } : {}), ...(search ? { search } : {}) }, { preserveScroll: true });
                                         }}
-                                        onUpdated={updated => feed.updateItem(post.id, updated)}
-                                        onMuteChange={muted => feed.updateItem(post.id, { viewer_muted: muted })}
+                                        onUpdated={updated => updated.status && updated.status !== 'published' ? feed.removeItem(post.id) : feed.updateItem(post.id, { body: updated.body, image_path: updated.image_path })}
+                                        onMuteChange={muted => feed.updateItem(post.id, { viewer_muted: muted })} onVoteChanged={(choice, options) => feed.updateItem(post.id, { viewer_vote: choice, poll_options: options })}
                                         onRemoved={() => {
                                             if (post.viewer_hidden) updateHidden(true, false, Boolean(post.viewer_saved));
                                             else if (post.viewer_saved) updateSaved(true, false, false);
@@ -198,7 +198,7 @@ export default function Feed({ posts, activeTopic, feedTab, feedScopeCounts, sea
                             <div className="pm-load-more-center" aria-live="polite">
                                 {feed.error ? (
                                     <button type="button" className="pm-btn-load-more" onClick={feed.retry}>
-                                        <RefreshCw size={16} /> Retry loading posts
+                                        <RefreshCw size={16} /> {feed.restart ? "Refresh feed" : "Retry loading posts"}
                                     </button>
                                 ) : feed.loading ? <span className="helper" role="status">Loading discussions…</span>
                                     : <button type="button" className="pm-btn-load-more" onClick={feed.loadMore}>

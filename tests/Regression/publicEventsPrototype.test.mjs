@@ -61,7 +61,7 @@ test('shared editor and administrator approval preserve member access boundaries
 test('header Events navigation and footer Events fallback open new listing from every page', () => {
     const header = read('resources/js/components/home/v2/HomeHeader.tsx');
     const footer = read('resources/js/components/home/v2/HomeFooter.tsx');
-    assert.match(header, /<Link href="\/events" onClick=\{close\}>Events<\/Link>/);
+    assert.match(header, /<Link href="\/events" onClick=\{close\} aria-current=\{navigationCurrent\(pathname, '\/events'\)\}>Events<\/Link>/);
     assert.doesNotMatch(header, /eventsHref|#pm-v2-events-title/);
     assert.ok(read('app/Support/Admin/SiteFooterContent.php').includes("$link('Events', '/events')"));
     assert.doesNotMatch(footer, /Homepage design mockup|Sample content/);
@@ -128,4 +128,10 @@ test('map link is additive, validated, persisted and used with address fallback'
     assert.match(model, /'mapLink' => \$this->map_link/);
     assert.match(detail, /event\.mapLink \|\| `https:\/\/www\.google\.com\/maps\/search/);
     assert.match(migration, /\$table->string\('map_link', 2048\)->nullable\(\)/);
+});
+
+ test('empty event results no longer duplicate the status and the promotion has tokenized spacing', () => {
+    const page = read('resources/js/pages/events/Index.tsx');
+    assert.doesNotMatch(page, /No events match your filters/);
+    assert.match(read('resources/css/pm-events.css'), /\.pm-event-empty \+ \.pm-event-host-promo \{ margin-top: var\(--pm-guide-s6\);/);
 });

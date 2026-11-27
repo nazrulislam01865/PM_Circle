@@ -7,6 +7,7 @@ use App\Http\Controllers\Onboarding\OnboardingController;
 use App\Models\HomePageContent;
 use App\Models\CommunityEvent;
 use App\Support\Home\HomepagePresentation;
+use App\Support\Admin\PublicPageContent;
 use App\Domain\Community\Services\EngagementStats;
 use App\Domain\Identity\Services\ProfileFieldPrivacy;
 use App\Domain\Identity\Services\MemberProfileAccess;
@@ -146,6 +147,6 @@ class HomeController extends Controller
 
     public function pricing(OnboardingController $onboarding): Response
     {
-        return Inertia::render('public/Pricing', ['plans' => $onboarding->catalog()]);
+        return Inertia::render('public/Pricing', ['plans' => $onboarding->catalog(), 'content' => PublicPageContent::load('compare-plans')]);
     }
 }

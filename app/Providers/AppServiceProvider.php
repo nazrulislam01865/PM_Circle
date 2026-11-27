@@ -33,6 +33,17 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
 
+        if (config('community.feed_performance_timing')) {
+            DB::listen(static function (\Illuminate\Database\Events\QueryExecuted $query): void {
+                if (! app()->bound('request')) return;
+                $request = app('request');
+                $key = \App\Http\Middleware\FeedPerformanceTiming::ATTRIBUTE;
+                $metrics = $request->attributes->get($key);
+                if (! is_array($metrics)) return;
+                $request->attributes->set($key, ['count' => $metrics['count'] + 1, 'ms' => $metrics['ms'] + $query->time]);
+            });
+        }
+
         // Keep demo membership switching independent of unrelated member requests.
         RateLimiter::for('course-lesson-write', fn (Request $request) => Limit::perMinute(30)->by('course-lesson:'.$request->user()->getAuthIdentifier()));
 

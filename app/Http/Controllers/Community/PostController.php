@@ -59,7 +59,9 @@ class PostController extends Controller
         ]);
         $dashboard = ($validated['context'] ?? 'community') === 'dashboard';
         if ($dashboard) {
-            abort_unless($request->user() && $request->user()->onboarding_step >= 3, 403);
+            abort_unless($request->user(), 401);
+            abort_unless($request->user()->onboarding_step >= 3 && $request->user()->status === 'active'
+                && ! $request->user()->is_admin && $request->user()->hasVerifiedEmail(), 403);
         }
 
         $page = $feed->page($validated['tab'] ?? 'all', $validated['topic'] ?? 'All',

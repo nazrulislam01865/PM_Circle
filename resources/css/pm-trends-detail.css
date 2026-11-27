@@ -30,3 +30,11 @@
     .pm-report-main { padding-block: var(--pm-guide-s6); }
     .pm-public-trends-detail .pm-report-publication { margin-top: var(--pm-guide-s4); margin-bottom: var(--pm-guide-s4); }
 }
+
+.pm-report-markdown { display: grid; gap: var(--pm-guide-s3); overflow-wrap: anywhere; }
+.pm-report-markdown img { max-width: 100%; height: auto; }
+.pm-report-markdown pre { max-width: 100%; overflow-x: auto; }
+.pm-report-section p { white-space: pre-line; }
+
+.pm-report-markdown h3 { color: var(--pm-guide-ink); font-size: var(--pm-guide-text-h3); font-weight: var(--pm-guide-weight-h2); line-height: var(--pm-guide-line-h3); }
+.pm-report-markdown h4 { color: var(--pm-guide-ink); font-size: var(--pm-guide-text-h4); font-weight: var(--pm-guide-weight-control); line-height: var(--pm-guide-line-h4); }

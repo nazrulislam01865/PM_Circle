@@ -109,14 +109,27 @@
 .pm-v2-header-nav, .pm-v2-header-utilities { display: flex; gap: var(--s3); align-items: center; }
 .pm-v2-header-nav { flex: 1; justify-content: center; }
 .pm-v2-header-nav > a, .pm-v2-header-nav summary, .pm-v2-header-utilities .pm-v2-login { color: var(--ink); font-size: var(--pm-v2-font-header-nav); line-height: var(--pm-guide-line-body); text-decoration: none; cursor: pointer; }
-.pm-v2-header-nav > a[aria-current="page"] { color: var(--pm-guide-blue); text-decoration: underline; text-underline-offset: .3em; }
+/* A single public navigation state treatment, with no link underline. */
+.pm-v2-header-nav > a[aria-current="page"],
+.pm-v2-header-nav > a[aria-current="location"],
+.pm-v2-header-nav > .pm-v2-nav-menu[data-active="true"] > summary,
+.pm-v2-header-nav > .pm-v2-nav-menu[open] > summary,
+.pm-v2-header-nav > a:focus-visible,
+.pm-v2-header-nav summary:focus-visible { color: var(--blue); text-decoration: none; }
+@media (hover: hover) and (pointer: fine) {
+    .pm-v2-header-nav > a:hover,
+    .pm-v2-header-nav summary:hover,
+    .pm-v2-header-utilities .pm-v2-login:hover { color: var(--blue); text-decoration: none; }
+}
 .pm-v2-header-nav summary { display: flex; gap: var(--s1); align-items: center; list-style: none; }
 .pm-v2-header-nav summary::-webkit-details-marker { display: none; }
 .pm-v2-header-nav summary svg { width: 12px; height: 12px; }
 .pm-v2-nav-menu { position: relative; }
 .pm-v2-nav-dropdown { position: absolute; top: 100%; left: 0; z-index: 60; display: flex; flex-direction: column; gap: 0; min-width: var(--pm-v2-nav-dropdown-width); padding: var(--s2); border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--surface); box-shadow: 0 8px 24px var(--pm-v2-shadow); }
 .pm-v2-nav-dropdown a { padding: var(--s2); color: var(--ink); text-decoration: none; white-space: nowrap; font-size: var(--pm-v2-font-header-nav); }
-.pm-v2-nav-dropdown a:hover { background: var(--blue-soft); color: var(--blue); }
+.pm-v2-nav-dropdown a:hover,
+.pm-v2-nav-dropdown a:focus-visible,
+.pm-v2-nav-dropdown a[aria-current] { background: var(--blue-soft); color: var(--blue); text-decoration: none; }
 .pm-v2-header-utilities .pm-v2-search-toggle, .pm-v2-menu-toggle { display: inline-flex; align-items: center; gap: var(--s1); border: 0; background: transparent; color: var(--blue); cursor: pointer; font-size: var(--pm-v2-font-header-nav); }
 .pm-v2-search-toggle svg { width: 15px; height: 15px; }
 .pm-v2-menu-toggle { display: none; }

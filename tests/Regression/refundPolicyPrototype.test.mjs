@@ -5,32 +5,35 @@ import { readFileSync } from 'node:fs';
 const read = file => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
 const page = read('resources/js/pages/public/PolicyNotice.tsx');
 const css = read('resources/css/pm-terms.css');
+const defaults = JSON.parse(read('resources/js/data/refund-policy.json'));
 
 test('Refund Policy preserves the public route and uses the shared homepage shell', () => {
-    assert.match(read('routes/web.php'), /Route::inertia\('\/refund-policy', 'public\/PolicyNotice'\)->name\('refund-policy'\)/);
+    assert.match(read('routes/web.php'), /Route::get\('\/refund-policy', \[\\App\\Http\\Controllers\\PublicSite\\ContentPagesController::class, 'refundPolicy'\]\)->name\('refund-policy'\)/);
+    assert.match(read('app/Http/Controllers/PublicSite/ContentPagesController.php'), /Inertia::render\('public\/PolicyNotice', \['content' => PublicPageContent::load\('refund-policy'\)\]\)/);
     assert.match(page, /<PublicLayout siteLayout homePrototype guideLayout banner=\{\{[^\n]*\}\}>/);
     assert.doesNotMatch(page, /fetch\(|axios\.|useEffect\(|router\.get\(|has not been published yet/);
     assert.ok(read('app/Support/Admin/SiteFooterContent.php').includes("$link('Refund Policy', '/refund-policy')"));
 });
 
-test('Prototype text, navigation and support destinations are present', () => {
+test('Prototype text, navigation and support destinations are preserved as editable defaults', () => {
+    const {banner, navigation, ...sections} = defaults;
     const titles = ['Monthly plan payments', 'Cancel your plan any time', 'Payment and access issues', 'Consumer rights'];
-    assert.deepEqual([...page.slice(0, page.indexOf('<PublicLayout')).matchAll(/title: '([^']+)'/g)].map(match => match[1]), titles);
-    assert.match(page, /navigationTitle: 'Cancel your plan'/);
-    assert.match(page, /Monthly plan payments, cancellations and purchase support\./);
-    assert.match(page, /Completed monthly plan payments are non-refundable/);
-    assert.match(page, /Cancellation does not generate a prorated refund\./);
-    assert.match(page, /Any refund or other remedy required by applicable law remains available\./);
-    assert.match(page, /href="\/contact">contact PM Circle support through ITQAN Consulting/);
-    assert.match(page, /href="\/contact">report the issue/);
-    assert.match(page, /href="\/terms">Terms and Conditions/);
+    assert.deepEqual(Object.values(sections).map(section => section.title), titles);
+    assert.equal(sections['cancel-your-plan'].navigationTitle, 'Cancel your plan');
+    assert.equal(banner.description, 'Monthly plan payments, cancellations and purchase support.');
+    assert.equal(navigation.title, 'On this page');
+    const paragraphs = Object.values(sections).flatMap(section => section.paragraphs);
+    assert.match(paragraphs.map(p => p.text).join(' '), /Completed monthly plan payments are non-refundable/);
+    assert.match(paragraphs.map(p => p.text).join(' '), /Cancellation does not generate a prorated refund\./);
+    assert.match(paragraphs.map(p => p.text).join(' '), /Any refund or other remedy required by applicable law remains available\./);
+    assert.deepEqual(paragraphs.filter(p => p.href).map(p => [p.href,p.linkLabel]), [['/contact','contact PM Circle support through ITQAN Consulting'],['/contact','report the issue'],['/terms','Terms and Conditions']]);
+    for (const id of Object.keys(sections)) assert.ok(page.includes(`'${id}'`));
     assert.match(page, /href="\/">Home/);
-    const ids = [...page.matchAll(/id: '([^']+)'/g)].map(match => match[1]);
-    assert.equal(new Set(ids).size, 4);
     assert.match(page, /href=\{`#\$\{section.id\}`\}/);
     assert.match(page, /id=\{section.id\}/);
-    assert.match(page, /aria-label="On this page"/);
-    assert.doesNotMatch(page, /Draft for review|Homepage design mockup/);
+    assert.match(page, /aria-label=\{navigation.title\}/);
+    assert.match(page, /<Paragraph \{\.\.\.paragraph\}\/>/);
+    assert.doesNotMatch(page, /dangerouslySetInnerHTML|Draft for review|Homepage design mockup/);
 });
 
 test('Refund layout reuses central legal styles and scopes its adjustments', () => {

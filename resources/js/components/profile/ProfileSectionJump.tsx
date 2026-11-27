@@ -30,7 +30,7 @@ export function ProfileSectionJump<T extends string>({ sections, targetPrefix, l
         let frame: number | null = null;
         const updateActiveSection = () => {
             frame = null;
-            let visible = sections[0]?.id;
+            let visible: T | undefined = sections[0]?.id;
             for (const item of sections) {
                 const section = document.getElementById(`${targetPrefix}${item.id}`);
                 if (!section) continue;

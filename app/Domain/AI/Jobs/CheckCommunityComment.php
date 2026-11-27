@@ -32,6 +32,10 @@ final class CheckCommunityComment implements ShouldQueue
 
     public function handle(PostContentCheckService $checker, PostCheckPolicy $policy): void
     {
+        if (config('community.engagement_write_gate')) {
+            $this->release(60);
+            return;
+        }
         $comment = Comment::query()->with(['post:id,body,status', 'parent:id,body,check_status'])
             ->find($this->commentId);
         if (! $comment || $comment->check_status !== 'pending_check') return;
@@ -65,6 +69,8 @@ final class CheckCommunityComment implements ShouldQueue
             ]);
             $cost = round(($result['input_tokens'] * 0.05 + $result['output_tokens'] * 0.40) / 1000000, 8);
             DB::transaction(function () use ($comment, $run, $result, $policy, $cost): void {
+                if (config('community.engagement_write_gate')) throw new RuntimeException('POST_CHECK_OUTCOME_UNKNOWN');
+                if (EngagementStats::writesEnabled()) EngagementStats::lockMember($comment->author_id);
                 $locked = Comment::query()->whereKey($comment->id)->lockForUpdate()->first();
                 if (! $locked || $locked->check_status !== 'pending_check') return;
                 if ($result['violates']) {
@@ -78,7 +84,6 @@ final class CheckCommunityComment implements ShouldQueue
                 } else {
                     $locked->check_status = 'approved';
                     $locked->check_reason = null;
-                    EngagementStats::applyComment($locked->post_id, 1);
                     DB::afterCommit(static function () use ($locked): void {
                         app(\App\Domain\Notifications\ActivityNotifier::class)->forComment($locked);
                         app(CommunityImageVariants::class)->queue('local', $locked->media_path);

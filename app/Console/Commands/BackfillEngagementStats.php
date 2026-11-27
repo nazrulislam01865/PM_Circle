@@ -47,6 +47,7 @@ final class BackfillEngagementStats extends Command
                     ->groupBy('post_id', 'type')
                     ->selectRaw('post_id, type, COUNT(*) AS total')->get()->groupBy('post_id');
                 $comments = DB::table('comments')->whereIn('post_id', $ids)->whereNull('deleted_at')
+                    ->where(fn ($query) => $query->whereNull('check_status')->orWhere('check_status', 'approved'))
                     ->groupBy('post_id')->selectRaw('post_id, COUNT(*) AS total')->pluck('total', 'post_id');
                 $existing = DB::table('post_engagement_stats')->whereIn('post_id', $ids)->get()->keyBy('post_id');
                 $rows = [];

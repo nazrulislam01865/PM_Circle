@@ -2,7 +2,8 @@ import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 import { HomePhoto } from '@/components/home/v2/HomePhoto';
-import { sampleTrendReports, trendArticles, trendArticleHref, type TrendArticle } from '@/data/pm-trends';
+import { trendArticleHref, type TrendArticle } from '@/data/pm-trends';
+import type { TrendDetailSettings } from '@/types/public-content';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
 import '../../../css/pm-trends-public.css';
 import '../../../css/pm-trends-detail.css';
@@ -18,12 +19,14 @@ function readComments(slug: string): ReportComment[] {
     } catch { return []; }
 }
 
-function ReportDetail({ article }: { article: TrendArticle }) {
+type Props = { article: TrendArticle; related: {slug: string; title: string}[]; settings: TrendDetailSettings; pageTitle: string };
+
+function ReportDetail({ article, related, settings }: Omit<Props, 'pageTitle'>) {
     const { auth } = usePage().props;
     const slug = article.slug;
-    const isSample = sampleTrendReports.some(report => report.slug === slug);
-    const title = article.articleTitle ?? article.title;
-    const lead = article.articleLead ?? article.summary;
+    const isSample = Boolean(article.sample);
+    const title = article.articleTitle || article.title;
+    const lead = article.articleLead || article.summary;
     const [bookmarked, setBookmarked] = useState(() => {
         try { return window.localStorage.getItem(`pm-trend-bookmark-${slug}`) === 'true'; }
         catch { return false; }
@@ -32,7 +35,6 @@ function ReportDetail({ article }: { article: TrendArticle }) {
     const [comments, setComments] = useState(() => readComments(slug));
     const [draft, setDraft] = useState('');
     const [commentError, setCommentError] = useState('');
-    const related = sampleTrendReports.filter(report => report.slug !== slug).slice(0, 2);
     const fallback = article.category === 'Career Paths' ? 'stakeholder' : article.category === 'Skills' ? 'scrum' : 'tutor';
 
     function toggleBookmark() {
@@ -71,40 +73,34 @@ function ReportDetail({ article }: { article: TrendArticle }) {
 
     return <>
         <Head title={title}><meta name="description" content={lead}/></Head>
-        <LegacyPageHeading><section className="pm-terms-banner" aria-labelledby="pm-report-title">
-            <div className="pm-public-trends-wrap">
-                <nav className="pm-terms-breadcrumb" aria-label="Breadcrumb"><Link href="/">Home</Link><span aria-hidden="true">/</span><Link href="/pm-trends">Trends</Link><span aria-hidden="true">/</span><span aria-current="page">Report</span></nav>
-                <h1 id="pm-report-title">{title}</h1>
-                <p>{lead}</p>
-            </div>
-        </section></LegacyPageHeading>
         <div className="pm-public-trends-wrap pm-report-main">
             <article className="pm-report-reading">
-                <p className="pm-public-trends-meta"><strong>{article.articleCategoryLabel ?? article.category}</strong> · {isSample ? 'Sample report' : article.classification} · {article.readMinutes} min read</p>
+                <p className="pm-public-trends-meta"><strong>{article.articleCategoryLabel || article.category}</strong> · {isSample ? 'Sample report' : article.classification} · {article.readMinutes} min read</p>
                 <p className="pm-public-trends-meta pm-report-publication">Published on PM Circle {article.date}{article.sources?.length ? <> · Source: {article.sources.map((source, index) => <span key={source.url}>{index ? ', ' : ''}<a href={source.url} target="_blank" rel="noopener noreferrer">{source.title}</a></span>)}</> : null}</p>
-                <div className="pm-report-actions">
-                    <button type="button" className="pm-guide-button is-outline" aria-pressed={bookmarked} onClick={toggleBookmark}>{bookmarked ? 'Saved report' : 'Save report'}</button>
-                    <button type="button" className="pm-guide-button is-outline" onClick={() => void share()}>Share</button>
-                    <a href="#report-comments">Comments ({comments.length})</a>
-                </div>
+                {(settings.saveEnabled || settings.shareEnabled || settings.commentsEnabled) && <div className="pm-report-actions">
+                    {settings.saveEnabled && <button type="button" className="pm-guide-button is-outline" aria-pressed={bookmarked} onClick={toggleBookmark}>{bookmarked ? 'Saved report' : 'Save report'}</button>}
+                    {settings.shareEnabled && <button type="button" className="pm-guide-button is-outline" onClick={() => void share()}>Share</button>}
+                    {settings.commentsEnabled && <a href="#report-comments">Comments ({comments.length})</a>}
+                </div>}
                 {actionStatus && <p className="pm-public-trends-meta" role="status">{actionStatus}</p>}
                 <HomePhoto photo={fallback} source={article.hero ?? article.thumbnail} alt="Project management report illustration" className="pm-report-photo" eager/>
                 <div className="pm-report-body">
                     {article.intro && <p>{article.intro}</p>}
-                    {article.sections.map((section, index) => <section className="pm-report-section" key={index}>
+                    {article.sections?.map((section, index) => <section className="pm-report-section" key={index}>
                         {section.title && <h2>{section.title}</h2>}
                         {section.text && <p>{section.text}</p>}
                         {section.image && <HomePhoto photo={fallback} source={section.image} alt={section.imageAlt ?? ''} className="pm-report-photo"/>}
-                        {section.chart && <img className="pm-report-chart" src={section.chart} alt="Illustration from the supplied prototype: PM job demand chart labelled 28 percent, 2024 to 2025" loading="lazy"/>}
+                        {section.chart && <img className="pm-report-chart" src={section.chart} alt={section.imageAlt || section.title || 'Report chart'} loading="lazy"/>}
                         {section.bullets && <ul>{section.bullets.map((item, i) => <li key={i}>{item}</li>)}</ul>}
                     </section>)}
-                    {article.sources?.length ? <section className="pm-report-section"><h2>Source</h2>{article.sources.map(source => <div key={source.url}><p><a href={source.url} target="_blank" rel="noopener noreferrer">{source.reportTitle ?? source.title}</a>{source.reportTitle && <> · {source.title}</>}</p>{source.description && <p>{source.description}</p>}</div>)}</section> : null}
+                    {article.bodyHtml && <div className="pm-report-markdown" dangerouslySetInnerHTML={{__html: article.bodyHtml}}/>}
+                    {article.sources?.length ? <section className="pm-report-section"><h2>{settings.sourceTitle}</h2>{article.sources.map(source => <div key={source.url}><p><a href={source.url} target="_blank" rel="noopener noreferrer">{source.reportTitle || source.title}</a>{source.reportTitle && <> · {source.title}</>}</p>{source.description && <p>{source.description}</p>}</div>)}</section> : null}
                 </div>
                 <aside className="pm-report-notice">
-                    <strong>{isSample ? 'AI-generated sample report' : 'Note'}</strong>
-                    <p>{isSample ? 'This article is illustrative. It may contain inaccuracies. Verify claims against current job listings, employer information and original sources before making career decisions.' : 'This article is AI-generated for learning and information purposes. The content is based on publicly available sources and general industry insights, and may not be fully accurate or up to date. Please verify key information from the original sources before making any career or business decisions.'}</p>
+                    <strong>{isSample ? settings.sampleNoticeTitle : settings.noticeTitle}</strong>
+                    <p>{isSample ? settings.sampleNoticeText : settings.noticeText}</p>
                 </aside>
-                <section className="pm-report-comments" id="report-comments" aria-labelledby="report-comments-title">
+                {settings.commentsEnabled && <section className="pm-report-comments" id="report-comments" aria-labelledby="report-comments-title">
                     <h2 id="report-comments-title">Comments</h2>
                     <p className="pm-public-trends-meta">Comments you post in this prototype are visible only in this browser.</p>
                     {auth?.user ? <form className="pm-report-comment-form" onSubmit={submitComment}>
@@ -114,22 +110,21 @@ function ReportDetail({ article }: { article: TrendArticle }) {
                         <button className="pm-guide-button" type="submit">Post comment</button>
                     </form> : <div className="pm-report-comment-login"><p>Log in to join the discussion.</p><Link href="/login" className="pm-guide-button is-outline">Log in to comment</Link></div>}
                     {comments.length ? <ul className="pm-report-comment-list">{comments.map((comment, index) => <li key={index}>{comment.text}</li>)}</ul> : <p>No comments yet. Be the first to share a thought.</p>}
-                </section>
-                <nav className="pm-report-related" aria-labelledby="report-related-title">
-                    <h2 id="report-related-title">More from Trends</h2>
+                </section>}
+                {settings.relatedEnabled && <nav className="pm-report-related" aria-labelledby="report-related-title">
+                    <h2 id="report-related-title">{settings.relatedTitle}</h2>
                     <ul>{related.map(report => <li key={report.slug}><Link href={trendArticleHref(report.slug)}>{report.title}</Link></li>)}</ul>
-                    <Link href="/pm-trends">All career reports</Link>
-                </nav>
+                    <Link href="/pm-trends">{settings.allReportsLabel}</Link>
+                </nav>}
             </article>
         </div>
     </>;
 }
 
-export default function Show({ slug }: { slug: string }) {
-    const article = sampleTrendReports.find(item => item.slug === slug) ?? trendArticles.find(item => item.slug === slug);
-    return <PublicLayout siteLayout homePrototype guideLayout active="/pm-trends" banner={{title: article ? article.articleTitle ?? article.title : 'Article not found', description: article ? article.articleLead ?? article.summary : undefined, parents: [{label: 'Trends', href: '/pm-trends'}], currentLabel: article ? 'Report' : 'Article not found', titleId: 'pm-report-title'}}>
+export default function Show({ article, related, settings, pageTitle }: Props) {
+    return <PublicLayout siteLayout homePrototype guideLayout active="/pm-trends" banner={{title: article.articleTitle || article.title, description: article.articleLead || article.summary, parents: [{label: pageTitle, href: '/pm-trends'}], currentLabel: 'Report', titleId: 'pm-report-title'}}>
         <div className="pm-public-trends-page pm-public-trends-detail pm-guide-public-shell">
-            {article ? <ReportDetail key={slug} article={article}/> : <><Head title="Article not found"/><div className="pm-public-trends-wrap pm-report-main"><LegacyPageHeading><h1>Article not found</h1></LegacyPageHeading><Link className="pm-guide-button is-outline" href="/pm-trends">Back to Trends</Link></div></>}
-        </div>
+            <LegacyPageHeading><section className="pm-terms-banner" aria-labelledby="pm-report-title"><div className="pm-public-trends-wrap"><nav className="pm-terms-breadcrumb" aria-label="Breadcrumb"><Link href="/">Home</Link><span aria-hidden="true">/</span><Link href="/pm-trends">{pageTitle}</Link><span aria-hidden="true">/</span><span aria-current="page">Report</span></nav><h1 id="pm-report-title">{article.articleTitle || article.title}</h1><p>{article.articleLead || article.summary}</p></div></section></LegacyPageHeading>
+            <ReportDetail key={article.slug} article={article} related={related} settings={settings}/></div>
     </PublicLayout>;
 }

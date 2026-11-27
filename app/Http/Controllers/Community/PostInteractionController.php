@@ -182,6 +182,7 @@ class PostInteractionController extends Controller
 
     public function recheckComment(Request $request, Post $post, Comment $comment): JsonResponse
     {
+        $this->ensureWritesOpen();
         abort_unless($comment->post_id === $post->id && $comment->author_id === $request->user()->id
             && $comment->check_status === 'check_error' && ! $comment->trashed(), 404);
         app(PostCheckPolicy::class)->assertCanContribute($request->user()->id);
@@ -262,9 +263,9 @@ class PostInteractionController extends Controller
         $this->ensurePublic($post, $request);
         $this->ensureWritesOpen();
         $data = $request->validate(['type' => ['required', Rule::in(ReactionIconCatalog::activeTypes())]]);
-        $count = $action->execute($request->user(), $post, $data['type']);
+        $result = $action->execute($request->user(), $post, $data['type'], $request->expectsJson());
         return $request->expectsJson()
-            ? response()->json(['reaction' => $data['type'], 'count' => $count])
+            ? response()->json($result)
             : back();
     }
 
@@ -272,9 +273,9 @@ class PostInteractionController extends Controller
     {
         $this->ensurePublic($post, $request);
         $this->ensureWritesOpen();
-        $count = $action->execute($request->user(), $post, null);
+        $result = $action->execute($request->user(), $post, null, $request->expectsJson());
         return $request->expectsJson()
-            ? response()->json(['reaction' => null, 'count' => $count])
+            ? response()->json($result)
             : back();
     }
 

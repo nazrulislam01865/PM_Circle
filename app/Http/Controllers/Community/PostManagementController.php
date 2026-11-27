@@ -83,9 +83,11 @@ final class PostManagementController extends Controller
         if ($oldUrl && ($newPath || $request->boolean('remove_image'))) {
             app(PostCheckMedia::class)->delete($oldUrl, $post->id);
         }
-        return $request->expectsJson()
-            ? response()->json(['body' => $post->fresh()->body, 'image_path' => $post->fresh()->image_path, 'status' => 'pending_check'])
-            : to_route('dashboard')->with('status', 'Checking your updated post.');
+        if ($request->expectsJson()) {
+            $updated = $post->fresh();
+            return response()->json(['body' => $updated->body, 'image_path' => $updated->image_path, 'status' => $updated->status]);
+        }
+        return to_route('dashboard')->with('status', 'Checking your updated post.');
     }
 
     /** Preserve the pre-check editing path while the AI checker rollout flag is disabled. */

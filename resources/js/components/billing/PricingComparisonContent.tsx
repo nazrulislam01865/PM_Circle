@@ -1,12 +1,15 @@
 import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { useState, type ReactNode } from 'react';
 import { PlanComparisonRows } from '@/components/billing/PlanComparison';
+import defaults from '@/data/compare-plans.json';
+import { PMDropdown } from '@/components/pm/PMDropdown';
 import { ProfileImportIllustration } from '@/components/billing/ProfileImportIllustration';
 import type { Plan } from '@/components/billing/PlanCard';
 import {
     Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog';
 
+export type PricingContent = typeof defaults;
 export type PricingPlanCode = 'free' | 'plus' | 'pro';
 
 function money(minor: number): string {
@@ -14,13 +17,18 @@ function money(minor: number): string {
 }
 
 /** The single comparison experience for public pricing and authenticated membership management. */
-export function PricingComparisonContent({ plans, renderAction, notice, error, billingFineprint }: {
+export function PricingComparisonContent({ plans, renderAction, notice, error, billingFineprint, content }: {
     plans: Plan[];
     renderAction: (plan: PricingPlanCode) => ReactNode;
     notice?: ReactNode;
     error?: string | null;
     billingFineprint?: string;
+    content?: PricingContent;
 }) {
+    const settings = content ?? defaults;
+    const { banner, comparison, actions, notes } = settings;
+    const profileImport = settings['profile-import'];
+    const durationLabel = (months: number) => months === 1 ? comparison.monthlyLabel : months === 12 ? comparison.yearlyLabel : `${months} ${comparison.monthsLabel}`;
     const [duration, setDuration] = useState(1);
     const planByCode = (code: PricingPlanCode) => plans.find(plan => plan.code === code);
     const planPrice = (code: PricingPlanCode, months = 1) =>
@@ -30,38 +38,37 @@ export function PricingComparisonContent({ plans, renderAction, notice, error, b
     const selectedPlus = plusOptions.find(option => option.months === duration) ?? plusOptions[0];
     const plusMonthly = selectedPlus ? money(selectedPlus.amount_minor / selectedPlus.months) : null;
 
-    return <div className="pm-compare-page">
+    return <div className={`pm-compare-page${content ? ' pm-public-compare' : ''}`}>
         <LegacyPageHeading><div className="pm-compare-intro">
-            <h1>Choose the support you need to grow.</h1>
-            <p>Start free. Add more practice and career tools when you're ready.</p>
+            <h1>{banner.title}</h1>
+            <p>{banner.description}</p>
         </div></LegacyPageHeading>
 
         {notice}
         {error && <p role="alert" className="pm-compare-error">{error}</p>}
 
-        <div className="pm-compare-scroll" tabIndex={0} role="region" aria-label="Membership feature comparison; scroll horizontally on small screens">
+        <div className="pm-compare-scroll" tabIndex={0} role="region" aria-label={comparison.regionLabel}>
             <table className="pm-compare-table">
                 <colgroup><col className="pm-compare-feature-col"/><col/><col/><col/></colgroup>
                 <thead><tr>
-                    <th className="pm-compare-header-feature" scope="col"><strong>Features</strong><span>Compare what's included in each plan.</span></th>
-                    <th scope="col"><strong>Free</strong><b>{money(planPrice('free') ?? 0)}</b><span>Always free</span></th>
+                    <th className="pm-compare-header-feature" scope="col"><strong>{comparison.title}</strong><span>{comparison.description}</span></th>
+                    <th scope="col"><strong>{content ? planByCode('free')?.name ?? 'Free' : 'Free'}</strong><b>{money(planPrice('free') ?? 0)}</b><span>{comparison.freeNote}</span></th>
                     <th scope="col" className="pm-compare-plus">
-                        <span className="pm-compare-recommended">Recommended</span>
-                        <strong>Plus</strong>
-                        <b>{plusMonthly ? <>{plusMonthly} <span className="pm-compare-per-month">/ month</span></> : 'Price to confirm'}</b>
-                        <label className="pm-compare-duration">
-                            <span className="sr-only">Plus billing duration</span>
-                            <select value={selectedPlus?.months ?? ''} onChange={event => setDuration(Number(event.target.value))} disabled={!plusOptions.length}>
-                                {plusOptions.map(option => <option key={option.months} value={option.months}>{option.months === 1 ? 'Monthly' : option.months === 12 ? 'Yearly' : `${option.months} months`}</option>)}
-                            </select>
-                        </label>
-                        <small>{plusOptions.filter(option => option.months !== 1).map(option => `${option.months === 12 ? 'Yearly' : `${option.months} months`}: ${money(option.amount_minor)}`).join(' · ')}</small>
+                        <span className="pm-compare-recommended">{comparison.recommended}</span>
+                        <strong>{content ? planByCode('plus')?.name ?? 'Plus' : 'Plus'}</strong>
+                        <b>{plusMonthly ? <>{plusMonthly} <span className="pm-compare-per-month">{comparison.perMonth}</span></> : comparison.priceUnavailable}</b>
+                        <div className="pm-compare-duration">
+                            {content ? <PMDropdown id="pm-compare-duration" aria-label={comparison.durationLabel} required value={String(selectedPlus?.months ?? '')} onValueChange={value => setDuration(Number(value))} options={plusOptions.map(option => ({value: String(option.months), label: durationLabel(option.months)}))} placeholder={comparison.priceUnavailable} disabled={!plusOptions.length}/> : <select aria-label={comparison.durationLabel} value={selectedPlus?.months ?? ''} onChange={event => setDuration(Number(event.target.value))} disabled={!plusOptions.length}>
+                                {plusOptions.map(option => <option key={option.months} value={option.months}>{durationLabel(option.months)}</option>)}
+                            </select>}
+                        </div>
+                        <small>{plusOptions.filter(option => option.months !== 1).map(option => `${durationLabel(option.months)}: ${money(option.amount_minor)}`).join(' · ')}</small>
                     </th>
-                    <th scope="col"><strong>Pro</strong><b>{planPrice('pro') == null ? 'Price to confirm' : <>{money(planPrice('pro')!)} <span className="pm-compare-per-month">/ month</span></>}</b><span>Proposed pricing</span></th>
+                    <th scope="col"><strong>{content ? planByCode('pro')?.name ?? 'Pro' : 'Pro'}</strong><b>{planPrice('pro') == null ? comparison.priceUnavailable : <>{money(planPrice('pro')!)} <span className="pm-compare-per-month">{comparison.perMonth}</span></>}</b><span>{comparison.proNote}</span></th>
                 </tr></thead>
-                <PlanComparisonRows />
+                <PlanComparisonRows sections={[settings.community, settings.learning, settings.career]}/>
                 <tfoot><tr>
-                    <th scope="row">Start when you're ready.</th>
+                    <th scope="row">{actions.title}</th>
                     <td>{renderAction('free')}</td>
                     <td className="pm-compare-plus">{renderAction('plus')}</td>
                     <td>{renderAction('pro')}</td>
@@ -69,25 +76,25 @@ export function PricingComparisonContent({ plans, renderAction, notice, error, b
             </table>
         </div>
 
-        <p className="pm-compare-fineprint">*Viewer names appear only when their privacy settings permit.<br/>{billingFineprint ?? "AI limits are illustrative. Cancel renewal anytime; access continues until the paid term ends."}</p>
+        <p className="pm-compare-fineprint" hidden={!notes.enabled}>{notes.privacyNote}<br/>{billingFineprint ?? notes.billingNote}</p>
 
-        <section className="pm-compare-import pm-panel" aria-labelledby="pm-profile-import-heading">
+        {profileImport.enabled && <section className="pm-compare-import pm-panel" aria-labelledby="pm-profile-import-heading">
             <ProfileImportIllustration />
             <div className="pm-compare-import-copy">
-                <h2 id="pm-profile-import-heading">Bring your experience with you.</h2>
-                <p>Add your LinkedIn link or upload your own LinkedIn PDF / profile export.<br className="pm-compare-import-break"/> Review imported details before saving.</p>
-                <small>File imports are snapshots, not automatic LinkedIn sync.</small>
+                <h2 id="pm-profile-import-heading">{profileImport.title}</h2>
+                <p>{content ? profileImport.description : <>Add your LinkedIn link or upload your own LinkedIn PDF / profile export.<br className="pm-compare-import-break"/> Review imported details before saving.</>}</p>
+                <small>{profileImport.note}</small>
             </div>
             <Dialog>
-                <DialogTrigger asChild><button type="button" className="pm-button pm-button-outline pm-button-sm pm-compare-import-action">How profile import works</button></DialogTrigger>
-                <DialogContent>
+                <DialogTrigger asChild><button type="button" className="pm-button pm-button-outline pm-button-sm pm-compare-import-action">{profileImport.linkLabel}</button></DialogTrigger>
+                <DialogContent className={content ? 'pm-public-compare-dialog' : undefined}>
                     <DialogHeader>
-                        <DialogTitle>How profile import works</DialogTitle>
-                        <DialogDescription>Profile import is a planned feature, not yet available for upload.</DialogDescription>
+                        <DialogTitle>{profileImport.dialogTitle}</DialogTitle>
+                        <DialogDescription>{profileImport.dialogDescription}</DialogDescription>
                     </DialogHeader>
-                    <p className="text-sm leading-relaxed text-slate-700">When available, you will be able to add your LinkedIn profile link or upload a PDF you exported yourself, review the extracted information, and choose what to save to your PM Circle profile. Files will not be synchronized automatically with LinkedIn.</p>
+                    <p className={content ? 'pm-compare-dialog-body' : 'text-sm leading-relaxed text-slate-700'}>{profileImport.dialogBody}</p>
                 </DialogContent>
             </Dialog>
-        </section>
+        </section>}
     </div>;
 }

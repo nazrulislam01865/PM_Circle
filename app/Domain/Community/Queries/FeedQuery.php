@@ -21,7 +21,7 @@ final class FeedQuery
     public function page(string $tab, string $topic, ?string $search, ?User $viewer, ?string $token = null, bool $includeSaved = false, ?int $authorId = null): array
     {
         $search = trim($search ?? '');
-        $scope = [$viewer?->getKey(), $tab, $topic, $search];
+        $scope = [2, $viewer?->getKey(), $tab, $topic, $search, $includeSaved ? 'dashboard' : 'community'];
         if ($authorId !== null) {
             $scope[] = $authorId;
         }

@@ -76,7 +76,7 @@ export function JoinCommunityDialog({ action, onClose, hasAccount }: {
 export function ReactionPicker({ endpoint, initial, total, canInteract, onJoin, label = 'post', onChanged, showCount = true, buttonLabel, prototypeIcon = false }: {
     endpoint: string; initial?: ReactionType | null; total?: number;
     canInteract: boolean; onJoin: RequestToJoin; label?: string;
-    onChanged?: (reaction: ReactionType | null, count: number) => void;
+    onChanged?: (reaction: ReactionType | null, count: number, breakdown?: Record<string, number>) => void;
     showCount?: boolean; buttonLabel?: string; prototypeIcon?: boolean;
 }) {
     const [active, setActive] = useState<ReactionType | null>(initial ?? null);
@@ -122,10 +122,10 @@ export function ReactionPicker({ endpoint, initial, total, canInteract, onJoin, 
                 ...(!remove ? { body: JSON.stringify({ type }) } : {}),
             });
             if (!response.ok) throw new Error(response.status === 419 ? 'Session expired. Refresh and try again.' : 'Unable to save your reaction. Please try again.');
-            const result: { reaction: ReactionType | null; count: number } = await response.json();
+            const result: { reaction: ReactionType | null; count: number; breakdown?: Record<string, number> } = await response.json();
             setActive(result.reaction);
             setCount(result.count);
-            onChanged?.(result.reaction, result.count);
+            onChanged?.(result.reaction, result.count, result.breakdown);
             setOpen(false);
         } catch (reason) {
             setActive(previous.active);
@@ -136,7 +136,7 @@ export function ReactionPicker({ endpoint, initial, total, canInteract, onJoin, 
     const chosen = allOptions.find(reaction => reaction.type === active);
     const selectedType = active ?? 'like';
     const archivedSelection = active !== null && !options.some(option => option.type === active);
-    return <div className="pm-home-reaction-root" ref={root} data-open={open ? 'true' : 'false'}>
+    return <div data-feed-pin={busy || open || undefined} className="pm-home-reaction-root" ref={root} data-open={open ? 'true' : 'false'}>
         <button type="button" className={`pm-home-action pm-home-reaction-main${active ? ` is-${active}` : ''}`}
             disabled={busy} aria-label={chosen ? `${chosen.label} reaction. Select to remove or choose a different reaction` : `Like this ${label}`}
             aria-pressed={Boolean(active)} aria-haspopup="true" aria-expanded={open}

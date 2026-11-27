@@ -76,7 +76,8 @@ class HandleInertiaRequests extends Middleware
                     'secure' => config('notifications.reverb_public_secure'),
                 ] : null,
             ] : null,
-            'memberShell' => fn () => $request->user() && $request->user()->is_admin !== true && $request->user()->onboarding_step >= 3
+            'memberShell' => fn () => $request->user()
+                && ! ($request->routeIs('dashboard') && config('community.progressive_dashboard_enabled')) && $request->user()->is_admin !== true && $request->user()->onboarding_step >= 3
                 ? app(\App\Domain\Dashboard\Queries\MemberShell::class)->forMember($request->user()) : null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

@@ -43,7 +43,7 @@ export function PostCard({
     isGuest = true,
     onJoin = () => {},
     onReactionChange,
-    onCommentAdded, onSavedChange, onHiddenChange, onRemoved, onUpdated, onMuteChange, mode = 'feed',
+    onCommentAdded, onSavedChange, onHiddenChange, onRemoved, onUpdated, onMuteChange, onVoteChanged, mode = 'feed',
 }: {
     post: PostPreview;
     isGuest?: boolean;
@@ -53,8 +53,9 @@ export function PostCard({
     onSavedChange?: (saved: boolean) => void;
     onHiddenChange?: (hidden: boolean) => void;
     onRemoved?: () => void;
-    onUpdated?: (updated: { body: string; image_path: string | null }) => void;
+    onUpdated?: (updated: { body: string; image_path: string | null; status?: string }) => void;
     onMuteChange?: (muted: boolean) => void;
+    onVoteChanged?: (choice: number, options: NonNullable<PostPreview['poll_options']>) => void;
     mode?: 'feed' | 'detail';
 }) {
     const secondary = usePostSecondaryActions({ postId: post.id, canInteract: !isGuest, onJoin, saved: Boolean(post.viewer_saved), onSavedChange });
@@ -91,7 +92,7 @@ export function PostCard({
                 {mode === 'detail' || post.viewer_hidden ? <PostContent className="pm-card-body" body={post.body} image={post.image_path}/>
                     : <Link href={`/posts/${post.id}`} className="pm-unified-post-body-link" aria-label={`View discussion by ${post.author.name}`}><PostContent className="pm-card-body" body={post.body} image={post.image_path}/></Link>}
             </div>
-            {!post.viewer_hidden && post.topic === 'Poll' && post.poll_options && <PostPoll postId={post.id} options={post.poll_options} selected={post.viewer_vote} canInteract={!isGuest} onJoin={onJoin}/>}
+            {!post.viewer_hidden && post.topic === 'Poll' && post.poll_options && <PostPoll postId={post.id} options={post.poll_options} selected={post.viewer_vote} canInteract={!isGuest} onJoin={onJoin} onVoteChanged={onVoteChanged}/>}
 
             {post.ai_generated && <p className="pm-ai-disclosure">AI-generated community content</p>}
             {post.tags && post.tags.length > 0 && (

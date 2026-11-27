@@ -25,7 +25,7 @@ test('Trends promotion reuses approved copy, existing photo, action and route', 
     assert.match(section, /id="pm-v2-trends-title">\{content.heading\}/);
     assert.doesNotMatch(section, /fetch\(|router\.|useEffect|useState|style=/);
     assert.ok(existsSync(new URL('../../public/images/home/prototype/leader.webp', import.meta.url)));
-    assert.match(read('routes/web.php'), /Route::inertia\('\/pm-trends', 'trends\/Index'\)/);
+    assert.match(read('routes/web.php'), /Route::get\('\/pm-trends', \[.*ContentPagesController::class, 'trends'\]\)/);
 });
 
 test('Trends banner uses shared container, centralized design roles and responsive styles', () => {

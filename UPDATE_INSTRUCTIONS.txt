@@ -1,0 +1,37 @@
+PM Circle - Trends, About Us and Events update
+This is the complete updated source project, merged from Archive(2).zip and the Trends/About/Events update. Extract into a fresh development or staging directory. Retain your existing environment configuration and persistent storage separately. Stale public/build assets, runtime caches, debug snapshots and macOS metadata were omitted; install dependencies and rebuild before running.
+Back up the database and source, apply and test on staging first. Use the Node version supported by the existing lockfile (at least 22.18 on Node 22). Install locked dependencies with composer install and npm ci. Run php artisan migrate, php artisan test --filter=PublicContentManagementTest, npm run types:check and npm run build. Clear application caches with php artisan optimize:clear. Follow the established release procedure; never use migrate:fresh on production. Migration is forward-only to protect newly authored content.
+No production deployment was performed. Full Laravel and frontend build verification was blocked by missing dependencies and registry access. Targeted source regression checks passed (30/30); broader suite 534/535, with one unchanged PMP assertion failure. PHP and TypeScript syntax checks passed. Browser layout verification and runtime tests remain required.
+
+Updated source and test files:
+app/Domain/Trends/TrendReports.php
+app/Http/Controllers/Admin/PublicPageController.php
+app/Http/Controllers/Admin/TrendReportController.php
+app/Http/Controllers/PublicSite/ContentPagesController.php
+app/Http/Requests/Admin/SaveTrendReportRequest.php
+app/Http/Requests/Admin/UpdatePublicPageRequest.php
+app/Support/Admin/PublicPageContent.php
+database/data/legacy-trend-reports.json
+database/migrations/2026_11_27_000001_enable_public_trend_management.php
+resources/css/pm-about.css
+resources/css/pm-events.css
+resources/css/pm-trends-detail.css
+resources/css/pm-trends-public.css
+resources/js/components/trends/TrendShared.tsx
+resources/js/data/pm-trends.ts
+resources/js/layouts/admin/AdminLayout.tsx
+resources/js/pages/admin/PublicPageEditor.tsx
+resources/js/pages/admin/TrendReportEditor.tsx
+resources/js/pages/admin/TrendReports.tsx
+resources/js/pages/events/Index.tsx
+resources/js/pages/public/About.tsx
+resources/js/pages/trends/Index.tsx
+resources/js/pages/trends/Show.tsx
+resources/js/types/public-content.ts
+routes/web.php
+tests/Feature/Admin/PublicContentManagementTest.php
+tests/Regression/homeTrendsBanner.test.mjs
+tests/Regression/publicAboutPrototype.test.mjs
+tests/Regression/publicEventsPrototype.test.mjs
+tests/Regression/trendsDetailPrototype.test.mjs
+tests/Regression/trendsListPrototype.test.mjs

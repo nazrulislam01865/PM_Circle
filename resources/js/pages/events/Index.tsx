@@ -63,7 +63,7 @@ export default function CommunityEvents({ events, filters, content }: { events: 
                         <div><label htmlFor="event-filter-sort" className="pm-guide-field-label">Sort by</label><PMDropdown id="event-filter-sort" value={sort} required placeholder="Sort by" options={[{value: 'soonest', label: 'Soonest first'}, {value: 'latest', label: 'Latest first'}]} onValueChange={value => { setSort(value); apply({ search, format, sort: value }); }}/></div>
                         <button className="pm-guide-button is-outline" type="submit">Search</button>
                     </form>
-                    <p className="pm-event-count" role="status" aria-live="polite">{events.data.length ? `Showing ${events.from}–${events.to} of ${events.total} events` : 'No events match your filters'}</p>
+                    {events.data.length > 0 && <p className="pm-event-count" role="status" aria-live="polite">Showing {events.from}–{events.to} of {events.total} events</p>}
                     {events.data.length > 0 ? <div className="pm-event-list">
                         {events.data.map((event, index) => <div key={event.slug} className="pm-event-row-slot">
                             <EventListingRow event={event}/>

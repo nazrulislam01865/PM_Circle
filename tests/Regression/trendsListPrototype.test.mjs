@@ -1,14 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
-import { filterTrendReports, reportTopics, sampleTrendReports, trendArticles, trendArticleHref } from '../../resources/js/data/pm-trends.ts';
+import { trendArticleHref } from '../../resources/js/data/pm-trends.ts';
 const read = file => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
+const reports = JSON.parse(read('database/data/legacy-trend-reports.json'));
+const sampleTrendReports = reports.filter(report => report.listed);
+const trendArticles = reports.filter(report => !report.listed);
 const page = read('resources/js/pages/trends/Index.tsx');
 const css = read('resources/css/pm-trends-public.css');
 const tokens = read('resources/css/pm-design-tokens.css');
 
 test('approved public list has the three exact report titles, topics, date and local photos', () => {
-    assert.deepEqual(reportTopics, ['AI at Work', 'Career Paths', 'Skills']);
+    assert.deepEqual(sampleTrendReports.map(report => report.category), ['AI at Work', 'Career Paths', 'Skills']);
     assert.deepEqual(sampleTrendReports.map(report => report.title), [
         'Using AI for project updates without losing the facts',
         'What to look for in a project coordinator role in Bangladesh',
@@ -23,31 +26,28 @@ test('approved public list has the three exact report titles, topics, date and l
     assert.equal(new Set([...trendArticles, ...sampleTrendReports].map(r => r.slug)).size, trendArticles.length + sampleTrendReports.length);
 });
 
-test('search, topic and saved filters combine and handle empty results without reading storage unnecessarily', () => {
-    const unavailable = () => { throw new Error('Unexpected storage access'); };
-    assert.equal(filterTrendReports('', 'All', false, unavailable).length, 3);
-    assert.equal(filterTrendReports('  BANGLADESH ', 'All', false, unavailable)[0].category, 'Career Paths');
-    assert.equal(filterTrendReports('AI at work', 'All', false, unavailable).length, 1);
-    assert.equal(filterTrendReports('interview', 'Skills', false, unavailable).length, 1);
-    assert.equal(filterTrendReports('interview', 'Career Paths', false, unavailable).length, 0);
-    assert.deepEqual(filterTrendReports('', 'All', true, slug => slug === sampleTrendReports[1].slug), [sampleTrendReports[1]]);
-    assert.equal(filterTrendReports('', 'Skills', true, () => false).length, 0);
+test('search and topic filters are server-backed and use bounded pages and shared dropdown', () => {
+    const controller = read('app/Http/Controllers/PublicSite/ContentPagesController.php');
+    const domain = read('app/Domain/Trends/TrendReports.php');
+    assert.match(controller, /paginate\(12, TrendReports::columns\(\)\)/);
+    assert.match(controller, /where\('category', \$topic\)/);
+    assert.match(controller, /ESCAPE/);
+    assert.match(domain, /where\('status', 'published'\)/);
+    assert.match(domain, /where\('listed', true\)/);
+    assert.match(page, /<PMDropdown/);
+    assert.match(page, /<LinkedPagination/);
+    assert.doesNotMatch(page, /Saved reports only|AI-generated sample reports for the PM Circle prototype|localStorage|sampleTrendReports/);
 });
 
-test('uses the shared homepage layout, banner, form controls, images and existing bookmark contract', () => {
+test('uses the shared homepage layout, banner, form controls, images and accessible result count', () => {
     assert.match(page, /<PublicLayout siteLayout homePrototype guideLayout active="\/pm-trends" banner=\{\{[^\n]*\}\}>/);
     assert.match(page, /pm-terms-banner/);
-    assert.match(page, /Search titles or topics/);
-    assert.match(page, /Saved reports only/);
-    assert.match(page, /window\.localStorage\.getItem\(`pm-trend-bookmark-\$\{slug\}`\)/);
-    assert.match(page, /catch \{\s*return false;/);
+    assert.match(page, /listing.searchPlaceholder/);
     assert.match(page, /role="status"/);
-    assert.doesNotMatch(page, /fetch\(|axios\.|router\.get\(|dangerouslySetInnerHTML/);
     const shared = read('resources/js/components/trends/TrendShared.tsx');
     assert.match(shared, /<HomePhoto photo=\{fallback\} source=\{article.thumbnail\}/);
     assert.match(shared, /rel="noopener noreferrer"/);
-    assert.match(read('resources/js/pages/trends/Show.tsx'), /sampleTrendReports\.find.*\?\? trendArticles\.find/);
-    assert.match(read('routes/web.php'), /Route::inertia\('\/pm-trends', 'trends\/Index'\)/);
+    assert.match(read('routes/web.php'), /Route::get\('\/pm-trends', \[.*ContentPagesController::class, 'trends'\]\)/);
 });
 
 test('page typography, controls and palette consume centralized tokens, with responsive layout isolated to the list', () => {

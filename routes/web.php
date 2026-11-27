@@ -87,6 +87,14 @@ Route::middleware(['auth', 'pm.admin', 'verified'])->prefix('admin')->name('admi
     Route::put('/legal/{document}', [\App\Http\Controllers\Admin\LegalPageController::class, 'update'])->whereIn('document', ['terms', 'privacy'])->middleware('throttle:20,1')->name('legal.update');
     Route::post('/legal/{document}/publish', [\App\Http\Controllers\Admin\LegalPageController::class, 'publish'])->whereIn('document', ['terms', 'privacy'])->middleware('throttle:5,1')->name('legal.publish');
     Route::get('/homepage', [HomepageController::class, 'edit'])->name('homepage.edit');
+    Route::get('/public-pages/{page}', [\App\Http\Controllers\Admin\PublicPageController::class, 'edit'])->whereIn('page', ['about', 'trends', 'compare-plans', 'refund-policy'])->name('public-pages.edit');
+    Route::put('/public-pages/{page}/{section}', [\App\Http\Controllers\Admin\PublicPageController::class, 'update'])->whereIn('page', ['about', 'trends', 'compare-plans', 'refund-policy'])->middleware('throttle:20,1')->name('public-pages.update');
+    Route::get('/trend-reports', [\App\Http\Controllers\Admin\TrendReportController::class, 'index'])->name('trend-reports.index');
+    Route::get('/trend-reports/create', [\App\Http\Controllers\Admin\TrendReportController::class, 'edit'])->name('trend-reports.create');
+    Route::get('/trend-reports/{report}/edit', [\App\Http\Controllers\Admin\TrendReportController::class, 'edit'])->whereNumber('report')->name('trend-reports.edit');
+    Route::post('/trend-reports', [\App\Http\Controllers\Admin\TrendReportController::class, 'save'])->middleware('throttle:20,1')->name('trend-reports.store');
+    Route::put('/trend-reports/{report}', [\App\Http\Controllers\Admin\TrendReportController::class, 'save'])->whereNumber('report')->middleware('throttle:20,1')->name('trend-reports.update');
+
     Route::get('/footer', [SiteFooterController::class, 'edit'])->name('footer.edit');
     Route::put('/footer', [SiteFooterController::class, 'update'])->middleware('throttle:20,1')->name('footer.update');
     Route::get('/interview-preparation', [InterviewCatalogController::class, 'index'])->name('interview-catalog.index');
@@ -147,13 +155,13 @@ Route::middleware(['auth', 'pm.admin', 'verified'])->prefix('admin')->name('admi
 Route::get('/', [HomeController::class, 'index'])->name('home');
 // Public, browser-only career exploration; requires no account, API or database records.
 Route::inertia('/discover-pm', 'public/DiscoverPm')->name('discover-pm.index');
-// Public, static PM Trends prototype; no database query or new content table.
-Route::inertia('/pm-trends', 'trends/Index')->name('pm-trends.index');
-Route::get('/pm-trends/{slug}', fn (string $slug) => \Inertia\Inertia::render('trends/Show', ['slug' => $slug]))
+// Public Trends listing and report details use the existing editorial article store.
+Route::get('/pm-trends', [\App\Http\Controllers\PublicSite\ContentPagesController::class, 'trends'])->name('pm-trends.index');
+Route::get('/pm-trends/{slug}', [\App\Http\Controllers\PublicSite\ContentPagesController::class, 'show'])
     ->where('slug', '[a-z0-9-]+')->name('pm-trends.show');
 Route::get('/pricing', [HomeController::class, 'pricing'])->name('pricing');
 Route::get('/community', [PostController::class, 'index'])->name('community.index');
-Route::get('/community/feed-page', [PostController::class, 'feedPage'])->middleware('throttle:90,1')->name('community.feed-page');
+Route::get('/community/feed-page', [PostController::class, 'feedPage'])->middleware(['throttle:90,1', \App\Http\Middleware\FeedPerformanceTiming::class])->name('community.feed-page');
 Route::get('/learning', [LearningController::class, 'index'])->name('learning.index');
 Route::get('/learning/courses/{course}', [DemoCourseController::class, 'show'])->name('learning.courses.show');
 Route::get('/learning/my-learning', [\App\Http\Controllers\Learning\CourseLearningController::class, 'index'])->name('learning.my-learning');
@@ -183,7 +191,7 @@ Route::get('/join/step/2', [OnboardingController::class, 'profile'])->middleware
 Route::post('/join/step/2', [OnboardingController::class, 'saveProfile'])->middleware(['pm.member:true', 'throttle:10,1'])->name('join.profile.save');
 Route::post('/api/auth/send-verification-code', [EmailVerificationCodeController::class, 'sendCode'])->middleware(['pm.member:true', 'throttle:15,1']);
 Route::post('/api/auth/verify-code', [EmailVerificationCodeController::class, 'verifyCode'])->middleware(['pm.member:true', 'throttle:30,1']);
-Route::inertia('/about', 'public/About')->name('about');
+Route::get('/about', [\App\Http\Controllers\PublicSite\ContentPagesController::class, 'about'])->name('about');
 Route::get('/terms', [\App\Http\Controllers\PublicSite\LegalPageController::class, 'terms'])->name('terms');
 Route::get('/privacy', [\App\Http\Controllers\PublicSite\LegalPageController::class, 'privacy'])->name('privacy');
 // Static public support destinations for the PMP footer; no APIs or database queries.
@@ -192,7 +200,7 @@ Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact', [ContactController::class, 'submit'])->middleware('throttle:5,10')->name('contact.submit');
 Route::get('/contact/confirm/{token}', [ContactController::class, 'confirm'])
     ->middleware(['signed', 'throttle:10,1'])->where('token', '[A-Za-z0-9]{64}')->name('contact.confirm');
-Route::inertia('/refund-policy', 'public/PolicyNotice')->name('refund-policy');
+Route::get('/refund-policy', [\App\Http\Controllers\PublicSite\ContentPagesController::class, 'refundPolicy'])->name('refund-policy');
 // Static public resume preview; no AI request or resume data access.
 Route::inertia('/ai-resume-assistant', 'public/AiResumeAssistant')->name('ai-resume-assistant');
 
@@ -231,7 +239,7 @@ Route::inertia('/simulators/pmi-acp', 'public/ComingSoon', ['title' => 'PMI-ACP 
 Route::middleware(['auth', 'pm.member', 'verified'])->group(function () {
     Route::get('/join/step/3', [OnboardingController::class, 'plan'])->name('join.plan');
     Route::post('/join/step/3', [OnboardingController::class, 'choosePlan'])->middleware('throttle:10,1')->name('join.plan.save');
-    Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::get('/dashboard', DashboardController::class)->middleware(\App\Http\Middleware\FeedPerformanceTiming::class)->name('dashboard');
 
     Route::get('/dashboard/features/{feature}', AccountFeatureController::class)->name('dashboard.features');
 });

@@ -1,0 +1,196 @@
+{
+  "banner": {
+    "title": "Choose the support you need to grow.",
+    "description": "Start free. Add more practice and career tools when you're ready.",
+    "currentLabel": "Compare plans",
+    "metaTitle": "Compare Free, Plus and Pro"
+  },
+  "comparison": {
+    "title": "Features",
+    "description": "Compare what's included in each plan.",
+    "recommended": "Recommended",
+    "freeNote": "Always free",
+    "proNote": "Proposed pricing",
+    "priceUnavailable": "Price to confirm",
+    "monthlyLabel": "Monthly",
+    "yearlyLabel": "Yearly",
+    "monthsLabel": "months",
+    "perMonth": "/ month",
+    "durationLabel": "Plus billing duration",
+    "regionLabel": "Membership feature comparison; scroll horizontally on small screens"
+  },
+  "community": {
+    "enabled": true,
+    "title": "Community & profile",
+    "rows": [
+      {
+        "label": "Professional profile & photo upload",
+        "icon": "UserRound",
+        "free": "Included",
+        "plus": "Included",
+        "pro": "Included"
+      },
+      {
+        "label": "Posts, comments, reactions & sharing",
+        "icon": "UsersRound",
+        "free": "Included",
+        "plus": "Included",
+        "pro": "Included"
+      },
+      {
+        "label": "Basic privacy & visibility controls",
+        "icon": "Shield",
+        "free": "Included",
+        "plus": "Included",
+        "pro": "Included"
+      },
+      {
+        "label": "Link your LinkedIn profile",
+        "icon": "Link2",
+        "free": "Included",
+        "plus": "Included",
+        "pro": "Included"
+      },
+      {
+        "label": "Import profile from LinkedIn PDF / export",
+        "icon": "FileText",
+        "free": "Included",
+        "plus": "Included",
+        "pro": "Included"
+      },
+      {
+        "label": "Re-import with review before updating",
+        "icon": "RefreshCw",
+        "free": "Included",
+        "plus": "Included",
+        "pro": "Included"
+      },
+      {
+        "label": "Achievements & learning record",
+        "icon": "Trophy",
+        "free": "Included",
+        "plus": "Included",
+        "pro": "Included"
+      }
+    ]
+  },
+  "learning": {
+    "enabled": true,
+    "title": "Learn & practice",
+    "rows": [
+      {
+        "label": "Short lessons & learning paths",
+        "icon": "BookOpen",
+        "free": "Samples",
+        "plus": "Full access",
+        "pro": "Full access"
+      },
+      {
+        "label": "PMP & Scrum practice questions",
+        "icon": "FileText",
+        "free": "Samples",
+        "plus": "Full access",
+        "pro": "Full access"
+      },
+      {
+        "label": "Standard project scenarios",
+        "icon": "Target",
+        "free": "Samples",
+        "plus": "Included",
+        "pro": "Included"
+      },
+      {
+        "label": "Advanced project simulations",
+        "icon": "ChartNoAxesColumnIncreasing",
+        "free": "Not included",
+        "plus": "Not included",
+        "pro": "Included"
+      },
+      {
+        "label": "AI feedback credits / month",
+        "icon": "BrainCircuit",
+        "free": "Not included",
+        "plus": "50",
+        "pro": "150"
+      }
+    ]
+  },
+  "career": {
+    "enabled": true,
+    "title": "Career & insights",
+    "rows": [
+      {
+        "label": "Browse jobs & save opportunities",
+        "icon": "BriefcaseBusiness",
+        "free": "Included",
+        "plus": "Included",
+        "pro": "Included"
+      },
+      {
+        "label": "Share professional profile & portfolio",
+        "icon": "IdCard",
+        "free": "Included",
+        "plus": "Included",
+        "pro": "Included"
+      },
+      {
+        "label": "Profile-view totals & trends",
+        "icon": "ChartNoAxesColumnIncreasing",
+        "free": "Not included",
+        "plus": "Included",
+        "pro": "Included"
+      },
+      {
+        "label": "Recent viewer details*",
+        "icon": "Eye",
+        "free": "Not included",
+        "plus": "Not included",
+        "pro": "Included"
+      },
+      {
+        "label": "AI resume builder & PDF export",
+        "icon": "FileText",
+        "free": "Not included",
+        "plus": "Not included",
+        "pro": "Included"
+      },
+      {
+        "label": "AI interview practice",
+        "icon": "MessageCircle",
+        "free": "Not included",
+        "plus": "Not included",
+        "pro": "Included"
+      },
+      {
+        "label": "Recruiter resume access controls",
+        "icon": "Settings",
+        "free": "Not included",
+        "plus": "Not included",
+        "pro": "Included"
+      }
+    ]
+  },
+  "actions": {
+    "title": "Start when you're ready.",
+    "adminLabel": "Administration",
+    "freeGuest": "Register free",
+    "freeMember": "Manage Free",
+    "plusLabel": "Get Plus",
+    "proLabel": "Get Pro"
+  },
+  "notes": {
+    "enabled": true,
+    "privacyNote": "*Viewer names appear only when their privacy settings permit.",
+    "billingNote": "AI limits are illustrative. Cancel renewal anytime; access continues until the paid term ends."
+  },
+  "profile-import": {
+    "enabled": true,
+    "title": "Bring your experience with you.",
+    "description": "Add your LinkedIn link or upload your own LinkedIn PDF / profile export. Review imported details before saving.",
+    "note": "File imports are snapshots, not automatic LinkedIn sync.",
+    "linkLabel": "How profile import works",
+    "dialogTitle": "How profile import works",
+    "dialogDescription": "Profile import is a planned feature, not yet available for upload.",
+    "dialogBody": "When available, you will be able to add your LinkedIn profile link or upload a PDF you exported yourself, review the extracted information, and choose what to save to your PM Circle profile. Files will not be synchronized automatically with LinkedIn."
+  }
+}

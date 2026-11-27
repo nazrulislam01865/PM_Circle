@@ -5,9 +5,21 @@ import { DashboardFeed } from '@/components/dashboard/DashboardFeed';
 import type { PostCheckPreview } from '@/components/community/PostCheckCard';
 import { MemberHomeOverview } from '@/components/dashboard/MemberHomeOverview';
 import { MemberDashboardLayout } from '@/layouts/pm/MemberDashboardLayout';
-import type { DashboardData } from '@/types/dashboard';
+import type { DashboardData, DashboardIdentity, DashboardFeedData, DashboardStatistics, DashboardFeedProps } from '@/types/dashboard';
 
-export default function Dashboard({ dashboard, flashStatus }: { dashboard: DashboardData; flashStatus?: string | null }) {
+export default function Dashboard({ dashboard, feed, postChecks, feedScopeCounts, statistics, planUsage, flashStatus }: {
+    dashboard: DashboardIdentity & Partial<DashboardData>;
+    feed?: DashboardFeedData;
+    postChecks?: DashboardData['postChecks'];
+    feedScopeCounts?: DashboardData['feedScopeCounts'];
+    statistics?: DashboardStatistics | null;
+    planUsage?: DashboardData['planUsage'] | null;
+    flashStatus?: string | null;
+}) {
+    // The legacy full payload remains supported while the release switch is off.
+    const feedData = { ...dashboard, ...feed, postChecks: postChecks ?? dashboard.postChecks!,
+        feedScopeCounts: feedScopeCounts ?? dashboard.feedScopeCounts! } as DashboardFeedProps;
+    const summary = statistics ?? (dashboard.learning && dashboard.overview ? { learning: dashboard.learning, overview: dashboard.overview } : undefined);
     const overviewRef = useRef<HTMLElement>(null);
     const [submittingPost, setSubmittingPost] = useState<PostCheckPreview | null>(null);
 
@@ -17,7 +29,7 @@ export default function Dashboard({ dashboard, flashStatus }: { dashboard: Dashb
 
         const header = document.querySelector<HTMLElement>('.pm-site-header');
         const secondaryHeader = document.querySelector<HTMLElement>('.pm-member-secondary');
-        const cards = Array.from(overview.children).filter((node): node is HTMLElement => node instanceof HTMLElement);
+
         let previousScrollY = window.scrollY;
         let stickyTop = 0;
         let upperBound = 0;
@@ -29,6 +41,7 @@ export default function Dashboard({ dashboard, flashStatus }: { dashboard: Dashb
             const headerHeight = (header?.getBoundingClientRect().height ?? 67)
                 + (secondaryHeader?.getBoundingClientRect().height ?? 0);
             const gap = parseFloat(getComputedStyle(overview).rowGap) || 0;
+            const cards = Array.from(overview.children).filter((node): node is HTMLElement => node instanceof HTMLElement);
             const contentHeight = cards.reduce((height, card) => height + card.getBoundingClientRect().height, 0)
                 + Math.max(0, cards.length - 1) * gap;
             const onDesktop = window.innerWidth > 830;
@@ -63,7 +76,7 @@ export default function Dashboard({ dashboard, flashStatus }: { dashboard: Dashb
         };
 
         const observer = new ResizeObserver(updateStickyLayout);
-        cards.forEach(card => observer.observe(card));
+        observer.observe(overview);
         if (header) observer.observe(header);
         if (secondaryHeader) observer.observe(secondaryHeader);
         window.addEventListener('resize', updateStickyLayout);
@@ -82,10 +95,10 @@ export default function Dashboard({ dashboard, flashStatus }: { dashboard: Dashb
         <div className="pm-dash-columns"><div className="pm-dash-center">
             <h1 className="sr-only">Member dashboard</h1>
             {flashStatus && <p role="status" className="pm-dashboard-flash">{flashStatus}</p>}
-            <DashboardComposer name={dashboard.member.name} plan={dashboard.isPreview ? 'free' : dashboard.plan} demo={dashboard.isDemo} onSubmissionStateChange={setSubmittingPost} blockedUntil={dashboard.postChecks.blocked_until} />
-            <DashboardFeed dashboard={dashboard} submittingPost={submittingPost} />
+            <DashboardComposer name={dashboard.member.name} plan={dashboard.isPreview ? 'free' : dashboard.plan} demo={dashboard.isDemo} onSubmissionStateChange={setSubmittingPost} blockedUntil={feedData.postChecks.blocked_until} />
+            <DashboardFeed dashboard={feedData} progressive={Boolean(feed)} submittingPost={submittingPost} />
         </div><aside ref={overviewRef} className="pm-dash-right" aria-label="Member overview">
-            <MemberHomeOverview dashboard={dashboard}/>
+            <MemberHomeOverview dashboard={dashboard} statistics={summary} planUsage={planUsage ?? dashboard.planUsage}/>
         </aside></div>
     </MemberDashboardLayout>;
 }

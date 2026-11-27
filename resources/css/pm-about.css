@@ -60,7 +60,7 @@
 .pm-about-content h3 {
     color: var(--pm-guide-ink);
     font-size: var(--pm-guide-text-h3);
-    font-weight: var(--pm-guide-weight-control);
+    font-weight: var(--pm-guide-weight-h2);
     line-height: var(--pm-guide-line-h3);
 }
 .pm-about-content p { max-width: 39rem; margin-top: var(--pm-guide-s2); }
@@ -68,7 +68,7 @@
 .pm-about-cards {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--pm-guide-s3);
+    gap: var(--pm-guide-s4);
     margin-top: var(--pm-guide-s2);
 }
 .pm-about-card {
@@ -90,11 +90,11 @@
     .pm-about-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 40.625rem) {
-    .pm-about-cards { grid-template-columns: minmax(0, 1fr); }
     .pm-about-content { padding-top: var(--pm-guide-s6); }
     .pm-about-banner { padding-bottom: var(--pm-guide-s6); }
 }
 @media (max-width: 33.75rem) {
+    .pm-about-cards { grid-template-columns: minmax(0, 1fr); }
     .pm-about-wrap { max-width: calc(100% - 2 * var(--pm-guide-gutter-mobile)); }
 }
 
@@ -102,3 +102,6 @@
     .pm-about-banner h1 { font-size: var(--pm-guide-rail-h1); }
     .pm-about-content h2 { font-size: var(--pm-guide-rail-h2); }
 }
+
+.pm-about-content > section:first-child { margin-top: 0; }
+.pm-about-content p { white-space: pre-line; overflow-wrap: anywhere; }

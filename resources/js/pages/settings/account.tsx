@@ -33,7 +33,7 @@ export default function AccountSettings({ sections, privacyFieldGroups, savedVal
     const changed = Object.keys(draft).filter(key => draft[key] !== baseline[key]);
     const [title, , description, groups] = sections[active];
     const privacyChoices = (values: SettingsValues): Record<string, ProfilePrivacyAudience> => Object.fromEntries(privacyFieldGroups.flatMap(group => group.fields.map(field => [field.key, values[`privacy_${field.key}`] as ProfilePrivacyAudience])));
-    const previewDark = draft.theme === 'Dark' || (draft.theme === 'System' && (appearance === 'system' ? resolvedAppearance === 'dark' : typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches));
+    const previewDark = false && (draft.theme === 'Dark' || (draft.theme === 'System' && (appearance === 'system' ? resolvedAppearance === 'dark' : typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches)));
     const confirmNavigation = () => !changed.length || window.confirm('You have unsaved changes. Leave without saving?');
 
     useEffect(() => {

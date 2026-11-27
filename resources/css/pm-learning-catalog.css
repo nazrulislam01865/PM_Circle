@@ -30,14 +30,14 @@
     padding: 12px clamp(18px, 4vw, 54px);
 }
 .pm-course-catalog .pm-catalog-hero h1 {
-    color: var(--surface);
+    color: var(--pm-on-solid);
     font-size: var(--type-h1-responsive);
     line-height: var(--type-line-h1);
     letter-spacing: var(--pm-tracking-neg-p6px);
     font-weight: var(--type-weight-bold);
     margin: 0 0 3px;
 }
-.pm-course-catalog .pm-catalog-hero p { color: var(--surface); font-size: var(--type-body); line-height: var(--type-line-body); margin: 0; max-width: 720px; }
+.pm-course-catalog .pm-catalog-hero p { color: var(--pm-on-solid); font-size: var(--type-body); line-height: var(--type-line-body); margin: 0; max-width: 720px; }
 .pm-catalog-tabs {
     display: grid;
     grid-template-columns: repeat(4, minmax(0,1fr));
@@ -66,7 +66,7 @@
     transition: color .15s, background-color .15s;
 }
 .pm-catalog-tabs button + button::before { content: ''; position: absolute; height: var(--pm-control-dimension-24px); left: 0; top: 50%; transform: translateY(-50%); border-left: 1px solid var(--catalog-line); }
-.pm-catalog-tabs button.is-active { background: var(--catalog-blue); color: var(--surface); }
+.pm-catalog-tabs button.is-active { background: var(--catalog-blue); color: var(--pm-on-solid); }
 .pm-catalog-tabs button:not(.is-active):hover { background: var(--primary-soft); color: var(--catalog-blue); }
 .pm-catalog-tabs button span { font-weight: var(--type-weight-semibold); }
 .pm-catalog-layout {
@@ -117,7 +117,7 @@
 .pm-catalog-sort svg { position: absolute; right: 10px; pointer-events: none; color: var(--catalog-ink); }
 .pm-catalog-view-switch { display: flex; align-items: center; gap: 2px; border: 1px solid var(--catalog-line); border-radius: var(--radius); background: var(--surface); padding: 3px; }
 .pm-catalog-view-switch button { height: var(--pm-control-dimension-40px); min-width: 39px; border: 0; border-radius: var(--pm-radius-6px); background: transparent; display: grid; place-items: center; color: var(--catalog-ink); }
-.pm-catalog-view-switch button.is-active { color: var(--surface); background: var(--catalog-blue); }
+.pm-catalog-view-switch button.is-active { color: var(--pm-on-solid); background: var(--catalog-blue); }
 .pm-catalog-view-switch button:not(.is-active):hover { background: var(--primary-soft); }
 .pm-catalog-count { font-size: var(--type-small); line-height: var(--type-line-small); color: var(--muted); margin: 0 0 12px; }
 .pm-catalog-course-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); }
@@ -141,8 +141,8 @@
 .pm-catalog-course-progress { background: var(--divider); height: 4px; margin: 0 0 7px; border-radius: var(--pm-radius-10px); overflow: hidden; }
 .pm-catalog-course-progress span { display: block; height: 100%; background: var(--catalog-blue); }
 .pm-catalog-course-footer { display: flex; align-items: center; gap: 8px; margin-top: auto; }
-.pm-catalog-course-action { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: 40px; padding: 9px 12px; flex: 1; min-width: 0; background: var(--catalog-blue); color: var(--surface); border: 1px solid var(--catalog-blue); border-radius: var(--radius); font-size: var(--type-button-compact); font-weight: var(--type-weight-bold); line-height: var(--type-line-button-compact); text-align: center; text-decoration: none; white-space: normal; }
-.pm-catalog-course-action:hover { background: var(--catalog-blue-hover); border-color: var(--catalog-blue-hover); color: var(--surface) !important; text-decoration: none; }
+.pm-catalog-course-action { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: 40px; padding: 9px 12px; flex: 1; min-width: 0; background: var(--catalog-blue); color: var(--pm-on-solid); border: 1px solid var(--catalog-blue); border-radius: var(--radius); font-size: var(--type-button-compact); font-weight: var(--type-weight-bold); line-height: var(--type-line-button-compact); text-align: center; text-decoration: none; white-space: normal; }
+.pm-catalog-course-action:hover { background: var(--catalog-blue-hover); border-color: var(--catalog-blue-hover); color: var(--pm-on-solid) !important; text-decoration: none; }
 .pm-catalog-bookmark { display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 38px; padding: 0; background: transparent; color: var(--catalog-ink); border: 1px solid transparent; border-radius: var(--radius); }
 .pm-catalog-bookmark:hover, .pm-catalog-bookmark.is-saved { color: var(--catalog-blue); background: var(--primary-soft); }
 .pm-catalog-bookmark:disabled { opacity: .5; cursor: wait; }

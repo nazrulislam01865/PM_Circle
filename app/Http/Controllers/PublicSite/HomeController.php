@@ -81,7 +81,7 @@ class HomeController extends Controller
                 ->selectRaw('COALESCE(home_stats.like_count, 0) AS likes_count')
                 ->selectRaw('COALESCE(home_stats.reactions_count, 0) AS reactions_count'), 'home_stats'))
             ->when(! EngagementStats::readsEnabled(), fn ($query) => $query->withCount([
-                'comments',
+                'comments' => fn ($query) => $query->visible(),
                 'reactions as likes_count' => fn ($query) => $query->where('type', 'like'),
                 'reactions as reactions_count',
             ]))

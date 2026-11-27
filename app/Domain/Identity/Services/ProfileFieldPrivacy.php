@@ -100,13 +100,13 @@ final class ProfileFieldPrivacy
             return false;
         }
 
-        if ($profile->visibility === 'members_only' && (! $viewer || $viewer->is_admin)) {
+        if ($profile->visibility === 'members_only' && ! in_array('members_only', self::profileAudiences($viewer), true)) {
             return false;
         }
 
         return match (self::choices($profile)[$key] ?? 'private') {
             'public' => true,
-            'community' => $viewer !== null && ! $viewer->is_admin && $viewer->status === 'active',
+            'community' => in_array('members_only', self::profileAudiences($viewer), true),
             default => false,
         };
     }

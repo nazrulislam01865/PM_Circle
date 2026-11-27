@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Domain\Interview\PracticeSettings;
 use App\Http\Requests\Admin\ImportInterviewQuestionsRequest;
 use App\Services\Interview\InterviewQuestionImporter;
 use App\Support\Admin\InterviewMasterData;
@@ -29,17 +30,21 @@ final class InterviewCatalogController extends Controller
             ->when($search !== '', fn ($query) => $query->whereRaw('LOWER(q.text) LIKE ?', ['%'.strtolower(addcslashes($search, '%_\\')).'%']))
             ->when($setId > 0, fn ($query) => $query->where('q.set_id', $setId))
             ->orderBy('s.sort_order')->orderBy('q.sort_order')->orderBy('q.id')
-            ->select(['q.id', 'q.set_id', 'q.type', 'q.text', 'q.is_active', 'q.sort_order', 's.title as set_title'])
+            ->select(['q.id', 'q.set_id', 'q.type', 'q.text', 'q.is_active', 'q.sort_order', 'q.topic', 'q.difficulty', 'q.answer_guidance', 's.title as set_title'])
             ->paginate(15)->withQueryString();
         $sets = DB::table('interview_question_sets as s')
             ->leftJoin('interview_questions as q', 'q.set_id', '=', 's.id')
             ->select('s.id', 's.title', 's.description', 's.industry', 's.role', 's.experience', 's.is_active', 's.sort_order')
             ->selectRaw('COUNT(q.id) as question_count')
             ->groupBy('s.id')->orderBy('s.sort_order')->orderBy('s.id')->get();
+        $options = InterviewMasterData::options(includeInactive: true);
+        $settings = PracticeSettings::load();
+        $roles = array_column(array_filter($options, fn ($option) => $option['group'] === 'role'), 'label', 'key');
+        $settings['role_profiles'] = PracticeSettings::roleProfiles($settings, $roles);
         return Inertia::render('admin/InterviewCatalog', [
-            'options' => InterviewMasterData::options(includeInactive: true),
+            'options' => $options,
             'sets' => $sets, 'questions' => $questions,
-            'settings' => ['minutes_per_question' => (int) DB::table('interview_configuration')->where('id', 1)->value('minutes_per_question')],
+            'settings' => $settings,
             'filters' => ['search' => $search, 'set' => $setId],
         ]);
     }
@@ -159,7 +164,24 @@ final class InterviewCatalogController extends Controller
 
     public function updateSettings(UpdateInterviewSettingsRequest $request): RedirectResponse
     {
-        DB::table('interview_configuration')->where('id', 1)->update($request->validated() + ['updated_at' => now()]);
-        return back()->with('status', 'Interview timing updated for new sessions.');
+        $data = $request->validated();
+        DB::transaction(function () use ($data): void {
+            $row = DB::table('interview_configuration')->where('id', 1)->lockForUpdate()->firstOrFail();
+            $settings = array_replace(PracticeSettings::defaults(), json_decode($row->practice_settings ?? 'null', true) ?? [], collect($data)->except('minutes_per_question')->all());
+            if ($settings['focus_percent'] + $settings['focus_common_percent'] > 100) {
+                throw ValidationException::withMessages(['focus_common_percent' => 'Focus and common percentages must total 100% or less.']);
+            }
+            if (isset($data['role_profiles'])) {
+                $keys = array_column($data['role_profiles'], 'role');
+                $valid = DB::table('master_data_options')->where('category', 'interview_role')->whereIn('value', $keys)->pluck('value')->all();
+                if (array_diff($keys, $valid)) throw ValidationException::withMessages(['role_profiles' => 'A role was removed. Reload the page before saving.']);
+                foreach ($settings['role_profiles'] as &$profile) $profile['focus'] = array_values(array_unique($profile['focus']));
+                unset($profile);
+            }
+            DB::table('interview_configuration')->where('id', 1)->update([
+                'minutes_per_question' => $data['minutes_per_question'], 'practice_settings' => json_encode($settings, JSON_THROW_ON_ERROR), 'updated_at' => now(),
+            ]);
+        });
+        return back()->with('status', 'Interview settings updated for new sessions.');
     }
 }

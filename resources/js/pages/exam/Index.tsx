@@ -31,10 +31,10 @@ const dashboardTabs: PmpDashboardTab[] = ['overview', 'performance', 'history', 
 /** Four prototype-matched views, one visible at a time. No navigation requests for tab changes. */
 export default function Index({ shell, availableQuestions, activeQuestionCount, fullLength, examSettings, planCode, planDetails,
     targetExamDate, attemptTotals, aiUsage, attempts, topicAccuracy, historyNextCursor }: Props) {
-    const page = usePage();
+    const page = usePage<{auth?: {user?: {settings?: {exam_default_view?: string}} | null}}>();
     const [active, setActive] = useState<PmpDashboardTab>(() => {
         const requested = new URLSearchParams(page.url.split('?')[1]?.split('#')[0] ?? '').get('tab');
-        return dashboardTabs.find(tab => tab === requested) ?? 'overview';
+        return dashboardTabs.find(tab => tab === requested) ?? (page.props.auth?.user?.settings?.exam_default_view === 'Practice mode' ? 'performance' : 'overview');
     });
     const [currentUsage, setCurrentUsage] = useState<PmpAiUsageData>(aiUsage);
     const [usageLoading, setUsageLoading] = useState(false);
@@ -47,7 +47,7 @@ export default function Index({ shell, availableQuestions, activeQuestionCount, 
     useEffect(() => {
         const onRestore = (event: PageTransitionEvent) => {
             if (event.persisted) {
-                router.reload({ only: ['attemptTotals', 'attempts', 'topicAccuracy', 'aiUsage'] });
+                router.reload({ only: ['attemptTotals', 'attempts', 'topicAccuracy', 'aiUsage', 'planCode', 'planDetails'] });
             }
         };
         window.addEventListener('pageshow', onRestore);

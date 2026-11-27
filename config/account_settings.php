@@ -44,7 +44,7 @@ return json_decode(<<<'JSON'
                     {
                         "id": "language",
                         "name": "Preferred language",
-                        "help": "Your preferred language for content and messages. Saved preference only; not yet applied by the relevant module.",
+                        "help": "Formats notification dates in your preferred language. Content and interface translations are not provided.",
                         "value": "English",
                         "choices": [
                             "English",
@@ -56,7 +56,7 @@ return json_decode(<<<'JSON'
                     {
                         "id": "timezone",
                         "name": "Time zone",
-                        "help": "Used for quiet hours; other event and reminder displays are not yet connected.",
+                        "help": "Used for notification timestamps, quiet hours and email digest scheduling.",
                         "value": "Asia/Dhaka",
                         "choices": [
                             "Asia/Dhaka",
@@ -71,7 +71,7 @@ return json_decode(<<<'JSON'
                     {
                         "id": "clock",
                         "name": "Time format",
-                        "help": "Your preferred time display. Saved preference only; not yet applied by the relevant module.",
+                        "help": "Choose the 12-hour or 24-hour format for notification timestamps.",
                         "value": "12-hour",
                         "choices": [
                             "12-hour",
@@ -88,7 +88,7 @@ return json_decode(<<<'JSON'
                     {
                         "id": "theme",
                         "name": "Appearance",
-                        "help": "Preview appearance here and apply it when you save.",
+                        "help": "Choose Light, Dark or System for the entire website on this browser.",
                         "value": "Light",
                         "choices": [
                             "Light",
@@ -177,11 +177,11 @@ return json_decode(<<<'JSON'
                     {
                         "id": "otherDevice",
                         "name": "Other signed-in devices",
-                        "help": "This control is not connected to a live service yet.",
+                        "help": "Confirm your password to sign out other browser sessions. Your current session stays signed in.",
                         "label": "Sign out other devices",
                         "danger": false,
                         "type": "action",
-                        "mode": "unavailable"
+                        "mode": "action"
                     }
                 ]
             ]
@@ -204,7 +204,7 @@ return json_decode(<<<'JSON'
                     {
                         "id": "inapp",
                         "name": "In-app notifications",
-                        "help": "Receive optional community and challenge activity in the notification centre.",
+                        "help": "Receive optional activity updates in the notification centre.",
                         "type": "toggle",
                         "mode": "preference",
                         "value": true
@@ -212,21 +212,22 @@ return json_decode(<<<'JSON'
                     {
                         "id": "mail",
                         "name": "Email notifications",
-                        "help": "This control is not connected to a live service yet.",
+                        "help": "Receive optional activity updates by email using your selected delivery frequency.",
                         "type": "toggle",
-                        "mode": "unavailable"
+                        "mode": "preference",
+                        "value": false
                     },
                     {
                         "id": "push",
                         "name": "Browser push notifications",
-                        "help": "This control is not connected to a live service yet.",
+                        "help": "Background browser push requires a push service and device subscriptions; it is not configured.",
                         "type": "toggle",
                         "mode": "unavailable"
                     },
                     {
                         "id": "digest",
                         "name": "Email digest frequency",
-                        "help": "This control is not connected to a live service yet.",
+                        "help": "Choose individual updates (normally within a minute), a daily digest at 08:00, a weekly digest on Monday at 08:00, or Off. Uses your account time zone; changes apply to new activity.",
                         "choices": [
                             "Instant",
                             "Daily",
@@ -234,7 +235,8 @@ return json_decode(<<<'JSON'
                             "Off"
                         ],
                         "type": "select",
-                        "mode": "unavailable"
+                        "mode": "preference",
+                        "value": "Instant"
                     }
                 ]
             ],
@@ -243,17 +245,19 @@ return json_decode(<<<'JSON'
                 [
                     {
                         "id": "learnNotify",
-                        "name": "Learning reminders",
-                        "help": "This control is not connected to a live service yet.",
+                        "name": "Course completion updates",
+                        "help": "Receive a notification when you complete a course.",
                         "type": "toggle",
-                        "mode": "unavailable"
+                        "mode": "preference",
+                        "value": false
                     },
                     {
                         "id": "examNotify",
-                        "name": "Simulator results and practice reminders",
-                        "help": "This control is not connected to a live service yet.",
+                        "name": "PMP simulator results",
+                        "help": "Receive a notification when your PMP exam result is ready.",
                         "type": "toggle",
-                        "mode": "unavailable"
+                        "mode": "preference",
+                        "value": false
                     },
                     {
                         "id": "challengeNotify",
@@ -265,7 +269,7 @@ return json_decode(<<<'JSON'
                     },
                     {
                         "id": "communityNotify",
-                        "name": "Comments, replies and mentions",
+                        "name": "Community activity",
                         "help": "Receive notifications for community follows, comments, replies and reactions.",
                         "type": "toggle",
                         "mode": "preference",
@@ -273,29 +277,31 @@ return json_decode(<<<'JSON'
                     },
                     {
                         "id": "eventNotify",
-                        "name": "Event registrations and reminders",
-                        "help": "This control is not connected to a live service yet.",
+                        "name": "Event registration updates",
+                        "help": "Receive an update when your member event registration is recorded.",
                         "type": "toggle",
-                        "mode": "unavailable"
+                        "mode": "preference",
+                        "value": false
                     },
                     {
                         "id": "careerNotify",
                         "name": "Career Trends and opportunities",
-                        "help": "This control is not connected to a live service yet.",
+                        "help": "No optional delivery workflow is currently available for this topic.",
                         "type": "toggle",
                         "mode": "unavailable"
                     },
                     {
                         "id": "usageNotify",
-                        "name": "AI usage and low balance",
-                        "help": "This control is not connected to a live service yet.",
+                        "name": "AI credit and token limit alerts",
+                        "help": "Receive an alert when a centralized AI request is blocked by insufficient credits or PMP tokens (at most once per reason per day).",
                         "type": "toggle",
-                        "mode": "unavailable"
+                        "mode": "preference",
+                        "value": false
                     },
                     {
                         "id": "newsletter",
                         "name": "News and offers",
-                        "help": "This control is not connected to a live service yet.",
+                        "help": "No optional delivery workflow is currently available for this topic.",
                         "type": "toggle",
                         "mode": "unavailable"
                     }
@@ -307,7 +313,7 @@ return json_decode(<<<'JSON'
                     {
                         "id": "quiet",
                         "name": "Pause optional alerts during quiet hours",
-                        "help": "Skip optional community and challenge alerts during quiet hours. Security and billing notices are unaffected.",
+                        "help": "Skip optional alerts during quiet hours. Security and billing notices are unaffected. Identical start and end times disable the quiet interval.",
                         "type": "toggle",
                         "mode": "preference",
                         "value": false
@@ -343,7 +349,7 @@ return json_decode(<<<'JSON'
                     {
                         "id": "goal",
                         "name": "Weekly study target",
-                        "help": "Used to track your learning goal. Saved preference only; not yet applied by the relevant module.",
+                        "help": "Show your personal weekly study target in My Learning. This is a target, not measured study time.",
                         "value": "3 hours",
                         "choices": [
                             "1 hour",
@@ -358,7 +364,7 @@ return json_decode(<<<'JSON'
                     {
                         "id": "interest",
                         "name": "Primary learning interest",
-                        "help": "Used for course recommendations. Saved preference only; not yet applied by the relevant module.",
+                        "help": "Prioritize matching published course categories in the recommended Browse courses order.",
                         "value": "Project management",
                         "choices": [
                             "Project management",
@@ -398,12 +404,16 @@ return json_decode(<<<'JSON'
                 [
                     {
                         "id": "examMode",
-                        "name": "Exam simulator mode",
-                        "help": "Choose your default for new attempts. Saved preference only; not yet applied by the relevant module.",
+                        "name": "Default simulator view",
+                        "help": "Open the PMP dashboard on full mock exam overview or focused practice performance. Both existing attempt types keep their configured timers.",
                         "value": "Timed exam",
                         "choices": [
                             "Timed exam",
                             "Practice mode"
+                        ],
+                        "options": [
+                            {"value": "Timed exam", "label": "Full mock overview"},
+                            {"value": "Practice mode", "label": "Focused practice"}
                         ],
                         "type": "select",
                         "mode": "preference"
@@ -411,7 +421,7 @@ return json_decode(<<<'JSON'
                     {
                         "id": "rationales",
                         "name": "Show answer explanations",
-                        "help": "Show rationales in practice mode and review. Saved preference only; not yet applied by the relevant module.",
+                        "help": "Choose whether answer explanations are expanded by default in completed PMP question reviews.",
                         "value": true,
                         "type": "toggle",
                         "mode": "preference"
@@ -504,13 +514,14 @@ return json_decode(<<<'JSON'
                     {
                         "id": "follow",
                         "name": "Who can follow you",
-                        "help": "This control is not connected to a live service yet.",
+                        "help": "Allow eligible members to start following your public profile, or prevent new follows. Existing followers can still unfollow.",
                         "choices": [
                             "Members only",
                             "No one"
                         ],
                         "type": "select",
-                        "mode": "unavailable"
+                        "mode": "preference",
+                        "value": "Members only"
                     },
                     {
                         "id": "mention",
@@ -549,7 +560,7 @@ return json_decode(<<<'JSON'
                     {
                         "id": "eventCalendar",
                         "name": "Suggest calendar links",
-                        "help": "Offer a calendar link after registering for an event. Saved preference only; not yet applied by the relevant module.",
+                        "help": "Offer a downloadable calendar entry after registering for an event.",
                         "value": true,
                         "type": "toggle",
                         "mode": "preference"
@@ -557,7 +568,7 @@ return json_decode(<<<'JSON'
                     {
                         "id": "eventEmail",
                         "name": "Event organiser contact",
-                        "help": "This control is not connected to a live service yet.",
+                        "help": "Organiser messaging and contact-sharing consent are not implemented; existing registration details remain private.",
                         "type": "toggle",
                         "mode": "unavailable"
                     }
@@ -585,8 +596,8 @@ return json_decode(<<<'JSON'
                     },
                     {
                         "id": "lowBalance",
-                        "name": "Warn before starting when balance is low",
-                        "help": "Show a notice before using AI when your balance is low. Saved preference only; not yet applied by the relevant module.",
+                        "name": "Warn when PMP AI balance is low",
+                        "help": "Show a warning in PMP question coaching when 10% or less of allocated tokens remain, or fewer than two replies can be funded. Required balance errors always appear.",
                         "value": true,
                         "type": "toggle",
                         "mode": "preference"
@@ -609,7 +620,7 @@ return json_decode(<<<'JSON'
                     {
                         "id": "aiLanguage",
                         "name": "AI response language",
-                        "help": "Preferred language for AI coaching. Saved preference only; not yet applied by the relevant module.",
+                        "help": "Choose the language of new member AI coaching responses using the centralized AI gateway. Existing replies and legacy tutoring are not translated.",
                         "value": "English",
                         "choices": [
                             "English",
@@ -666,18 +677,20 @@ return json_decode(<<<'JSON'
                     {
                         "id": "renew",
                         "name": "Auto-renew membership",
-                        "help": "Automatic renewal is not supported by the current payment flow.",
-                        "type": "toggle",
-                        "mode": "unavailable"
+                        "help": "Membership uses fixed terms. Automatic renewal is not available.",
+                        "type": "text",
+                        "mode": "readonly",
+                        "value": "Not supported"
                     },
                     {
                         "id": "cancelPlan",
                         "name": "Cancel membership",
-                        "help": "Self-service membership cancellation is not available.",
-                        "label": "Cancel plan",
+                        "help": "Contact support about cancelling a paid membership. Current access and billing records will not change automatically.",
+                        "label": "Contact support",
                         "danger": true,
                         "type": "action",
-                        "mode": "unavailable"
+                        "mode": "link",
+                        "href": "/help-center/contact"
                     }
                 ]
             ],
@@ -702,12 +715,12 @@ return json_decode(<<<'JSON'
                     },
                     {
                         "id": "invoice",
-                        "name": "Billing history",
-                        "help": "Invoice history is not available from this workspace.",
-                        "label": "View invoices",
+                        "name": "Payment history",
+                        "help": "View your recorded central payment orders (not tax invoices).",
+                        "label": "View payments",
                         "danger": false,
                         "type": "action",
-                        "mode": "unavailable"
+                        "mode": "action"
                     }
                 ]
             ]
@@ -748,16 +761,17 @@ return json_decode(<<<'JSON'
                     {
                         "id": "deactivate",
                         "name": "Deactivate account",
-                        "help": "Self-service temporary deactivation is not available.",
-                        "label": "Deactivate",
+                        "help": "Contact support about temporary account deactivation. This action does not deactivate the account automatically.",
+                        "label": "Contact support",
                         "danger": true,
                         "type": "action",
-                        "mode": "unavailable"
+                        "mode": "link",
+                        "href": "/help-center/contact"
                     },
                     {
                         "id": "delete",
                         "name": "Delete account",
-                        "help": "Permanently delete your account after confirming your password.",
+                        "help": "Permanently delete your account after confirming your password. Accounts with retained financial or audit records may need support-assisted removal.",
                         "label": "Delete account",
                         "danger": true,
                         "type": "action",

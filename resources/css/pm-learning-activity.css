@@ -8,7 +8,7 @@
 .pm-learn-step-line { height: 2px; flex: 1; max-width: 37px; background: var(--pm-tone-d6dfe8); }
 .pm-learn-step { display: flex; align-items: center; gap: 8px; min-width: 0; white-space: nowrap; }
 .pm-learn-step-number { display: grid; place-items: center; width: 32px; height: 32px; background: var(--pm-tone-e4e9f0); border-radius: 50%; font-weight: var(--type-weight-bold); color: var(--pm-tone-344762); flex: none; }
-.pm-learn-step.current .pm-learn-step-number, .pm-learn-step.done .pm-learn-step-number { background: var(--learn-blue); color: var(--surface); }
+.pm-learn-step.current .pm-learn-step-number, .pm-learn-step.done .pm-learn-step-number { background: var(--learn-blue); color: var(--pm-on-solid); }
 .pm-learn-step.current .pm-learn-step-title, .pm-learn-step.done .pm-learn-step-title { color: var(--pm-tone-0759c4); font-weight: var(--type-weight-bold); }
 .pm-learn-step-title { font-size: var(--pm-font-size-13px); color: var(--pm-tone-42536e); }
 .pm-learn-notice { display: flex; gap: 12px; align-items: center; padding: 11px 13px; border: 1px solid var(--pm-tone-e0e8f1); background: var(--pm-tone-f5faff); border-radius: var(--pm-radius-7px); font-size: var(--pm-font-size-13px); color: var(--pm-tone-53617b); margin-bottom: 12px; }
@@ -56,7 +56,7 @@
 .pm-learn-checklist a.active small { color: var(--pm-tone-0969d6); }
 .pm-learn-check-number { width: 31px; height: 31px; display: grid; place-items: center; border-radius: 50%; background: var(--pm-tone-e6eaf0); color: var(--pm-tone-223754); font-weight: var(--pm-font-weight-800); flex: none; }
 .pm-learn-checklist a.active .pm-learn-check-number { border: 1px solid var(--pm-tone-267be7); background: var(--pm-tone-eef7ff); color: var(--learn-blue); }
-.pm-learn-check-number.done { background: var(--learn-blue); color: var(--surface); }
+.pm-learn-check-number.done { background: var(--learn-blue); color: var(--pm-on-solid); }
 .pm-learn-ai-help { display: flex; align-items: flex-start; gap: 12px; }
 .pm-learn-ai-help > svg { flex: none; }
 .pm-learn-ai-help strong { color: var(--pm-tone-142550); font-size: var(--pm-font-size-13px); }

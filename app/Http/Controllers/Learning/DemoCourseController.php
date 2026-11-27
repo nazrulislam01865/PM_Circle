@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Learning;
 
 use App\Domain\Billing\Queries\CurrentMemberPlan;
+use App\Domain\Learning\Queries\CourseCertificateData;
 use App\Domain\Learning\Queries\DemoCourseCatalog;
 use App\Http\Controllers\Controller;
 use App\Services\Learning\CourseLessonProgress;
@@ -58,7 +59,12 @@ final class DemoCourseController extends Controller
             ])->all(),
         ];
 
+        $certificate = $enrolled ? DB::table('learning_course_certificates')
+            ->where('user_id', $member->id)->where('course_id', $courseModel->id)
+            ->first(['reference', 'member_name', 'course_title', 'issued_at']) : null;
+
         return Inertia::render('learning/CourseShow', [
+            'certificate' => $certificate ? CourseCertificateData::fromRecord($certificate) : null,
             'course' => [
                 ...collect($record)->except('lessons')->all(),
                 'lessons' => collect($record['lessons'])->map(fn ($lesson) => [

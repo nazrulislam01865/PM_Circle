@@ -30,7 +30,7 @@ final class FeedPerformanceArchitectureTest extends TestCase
         $this->actingAs($user);
         $history = [];
         DB::listen(function ($query) use (&$history): void {
-            if (preg_match('/learning_activity_completions|pmp_exam_attempts|member_profile_views|learning_course_certificates|interview_sessions/i', $query->sql)) {
+            if (preg_match('/learning_activity_completions|pmp_exam_attempts|member_profile_views|learning_course_certificates|learning_course_completions|interview_sessions/i', $query->sql)) {
                 $history[] = $query->sql;
             }
         });
@@ -107,8 +107,6 @@ final class FeedPerformanceArchitectureTest extends TestCase
         $this->assertSame($post->comments()->visible()->count(), $count());
         $this->artisan('community:backfill-engagement-stats', ['--verify' => true])->assertExitCode(0);
         DB::transaction(function () use ($author): void {
-            EngagementStats::lockMember($author->id);
-            EngagementStats::beforeMemberDeletion($author->id);
             $author->delete();
         });
         $this->assertSame(0, $count());

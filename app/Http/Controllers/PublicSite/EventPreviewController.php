@@ -51,7 +51,8 @@ final class EventPreviewController extends Controller
 
         return Inertia::render('events/Show', [
             'event' => $event->detailData(), 'relatedEvents' => $related->map(fn (CommunityEvent $item) => $item->listingData()),
-            'comments' => $comments, 'registered' => $registered, 'canRegister' => $member || ($event->open_to_everyone && ! $request->user()),
+            'comments' => $comments, 'registered' => $registered,
+            'calendarEnabled' => $registered && ($request->user()->account_preferences['eventCalendar'] ?? true), 'canRegister' => $member || ($event->open_to_everyone && ! $request->user()),
             'canComment' => $member || ! $request->user(), 'notice' => $request->session()->get('event_notice'),
         ]);
     }
@@ -99,7 +100,11 @@ final class EventPreviewController extends Controller
                 $claimed = DB::table('community_event_registrations')->where('event_id', $event->id)->where('email', $email)->whereNull('user_id')
                     ->whereNotExists(fn ($query) => $query->selectRaw('1')->from('community_event_registrations as existing')->where('existing.event_id', $event->id)->where('existing.user_id', $request->user()->id))
                     ->update(['user_id' => $request->user()->id, 'name' => $registration['name'], 'phone' => $registration['phone'], 'role' => $registration['role'], 'updated_at' => now()]);
-                if ($claimed) return;
+                $inserted = $claimed;
+            }
+            if ($inserted && $member && ($request->user()->account_preferences['eventNotify'] ?? false)) {
+                $userId = $request->user()->id;
+                DB::afterCommit(static fn () => app(\App\Domain\Notifications\ActivityNotifier::class)->forEventRegistration($userId, $event->id, $slug));
             }
         });
         return to_route('events.show', $slug)->with('event_notice', 'Registration received. If already registered, no duplicate registration was created.');

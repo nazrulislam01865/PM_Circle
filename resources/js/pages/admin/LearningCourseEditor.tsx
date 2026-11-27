@@ -13,17 +13,17 @@ type ExistingCourse = {
     id: number; title: string; summary: string; overview: string; category: string;
     level: string; minutes: number;
     thumbnail: number; coverUrl?: string | null; accessTier: 'free' | 'paid';
-    objectives: string[]; outline: Section[]; lessons: Lesson[]; isPublished: boolean; presentation: Presentation; sortOrder: number;
+    objectives: string[]; outline: Section[]; lessons: Lesson[]; isPublished: boolean; certificateEnabled: boolean; presentation: Presentation; sortOrder: number;
 };
 type CourseInput = {
     title: string; summary: string; overview: string; category: string;
     level: ExistingCourse['level']; minutes: number;
-    access_tier: ExistingCourse['accessTier']; is_published: boolean;
+    access_tier: ExistingCourse['accessTier']; is_published: boolean; certificate_enabled: boolean;
     objectives: string[]; outline: Section[]; lessons: Lesson[]; presentation: Presentation; sort_order: number;
 };
 const defaults: CourseInput = {
     title: '', summary: '', overview: '', category: '', level: '', minutes: 120,
-    access_tier: '' as ExistingCourse['accessTier'], is_published: false, presentation: defaultPresentation, sort_order: 999,
+    access_tier: '' as ExistingCourse['accessTier'], is_published: false, certificate_enabled: false, presentation: defaultPresentation, sort_order: 999,
     objectives: [''], outline: [{ title: '', topics: [''] }], lessons: [{ title: '', body: '' }],
 };
 type DropdownOption = { value: string; label: string };
@@ -33,7 +33,7 @@ export default function LearningCourseEditor({ course, dropdowns }: { course: Ex
     const [value, setValue] = useState<CourseInput>(() => course ? {
         title: course.title, summary: course.summary, overview: course.overview,
         category: course.category, level: course.level, minutes: course.minutes,
-        access_tier: course.accessTier, is_published: course.isPublished, presentation: course.presentation ?? defaultPresentation, sort_order: course.sortOrder ?? 999,
+        access_tier: course.accessTier, is_published: course.isPublished, certificate_enabled: course.certificateEnabled, presentation: course.presentation ?? defaultPresentation, sort_order: course.sortOrder ?? 999,
         objectives: course.objectives?.length ? course.objectives : [''],
         outline: course.outline?.length ? course.outline : [{ title: '', topics: [''] }],
         lessons: course.lessons?.length ? course.lessons : [{ title: '', body: '' }],
@@ -95,6 +95,7 @@ export default function LearningCourseEditor({ course, dropdowns }: { course: Ex
                     <label className="pm-admin-field"><span>Estimated study time (minutes)</span><input type="number" required min={1} max={100000} value={value.minutes} onChange={e => update('minutes', Number(e.target.value))}/>{fieldError('minutes')}</label>
                     <AdminChoice id="course-access" label="Membership access" required value={value.access_tier} options={dropdowns.course_access ?? []} onChange={next => update('access_tier', next as CourseInput['access_tier'])} error={errors.access_tier}/>
                     <label className="pm-admin-field"><span>Catalog order (lower appears first)</span><input type="number" min={0} max={100000} value={value.sort_order} onChange={e => update('sort_order', Number(e.target.value))}/>{fieldError('sort_order')}</label>
+                    <div className="pm-course-admin-wide"><label className="pm-course-admin-publish"><input type="checkbox" checked={value.certificate_enabled} onChange={e => update('certificate_enabled', e.target.checked)}/><span><strong>Provide certificate after course completion</strong><small>Automatically issue one certificate when a member completes every lesson. Turning this off does not revoke certificates already earned.</small></span></label>{fieldError('certificate_enabled')}</div>
                     <div className="pm-course-cover-control pm-course-admin-wide">
                         <div className="pm-course-admin-cover-preview"><img src={coverPreview || course?.coverUrl || `/images/learning/course-${course?.thumbnail ?? 1}.webp`} alt="Course cover preview"/></div>
                         <div className="pm-course-cover-actions"><strong>Course cover image</strong><label className="pm-admin-button pm-admin-button-quiet"><ImagePlus size={17}/>{cover ? 'Choose another image' : course?.coverUrl ? 'Replace image' : 'Upload custom cover'}<input type="file" accept="image/jpeg,image/png,image/webp" className="pm-course-cover-input" onChange={e => setCover(e.target.files?.[0] ?? null)}/></label>{cover && <><small>{cover.name}</small><button type="button" className="pm-admin-button" onClick={() => setCover(null)}>Cancel selection</button></>}<small>JPG, PNG or WebP · up to 3 MB</small>{fieldError('cover_image')}</div>

@@ -12,7 +12,7 @@ final class LearningCourse extends Model
         'slug', 'title', 'summary', 'overview', 'category', 'level', 'minutes',
         'thumbnail', 'cover_path', 'access_tier', 'objectives', 'outline',
         'lessons', 'is_published', 'sort_order', 'presentation',
-        'practice_question_count', 'practice_duration_minutes', 'practice_enabled',
+        'practice_question_count', 'practice_duration_minutes', 'practice_enabled', 'certificate_enabled',
     ];
 
     protected function casts(): array
@@ -21,7 +21,7 @@ final class LearningCourse extends Model
             'minutes' => 'integer', 'thumbnail' => 'integer',
             'is_published' => 'boolean', 'sort_order' => 'integer',
             'practice_question_count' => 'integer', 'practice_duration_minutes' => 'integer',
-            'practice_enabled' => 'boolean',
+            'practice_enabled' => 'boolean', 'certificate_enabled' => 'boolean',
             'presentation' => 'array', 'objectives' => 'array', 'outline' => 'array', 'lessons' => 'array',
         ];
     }

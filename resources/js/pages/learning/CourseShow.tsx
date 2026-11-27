@@ -5,8 +5,9 @@ import {
     CourseDetailPracticePanel, CourseDetailResourcesPanel,
     CourseDetailOverview, CourseDetailTabs, CourseProviderCard, courseActionError, type CourseDetailTab,
 } from '@/components/learning/CourseDetail';
+import { CertificateCard } from '@/components/learning/CourseWorkspace';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
-import type { CoursePracticeSettings, CourseResourceData, DemoCourseDetailData, CourseReview, OwnCourseReview } from '@/types/learning';
+import type { CoursePracticeSettings, CourseResourceData, DemoCourseDetailData, CourseReview, OwnCourseReview, CourseCertificate } from '@/types/learning';
 import { demoCourseHref } from '@/types/learning';
 
 type CourseShowProps = {
@@ -20,11 +21,12 @@ type CourseShowProps = {
     practice: CoursePracticeSettings;
     resources: CourseResourceData[];
     nextLesson?: number;
+    certificate?: CourseCertificate | null;
     reviews?: CourseReview[];
     ownReview?: OwnCourseReview | null;
 };
 
-export default function CourseShow({ course, isMember, isAuthenticated, eligible, enrolled, saved, memberTier, practice, resources, nextLesson = 1, reviews = [], ownReview }: CourseShowProps) {
+export default function CourseShow({ course, isMember, isAuthenticated, eligible, enrolled, saved, memberTier, practice, resources, nextLesson = 1, reviews = [], ownReview, certificate }: CourseShowProps) {
     const [submitting, setSubmitting] = useState(false);
     const [saving, setSaving] = useState(false);
     const [shareStatus, setShareStatus] = useState('');
@@ -107,6 +109,7 @@ export default function CourseShow({ course, isMember, isAuthenticated, eligible
                     <aside className="pm-course-detail-aside" aria-label="Course enrollment and provider">
                         <CourseAccessCard course={course} practice={practice} resources={resources} isMember={isMember} isAuthenticated={isAuthenticated} isAdmin={isAdmin}
                             eligible={eligible} enrolled={enrolled} memberTier={memberTier} submitting={submitting || saving} error={enrollmentError} lessonHref={course.lessons.length ? `${url}/lessons/${nextLesson}` : undefined} onEnroll={enroll} onViewCurriculum={() => jump('curriculum')} />
+                        {certificate && <CertificateCard certificate={certificate} root={root} />}
                         <CourseProviderCard course={course} />
                     </aside>
                 </div>

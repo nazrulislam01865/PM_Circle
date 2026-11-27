@@ -1,6 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { ChevronDown, ChevronRight, Database, ExternalLink, Flag, House, LayoutDashboard, LogOut, Menu, PanelTop, ClipboardCheck, Gift, Route, Settings2, CalendarDays, X, BookOpen, Heart, MessageSquareMore, Search, Bell } from 'lucide-react';
+import { ChevronDown, ChevronRight, Database, ExternalLink, Flag, House, LayoutDashboard, LogOut, Menu, PanelTop, ClipboardCheck, Gift, Route, Settings2, CalendarDays, X, BookOpen, Heart, MessageSquareMore, Search, Bell, Award } from 'lucide-react';
 import { aiWorkspaceLinks } from '@/components/admin/ai/workspace-navigation';
 import { Brand } from '@/components/pm/Brand';
 import { homepageSections, type HomepageSection, type HomepageSectionVisibility } from '@/components/admin/homepage-sections';
@@ -22,6 +22,7 @@ type Props = {
     pmpVisibility?: Record<PmpPublicSection, boolean>;
     headingAction?: ReactNode;
     breadcrumb?: string[];
+    topbarAction?: ReactNode;
     dashboardHeader?: { pendingReviews: number };
 };
 
@@ -31,16 +32,17 @@ const aiSettingsLinks = [
     { title: 'PMP Exam Simulator AI', href: '/admin/ai/pmp-settings' },
     { title: 'Feed Moderation AI', href: '/admin/ai/feed-moderation' },
     { title: 'AI usage management', href: '/admin/ai/usage-management' },
+    { title: 'AI refill packages', href: '/admin/ai/refill-packages' },
 ];
 
 // Admin pages own their layout instance. Keep only navigation UI state across
 // Inertia page remounts, independently of the document scroll position.
 const adminSidebarState = {
     scrollTop: 0,
-    groups: { workspace: false, ai: false, home: false, master: false, navigation: false, pmp: false },
+    groups: { workspace: false, ai: false, home: false, master: false, navigation: false, pmp: false, achievements: false },
 };
 
-export function AdminLayout({ title, subtitle, children, active, selectedHomeSection, onSelectHomeSection, homepageVisibility, selectedCatalogCategory, selectedPmpSection, onSelectPmpSection, pmpVisibility, headingAction, breadcrumb, dashboardHeader }: Props) {
+export function AdminLayout({ title, subtitle, children, active, selectedHomeSection, onSelectHomeSection, homepageVisibility, selectedCatalogCategory, selectedPmpSection, onSelectPmpSection, pmpVisibility, headingAction, breadcrumb, dashboardHeader, topbarAction }: Props) {
     const { auth } = usePage<{ auth?: { user?: { name?: string } | null } }>().props;
     const [searchOpen, setSearchOpen] = useState(false);
     const [searchValue, setSearchValue] = useState('');
@@ -53,6 +55,7 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
         { title: 'Course library', href: '/admin/learning/courses' },
         { title: 'Browse Courses control', href: '/admin/learning/courses/catalog-settings' },
         { title: 'Community events', href: '/admin/events' },
+        { title: 'Achievements & badges', href: '/admin/achievements' },
         { title: 'Manage rewards', href: '/admin/profile-rewards' },
         { title: 'Homepage control', href: '/admin/homepage' },
         { title: 'About Us control', href: '/admin/public-pages/about' },
@@ -62,9 +65,12 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
         { title: 'Trend reports', href: '/admin/trend-reports' },
         { title: 'Terms and Conditions', href: '/admin/legal/terms' },
         { title: 'Privacy Policy', href: '/admin/legal/privacy' },
+        { title: 'Signup plans & validity', href: '/admin/membership-validity' },
         { title: 'PMP questions', href: '/admin/exam-simulator/pmp/questions' },
         { title: 'Master data', href: '/admin/master-data' },
     ];
+    const isAchievements = active.startsWith('/admin/achievements');
+    const [achievementsOpen, setAchievementsOpen] = useState(() => isAchievements || adminSidebarState.groups.achievements);
     const isHomepage = active === '/admin/homepage';
     const isMaster = active === '/admin/master-data';
     const isNavigation = active === '/admin/navigation' || active === '/admin/footer';
@@ -84,8 +90,8 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
     const sidebarRef = useRef<HTMLElement>(null);
 
     useLayoutEffect(() => {
-        adminSidebarState.groups = { workspace: workspaceOpen, ai: aiOpen, home: homeOpen, master: masterOpen, navigation: navOpen, pmp: pmpOpen };
-    }, [workspaceOpen, aiOpen, homeOpen, masterOpen, navOpen, pmpOpen]);
+        adminSidebarState.groups = { workspace: workspaceOpen, ai: aiOpen, home: homeOpen, master: masterOpen, navigation: navOpen, pmp: pmpOpen, achievements: achievementsOpen };
+    }, [workspaceOpen, aiOpen, homeOpen, masterOpen, navOpen, pmpOpen, achievementsOpen]);
 
     useLayoutEffect(() => {
         const sidebar = sidebarRef.current;
@@ -105,13 +111,14 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
 
     // Both catalog areas reuse one Inertia page; expand the matching group on route changes.
     useEffect(() => {
+        if (isAchievements) setAchievementsOpen(true);
         if (isAi) setAiOpen(true);
         if (isAiWorkspace) setWorkspaceOpen(true);
         if (isHomepage) setHomeOpen(true);
         if (isMaster) setMasterOpen(true);
         if (isNavigation) setNavOpen(true);
         if (isPmp) setPmpOpen(true);
-    }, [active, isAi, isAiWorkspace, isHomepage, isMaster, isNavigation, isPmp]);
+    }, [active, isAi, isAiWorkspace, isHomepage, isMaster, isNavigation, isPmp, isAchievements]);
     const sectionLabel = homepageSections.find(section => section.key === selectedHomeSection)?.name;
     const catalogLabel = [...dropdownGroups, ...navigationGroups].find(group => group.key === selectedCatalogCategory)?.label;
     const pmpLabel = isPmp ? pmpPublicSections.find(section => section.key === selectedPmpSection)?.title : undefined;
@@ -167,6 +174,15 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
                     className={`pm-admin-nav-link ${active === '/admin/profile-rewards' ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
                     <Gift size={18} aria-hidden="true"/><span>Profile rewards</span>
                 </Link>
+                <button type="button" className={`pm-admin-nav-link pm-admin-nav-group-button ${isAchievements ? 'is-active' : ''}`} aria-expanded={achievementsOpen} aria-controls="pm-admin-achievements-submenu" onClick={() => setAchievementsOpen(open => !open)}>
+                    <Award size={18} aria-hidden="true"/><span>Achievements &amp; badges</span>{achievementsOpen ? <ChevronDown size={17}/> : <ChevronRight size={17}/>}
+                </button>
+                {achievementsOpen && <div id="pm-admin-achievements-submenu" className="pm-admin-submenu" aria-label="Achievement sections">
+                    {[['badges','All badges'],['works','Task & event rewards'],['awards','Award records'],['preview','Member preview']].map(([key,label]) => {
+                        const selected = isAchievements && (selectedCatalogCategory === key || key === 'badges' && selectedCatalogCategory === 'editor');
+                        return <Link key={key} href={`/admin/achievements?view=${key}`} aria-current={selected ? 'page' : undefined} className={`pm-admin-submenu-link ${selected ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}><span className="pm-admin-submenu-marker" aria-hidden="true"/><span>{label}</span></Link>;
+                    })}
+                </div>}
                 <button type="button" className={`pm-admin-nav-link pm-admin-nav-group-button ${isAiWorkspace ? 'is-active' : ''}`}
                     aria-expanded={workspaceOpen} aria-controls="pm-admin-ai-workspace-submenu" onClick={() => setWorkspaceOpen(open => !open)}>
                     <LayoutDashboard size={18} aria-hidden="true"/><span>AI Workspace</span>
@@ -241,6 +257,10 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
                     className={`pm-admin-nav-link ${isPmpBank ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
                     <ClipboardCheck size={18} aria-hidden="true"/><span>PMP questions &amp; settings</span>
                 </Link>
+                <Link href="/admin/membership-validity" aria-current={active === '/admin/membership-validity' ? 'page' : undefined}
+                    className={`pm-admin-nav-link ${active === '/admin/membership-validity' ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
+                    <CalendarDays size={18} aria-hidden="true"/><span>Signup plans &amp; validity</span>
+                </Link>
                 <Link href="/admin/interview-preparation" aria-current={active === '/admin/interview-preparation' ? 'page' : undefined}
                     className={`pm-admin-nav-link ${active === '/admin/interview-preparation' ? 'is-active' : ''}`} onClick={() => setMobileOpen(false)}>
                     <MessageSquareMore size={18} aria-hidden="true"/><span>Interview preparation</span>
@@ -288,7 +308,7 @@ export function AdminLayout({ title, subtitle, children, active, selectedHomeSec
                             <Link href="/admin/logout" method="post" as="button" onClick={() => setProfileOpen(false)}>Sign out <LogOut size={14}/></Link>
                         </div>}
                     </div>
-                </div> : <Link href="/" className="pm-admin-view-site">View website <ExternalLink size={16} aria-hidden="true"/></Link>}
+                </div> : topbarAction ?? <Link href="/" className="pm-admin-view-site">View website <ExternalLink size={16} aria-hidden="true"/></Link>}
             </header>
             <main className="pm-admin-content" id="admin-main">
                 <div className="pm-admin-page-heading"><div><h1>{title}</h1>{subtitle && <p>{subtitle}</p>}</div>{headingAction}</div>

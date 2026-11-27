@@ -10,8 +10,8 @@ const filters: { value: Filter; label: string }[] = [
 ];
 
 /** Shared question review; only the authenticated caller can supply an AI chat footer. */
-export function PmpExamReviewView({ questions, responses, total, correct, initial = 'all', actions, renderQuestionFooter }: {
-    questions: ExamQuestion[]; responses: ExamResponses; total: number; correct: number; initial?: Filter;
+export function PmpExamReviewView({ questions, responses, total, correct, initial = 'all', showRationales = true, actions, renderQuestionFooter }: {
+    questions: ExamQuestion[]; responses: ExamResponses; total: number; correct: number; initial?: Filter; showRationales?: boolean;
     actions: ReactNode; renderQuestionFooter?: (question: ExamQuestion, metadata: string) => ReactNode;
 }) {
     const [filter, setFilter] = useState<Filter>(initial);
@@ -54,10 +54,15 @@ export function PmpExamReviewView({ questions, responses, total, correct, initia
             <div className="pm-exam-review-main"><p className="pm-exam-question-prompt">{question.prompt}</p>
                 <ExamOptionList question={question} chosen={responses[question.id]?.choice} readonly reveal/>
                 {!responses[question.id]?.choice && <p className="pm-exam-review-unanswered">You left this question unanswered.</p>}
-                <PmpReviewExplanation key={question.id} question={question}/>
+                <ReviewRationales key={question.id} question={question} initiallyOpen={showRationales}/>
                 {renderQuestionFooter?.(question, [question.code, metadata?.industry, 'Single Select'].filter(Boolean).join(' · '))}
             </div>
         </section> : <section className="pm-exam-panel pm-exam-review-question"><p className="pm-pmp-empty">No questions match this filter. Choose another status.</p></section>}
         </div>
     </>;
+}
+
+function ReviewRationales({ question, initiallyOpen }: {question: ExamQuestion; initiallyOpen: boolean}) {
+    const [open, setOpen] = useState(initiallyOpen);
+    return <>{!initiallyOpen && <button type="button" className="pm-review-outline-button" aria-expanded={open} onClick={() => setOpen(value => !value)}>{open ? 'Hide answer explanations' : 'Show answer explanations'}</button>}{open && <PmpReviewExplanation question={question}/>}</>;
 }

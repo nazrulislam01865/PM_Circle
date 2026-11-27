@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { Fragment, useEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import { examResult, examReview } from '@/components/exam/ExamShared';
+import { PMDropdown } from '@/components/pm/PMDropdown';
 import { PmpAiRefillPanel } from '@/components/exam/PmpAiRefillPanel';
 
 export type PmpWorkspaceAttempt = {
@@ -21,7 +22,7 @@ export type PmpWorkspaceAttempt = {
 };
 export type PmpPlanDetails = {
     code: string; source: 'subscription' | 'complimentary' | 'none';
-    starts_at: string | null; ends_at: string | null;
+    starts_at: string | null; ends_at: string | null; months: number | null;
 };
 export type PmpAiUsageData = {
     allocated: number; used: number; reserved?: number; remaining: number;
@@ -196,10 +197,10 @@ export function PmpOverview({ attempts, planCode, planDetails, targetExamDate, a
         <div className="pm-pmp-overview-cards">
             <Panel><div className="pm-pmp-card-title"><IconTile><CalendarDays/></IconTile><h2>Current Plan · {planCode.toUpperCase()}</h2></div>
                 <div className="pm-pmp-plan-dates"><span>Activated <strong>{dateLabel(planDetails.starts_at, true)}</strong></span>
-                    <span>Expires <strong>{dateLabel(planDetails.ends_at, true)}</strong></span></div>
+                    <span>Expires <strong>{dateLabel(planDetails.ends_at, true)}</strong></span>{planDetails.months !== null && <span>Validity <strong>{planDetails.months} {planDetails.months === 1 ? 'month' : 'months'}</strong></span>}</div>
                 <div className="pm-pmp-dual-stats"><div><strong>{usedDays ?? '—'}</strong><small>days used</small></div>
                     <div><strong>{daysLeft ?? '—'}</strong><small>days remaining</small></div></div>
-                {planDetails.source === 'complimentary' && <p className="pm-pmp-muted">Complimentary access has no billed activation or expiry dates.</p>}
+                {planDetails.source === 'complimentary' && !planDetails.ends_at && <p className="pm-pmp-muted">Validity has not been configured. Contact the administrator.</p>}
                 <SecondaryLink href="/membership">Manage Plan</SecondaryLink>
             </Panel>
             <Panel><div className="pm-pmp-card-title"><IconTile><Layers3/></IconTile><h2>Mock Exams</h2></div>
@@ -319,11 +320,10 @@ export function PmpPerformance({ attempts, topics, onStart, onFocus, starting, c
     ];
     return <Surface>
         <div className="pm-pmp-section-heading"><div><h1>Performance and Preparation</h1>
-            <div className="pm-pmp-performance-filters"><select aria-label="Exam category" value={mode} onChange={e => setMode(e.target.value as 'full' | 'short')}>
-                <option value="full">Full mocks ({fullQuestionCount} questions)</option><option value="short">Short practice</option>
-            </select><select aria-label="Performance history range" value={limit} onChange={e => setLimit(Number(e.target.value))}>
-                <option value={5}>Last 5 completed</option><option value={10}>Last 10 completed</option><option value={20}>Last 20 completed</option>
-            </select></div></div><span className="pm-pmp-sample-tag"><Info size={14}/> Your practice data</span></div>
+            <div className="pm-pmp-performance-filters">
+                <PMDropdown id="pmp-performance-category" aria-label="Exam category" required value={mode} onValueChange={value => setMode(value as 'full' | 'short')} placeholder="Exam category" options={[{value:'full',label:`Full mocks (${fullQuestionCount} questions)`},{value:'short',label:'Short practice'}]}/>
+                <PMDropdown id="pmp-performance-range" aria-label="Performance history range" required value={String(limit)} onValueChange={value => setLimit(Number(value))} placeholder="History range" options={[{value:'5',label:'Last 5 completed'},{value:'10',label:'Last 10 completed'},{value:'20',label:'Last 20 completed'}]}/>
+            </div></div><span className="pm-pmp-sample-tag"><Info size={14}/> Your practice data</span></div>
         <div className="pm-pmp-metric-grid">{stats.map(stat => <Panel key={stat.label} className="pm-pmp-metric"><small>{stat.label}</small><strong>{stat.value}</strong></Panel>)}</div>
         <div className="pm-pmp-analysis-grid"><Panel><h2>Score Trend</h2><ScoreTrend completed={group}/></Panel>
             <Panel><h2>Topic Accuracy</h2>{breakdown.length ? <div className="pm-pmp-table-scroll"><table className="pm-pmp-topic-table" aria-label="Topic accuracy"><thead><tr>
@@ -391,15 +391,9 @@ export function PmpHistory({ attempts, initialNextCursor, onStart, starting, can
             <PrimaryAction onClick={onStart} disabled={starting || !canStart}><Play size={17} fill="currentColor"/>Start a new mock exam</PrimaryAction>
         </div>
         <div className="pm-pmp-history-filters">
-            <label><Layers3 size={17}/><select aria-label="Exam type" value={kind} onChange={e => setKind(e.target.value)}>
-                <option value="all">All exam types</option><option value="full">Full mocks</option><option value="short">Short practice</option>
-            </select><ChevronDown size={16}/></label>
-            <label><CheckCircle2 size={17}/><select aria-label="Exam status" value={status} onChange={e => setStatus(e.target.value)}>
-                <option value="all">All statuses</option><option value="completed">Completed</option><option value="in_progress">In progress</option><option value="expired">Expired</option>
-            </select><ChevronDown size={16}/></label>
-            <label><CalendarDays size={17}/><select aria-label="Exam date range" value={period} onChange={e => setPeriod(e.target.value)}>
-                <option value="all">Date range</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option>
-            </select><ChevronDown size={16}/></label>
+            <PMDropdown id="pmp-history-type" aria-label="Exam type" required value={kind} onValueChange={setKind} placeholder="Exam type" options={[{value:'all',label:'All exam types'},{value:'full',label:'Full mocks'},{value:'short',label:'Short practice'}]}/>
+            <PMDropdown id="pmp-history-status" aria-label="Exam status" required value={status} onValueChange={setStatus} placeholder="Exam status" options={[{value:'all',label:'All statuses'},{value:'completed',label:'Completed'},{value:'in_progress',label:'In progress'},{value:'expired',label:'Expired'}]}/>
+            <PMDropdown id="pmp-history-period" aria-label="Exam date range" required value={period} onValueChange={setPeriod} placeholder="Date range" options={[{value:'all',label:'Date range'},{value:'7',label:'Last 7 days'},{value:'30',label:'Last 30 days'},{value:'90',label:'Last 90 days'}]}/>
             <span className="pm-pmp-sample-tag"><Info size={14}/> Your exam records</span>
         </div>
         <div className="pm-pmp-table-scroll"><table className="pm-pmp-history-table" aria-label="Exam history"><thead><tr>
@@ -450,13 +444,7 @@ export function PmpAiUsage({ usage, planDetails, onRefresh, loading = false, err
     };
     const labelFor = (kind: string) => labels[kind] ?? { title: kind.replace(/_/g, ' '), description: 'Recorded AI activity.' };
     const isPaid = planDetails.source === 'subscription';
-    return <Surface className="pm-pmp-ai-surface">
-        <div className="pm-pmp-ai-top"><strong>PMP® Exam Simulator</strong><span aria-hidden="true">·</span>
-            <span className={`pm-pmp-status ${isPaid ? 'is-completed' : 'is-progress'}`}>
-                {isPaid ? 'Purchased' : planDetails.source === 'complimentary' ? 'Complimentary' : 'Plan not active'}</span>
-            <small><Info size={15}/> Live account data</small>
-        </div>
-        <div className="pm-pmp-ai-grid">
+    return <section className="pm-pmp-ai-grid" aria-label="AI usage and refills">
             <div className="pm-pmp-ai-main">
                 <Panel className="pm-pmp-ai-balance">
                     <div className="pm-pmp-ai-lead"><IconTile><Sparkles/></IconTile><div>
@@ -491,6 +479,5 @@ export function PmpAiUsage({ usage, planDetails, onRefresh, loading = false, err
                 </Panel>
             </div>
             <PmpAiRefillPanel eligible={isPaid}/>
-        </div>
-    </Surface>;
+    </section>;
 }

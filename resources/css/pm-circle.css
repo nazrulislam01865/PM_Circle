@@ -10,8 +10,8 @@
     padding: var(--pm-control-padding-11px) var(--pm-control-padding-20px);
     border: 1px solid transparent;
     border-radius: var(--radius);
-    background: var(--primary);
-    color: var(--surface);
+    background: var(--pm-action-blue);
+    color: var(--pm-on-solid);
     font-family: var(--font);
     font-size: var(--type-button);
     font-weight: var(--pm-guide-weight-control);
@@ -27,12 +27,12 @@
 }
 
 .btn:hover {
-    background: var(--primary-hover);
-    color: var(--surface);
+    background: var(--pm-action-hover);
+    color: var(--pm-on-solid);
 }
 
 .btn:active {
-    background: var(--primary-active);
+    background: var(--pm-action-hover);
 }
 
 .btn.secondary {
@@ -56,8 +56,8 @@
 }
 
 .btn.danger {
-    background: var(--danger);
-    color: var(--surface);
+    background: var(--pm-solid-red);
+    color: var(--pm-on-solid);
 }
 
 .btn.small {
@@ -263,8 +263,8 @@
 }
 
 .pm-button {
-    background: var(--pm-primary);
-    color: var(--surface);
+    background: var(--pm-action-blue);
+    color: var(--pm-on-solid);
     padding: var(--pm-guide-s2) var(--pm-guide-button-pad-inline);
     min-height: var(--pm-guide-button-height);
     border: 1px solid var(--pm-primary);
@@ -280,8 +280,8 @@
 }
 
 .pm-button:hover {
-    background: var(--pm-primary-hover);
-    color: var(--surface);
+    background: var(--pm-action-hover);
+    color: var(--pm-on-solid);
 }
 
 .pm-button:disabled {
@@ -775,8 +775,8 @@
 }
 
 .pm-topic-pills a.selected {
-    background: var(--pm-primary);
-    color: var(--surface);
+    background: var(--pm-action-blue);
+    color: var(--pm-on-solid);
 }
 
 .pm-post-preview {
@@ -1301,7 +1301,7 @@
 }
 
 .pm-step-bars span.active {
-    background: var(--pm-primary);
+    background: var(--pm-action-blue);
 }
 
 .pm-auth-intro {
@@ -1589,7 +1589,7 @@
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: var(--pm-primary);
+    background: var(--pm-action-blue);
 }
 
 .pm-recommended {
@@ -2207,9 +2207,9 @@
 }
 
 .pm-filter-pill.active {
-    background: var(--primary);
+    background: var(--pm-action-blue);
     border-color: var(--primary);
-    color: var(--surface);
+    color: var(--pm-on-solid);
 }
 
 /* Guest callout banner */
@@ -2626,7 +2626,7 @@
     align-items: center;
     gap: 6px;
     background: var(--pm-tone-e4f7ee);
-    color: var(--pm-tone-0c7a52);
+    color: var(--pm-theme-fg-pm-tone-0c7a52);
     border-radius: var(--pm-radius-16px);
     padding: 4px 10px;
     font-size: var(--type-caption);
@@ -3033,8 +3033,8 @@
     padding: var(--pm-control-padding-11px) var(--pm-control-padding-20px);
     border: 1px solid var(--primary);
     border-radius: var(--radius);
-    background: var(--primary);
-    color: var(--surface);
+    background: var(--pm-action-blue);
+    color: var(--pm-on-solid);
     font-family: var(--font);
     font-size: var(--type-button);
     font-weight: var(--type-weight-bold);
@@ -3045,14 +3045,14 @@
 }
 
 .pm-system-button:hover {
-    background: var(--primary-hover);
+    background: var(--pm-action-hover);
     border-color: var(--primary-hover);
-    color: var(--surface);
+    color: var(--pm-on-solid);
     text-decoration: none;
 }
 
 .pm-system-button:active {
-    background: var(--primary-active);
+    background: var(--pm-action-hover);
     border-color: var(--primary-active);
 }
 

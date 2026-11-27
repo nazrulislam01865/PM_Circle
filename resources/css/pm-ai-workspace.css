@@ -11,7 +11,7 @@
 .pm-ai-workspace-table table{min-width:36rem}
 .pm-ai-workspace-table th{color:var(--muted);font-size:var(--text-metric-caption);text-transform:uppercase;letter-spacing:normal}
 .pm-ai-workspace-table td .pm-admin-editor-actions{min-width:max-content}
-.pm-ai-workspace-table .pm-admin-button,.pm-ai-workspace-route .pm-admin-button{min-height:var(--control-compact);font-size:var(--text-sm);padding:var(--s1) var(--s2)}
+.pm-ai-workspace-table .pm-admin-button{min-height:var(--control-compact);font-size:var(--text-sm);padding:var(--s1) var(--s2)}
 .pm-ai-workspace-empty{text-align:center;color:var(--muted);padding:var(--s6)!important}
 .pm-ai-workspace-two{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:var(--s5);align-items:start;min-width:0}
 .pm-ai-workspace-metric{display:grid;gap:var(--s2);align-content:start}
@@ -34,23 +34,18 @@
 .pm-ai-workspace-provider-stats strong{font-size:var(--pm-ai-admin-provider-stat);font-weight:var(--bold);color:var(--ink)}
 .pm-ai-workspace-toolbar{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap;padding:var(--s3) var(--s4);border-bottom:1px solid var(--border)}
 .pm-ai-workspace-toolbar>.pm-admin-field{flex:1;max-width:20rem;min-width:9rem}
-.pm-ai-workspace-route{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,.9fr) auto;align-items:center;gap:var(--s4);border:1px solid var(--border);border-radius:var(--radius-control);padding:var(--s4)}
-.pm-ai-workspace-route>div{min-width:0;overflow-wrap:anywhere}
-.pm-ai-workspace-route h3{font-size:var(--text-h4);font-weight:var(--semibold)}
-.pm-ai-workspace-route small{font-size:var(--text-xs)}
-.pm-ai-workspace-route>div:last-child{justify-content:flex-end}
-.pm-ai-workspace-routes,.pm-ai-workspace-form{display:grid;gap:var(--s3)}
+.pm-ai-workspace-form{display:grid;gap:var(--s3)}
 .pm-ai-workspace-budget-row{display:grid;gap:var(--s2);font-size:var(--text-sm)}
 .pm-ai-workspace-budget-row>div:first-child span{color:var(--muted)}
 .pm-ai-workspace-chart{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:var(--s2);text-align:center}
 .pm-ai-workspace-chart>div{display:grid;gap:var(--s1);min-width:0}
 .pm-ai-workspace-bars{height:9rem;display:flex;align-items:end;justify-content:center;gap:var(--s1);border-bottom:1px solid var(--border)}
-.pm-ai-workspace-bars span{display:block;width:30%;background:var(--blue);border-radius:var(--radius-control) var(--radius-control) 0 0}
+.pm-ai-workspace-bars span{display:block;width:30%;background:var(--pm-action-blue);border-radius:var(--radius-control) var(--radius-control) 0 0}
 .pm-ai-workspace-bars span:nth-child(2){opacity:.4}
 .pm-ai-workspace-chart small,.pm-ai-workspace-legend{font-size:var(--text-xs);color:var(--muted)}
 .pm-ai-workspace-legend{display:flex;gap:var(--s3);flex-wrap:wrap}
 .pm-ai-workspace-legend span{display:flex;align-items:center;gap:var(--s1)}
-.pm-ai-workspace-legend i{display:inline-block;width:.625rem;height:.625rem;background:var(--blue);border-radius:2px}
+.pm-ai-workspace-legend i{display:inline-block;width:.625rem;height:.625rem;background:var(--pm-action-blue);border-radius:2px}
 .pm-ai-workspace-legend span:nth-child(2) i{opacity:.4}
 .pm-ai-workspace-dialog{width:min(34rem,calc(100% - var(--s6)));padding:0;max-width:calc(100% - var(--s6));border-radius:var(--radius-card)}
 .pm-admin:has(.pm-ai-workspace) .pm-admin-page-heading{display:flex;align-items:center;justify-content:space-between;gap:var(--s4);flex-wrap:wrap}
@@ -85,8 +80,8 @@
 .pm-ai-workspace-dialog .pm-admin-field-grid{gap:var(--s3)}
 .pm-ai-workspace .pm-admin-panel{box-shadow:var(--pm-guide-shadow)}
 .pm-ai-workspace .pm-admin-stats>.pm-admin-panel{min-width:0}
-@media(max-width:75rem){.pm-ai-workspace-two{grid-template-columns:1fr}.pm-ai-workspace-provider-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pm-ai-workspace-route{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:45rem){.pm-ai-workspace-provider-grid,.pm-ai-workspace-route{grid-template-columns:1fr}.pm-ai-workspace-route>div:last-child{justify-content:flex-start}.pm-ai-workspace-toolbar>.pm-admin-field{max-width:none}.pm-ai-workspace-panel>header,.pm-ai-workspace-body{padding:var(--s3)}}
+@media(max-width:75rem){.pm-ai-workspace-two{grid-template-columns:1fr}.pm-ai-workspace-provider-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:45rem){.pm-ai-workspace-provider-grid{grid-template-columns:1fr}.pm-ai-workspace-toolbar>.pm-admin-field{max-width:none}.pm-ai-workspace-panel>header,.pm-ai-workspace-body{padding:var(--s3)}}
 @media(max-width:45rem){.pm-ai-workspace-dialog-body{padding:var(--s4)}.pm-ai-workspace-dialog .pm-admin-field-grid{grid-template-columns:1fr}}
 
 .pm-admin:has(.pm-ai-workspace) .pm-admin-page-heading>.pm-admin-button{font-size:var(--pm-ai-admin-control-text);min-height:var(--pm-ai-admin-control-height)}
@@ -102,3 +97,22 @@
 .pm-ai-workspace-dialog .pm-admin-field>span{color:var(--ink)}
 .pm-ai-workspace-dialog .pm-admin-field-grid{align-items:start}
 @media(max-width:45rem){.pm-ai-workspace-toolbar>.pm-admin-choice-field{flex:1 1 8rem;max-width:none}}
+
+/* Feature Configuration: shared table tracks, independent of row action count.
+   Keep overflow inside the existing table scroll wrapper on narrow screens. */
+.pm-ai-workspace-feature-table{min-width:0}
+.pm-ai-workspace-feature-table table{table-layout:fixed;min-width:58rem}
+.pm-ai-workspace-feature-table th:nth-child(1){width:25%}
+.pm-ai-workspace-feature-table th:nth-child(2),.pm-ai-workspace-feature-table th:nth-child(3){width:20%}
+.pm-ai-workspace-feature-table th:nth-child(4){width:10%}
+.pm-ai-workspace-feature-table th:nth-child(5){width:25%}
+.pm-ai-workspace-feature-table th:last-child{text-align:right}
+.pm-ai-workspace-feature-table td{max-width:none;vertical-align:middle}
+.pm-ai-workspace-feature-detail{display:grid;gap:var(--s1);min-width:0;overflow-wrap:anywhere}
+.pm-ai-workspace-feature-detail strong{font-weight:var(--semibold);color:var(--ink)}
+.pm-ai-workspace-feature-table td .pm-ai-workspace-feature-detail .pm-ai-admin-muted{margin-top:0}
+.pm-ai-workspace-feature-actions{display:grid;grid-template-columns:repeat(2,minmax(0,7.75rem));justify-content:end;align-items:center;gap:var(--s2);min-width:0}
+.pm-ai-workspace-feature-actions .pm-admin-button{white-space:normal;text-align:center;min-width:0;font-size:var(--pm-ai-admin-control-text)}
+.pm-ai-workspace-feature-actions>.pm-admin-field{grid-column:1/-1;justify-items:end;gap:var(--s1);text-align:right}
+.pm-ai-workspace-feature-actions>.pm-admin-field>.pm-admin-button{width:min(100%,7.75rem)}
+.pm-ai-workspace-feature-actions>.pm-admin-field>small{max-width:100%;overflow-wrap:anywhere}

@@ -3,6 +3,7 @@ import { ImagePlus, Send, Smile, X } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { CommentFeedback } from './CommentFeedback';
 import { Avatar } from '@/components/pm/Avatar';
+import { requestKey } from '@/lib/request-key';
 import type { RequestToJoin } from '@/components/home/HomeEngagement';
 
 export type SavedComment = {
@@ -16,6 +17,9 @@ export type SavedComment = {
     author: { name: string; avatar_path?: string | null; profile_url?: string | null };
     replies: SavedComment[];
     replies_count?: number;
+    version?: number | null;
+    post_comments_count?: number | null;
+    root_replies_count?: number | null;
 };
 
 const emojis = ['🙂', '😊', '❤️', '👍', '👏', '🙌', '🎉', '🤝', '💡', '🚀', '😮', '😢'];
@@ -23,6 +27,8 @@ const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const maxFileBytes = 5 * 1024 * 1024;
 const commentDrafts = new Map<number, string>();
 const MAX_DRAFTS = 24;
+type PendingReview = { id: number; submittedBody: string };
+const pendingComments = new Map<string, PendingReview>();
 let draftViewer = 0;
 
 /** Shared post/discussion comment editor. Scenario replies provide a text-submit callback; post comments use their existing media endpoint. */
@@ -42,18 +48,28 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
     compact?: boolean;
 }) {
     const viewer = usePage<{ auth?: { user?: { id: number } | null } }>().props.auth?.user?.id ?? 0;
-    if (draftViewer !== viewer) { commentDrafts.clear(); draftViewer = viewer; }
+    if (draftViewer !== viewer) { commentDrafts.clear(); pendingComments.clear(); draftViewer = viewer; }
     const [body, setBody] = useState(() => compact || postId === undefined ? '' : (commentDrafts.get(postId) ?? ''));
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
     const [emojiOpen, setEmojiOpen] = useState(false);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
-    const [reviewNotice, setReviewNotice] = useState('');
-    const [pendingReview, setPendingReview] = useState<{ id: number; submittedBody: string } | null>(null);
+    const pendingKey = `${viewer}:${postId ?? 0}:${parentId ?? 0}`;
+    const [reviewNotice, setReviewNotice] = useState(() => pendingComments.has(pendingKey) ? 'Checking your comment...' : '');
+    const [pendingReview, setPendingReviewState] = useState<PendingReview | null>(() => pendingComments.get(pendingKey) ?? null);
+    const setPendingReview = (value: PendingReview | null) => {
+        if (value) {
+            if (!pendingComments.has(pendingKey) && pendingComments.size >= MAX_DRAFTS) pendingComments.delete(pendingComments.keys().next().value!);
+            pendingComments.set(pendingKey, value);
+        } else pendingComments.delete(pendingKey);
+        setPendingReviewState(value);
+    };
     const [failedComment, setFailedComment] = useState<number | null>(null);
     const onCreatedRef = useRef(onCreated);
     useEffect(() => { onCreatedRef.current = onCreated; }, [onCreated]);
+    const submission = useRef<{ key: string; body: string; file: File | null; parentId: number | null; postId: number } | null>(null);
+    const sending = useRef(false);
     const photoInput = useRef<HTMLInputElement>(null);
     const editor = useRef<HTMLTextAreaElement>(null);
     const isReply = parentId !== null;
@@ -83,15 +99,22 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
         let live = true;
         let settled = false;
         let inFlight = false;
+        let delay = 3000;
+        let timer: number | undefined;
         const abort = new AbortController();
         const poll = async () => {
-            if (settled || inFlight || document.visibilityState === 'hidden') return;
+            if (settled || inFlight || !live) return;
+            if (document.visibilityState === 'hidden') { timer = window.setTimeout(() => { void poll(); }, 10000); return; }
             inFlight = true;
             try {
                 const response = await fetch(`/posts/${postId}/comments/${pendingReview.id}/check-status`, {
                     credentials: 'same-origin', signal: abort.signal, headers: { Accept: 'application/json' },
                 });
-                if (!response.ok || !live || settled) return;
+                if (!live || settled) return;
+                if (response.status === 404 || response.status === 410 || response.status === 403) {
+                    settled = true; setPendingReview(null); setReviewNotice(''); setError('This comment is no longer available.'); return;
+                }
+                if (!response.ok) return;
                 const result = await response.json() as {
                     status: string; reason?: string | null; comment?: SavedComment | null;
                 };
@@ -117,11 +140,16 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
                     setPendingReview(null);
                 }
             } catch { /* The next poll retries; never expose unchecked comments. */ }
-            finally { inFlight = false; }
+            finally {
+                inFlight = false;
+                if (live && !settled) {
+                    delay = Math.min(30000, Math.round(delay * 1.5));
+                    timer = window.setTimeout(() => { void poll(); }, delay + Math.floor(Math.random() * 1000));
+                }
+            }
         };
         void poll();
-        const timer = window.setInterval(() => { void poll(); }, 6000);
-        return () => { live = false; abort.abort(); window.clearInterval(timer); };
+        return () => { live = false; abort.abort(); if (timer !== undefined) window.clearTimeout(timer); };
     }, [pendingReview, postId]);
 
     const retryFailedReview = async () => {
@@ -155,7 +183,8 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
     const submit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (!canInteract) { onJoin(isReply ? 'reply to a comment' : 'comment on a post'); return; }
-        if (!valid || busy || pendingReview) return;
+        if (!valid || sending.current || pendingReview) return;
+        sending.current = true;
         setBusy(true); setError(''); setReviewNotice('');
         try {
             if (onSubmitText) {
@@ -165,7 +194,13 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
             }
             if (postId === undefined) throw new Error('Comment destination is unavailable.');
             const token = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+            const text = body.trim();
+            const intent = submission.current;
+            if (!intent || intent.body !== text || intent.file !== file || intent.parentId !== parentId || intent.postId !== postId) {
+                submission.current = { key: requestKey(), body: text, file, parentId, postId };
+            }
             const payload = new FormData();
+            payload.append('submission_key', submission.current!.key);
             if (body.trim()) payload.append('body', body.trim());
             if (file) payload.append('media', file);
             if (parentId !== null) payload.append('parent_id', String(parentId));
@@ -175,6 +210,7 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
                 body: payload,
             });
             if (!response.ok) {
+                if (response.status === 409 || response.status === 410) { submission.current = null; throw new Error(response.status === 410 ? 'This comment was deleted. Submit again to create a new comment.' : 'This submission no longer matches the original. Please submit again.'); }
                 if (response.status === 419) throw new Error('Session expired. Refresh and try again.');
                 if (response.status === 422) {
                     const details = await response.json().catch(() => ({})) as { errors?: Record<string, string[]>; message?: string };
@@ -183,6 +219,7 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
                 throw new Error('Unable to save your comment. Please try again.');
             }
             const result = await response.json() as { comment: SavedComment; check_status?: string | null };
+            submission.current = null;
             if (result.check_status === 'pending_check') {
                 setPendingReview({ id: result.comment.id, submittedBody: body.trim() });
                 setReviewNotice(isReply ? 'Checking your reply...' : 'Checking your comment...');
@@ -195,7 +232,7 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
             setBody(''); if (!compact && postId !== undefined) commentDrafts.delete(postId); setFile(null); setEmojiOpen(false);
         } catch (reason) {
             setError(reason instanceof Error ? reason.message : 'Unable to save your comment.');
-        } finally { setBusy(false); }
+        } finally { sending.current = false; setBusy(false); }
     };
 
     return <form data-feed-pin={Boolean(body || file || busy || pendingReview || failedComment) || undefined} className={`pm-comment-compose${compact ? ' pm-comment-compose--reply' : ''}`} onSubmit={event => { void submit(event); }} aria-label={isReply ? `Reply to ${replyToName ?? 'comment'}` : 'Write a comment'}>
@@ -224,6 +261,7 @@ export function CommentComposer({ postId, parentId = null, avatarName, avatarSrc
             {emojiOpen && <div className="pm-comment-emoji-list" role="group" aria-label="Choose an emoji">{emojis.map(emoji => <button key={emoji} type="button" aria-label={`Insert ${emoji}`} onClick={() => { const value = body + emoji; if (rememberDraft(value)) setBody(value); editor.current?.focus(); setEmojiOpen(false); }}>{emoji}</button>)}</div>}
             {(reviewNotice || error) && <div className="pm-comment-feedback-stack">
                 {reviewNotice && <CommentFeedback tone={failedComment ? 'warning' : pendingReview ? 'checking' : 'info'} message={reviewNotice}>
+                    {pendingReview?.submittedBody && <p>{pendingReview.submittedBody}</p>}
                     {failedComment && <button type="button" className="pm-button pm-button-outline pm-button-sm" onClick={() => void retryFailedReview()}>Retry check</button>}
                 </CommentFeedback>}
                 {error && <CommentFeedback tone="error" message={error}/>}

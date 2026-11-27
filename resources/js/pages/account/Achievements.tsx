@@ -4,6 +4,7 @@ import { PublicLayout } from '@/layouts/pm/PublicLayout';
 import { DashboardAvatar } from '@/components/dashboard/DashboardAvatar';
 import { AchievementPanel, AchievementProgress, BadgeGrid, BadgeMedal, LearningPathways, LatestBadgeCards, achievementDate, badgeProgressText, badgeRequirement, badgeStatusLabel } from '@/components/achievements/AchievementCards';
 import { sampleActions, sampleSnapshot, simulate, filterBadges, nearestBadges } from '@/components/achievements/achievementState';
+import { CertificateCard } from '@/components/learning/CourseWorkspace';
 import type { AchievementBadge, AchievementMember, AchievementRecord, AchievementSnapshot } from '@/components/achievements/types';
 
 const views = [['overview', 'Overview'], ['collection', 'Badge collection'], ['record', 'Learning record'], ['profile', 'Profile Overview']] as const;
@@ -71,6 +72,7 @@ export default function Achievements({ snapshot, member }: { snapshot: Achieveme
         {sample && <div className="pm-ach-sample pm-ach-between"><p><strong>Sample activity preview</strong> · No real progress is changed.</p><button type="button" className={outline} onClick={() => { setSample(null); setNotice('Returned to your actual achievement record.'); }}>Exit sample preview</button></div>}
         {notice && <p className="pm-ach-notice" role="status">{notice}</p>}
         {view === 'overview' && <><div className="pm-ach-metrics">{metrics.map(([value, label]) => <div className="pm-ach-metric" key={label}><strong>{value}</strong><span className="pm-ach-meta">{label}</span></div>)}</div>
+            {!sample && <AchievementPanel title="Course certificates" action={<Link className={outline} href="/dashboard/learning/certificates">View all certificates</Link>}>{data.certificates.length ? <div className="pm-ach-badge-grid">{data.certificates.map(certificate => <CertificateCard key={certificate.reference} certificate={certificate} root="/dashboard/learning"/>)}</div> : <p className="pm-ach-empty">No course certificates earned yet.</p>}</AchievementPanel>}
             <LearningPathways paths={data.paths} onRecord={() => navigate('record')}/>
             <AchievementPanel title="Latest badges" action={<button className={outline} type="button" onClick={() => navigate('profile')}>Profile preview</button>}><BadgeGrid badges={data.latest} onDetails={showDetails} empty="No activity badges earned yet."/></AchievementPanel>
             <AchievementPanel title="Closest to unlocking" action={<button className={outline} type="button" onClick={() => navigate('collection')}>All badges</button>}><BadgeGrid badges={nearest} onDetails={showDetails} empty="No partially completed badges."/></AchievementPanel></>}

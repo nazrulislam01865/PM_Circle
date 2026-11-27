@@ -59,7 +59,7 @@ test('new comments never enter manual review; uncertain results are hidden witho
     assert.match(uncertain, /check_status = 'restricted'/);
     assert.doesNotMatch(uncertain, /recordCommentViolation|EngagementStats/);
     assert.match(job, /check_status = 'approved'/);
-    assert.match(read('app/Models/Comment.php'), /orWhere\('check_status', 'approved'\)/);
+    assert.match(read('app/Models/Comment.php'), /orWhere\(\$table\.'\.check_status', 'approved'\)/);
     assert.doesNotMatch(read('resources/js/components/community/CommentComposer.tsx'), /awaiting an administrator review/);
 });
 

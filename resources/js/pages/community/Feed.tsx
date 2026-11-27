@@ -10,7 +10,7 @@ import {
     Search,
     Users,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { PostCard, type PostPreview } from '@/components/community/PostCard';
 import { VirtualizedFeed } from '@/components/community/VirtualizedFeed';
 import { useSlidingFeed, type FeedPage } from '@/hooks/community/useSlidingFeed';
@@ -18,6 +18,10 @@ import { JoinCommunityDialog } from '@/components/home/HomeEngagement';
 import { FeedScopeTabs, type FeedScope, type FeedScopeCounts } from '@/components/community/FeedScopeTabs';
 import { useFeedScopeCounts } from '@/hooks/community/useFeedScopeCounts';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
+import { DashboardComposer } from '@/components/dashboard/DashboardComposer';
+import { PostCheckCard, type PostCheckFeedData } from '@/components/community/PostCheckCard';
+import { usePostCheckFeed } from '@/hooks/community/usePostCheckFeed';
+import type { DashboardShellData } from '@/types/dashboard';
 
 type Props = {
     posts: FeedPage<PostPreview>;
@@ -26,6 +30,8 @@ type Props = {
     feedTab: FeedScope;
     feedScopeCounts: FeedScopeCounts;
     search?: string | null;
+    postChecks?: PostCheckFeedData | null;
+    flashStatus?: string | null;
     todayScenario?: {
         id: number;
         slug: string;
@@ -34,8 +40,9 @@ type Props = {
     } | null;
 };
 
-export default function Feed({ posts, activeTopic, feedTab, feedScopeCounts, search, todayScenario, virtualFeedEnabled }: Props) {
-    const { auth, emailVerificationRequired } = usePage<{
+export default function Feed({ posts, activeTopic, feedTab, feedScopeCounts, search, todayScenario, virtualFeedEnabled, postChecks, flashStatus }: Props) {
+    const { auth, emailVerificationRequired, memberShell } = usePage<{
+        memberShell?: DashboardShellData | null;
         emailVerificationRequired?: boolean;
         auth: {
             user: {
@@ -51,6 +58,7 @@ export default function Feed({ posts, activeTopic, feedTab, feedScopeCounts, sea
     const [joinAction, setJoinAction] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState(search ?? '');
     const sidebarRef = useRef<HTMLElement>(null);
+    useEffect(() => setSearchTerm(search ?? ''), [search]);
 
     useEffect(() => {
         const sidebar = sidebarRef.current;
@@ -152,14 +160,19 @@ export default function Feed({ posts, activeTopic, feedTab, feedScopeCounts, sea
                             </section>
                         )}
 
+                        {!isGuest && memberShell && postChecks && (
+                            <CommunityComposer key={memberShell.member.id} member={memberShell} initialChecks={postChecks}
+                                flashStatus={flashStatus} showChecks={(feedTab === 'all' || feedTab === 'mine') && activeTopic === 'All' && !search} />
+                        )}
+
                         {/* Server-hydrated, measured sliding window. Cards and guest prompt remain unchanged. */}
                         {feed.items.length ? (
                             <VirtualizedFeed items={feed.items} onNearEnd={feed.loadMore}
                                 className="pm-feed-posts-list" enabled={virtualFeedEnabled}
                                 renderItem={(post, index) => <>
                                     <PostCard post={post} isGuest={isGuest} onJoin={setJoinAction}
-                                        onReactionChange={(reaction, count, counts) => feed.updateItem(post.id, { viewer_reaction: reaction, reactions_count: count, reaction_breakdown: counts })}
-                                        onCommentAdded={() => feed.updateItem(post.id, current => ({ comments_count: current.comments_count + 1 }))}
+                                        onReactionChange={(reaction, count, counts, version) => feed.updateItem(post.id, current => version != null && current.engagement_version != null && version < current.engagement_version ? {} : { viewer_reaction: reaction, reactions_count: count, reaction_breakdown: counts, engagement_version: version ?? current.engagement_version })}
+                                        onCommentAdded={count => feed.updateItem(post.id, current => ({ comments_count: count ?? current.comments_count + 1 }))}
                                         onSavedChange={saved => {
                                             updateSaved(Boolean(post.viewer_saved), saved, Boolean(post.viewer_hidden));
                                             if (feedTab === 'saved' && !saved) {
@@ -305,4 +318,37 @@ export default function Feed({ posts, activeTopic, feedTab, feedScopeCounts, sea
             <JoinCommunityDialog action={joinAction} onClose={() => setJoinAction(null)} hasAccount={Boolean(auth?.user)} />
         </PublicLayout>
     );
+}
+
+/** The same homepage composer and private moderation status cards, in the discussion feed. */
+function CommunityComposer({ member, initialChecks, flashStatus, showChecks }: {
+    member: DashboardShellData;
+    initialChecks: PostCheckFeedData;
+    flashStatus?: string | null;
+    showChecks: boolean;
+}) {
+    const [newPostsAvailable, setNewPostsAvailable] = useState(false);
+    // Like the progressive home feed, refresh on demand instead of resetting a
+    // reader's scroll position or interrupting another post submission.
+    const onCheckCompleted = useCallback(() => setNewPostsAvailable(true), []);
+    const { postChecks, refreshCheckFeed } = usePostCheckFeed(initialChecks, onCheckCompleted);
+    const blocked = Boolean(postChecks.blocked_until && new Date(postChecks.blocked_until).getTime() > Date.now());
+
+    return <>
+        {flashStatus && <p role="status" className="pm-dashboard-flash">{flashStatus}</p>}
+        <DashboardComposer name={member.member.name} plan={member.plan} demo={member.isDemo}
+            blockedUntil={postChecks.blocked_until} returnTo="community" />
+        {blocked && <div className="pm-post-check-policy" role="status"><AlertTriangle size={22} aria-hidden="true"/><div>
+            <strong>Your community posting is temporarily restricted</strong>
+            <p>Posting, commenting and replying are paused while a restriction is active.</p>
+            <small>Restriction ends {new Date(postChecks.blocked_until!).toLocaleString()}.</small>
+        </div></div>}
+        {showChecks && newPostsAvailable && <div className="pm-load-more-center"><button type="button" className="pm-btn-load-more" onClick={() => {
+            router.reload({ only: ['posts', 'feedScopeCounts', 'postChecks', 'flashStatus'], onSuccess: () => setNewPostsAvailable(false) });
+        }}>Refresh discussions</button></div>}
+        {showChecks && postChecks.posts.length > 0 && <div className="pm-dash-posts pm-community-post-checks">
+            {postChecks.posts.map(post => <PostCheckCard key={post.id} post={post}
+                owner={member.member} blockedUntil={postChecks.blocked_until} onRefresh={() => { void refreshCheckFeed(); }}/>)}
+        </div>}
+    </>;
 }

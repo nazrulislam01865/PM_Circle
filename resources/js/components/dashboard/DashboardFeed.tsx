@@ -1,24 +1,25 @@
 import { router, usePage } from '@inertiajs/react';
 import { AlertCircle, Heart } from 'lucide-react';
-import { PostCheckCard, type PostCheckFeedData, type PostCheckPreview } from '@/components/community/PostCheckCard';
+import { PostCheckCard, type PostCheckPreview } from '@/components/community/PostCheckCard';
 import { PostCard, type PostPreview } from '@/components/community/PostCard';
 import { FeedScopeTabs } from '@/components/community/FeedScopeTabs';
 import type { DashboardFeedProps, DashboardPost, DashboardTab } from '@/types/dashboard';
 import { VirtualizedFeed } from '@/components/community/VirtualizedFeed';
 import { useSlidingFeed } from '@/hooks/community/useSlidingFeed';
+import { usePostCheckFeed } from '@/hooks/community/usePostCheckFeed';
 import { useFeedScopeCounts } from '@/hooks/community/useFeedScopeCounts';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 /** Adapt the existing dashboard feed projection; no additional API or database requests. */
 const samplePortraits: Record<string, string> = { 'Sara Ahmed': 'sara', 'Priya Nair': 'priya', 'Daniel Chen': 'daniel' };
 
-function FeedItem({ post, demo, onReactionChange, onCommentAdded, onSavedChange, onHiddenChange, onRemoved, onUpdated, onMuteChange, onVoteChanged }: { post: DashboardPost; demo: boolean; onHiddenChange: (hidden: boolean) => void; onRemoved: () => void; onUpdated: (updated: { body: string; image_path: string | null; status?: string }) => void; onMuteChange: (muted: boolean) => void; onReactionChange: (reaction: DashboardPost['reaction'], count: number, counts: NonNullable<DashboardPost['reactionBreakdown']>) => void; onCommentAdded: () => void; onSavedChange: (saved: boolean) => void; onVoteChanged: (choice: number, options: NonNullable<DashboardPost['pollOptions']>) => void }) {
+function FeedItem({ post, demo, onReactionChange, onCommentAdded, onSavedChange, onHiddenChange, onRemoved, onUpdated, onMuteChange, onVoteChanged }: { post: DashboardPost; demo: boolean; onHiddenChange: (hidden: boolean) => void; onRemoved: () => void; onUpdated: (updated: { body: string; image_path: string | null; status?: string }) => void; onMuteChange: (muted: boolean) => void; onReactionChange: (reaction: DashboardPost['reaction'], count: number, counts: NonNullable<DashboardPost['reactionBreakdown']>, version?: number | null) => void; onCommentAdded: (count?: number) => void; onSavedChange: (saved: boolean) => void; onVoteChanged: (choice: number, options: NonNullable<DashboardPost['pollOptions']>) => void }) {
     const avatar = post.authorAvatar || (demo && samplePortraits[post.author]
         ? `/images/dashboard/${samplePortraits[post.author]}.webp` : null);
     const preview: PostPreview = {
         id: post.id, title: post.title, body: post.body, image_path: post.image_path,
         topic: post.topic, published_at: post.publishedAt,
-        comments_count: post.comments, reactions_count: post.reactions, reaction_breakdown: post.reactionBreakdown,
+        comments_count: post.comments, reactions_count: post.reactions, reaction_breakdown: post.reactionBreakdown, engagement_version: post.engagementVersion,
         viewer_reaction: post.reaction, viewer_saved: post.saved, viewer_hidden: post.hidden,
         viewer_is_author: post.isOwner, viewer_muted: post.isMuted,
         is_anonymous: post.is_anonymous, visibility: post.visibility,
@@ -42,44 +43,12 @@ export function DashboardFeed({ dashboard, progressive = false, submittingPost =
     }), [dashboard.posts, dashboard.feedPage]);
     const feed = useSlidingFeed(initial, { tab: dashboard.feedTab, context: 'dashboard', viewerId: dashboard.member.id, bounded: dashboard.boundedFeedEnabled && dashboard.virtualFeedEnabled, estimateHeight: 280 });
     const { counts, updateSaved, updateHidden } = useFeedScopeCounts(dashboard.feedScopeCounts);
-    const [postChecks, setPostChecks] = useState<PostCheckFeedData>(dashboard.postChecks);
-    useEffect(() => setPostChecks(dashboard.postChecks), [dashboard.postChecks]);
-    const hasPending = postChecks.posts.some(post => post.status === 'pending_check');
     const [newPostsAvailable, setNewPostsAvailable] = useState(false);
-    const checkRequest = useRef<AbortController | null>(null);
-    const checksRef = useRef(postChecks);
-    checksRef.current = postChecks;
-    const refreshCheckFeed = useCallback(async () => {
-        if (checkRequest.current || document.visibilityState === 'hidden') return;
-        const abort = new AbortController();
-        checkRequest.current = abort;
-        try {
-            const response = await fetch('/posts/check-feed', { credentials: 'same-origin', signal: abort.signal, headers: { Accept: 'application/json' } });
-            if (!response.ok || abort.signal.aborted) return;
-            const data = await response.json() as PostCheckFeedData;
-            if (abort.signal.aborted) return;
-            const completed = checksRef.current.posts.some(post => post.status === 'pending_check' && !data.posts.some(next => next.id === post.id && next.status === 'pending_check'));
-            checksRef.current = data;
-            setPostChecks(data);
-            if (completed) {
-                if (progressive) setNewPostsAvailable(true);
-                else router.reload({ only: ['dashboard'] });
-            }
-        } catch { /* Never expose unchecked content. */ }
-        finally { if (checkRequest.current === abort) checkRequest.current = null; }
+    const onCheckCompleted = useCallback(() => {
+        if (progressive) setNewPostsAvailable(true);
+        else router.reload({ only: ['dashboard'] });
     }, [progressive]);
-    useEffect(() => {
-        if (!hasPending) return;
-        let live = true;
-        let timer: number;
-        const schedule = () => { timer = window.setTimeout(async () => {
-            await refreshCheckFeed();
-            if (live) schedule();
-        }, 6000 + Math.random() * 1000); };
-        schedule();
-        return () => { live = false; window.clearTimeout(timer); };
-    }, [hasPending, refreshCheckFeed]);
-    useEffect(() => () => { checkRequest.current?.abort(); checkRequest.current = null; }, []);
+    const { postChecks, refreshCheckFeed } = usePostCheckFeed(dashboard.postChecks, onCheckCompleted);
     const restricted = dashboard.feedTab === 'restricted';
     const blocked = Boolean(postChecks.blocked_until && new Date(postChecks.blocked_until).getTime() > Date.now());
     const restrictionPolicy = postChecks.restriction_policy;
@@ -109,8 +78,8 @@ export function DashboardFeed({ dashboard, progressive = false, submittingPost =
             estimateHeight={280} onNearEnd={feed.loadMore} onNearStart={feed.hasPrevious ? feed.loadPrevious : undefined}
             topPx={feed.topPx} bottomPx={feed.bottomPx} anchor={feed.anchor} viewport={dashboard.boundedFeedEnabled && dashboard.virtualFeedEnabled ? feed.viewport : undefined} enabled={dashboard.virtualFeedEnabled}
             renderItem={post => <FeedItem post={post} demo={dashboard.isDemo}
-                onReactionChange={(reaction, count, counts) => feed.updateItem(post.id, { reaction, reactions: count, reactionBreakdown: counts })}
-                onCommentAdded={() => feed.updateItem(post.id, current => ({ comments: current.comments + 1 }))}
+                onReactionChange={(reaction, count, counts, version) => feed.updateItem(post.id, current => version != null && current.engagementVersion != null && version < current.engagementVersion ? {} : { reaction, reactions: count, reactionBreakdown: counts, engagementVersion: version ?? current.engagementVersion })}
+                onCommentAdded={count => feed.updateItem(post.id, current => ({ comments: count ?? current.comments + 1 }))}
                 onSavedChange={saved => {
                     updateSaved(post.saved, saved, Boolean(post.hidden));
                     if (dashboard.feedTab === 'saved' && !saved) {

@@ -208,7 +208,7 @@ final class ProfileEditorSaveService
         });
     }
     /** Merge CV-shaped inputs with legacy fields that are no longer editable on this page. */
-    private function mergeAlignedRecord(string $section, array $entry, array $old, Model $row): array
+    public function mergeAlignedRecord(string $section, array $entry, array $old, Model $row): array
     {
         $period = (string) ($entry['period'] ?? '');
         $entry['period'] = $period;

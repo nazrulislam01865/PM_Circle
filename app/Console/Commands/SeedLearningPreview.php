@@ -45,13 +45,13 @@ final class SeedLearningPreview extends Command
                         'title' => $data['title'], 'summary' => $data['summary'], 'overview' => $data['summary'],
                         'category' => $data['category'], 'level' => 'Beginner', 'minutes' => 45,
                         'thumbnail' => $data['thumbnail'], 'access_tier' => 'free', 'is_published' => true,
-                        'sort_order' => 990 + $index, 'practice_enabled' => true, 'practice_question_count' => 3,
+                        'sort_order' => 990 + $index, 'certificate_enabled' => true, 'practice_enabled' => true, 'practice_question_count' => 3,
                         'objectives' => array_column($lessons, 'title'),
                         'outline' => array_map(fn (array $lesson): array => ['title' => $lesson['title'], 'topics' => [$lesson['title']]], $lessons),
                         'lessons' => $lessons,
                     ]);
                     // Refuse to touch a conflicting or customized course, even in a development database.
-                    if ($course->title !== $data['title'] || $course->access_tier !== 'free' || ! $course->is_published || ! $course->practice_enabled || $course->lessons != $lessons) {
+                    if ($course->title !== $data['title'] || $course->access_tier !== 'free' || ! $course->is_published || ! $course->practice_enabled || ! $course->certificate_enabled || $course->lessons != $lessons) {
                         throw new RuntimeException('A preview course already exists with different content or settings. No changes were made.');
                     }
                     foreach ($data['questions'] as $i => [$prompt, $options, $correct, $explanation]) {

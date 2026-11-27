@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
-use App\Domain\Community\Services\EngagementStats;
 use App\Jobs\AnalyzeProfileResume;
 use App\Domain\Billing\Queries\CurrentMemberPlan;
 use App\Domain\Billing\Services\ProfileCompletionRewardService;
@@ -668,13 +667,13 @@ class ProfileController extends Controller
             'Account removal is briefly unavailable during engagement maintenance. Please retry.');
         $user = $request->user();
 
-        DB::transaction(function () use ($user): void {
-            if (EngagementStats::writesEnabled()) {
-                EngagementStats::lockMember($user->id);
-                EngagementStats::beforeMemberDeletion($user->id);
-            }
+        try {
             $user->delete();
-        }, 3);
+        } catch (\Illuminate\Database\QueryException $exception) {
+            // PostgreSQL foreign-key constraints protect retained financial and audit records.
+            if (($exception->errorInfo[0] ?? null) !== '23503') throw $exception;
+            throw \Illuminate\Validation\ValidationException::withMessages(['password' => 'Your account has retained records that require support-assisted removal. Please contact the Help Centre.']);
+        }
 
         Storage::disk('local')->deleteDirectory('support/'.$user->id);
         Auth::logout();

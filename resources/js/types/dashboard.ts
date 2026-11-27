@@ -6,6 +6,7 @@ export type DashboardPost = {
     id: number; title: string | null; body: string; image_path?: string | null; topic: string;
     is_anonymous?: boolean; visibility?: string; author: string; authorId?: number | null; authorHasPublicProfile?: boolean; authorProfileUrl?: string | null; authorRole: string | null; authorAvatar?: string | null; publishedAt: string | null;
     comments: number; reactions: number; reactionBreakdown?: import('@/components/community/PostReactions').ReactionCounts;
+    engagementVersion?: number | null;
     saved: boolean; hidden?: boolean; isOwner?: boolean; isMuted?: boolean; pollOptions?: { id: number; label: string; votes_count: number }[]; viewerVote?: number | null; reaction: import('@/components/home/HomeEngagement').ReactionType | null;
 };
 export type DashboardData = {

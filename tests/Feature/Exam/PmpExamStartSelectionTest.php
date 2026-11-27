@@ -122,6 +122,41 @@ final class PmpExamStartSelectionTest extends TestCase
         $this->assertSame(27, (int) round(\Carbon\Carbon::parse($full->started_at)->diffInMinutes($full->expires_at, true)));
     }
 
+    public function test_out_of_order_answers_and_skipped_questions_preserve_scoring(): void
+    {
+        $this->questions(3);
+        DB::table('pmp_exam_settings')->insert([
+            'id' => 1, 'full_question_count' => 3, 'shuffle_questions' => false,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $url = $this->actingAs($this->member())->postJson('/exams/pmp/start', ['selection' => 'random'])
+            ->assertOk()->json('takeUrl');
+        $attempt = (int) basename($url);
+        $ids = json_decode(DB::table('pmp_exam_attempts')->find($attempt)->question_ids, true);
+        $endpoint = "/exams/pmp/attempts/{$attempt}";
+
+        // Answer the last question first, then return to the first one.
+        $this->putJson("{$endpoint}/answer", [
+            'questionId' => $ids[2], 'choice' => 'B', 'marked' => false,
+        ])->assertOk();
+        $this->assertDatabaseMissing('pmp_exam_attempt_answers', [
+            'attempt_id' => $attempt, 'question_id' => $ids[0],
+        ]);
+        $this->putJson("{$endpoint}/answer", [
+            'questionId' => $ids[0], 'choice' => 'B', 'marked' => false,
+        ])->assertOk();
+        $this->postJson("{$endpoint}/submit")->assertOk();
+        $this->assertDatabaseMissing('pmp_exam_attempt_answers', [
+            'attempt_id' => $attempt, 'question_id' => $ids[1],
+        ]);
+        $this->assertDatabaseHas('pmp_exam_attempts', [
+            'id' => $attempt, 'status' => 'completed', 'correct_count' => 2, 'total_questions' => 3,
+        ]);
+        $this->get("{$endpoint}/result")->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('exam/Result')->where('attempt.total', 3)->where('attempt.answered', 2)
+            ->where('attempt.correct', 2)->etc());
+    }
+
     public function test_imported_approved_workbook_questions_become_active_without_approving_drafts(): void
     {
         $admin = User::factory()->create(['is_admin' => true, 'onboarding_step' => 3]);

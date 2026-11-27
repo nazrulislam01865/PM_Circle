@@ -27,7 +27,7 @@
 .pm-admin-overview-card-header p{margin-top:var(--s1);font-size:var(--text-xs);line-height:var(--line-sm);color:var(--muted)}
 .pm-admin-overview-segment{display:inline-flex;flex:none;gap:0;border:1px solid var(--border);border-radius:var(--radius-control);padding:var(--s1);background:var(--surface)}
 .pm-admin-overview-segment button{border:0;border-radius:calc(var(--radius-control) / 1.5);padding:var(--s1) var(--s2);background:transparent;color:var(--ink);font:var(--semibold) var(--text-xs)/var(--line-xs) var(--font-ui);cursor:pointer}
-.pm-admin-overview-segment button.is-active{background:var(--blue);color:var(--surface)}
+.pm-admin-overview-segment button.is-active{background:var(--pm-action-blue);color:var(--pm-on-solid)}
 .pm-admin-overview-chart-detail{align-self:flex-end;color:var(--muted);font:var(--medium) var(--text-xs)/var(--line-xs) var(--font-ui);margin-bottom:calc(-1 * var(--s3));font-variant-numeric:tabular-nums}
 .pm-admin-overview-svg-chart{display:block;width:100%;height:auto;min-height:11rem;max-height:16rem;overflow:visible}
 .pm-admin-overview-svg-chart text{font-family:var(--font-ui)}
@@ -86,7 +86,7 @@
 .pm-admin-overview-top-actions{display:flex;align-items:center;gap:var(--s3);margin-left:auto}
 .pm-admin-overview-header-button{position:relative;display:grid;place-items:center;width:var(--control-height);height:var(--control-height);border:0;border-radius:var(--radius-control);background:transparent;color:var(--ink);cursor:pointer;text-decoration:none}
 .pm-admin-overview-header-button:hover{background:var(--blue-soft);color:var(--blue)}
-.pm-admin-overview-header-count{position:absolute;right:0;top:0;background:var(--blue);color:var(--surface);border-radius:var(--radius-pill);min-width:1rem;padding:0 var(--s1);font:var(--bold) var(--text-xs)/var(--line-xs) var(--font-ui);text-align:center}
+.pm-admin-overview-header-count{position:absolute;right:0;top:0;background:var(--pm-action-blue);color:var(--pm-on-solid);border-radius:var(--radius-pill);min-width:1rem;padding:0 var(--s1);font:var(--bold) var(--text-xs)/var(--line-xs) var(--font-ui);text-align:center}
 .pm-admin-overview-top-popover{position:relative}
 .pm-admin-overview-account{display:flex;align-items:center;gap:var(--s2);border:0;border-left:1px solid var(--border);background:transparent;color:var(--ink);padding:0 0 0 var(--s3);cursor:pointer;font:var(--semibold) var(--text-sm)/var(--line-sm) var(--font-ui)}
 .pm-admin-overview-account>span{display:grid;place-items:center;min-width:2.1rem;width:2.1rem;height:2.1rem;border-radius:50%;background:var(--blue-soft);color:var(--blue);font-weight:var(--bold)}

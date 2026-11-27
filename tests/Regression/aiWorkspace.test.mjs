@@ -138,3 +138,17 @@ test('workspace credential diagnostics use real operation endpoints and existing
     assert.match(read('app/Domain/AI/Services/AiWorkspaceCredentials.php'), /AiCredentialDiagnostic::class\)->run/);
     assert.match(read('resources/js/pages/admin/AiWorkspace.tsx'), /Routing target: \{k.routing_target\}/);
 });
+
+test('feature configuration shares table columns and preserves every existing action', () => {
+    const page = read('resources/js/pages/admin/AiWorkspace.tsx');
+    const section = page.slice(page.indexOf("if (section === 'features')"), page.indexOf("if (section === 'budget')"));
+    assert.match(section, /<Panel title="Feature routing"[^>]* table>/);
+    assert.match(section, /<Table columns=\{\['Feature', 'Primary model \/ key', 'Failover \/ daily limit', 'Status', 'Actions'\]\}/);
+    for (const control of ['primaryKey(f)', 'backupKey(f)', 'featureAction(f)', 'Configure route', 'ReviewConnectionTest', "f.enabled ? 'Active' : 'Disabled'"]) assert.ok(section.includes(control), control);
+    assert.doesNotMatch(section, /pm-ai-workspace-route[s" ]/);
+    const css = read('resources/css/pm-ai-workspace.css');
+    assert.match(css, /\.pm-ai-workspace-feature-table table\{[^}]*table-layout:fixed;min-width:/);
+    assert.match(css, /\.pm-ai-workspace-feature-actions\{[^}]*justify-content:end/);
+    assert.match(css, /\.pm-ai-workspace-feature-actions>\.pm-admin-field\{[^}]*grid-column:1\/-1/);
+    assert.match(read('resources/css/pm-admin-ai-usage.css'), /\.pm-ai-admin-table-wrap\{[^}]*overflow-x:auto/);
+});

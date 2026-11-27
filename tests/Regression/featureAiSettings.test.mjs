@@ -47,11 +47,11 @@ test('connection checks use the feature-specific server keys and never return a 
 test('feature and editorial settings use the existing active verified administrator role', () => {
     const access = read('app/Domain/AI/Services/AiAdminAccess.php');
     const roleGuard = access.indexOf('$actor->is_admin === true');
-    const rolePermissions = access.indexOf("['ai.manage_features', 'ai.manage_editorial']");
+    const rolePermissions = access.indexOf("['ai.manage_features', 'ai.manage_editorial', 'ai.manage_packages']");
     const separateGrants = access.indexOf("DB::table('ai_admin_permissions')");
     assert.ok(roleGuard >= 0 && roleGuard < rolePermissions && rolePermissions < separateGrants);
     assert.match(access, /\$actor->status === 'active' && \$actor->email_verified_at !== null/);
-    assert.match(access, /in_array\(\$permission, \['ai.manage_features', 'ai.manage_editorial'\], true\)\) \{\s*return;/);
+    assert.match(access, /in_array\(\$permission, \['ai.manage_features', 'ai.manage_editorial', 'ai.manage_packages'\], true\)\) \{\s*return;/);
     assert.match(access, /where\('user_id', \$actor->id\)->where\('permission', \$permission\)->exists\(\)/);
     const daily = read('resources/js/pages/admin/DailyChallenge.tsx');
     assert.match(daily, /label="Scenario title guidance"/);

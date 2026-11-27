@@ -121,7 +121,7 @@ final class QuestionCatalog
             ?? config('pm-interview.minutes_per_question', 2));
     }
 
-    public function select(string $industry, string $role, string $experience, array $types, int $count, ?int $setId = null, array $options = []): array
+    public function select(string $industry, string $role, string $experience, array $types, int $count, ?int $setId = null, array $options = [], ?array $settings = null, array $labels = []): array
     {
         $query = DB::table('interview_questions as q')
             ->join('interview_question_sets as s', 's.id', '=', 'q.set_id')
@@ -139,7 +139,7 @@ final class QuestionCatalog
         }
         // Rank per type in SQL; the optional preview uses a bounded candidate pool.
         // The old start endpoint retains the original deterministic catalog order.
-        $ranked = $query->select(['q.id', 'q.type', 'q.text', 's.industry', 's.role', 's.experience'])
+        $ranked = $query->select(['q.id', 'q.type', 'q.text', 'q.topic', 'q.difficulty', 'q.answer_guidance', 's.industry', 's.role', 's.experience'])
             ->selectRaw('ROW_NUMBER() OVER (PARTITION BY q.type ORDER BY
                 CASE WHEN s.industry IS NOT NULL THEN 0 ELSE 1 END,
                 CASE WHEN s.role IS NOT NULL THEN 0 ELSE 1 END,
@@ -147,16 +147,16 @@ final class QuestionCatalog
                 s.sort_order, q.sort_order, q.id) as question_rank');
         $rows = DB::query()->fromSub($ranked, 'eligible')
             ->where('question_rank', '<=', $options ? min(200, $count * 4) : $count)->orderBy('question_rank')
-            ->get(['id', 'type', 'text', 'industry', 'role', 'experience']);
+            ->get(['id', 'type', 'text', 'topic', 'difficulty', 'answer_guidance', 'industry', 'role', 'experience']);
 
-        $industryLabel = $options['industry_label'] ?? DB::table('master_data_options')->where('category', 'interview_industry')->where('value', $industry)->value('label') ?? $industry;
-        $roleLabel = $options['role_label'] ?? $role;
+        $industryLabel = $labels['industry'] ?? $options['industry_label'] ?? DB::table('master_data_options')->where('category', 'interview_industry')->where('value', $industry)->value('label') ?? $industry;
+        $roleLabel = $labels['role'] ?? $options['role_label'] ?? $role;
         $groups = $rows->groupBy('type');
         if ($options) {
             $terms = PracticeRubric::keywords(implode(' ', $options['focus'] ?? []).' '.($options['jd'] ?? ''));
             $groups = $groups->map(function ($group) use ($terms) {
                 // Only the bounded candidate pool is shuffled; keyword matches take precedence.
-                return $group->shuffle()->sortByDesc(fn ($q) => 100 * ((int) ($q->industry !== null) + (int) ($q->role !== null) + (int) ($q->experience !== null)) + min(99, count(array_intersect($terms, PracticeRubric::keywords($q->text)))))->values();
+                return $group->shuffle()->sortByDesc(fn ($q) => 100 * ((int) ($q->industry !== null) + (int) ($q->role !== null) + (int) ($q->experience !== null)) + min(99, count(array_intersect($terms, PracticeRubric::keywords($q->text.' '.($q->topic ?? ''))))))->values();
             });
         }
         $selected = [];
@@ -181,6 +181,10 @@ final class QuestionCatalog
                 if (isset($used[$question->id])) continue;
                 $used[$question->id] = true;
                 $selected[] = ['id' => 'bank-'.$question->id, 'type' => $type, 'text' => $prompt];
+                if (isset($labels['types'][$type])) $selected[array_key_last($selected)]['type_label'] = $labels['types'][$type];
+                foreach (['topic', 'difficulty', 'answer_guidance'] as $field) {
+                    if (filled($question->{$field})) $selected[array_key_last($selected)][$field] = $question->{$field};
+                }
                 if ($options) {
                     $selected[array_key_last($selected)]['contextual'] = $question->industry !== null || $question->role !== null || $question->experience !== null
                         || str_contains($question->text, '{industry}') || str_contains($question->text, '{scenario}');
@@ -193,7 +197,7 @@ final class QuestionCatalog
             $focusTerms = PracticeRubric::keywords(implode(' ', $options['focus'] ?? []));
             $mix = $options['mix'] ?? 'recommended';
             $common = fn ($q) => ! $q['contextual'];
-            $focus = fn ($q) => (bool) array_intersect($focusTerms, PracticeRubric::keywords($q['text']));
+            $focus = fn ($q) => (bool) array_intersect($focusTerms, PracticeRubric::keywords($q['text'].' '.($q['topic'] ?? '')));
             $buckets = ['Common questions' => [], 'Role & industry scenarios' => [], 'Focus-area questions' => []];
             foreach ($selected as $q) {
                 $bucket = $mix === 'focus' && $focus($q) ? 'Focus-area questions' : ($common($q) ? 'Common questions' : 'Role & industry scenarios');
@@ -202,13 +206,7 @@ final class QuestionCatalog
             if ($mix === 'focus' && empty($buckets['Focus-area questions'])) {
                 throw ValidationException::withMessages(['focus' => 'No published questions match those focus areas. Choose another focus area or question mix.']);
             }
-            $majority = (int) round($count * .6);
-            $small = (int) round($count * .2);
-            $quotas = match ($mix) {
-                'common' => ['Common questions' => $count],
-                'focus' => ['Focus-area questions' => $majority, 'Common questions' => $small, 'Role & industry scenarios' => $count - $majority - $small],
-                default => ['Common questions' => $majority, 'Role & industry scenarios' => $count - $majority],
-            };
+            $quotas = PracticeSettings::quotas($settings ?? PracticeSettings::load(), $mix, $count);
             $selected = [];
             foreach ($quotas as $bucket => $quota) {
                 $selected = array_merge($selected, array_splice($buckets[$bucket], 0, $quota));
@@ -221,10 +219,10 @@ final class QuestionCatalog
             }
             foreach ($selected as &$q) {
                 unset($q['contextual']);
-                $q['difficulty'] = in_array($experience, ['senior', 'leadership'], true) ? ($q['type'] === 'Situational' ? 'Hard' : 'Medium') : ($q['type'] === 'Situational' || $q['type'] === 'Technical' ? 'Medium' : 'Easy');
+                $q['difficulty'] ??= in_array($experience, ['senior', 'leadership'], true) ? ($q['type'] === 'Situational' ? 'Hard' : 'Medium') : ($q['type'] === 'Situational' || $q['type'] === 'Technical' ? 'Medium' : 'Easy');
                 $topics = ['risk' => 'Risk and issue management', 'scope' => 'Scope change', 'stakeholder' => 'Stakeholder communication', 'dependenc' => 'Dependency management', 'schedule' => 'Delivery planning', 'milestone' => 'Delivery planning', 'release' => 'Release planning', 'budget' => 'Budget control', 'quality' => 'Quality management', 'conflict' => 'Team conflict', 'agile' => 'Agile delivery', 'requirements' => 'Requirements management', 'leadership' => 'Leadership'];
                 foreach ($topics as $term => $label) {
-                    if (str_contains(strtolower($q['text']), $term)) { $q['topic'] = $label; break; }
+                    if (! isset($q['topic']) && str_contains(strtolower($q['text']), $term)) { $q['topic'] = $label; break; }
                 }
                 if ($q['bucket'] === 'Role & industry scenarios') {
                     $q['text'] .= ' Frame your answer for '.$industryLabel.' and the '.$roleLabel.' role.';

@@ -34,7 +34,6 @@ export function PmpSubmitReviewSummary({ total, answeredCount, markedIndexes, un
                 <p>Select a question to return to it.</p>
                 {unansweredIndexes.length ? <div className="pm-exam-submit-review-rows">
                     {unansweredIndexes.map(index => <button key={index} type="button" disabled={!canVisit(index) || submitting}
-                        title={!canVisit(index) ? 'Answer earlier questions to unlock this question' : undefined}
                         onClick={() => onUnanswered(index)}>
                         <span>Question {index + 1}</span><ChevronRight size={19} aria-hidden="true"/>
                     </button>)}

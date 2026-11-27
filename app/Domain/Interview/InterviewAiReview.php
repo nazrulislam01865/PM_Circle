@@ -35,7 +35,7 @@ final class InterviewAiReview
         if (! is_string($question['text'] ?? null)) throw new AiFailure('SUBJECT_NOT_ACCESSIBLE', 404);
         return ['subject_type' => 'interview_answer', 'subject_id' => $row->id,
             'context' => ['question' => $question['text'], 'candidate_answer' => $row->answer,
-                'role' => $row->role, 'industry' => $row->industry, 'experience' => $row->experience, 'profession' => $row->profession],
+                'reference_guidance' => $question['answer_guidance'] ?? null, 'role' => $row->role, 'industry' => $row->industry, 'experience' => $row->experience, 'profession' => $row->profession],
             'message' => null, 'existing_review_id' => $row->ai_review_request_id];
     }
 

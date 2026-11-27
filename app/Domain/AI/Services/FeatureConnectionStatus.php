@@ -36,8 +36,8 @@ final class FeatureConnectionStatus
     {
         return hash_hmac('sha256', json_encode([$feature, $model, $this->key($feature),
             $this->verification($feature), app(AiFeatureRouting::class)->primaryAccounting(match ($feature) { 'daily-challenge' => 'scenario_generate', 'daily-challenge-review' => 'daily_challenge_review', 'pmp' => 'pmp_explain', 'feed-moderation' => 'feed_moderation', default => $this->featureCode($feature) }, match ($feature) { 'daily-challenge', 'daily-challenge-review' => 'daily_challenge_api_key', 'pmp' => 'api_key', 'feed-moderation' => 'post_check_api_key', default => 'api_key' }), config('pm-ai.enabled'), config('pm-ai.endpoint'), in_array($model, app(\App\Domain\AI\Services\AiRuntimeSettings::class)->allowedModels(), true),
-            in_array($feature, ['daily-challenge', 'daily-challenge-review'], true) ? [app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential('post_check_api_key'), config('pm-ai.editorial_enabled'), app()->environment('local') && config('pm-ai.daily_challenge_skip_generation_moderation')] : null,
-            $feature === 'pmp' ? config('pm-ai.pmp_external_moderation') : null,
+            in_array($feature, ['daily-challenge', 'daily-challenge-review'], true) ? [app(\App\Domain\AI\Services\AiFeatureRouting::class)->moderationSecret(), config('pm-ai.editorial_enabled'), app()->environment('local') && config('pm-ai.daily_challenge_skip_generation_moderation')] : null,
+            in_array($feature, ['pmp', 'pmp-followup'], true) ? config('pm-ai.pmp_external_moderation') : null,
             $feature === 'feed-moderation' ? config('pm-ai.post_check_enabled') : null,
         ]), (string) config('app.key'));
     }
@@ -130,7 +130,7 @@ final class FeatureConnectionStatus
 
     private function featureCode(string $feature): string
     {
-        return match ($feature) { 'daily-challenge' => 'scenario_generate', 'daily-challenge-review' => 'daily_challenge_review', 'pmp' => 'pmp_explain', default => in_array($feature, self::MEMBER_REVIEW_OPERATIONS, true) ? $feature : throw new \InvalidArgumentException('Unknown diagnostic operation') };
+        return match ($feature) { 'daily-challenge' => 'scenario_generate', 'daily-challenge-review' => 'daily_challenge_review', 'pmp' => 'pmp_explain', 'pmp-followup' => 'pmp_followup', default => in_array($feature, self::MEMBER_REVIEW_OPERATIONS, true) ? $feature : throw new \InvalidArgumentException('Unknown diagnostic operation') };
     }
 
     public function test(string $feature, ?string $model, int $actorId): array
@@ -162,7 +162,7 @@ final class FeatureConnectionStatus
                 if (! $price) throw new AiFailure('MODEL_PRICE_MISSING', 503);
                 $prices = ['input' => $price->input_usd_per_m, 'cached' => $price->cached_input_usd_per_m, 'output' => $price->output_usd_per_m];
                 $context = ['context' => ['diagnostic' => true, 'sample' => 'A project team reviewed a schedule.'], 'message' => null];
-                if ($feature === 'pmp') {
+                if (in_array($feature, ['pmp', 'pmp-followup'], true)) {
                     $context['subject_type'] = 'pmp_attempt_question';
                     $context['context']['question'] = 'What should a project manager review to understand the planned delivery dates?';
                     $context['context']['options'] = ['A' => 'Project schedule', 'B' => 'Office seating plan'];
@@ -172,6 +172,7 @@ final class FeatureConnectionStatus
                 $instructions = $feature === 'daily-challenge'
                     ? 'Internal connection diagnostic only. Return a very short fictional project scenario with all required JSON fields. Include exactly two known facts, one topic, and two rubric criteria with unique lowercase keys and 5 points each. Do not publish anything.'
                     : 'Internal connection diagnostic only. Explain the synthetic completed question briefly in the required explanation field and set nextStep to null.';
+                if ($feature === 'pmp-followup') $instructions = 'Internal connection diagnostic only. Answer the synthetic question briefly in the required answer field and set nextStep to null.';
                 if ($feature === 'daily-challenge-review') {
                     $criteria = [['key' => 'risk', 'description' => 'Identify a delivery risk.', 'max_points' => 10]];
                     $context = ['context' => ['scenario' => 'A fictional team faces a schedule delay.', 'answer' => 'Identify the risk and assign an owner.', 'rubric' => $criteria], 'rubric' => ['criteria' => $criteria, 'max_score' => 10], 'message' => null];
@@ -210,7 +211,7 @@ final class FeatureConnectionStatus
 
     public function assertCurrent(object $request, object $settings): void
     {
-        $feature = match ($request->feature_code) { 'scenario_generate' => 'daily-challenge', 'daily_challenge_review' => 'daily-challenge-review', 'pmp_explain' => 'pmp', default => $request->feature_code };
+        $feature = match ($request->feature_code) { 'scenario_generate' => 'daily-challenge', 'daily_challenge_review' => 'daily-challenge-review', 'pmp_explain' => 'pmp', 'pmp_followup' => 'pmp-followup', default => $request->feature_code };
         if (! $settings->enabled || ! config('pm-ai.enabled') || ($feature === 'daily-challenge' && ! config('pm-ai.editorial_enabled'))
             || $settings->model !== $request->model || ! in_array($request->model, app(\App\Domain\AI\Services\AiRuntimeSettings::class)->allowedModels(), true)
             || $request->client_key !== $this->fingerprint($feature, $request->model)) {
@@ -220,7 +221,7 @@ final class FeatureConnectionStatus
 
     public function refreshCompleted(object $request): void
     {
-        $feature = match ($request->feature_code) { 'scenario_generate' => 'daily-challenge', 'daily_challenge_review' => 'daily-challenge-review', 'pmp_explain' => 'pmp', default => $request->feature_code };
+        $feature = match ($request->feature_code) { 'scenario_generate' => 'daily-challenge', 'daily_challenge_review' => 'daily-challenge-review', 'pmp_explain' => 'pmp', 'pmp_followup' => 'pmp-followup', default => $request->feature_code };
         $this->testStatus($feature, $request->request_uuid, (int) $request->subject_id);
     }
 

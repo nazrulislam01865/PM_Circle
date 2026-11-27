@@ -42,7 +42,7 @@
 .pm-admin-multi-check{display:grid;place-items:center;flex:none;width:1.25rem;height:1.25rem;border:1px solid var(--control-border);border-radius:.25rem;color:var(--blue)}
 .pm-admin-multi-item[data-state="checked"] .pm-admin-multi-check{border-color:var(--blue);background:var(--blue-soft)}
 .pm-admin-multi-menu-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding:var(--s2);font:var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui);color:var(--muted)}
-.pm-admin-multi-done{padding:var(--s2) var(--s3);border-radius:var(--radius-control);background:var(--blue);color:white;outline:none;cursor:pointer;font-weight:var(--semibold)}
+.pm-admin-multi-done{padding:var(--s2) var(--s3);border-radius:var(--radius-control);background:var(--pm-action-blue);color:white;outline:none;cursor:pointer;font-weight:var(--semibold)}
 .pm-admin-multi-tags{display:flex;gap:var(--s1);flex-wrap:wrap;margin-top:var(--s1)}
 .pm-admin-multi-tag{display:inline-flex;align-items:center;gap:var(--s1);max-width:100%;padding:var(--s1) var(--s2);border-radius:var(--radius-pill);background:var(--blue-soft);color:var(--blue);font:var(--medium) var(--text-sm)/var(--line-sm) var(--font-ui);overflow-wrap:anywhere}
 .pm-admin-multi-tag button{font:inherit;color:inherit;cursor:pointer;border:0;background:transparent;min-width:1.25rem;min-height:1.25rem}

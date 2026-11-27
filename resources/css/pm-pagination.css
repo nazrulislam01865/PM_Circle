@@ -12,7 +12,7 @@ nav.pm-pagination .pm-pagination-control.is-outline {
     text-decoration: none; cursor: pointer;
 }
 nav.pm-pagination .pm-pagination-control.is-outline:hover:not(:disabled):not([aria-current="page"]) { background: var(--pm-guide-pale); }
-nav.pm-pagination .pm-pagination-control.is-outline[aria-current="page"] { background: var(--pm-guide-blue); color: var(--pm-guide-white); border-color: var(--pm-guide-blue); }
+nav.pm-pagination .pm-pagination-control.is-outline[aria-current="page"] { background: var(--pm-action-blue); color: var(--pm-on-solid); border-color: var(--pm-guide-blue); }
 nav.pm-pagination .pm-pagination-control.is-outline:disabled { background: var(--pm-guide-control-disabled); color: var(--pm-guide-muted); border-color: var(--pm-guide-line); cursor: default; }
 .pm-pagination-control:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 .pm-pagination-gap, .pm-pagination-position { color: var(--pm-guide-muted); font-size: var(--pm-guide-text-meta); }

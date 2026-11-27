@@ -6,6 +6,9 @@ import AuthLayout from '@/layouts/auth-layout';
 
 const appName = import.meta.env.VITE_APP_NAME || 'PM Circle';
 
+// Apply the saved appearance before any page mounts.
+initializeTheme();
+
 void createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     layout: (name) => {
@@ -43,5 +46,3 @@ void createInertiaApp({
     },
 });
 
-// This will set light / dark mode on load...
-initializeTheme();

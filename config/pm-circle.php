@@ -27,4 +27,6 @@ return [
     // Explicit owner-controlled opt-in for complimentary membership access,
     // including production. Disabled by default; do not confuse with checkout.
     'self_service_complimentary_access_enabled' => (bool) env('PMC_SELF_SERVICE_COMPLIMENTARY_ACCESS_ENABLED', false),
+    // Optional demo-only switching after signup. Leave off for administrator-controlled terms.
+    'self_service_complimentary_switching_enabled' => (bool) env('PMC_SELF_SERVICE_COMPLIMENTARY_SWITCHING_ENABLED', false),
 ];

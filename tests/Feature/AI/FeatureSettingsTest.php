@@ -86,6 +86,25 @@ final class FeatureSettingsTest extends TestCase
         ]])->assertUnprocessable()->assertJsonValidationErrors('features.pmp_followup.enabled');
     }
 
+    public function test_workspace_feature_switches_are_reflected_in_pmp_settings(): void
+    {
+        $this->withoutVite();
+        config()->set('pm-ai.allowed_models', ['gpt-5-nano']);
+        $this->artisan('pm-ai:setup-pmp-chat', ['--local-test' => true])->assertExitCode(0);
+        $this->actingAs($this->admin());
+        $route = ['primary_model' => 'gpt-5-nano', 'strategy' => 'primary_only', 'enabled' => false];
+        $this->putJson('/admin/ai/workspace/features/pmp_followup', $route)->assertOk();
+        $this->putJson('/admin/ai/workspace/features/pmp_explain', $route)->assertOk();
+        $this->get('/admin/ai/pmp-settings')->assertOk()->assertInertia(fn ($page) => $page
+            ->where('features.pmp_explain.enabled', false)->where('features.pmp_followup.enabled', false));
+        $this->putJson('/admin/ai/workspace/features/pmp_followup', [...$route, 'enabled' => true])
+            ->assertUnprocessable()->assertJsonValidationErrors('enabled');
+        $this->putJson('/admin/ai/workspace/features/pmp_explain', [...$route, 'enabled' => true])->assertOk();
+        $this->putJson('/admin/ai/workspace/features/pmp_followup', [...$route, 'enabled' => true])->assertOk();
+        $this->get('/admin/ai/pmp-settings')->assertOk()->assertInertia(fn ($page) => $page
+            ->where('features.pmp_explain.enabled', true)->where('features.pmp_followup.enabled', true));
+    }
+
     private function configureGenerationDiagnostic(): void
     {
         Queue::fake();

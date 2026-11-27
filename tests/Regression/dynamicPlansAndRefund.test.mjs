@@ -13,7 +13,8 @@ test('pricing preserves catalogue as the canonical price source; content has no 
     assert.match(comparison, /selectedPlus.amount_minor \/ selectedPlus.months/);
     assert.doesNotMatch(JSON.stringify(defaults), /amount_minor|currency|"prices"/);
     assert.deepEqual(['community','learning','career'].map(key => defaults[key].rows.length), [7,5,7]);
-    assert.match(comparison, /content \? <PMDropdown/);
+    assert.match(comparison, /<PMDropdown id="pm-compare-duration"/);
+    assert.match(comparison, /<PMDropdown id="pm-compare-pro-duration"/);
     assert.match(comparison, /<PlanComparisonRows sections=\{\[settings.community, settings.learning, settings.career\]\}/);
     assert.match(read('resources/js/pages/public/Pricing.tsx'), /content=\{content\}/);
 });
@@ -35,12 +36,12 @@ test('both pages have allowlisted admin routes and individual editor sections', 
     assert.match(read('app/Http/Controllers/Admin/PublicPageController.php'), /PublicPageContent::clear\(\$page\)/);
 });
 
-test('public comparison style uses central roles without altering legacy membership styling', () => {
+test('public comparison and member duration controls use shared central roles', () => {
     const css = read('resources/css/pm-comparison.css').split('/* Public Compare Plans')[1];
     const tokens = read('resources/css/pm-design-tokens.css');
     assert.ok(css);
     for (const [,token] of css.matchAll(/var\((--[\w-]+)/g)) assert.ok(tokens.includes(`${token}:`), token);
     assert.doesNotMatch(css, /#[0-9a-f]{3,8}\b|font-size:\s*\d/i);
-    assert.match(css, /\.pm-public-compare \.pm-compare-duration \.pm-dropdown-trigger/);
+    assert.match(css, /\.pm-compare-duration \.pm-dropdown-trigger/);
     assert.match(comparison, /content \? ' pm-public-compare' : ''/);
 });

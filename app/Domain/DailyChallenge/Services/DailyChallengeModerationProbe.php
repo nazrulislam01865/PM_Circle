@@ -11,7 +11,7 @@ final class DailyChallengeModerationProbe
     /** @return array{ok: bool, http_status: int|null, request_id: string|null, code: string} */
     public function check(): array
     {
-        $key = app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential('post_check_api_key');
+        $key = app(\App\Domain\AI\Services\AiFeatureRouting::class)->moderationSecret();
         if (! is_string($key) || trim($key) === '') {
             return $this->result(false, null, null, 'POST_CHECK_OMNI_KEY_MISSING');
         }

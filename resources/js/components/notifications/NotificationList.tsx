@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { Bell, ChevronRight } from 'lucide-react';
 import { useNotificationCenter, type Notification } from './NotificationCenter';
 
@@ -8,10 +8,12 @@ function safeUrl(value: string): string {
 
 export function NotificationItem({ item, onSelect }: { item: Notification; onSelect?: () => void }) {
     const { markRead } = useNotificationCenter();
+    const { auth } = usePage<{ auth?: { user?: { settings?: { notification_locale?: string; notification_timezone?: string; notification_clock?: string } } } }>().props;
+    const settings = auth?.user?.settings;
     return <Link href={safeUrl(item.url)} className={`pm-notification-item${item.read_at ? '' : ' is-unread'}`}
         onClick={() => { void markRead(item.id); onSelect?.(); }}>
         <span className="pm-notification-icon" aria-hidden="true"><Bell size={17}/></span>
-        <span className="pm-notification-copy"><span>{item.message}</span><small>{new Date(item.created_at).toLocaleString('en-BD', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Dhaka' })}</small></span>
+        <span className="pm-notification-copy"><span>{item.message}</span><small>{new Date(item.created_at).toLocaleString(settings?.notification_locale ?? 'en-BD', { dateStyle: 'medium', timeStyle: 'short', timeZone: settings?.notification_timezone ?? 'Asia/Dhaka', hour12: settings?.notification_clock !== '24-hour' })}</small></span>
         {!item.read_at && <span className="pm-notification-unread-dot" aria-label="Unread"/>}
         <ChevronRight size={16} aria-hidden="true"/>
     </Link>;

@@ -79,7 +79,7 @@
     left: var(--s1);
     right: var(--s1);
     border-radius: var(--radius-pill) var(--radius-pill) 0 0;
-    background: var(--blue);
+    background: var(--pm-action-blue);
 }
 .pm-member-home-nav-group { position: relative; }
 .pm-member-home-nav-group > summary .pm-nav-chevron { transition: transform .15s ease; }
@@ -133,8 +133,8 @@
     border-radius: var(--radius-control);
     font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui);
 }
-.pm-member-home .pm-dash-btn-primary { background: var(--blue); border-color: var(--blue); }
-.pm-member-home .pm-dash-btn-primary:hover { background: var(--blue-hover); }
+.pm-member-home .pm-dash-btn-primary { background: var(--pm-action-blue); border-color: var(--blue); }
+.pm-member-home .pm-dash-btn-primary:hover { background: var(--pm-action-hover); }
 .pm-member-home .pm-dash-btn-outline, .pm-member-home .pm-dash-btn-white { color: var(--blue); border-color: var(--blue); }
 .pm-member-home .pm-dash-center { min-width: 0; }
 .pm-member-home .pm-dash-composer { padding: var(--s3) var(--s4); margin-bottom: var(--s3); }

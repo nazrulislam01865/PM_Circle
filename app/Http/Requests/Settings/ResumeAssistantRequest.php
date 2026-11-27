@@ -44,6 +44,7 @@ final class ResumeAssistantRequest extends FormRequest
         return [
             ...\App\Domain\Identity\Services\ResumeDocument::rules(),
             'action' => ['required', 'in:draft,submit'],
+            'sync_profile' => ['sometimes', 'boolean'],
             'version' => ['required', 'string', 'size:64'],
             'name' => ['required_if:action,submit', 'nullable', 'string', 'max:255'],
             'email' => ['required_if:action,submit', 'nullable', 'email', 'max:255'],

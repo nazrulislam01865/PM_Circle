@@ -86,6 +86,42 @@ final class ResumeAssistantBuilderTest extends TestCase
         $this->assertWordContains($word->getContent(), 'CV university');
     }
 
+    public function test_reviewed_resume_updates_both_profile_views_without_duplicate_records(): void
+    {
+        $user = $this->member();
+        $credential = $user->certifications()->create(['name' => 'Verified credential']);
+        $credential->verified = true;
+        $credential->save();
+        $snapshot = app(ResumeAssistantProfile::class)->snapshot($user);
+        $document = $snapshot['document'];
+        $document['education'] = [['title' => 'Example University', 'subtitle' => 'BSc', 'period' => '2020 - 2024']];
+        $document['experience'] = [['title' => 'Example Company', 'subtitle' => 'Engineer', 'period' => '2024-01 – Present', 'description' => 'Developed software.']];
+        $document['projects'] = [['title' => 'Example project', 'description' => 'Built a service.']];
+        $document['skills'] = [['title' => 'Engineering', 'description' => 'PHP, SQL']];
+        $document['certifications'] = [['title' => 'Verified credential', 'subtitle' => 'Unverified issuer']];
+        $document['research'] = [['title' => 'Example research', 'description' => 'Research details']];
+        $payload = [...$snapshot['fields'], 'version' => $snapshot['version'], 'document' => $document, 'sync_profile' => true];
+        $this->actingAs($user)->post('/dashboard/resume-assistant', [...$payload, 'action' => 'draft'])->assertRedirect();
+        $this->assertSame(0, $user->educations()->count());
+        $this->post('/dashboard/resume-assistant', [...$payload, 'action' => 'submit'])->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertSame('Example University', $user->educations()->firstOrFail()->institution);
+        $this->assertSame('Example Company', $user->experiences()->firstOrFail()->organization);
+        $this->assertSame('Example project', $user->profileProjects()->firstOrFail()->title);
+        $this->assertSame(['PHP', 'SQL'], $user->fresh()->profile->skills);
+        $this->assertTrue((bool) $credential->fresh()->verified);
+        foreach (['overview', 'edit'] as $tab) {
+            $this->get('/settings/profile?tab='.$tab)->assertOk()->assertInertia(fn ($page) => $page
+                ->where('profileData.educations.0.institution', 'Example University')
+                ->where('profileData.experiences.0.organization', 'Example Company')
+                ->where('profileData.editor_details.records.research.0.title', 'Example research'));
+        }
+        $fresh = app(ResumeAssistantProfile::class)->snapshot($user->fresh());
+        $this->post('/dashboard/resume-assistant', [...$payload, 'version' => $fresh['version'], 'action' => 'submit'])->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertSame(1, $user->educations()->count());
+        $this->assertSame(1, $user->experiences()->count());
+        $this->assertSame(1, $user->profileProjects()->count());
+    }
+
     public function test_profile_tab_does_not_bypass_entitlement(): void
     {
         $this->actingAs($this->member('plus'))->get('/settings/profile?tab=assistant')->assertForbidden();

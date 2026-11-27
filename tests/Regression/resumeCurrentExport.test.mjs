@@ -49,3 +49,11 @@ test('sticky rail accounts for actual profile tabs and editor bottom, and never 
     assert.match(css,/@container pm-resume-builder \(max-width: 52rem\) \{\s*\.pm-resume-builder-aside \{ position: static[^}]*overflow: visible/);
     assert.doesNotMatch(css,/pm-resume-aside-content/);
 });
+
+test('stacked résumé rail shows the live preview before quality and full-preview actions only at the shared breakpoint',()=>{
+    const aside=page.split('<aside className="pm-resume-builder-aside"')[1].split('</aside>')[0];
+    assert.ok(aside.indexOf('<ResumeQuality') < aside.indexOf('View full résumé'));
+    assert.ok(aside.indexOf('View full résumé') < aside.indexOf('<ResumeDraftPreview'));
+    assert.match(css,/@container pm-resume-builder \(max-width: 52rem\) \{\s*\.pm-resume-builder-aside \{ position: static[^}]*\}\s*\/\*[^*]*\*\/\s*\.pm-resume-builder-aside > \.pm-resume-preview-card \{ order: -1; \}\s*\}/);
+    assert.equal([...css.matchAll(/\.pm-resume-builder-aside > \.pm-resume-preview-card\s*\{/g)].length,1);
+});

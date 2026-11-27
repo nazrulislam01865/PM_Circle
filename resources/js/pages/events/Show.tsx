@@ -2,16 +2,17 @@ import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { EventAction, EventBanner, EventFormErrors } from '@/components/events/EventComponents';
 import { eventDateParts, eventHref, type EventComment, type EventDetail, type EventPage, type EventPreview } from '@/components/events/eventTypes';
+import { eventCalendar } from '@/components/events/eventCalendar';
 import { LinkedPagination } from '@/components/pm/Pagination';
 import { PublicLayout } from '@/layouts/pm/PublicLayout';
 import type { RewardPromotionData } from '@/types/reward';
 
 type Viewer = { name: string; email: string; is_admin: boolean } | null;
-function EventRegistration({ event, viewer, canRegister, registered }: { event: EventDetail; viewer: Viewer; canRegister: boolean; registered: boolean }) {
+function EventRegistration({ event, viewer, canRegister, registered, calendarEnabled }: { event: EventDetail; viewer: Viewer; canRegister: boolean; registered: boolean; calendarEnabled: boolean }) {
     const form = useForm({ name: viewer?.name ?? '', email: viewer?.email ?? '', phone: '', role: '' });
     return <aside className="pm-event-registration pm-event-detail-panel" aria-labelledby="pm-event-register-title">
         <h2 id="pm-event-register-title">Register for this event</h2>
-        {registered ? <div className="pm-event-form-result" role="status"><strong>You are registered.</strong></div> : !event.registrationOpen ? <p>Registration is closed for this event.</p> : !canRegister ? <>
+        {registered ? <div className="pm-event-form-result" role="status"><strong>You are registered.</strong>{calendarEnabled && event.startsAt && <button type="button" className="pm-guide-button is-outline" onClick={() => { const content = eventCalendar(event, window.location.origin); if (!content) return; const url = URL.createObjectURL(new Blob([content], {type: 'text/calendar;charset=utf-8'})); const link = document.createElement('a'); link.href = url; link.download = 'pm-circle-event.ics'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }}>Add to calendar</button>}</div> : !event.registrationOpen ? <p>Registration is closed for this event.</p> : !canRegister ? <>
             <p>{viewer?.is_admin ? 'Administrator accounts cannot register for member events.' : viewer ? 'Complete your member account to register.' : 'This event is for PM Circle community members.'}</p>
             {!viewer && <><EventAction href="/register">Join PM Circle free</EventAction><EventAction href="/login" outline>Sign in</EventAction></>}
             {viewer && !viewer.is_admin && <EventAction href="/join/step/2" outline>Complete your account</EventAction>}
@@ -61,7 +62,7 @@ function EventDiscussion({ event, comments, viewer, canComment }: { event: Event
         </form>}
     </section>;
 }
-export default function CommunityEventDetails({ event, relatedEvents, comments, canRegister, canComment, registered, notice }: { event: EventDetail; relatedEvents: EventPreview[]; comments: EventPage<EventComment>; canRegister: boolean; canComment: boolean; registered: boolean; notice?: string }) {
+export default function CommunityEventDetails({ event, relatedEvents, comments, canRegister, canComment, registered, calendarEnabled = false, notice }: { event: EventDetail; relatedEvents: EventPreview[]; comments: EventPage<EventComment>; canRegister: boolean; canComment: boolean; registered: boolean; calendarEnabled?: boolean; notice?: string }) {
     const { rewardPromotion, auth } = usePage<{ rewardPromotion?: RewardPromotionData | null; auth: { user: Viewer } }>().props;
     return <PublicLayout siteLayout homePrototype guideLayout eventPrototype homeOfferLabel={rewardPromotion?.discountLabel} banner={{title: event.title, description: event.description, parents: [{label: 'Community Events', href: '/events'}], titleId: 'pm-event-page-title'}}>
         <Head title={`${event.title} | Community Events | PM Circle`}><meta name="description" content={event.description}/></Head>
@@ -70,7 +71,7 @@ export default function CommunityEventDetails({ event, relatedEvents, comments, 
             <div className="pm-event-detail-layout"><div className="pm-event-detail-column">
                 {event.coverUrl && <img className="pm-event-detail-hero" src={event.coverUrl} alt={event.title} width="800" height="330" decoding="async"/>}
                 <EventAbout event={event}/><EventLocation event={event}/><RelatedEvents events={relatedEvents}/><EventDiscussion key={event.slug} event={event} comments={comments} viewer={auth.user} canComment={canComment}/>
-            </div><EventRegistration key={event.slug} event={event} viewer={auth.user} canRegister={canRegister} registered={registered}/></div>
+            </div><EventRegistration key={event.slug} event={event} viewer={auth.user} canRegister={canRegister} registered={registered} calendarEnabled={calendarEnabled}/></div>
         </div></div>
     </PublicLayout>;
 }

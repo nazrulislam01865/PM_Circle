@@ -34,5 +34,5 @@ test('member profile has one full-width column in both tabs and no duplicate hea
     assert.match(show, /<MemberProfileName name=\{profile.name\}\/>/);
     assert.doesNotMatch(show, /pm-profile-overview-grid|pm-profile-side-col|<aside|pm-profile-top-titles|Professional profile and community contributions|Recent posts|View overview|pm-feature-privacy/);
     assert.match(show, /className="pm-profile-top-actions ml-auto flex-wrap"/);
-    assert.match(show, /canFollow && <button/);
+    assert.match(show, /\(canFollow \|\| following\) && <button/);
 });

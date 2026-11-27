@@ -17,7 +17,7 @@ final class PracticeRubric
             if (preg_match('/\b'.preg_quote($term, '/').'\b/i', $answer)) { $coverage = true; break; }
         }
         $score = trim($answer) === '' ? 0 : 2 + 2 * ((int) $detail + (int) $action + (int) $outcome + (int) $coverage);
-        $outline = match ($question['type']) {
+        $outline = $question['answer_guidance'] ?? match ($question['type']) {
             'Behavioral' => 'Describe the situation and your responsibility, your own decisions and actions, and the observed result or lesson.',
             'Technical' => 'Name the relevant process, tool or metric. Explain ownership, frequency and thresholds, and how they inform decisions.',
             'Situational' => 'Validate the impact and urgency. Compare options, assign owners, communicate trade-offs, and explain how you will verify progress.',

@@ -194,4 +194,52 @@ final class InterviewAdminCatalogTest extends TestCase
         $this->get('/admin/interview-preparation/questions/template')->assertForbidden();
     }
 
+    public function test_dynamic_settings_apply_to_new_sessions_and_guidance_is_not_exposed_before_submission(): void
+    {
+        $admin = $this->admin();
+        $member = $this->member();
+        $this->actingAs($admin)->put('/admin/interview-preparation/settings', [
+            'minutes_per_question' => 4,
+            'allow_new_sessions' => true,
+            'allow_job_description' => false,
+            'hero_title' => 'Prepare for a delivery interview',
+            'mix_labels' => ['recommended' => 'Balanced', 'common' => 'Common', 'focus' => 'Specialist'],
+            'focus_percent' => 50, 'focus_common_percent' => 30,
+            'role_profiles' => [['role' => 'Project Manager', 'profession' => 'Delivery Leadership', 'focus' => ['capacity']]],
+        ])->assertRedirect()->assertSessionHasNoErrors();
+        $set = DB::table('interview_question_sets')->insertGetId(['title' => 'Custom guidance', 'is_active' => true, 'sort_order' => 1, 'created_at' => now(), 'updated_at' => now()]);
+        $this->post('/admin/interview-preparation/questions', [
+            'set_id' => $set, 'type' => 'General', 'text' => 'How do you plan resource capacity for a project?',
+            'topic' => 'Capacity planning', 'difficulty' => 'Hard', 'answer_guidance' => 'Discuss resource availability and capacity.',
+            'is_active' => true, 'sort_order' => 1,
+        ])->assertRedirect()->assertSessionHasNoErrors();
+        $this->post('/admin/interview-preparation/options', ['group' => 'count', 'key' => '1', 'label' => 'One question', 'is_active' => true, 'sort_order' => 1])->assertRedirect()->assertSessionHasNoErrors();
+        $payload = $this->startPayload(['count' => 1, 'question_set' => $set, 'types' => ['General'], 'mix' => 'focus', 'focus' => ['capacity']]);
+        $this->actingAs($member)->postJson('/interview-preparation/preview', array_replace($payload, ['focus' => ['unconfigured']]))->assertUnprocessable()->assertJsonValidationErrors('focus');
+        $this->postJson('/interview-preparation/preview', $payload + ['jd' => 'Some job description'])->assertUnprocessable()->assertJsonValidationErrors('jd');
+        $preview = $this->postJson('/interview-preparation/preview', $payload)->assertOk()->assertJsonPath('questions.0.topic', 'Capacity planning')->assertJsonPath('questions.0.difficulty', 'Hard')->assertJsonMissingPath('questions.0.answer_guidance')->json();
+        $this->post('/interview-preparation/start', $payload + ['draft' => $preview['draft']])->assertRedirect()->assertSessionHasNoErrors();
+        $session = DB::table('interview_sessions')->where('user_id', $member->id)->first();
+        $this->assertSame('Delivery Leadership', $session->profession);
+        $this->assertSame(4, (int) $session->minutes_per_question);
+        $this->assertSame('Discuss resource availability and capacity.', json_decode($session->questions, true)[0]['answer_guidance']);
+        $this->actingAs($admin)->put('/admin/interview-preparation/settings', ['minutes_per_question' => 8, 'allow_new_sessions' => false])->assertRedirect();
+        $this->actingAs($member)->postJson('/interview-preparation/preview', $payload)->assertUnprocessable()->assertJsonValidationErrors('count');
+        $this->get('/interview-preparation/sessions/'.$session->id)->assertOk();
+        $this->postJson('/interview-preparation/sessions/'.$session->id.'/answer', ['position' => 0, 'mode' => 'type', 'answer' => 'I would review capacity.'])->assertOk()->assertJsonPath('answer.evaluation.suggested_answer', 'Discuss resource availability and capacity.');
+        $this->assertDatabaseHas('interview_sessions', ['id' => $session->id, 'minutes_per_question' => 4]);
+    }
+
+    public function test_prompt_activation_preserves_routing_and_requires_permission_and_current_version(): void
+    {
+        $admin = $this->admin();
+        $this->actingAs($admin)->getJson('/admin/ai/prompts/interview_answer_review')->assertForbidden();
+        DB::table('ai_admin_permissions')->insert(['user_id' => $admin->id, 'permission' => 'ai.manage_prompts', 'created_at' => now()]);
+        $current = $this->getJson('/admin/ai/prompts/interview_answer_review')->assertOk()->json();
+        $before = DB::table('ai_features')->where('code', 'interview_answer_review')->first();
+        $payload = ['feature' => 'interview_answer_review', 'template' => 'Review the exact saved question and give educational coaching only.', 'evaluation_reference' => 'test-reference', 'reason' => 'Update interview coaching instructions.', 'activate' => true, 'expected_version' => $current['version']];
+        $next = $this->postJson('/admin/ai/prompts', $payload)->assertCreated()->json('version');
+        $this->assertDatabaseHas('ai_features', ['code' => 'interview_answer_review', 'prompt_version' => $next, 'model' => $before->model, 'credit_tariff' => $before->credit_tariff, 'enabled' => $before->enabled]);
+        $this->postJson('/admin/ai/prompts', $payload)->assertConflict();
+    }
 }

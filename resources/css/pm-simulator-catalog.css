@@ -64,8 +64,8 @@
     line-height: var(--pm-guide-line-control); text-align: center; text-decoration: none; cursor: pointer;
 }
 .pm-simulators-page .pm-sim-action:hover { background: var(--pm-guide-pale); }
-.pm-simulators-page .pm-sim-action.is-primary { background: var(--pm-guide-blue); color: var(--pm-guide-white); }
-.pm-simulators-page .pm-sim-action.is-primary:hover { background: var(--pm-guide-blue-hover); }
+.pm-simulators-page .pm-sim-action.is-primary { background: var(--pm-action-blue); color: var(--pm-on-solid); }
+.pm-simulators-page .pm-sim-action.is-primary:hover { background: var(--pm-action-hover); }
 .pm-sim-reward .pm-sim-action { color: var(--pm-v2-reward-ink); border-color: var(--pm-v2-reward-border); }
 .pm-sim-reward .pm-sim-action:hover { background: var(--reward-surface-bright); }
 

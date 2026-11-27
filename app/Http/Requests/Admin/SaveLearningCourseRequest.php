@@ -32,7 +32,7 @@ final class SaveLearningCourseRequest extends FormRequest
         }
         // Nested lecture and curriculum fields are JSON to avoid PHP max_input_vars truncation.
         $this->merge(array_intersect_key($decoded, array_flip([
-            'title', 'summary', 'overview', 'category', 'level', 'minutes', 'access_tier', 'is_published', 'sort_order', 'presentation', 'objectives', 'outline', 'lessons',
+            'title', 'summary', 'overview', 'category', 'level', 'minutes', 'access_tier', 'is_published', 'certificate_enabled', 'sort_order', 'presentation', 'objectives', 'outline', 'lessons',
         ])));
     }
 
@@ -76,6 +76,7 @@ final class SaveLearningCourseRequest extends FormRequest
             'minutes' => ['required', 'integer', 'between:1,100000'],
             'access_tier' => ['required', Rule::in(array_intersect($choices['course_access'], ['free', 'paid']))],
             'is_published' => ['required', 'boolean'],
+            'certificate_enabled' => ['sometimes', 'required', 'boolean'],
             'sort_order' => ['sometimes', 'integer', 'between:0,100000'],
             'presentation' => ['sometimes', 'array:type,tags,provider_name,provider_description,faq,practice_examples'],
             'presentation.type' => ['required_with:presentation', 'in:Professional development,Certification preparation'],

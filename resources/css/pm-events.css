@@ -31,13 +31,13 @@
 .pm-event-ad-controls button svg { width: var(--pm-guide-s4); height: var(--pm-guide-s4); }
 .pm-event-ad-card { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); min-height: var(--pm-event-ad-min-height); overflow: hidden; border: 1px solid var(--pm-guide-line); border-radius: var(--pm-guide-radius-card); background: var(--pm-guide-footer); }
 .pm-event-ad-card > img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.pm-event-ad-copy { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding: var(--pm-guide-s6); color: var(--pm-guide-white); }
+.pm-event-ad-copy { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding: var(--pm-guide-s6); color: var(--pm-on-solid); }
 .pm-event-ad-brand { display: flex; align-items: center; gap: var(--pm-guide-s2); margin-bottom: var(--pm-guide-s2); font-size: var(--pm-guide-text-control); }
 .pm-event-ad-brand span { display: grid; place-items: center; width: var(--pm-guide-s8); height: var(--pm-guide-s8); border-radius: var(--pm-guide-radius-sm); background: var(--pm-guide-white); color: var(--pm-guide-blue); font-size: var(--pm-guide-text-meta); font-weight: var(--pm-guide-weight-h2); }
 .pm-event-ad-copy > p { color: var(--pm-event-on-dark); font-size: var(--pm-guide-text-body); line-height: var(--pm-guide-line-body); }
 .pm-event-ad-copy > p:first-of-type { font-size: var(--pm-guide-text-meta); }
-.pm-event-ad-copy h2 { margin-top: var(--pm-guide-s1); color: var(--pm-guide-white); font-size: var(--pm-guide-text-h2); font-weight: var(--pm-guide-weight-h2); line-height: var(--pm-guide-line-h2); }
-.pm-event-ad-copy .pm-guide-button { margin-top: var(--pm-guide-s3); border-color: var(--pm-guide-white); }
+.pm-event-ad-copy h2 { margin-top: var(--pm-guide-s1); color: var(--pm-on-solid); font-size: var(--pm-guide-text-h2); font-weight: var(--pm-guide-weight-h2); line-height: var(--pm-guide-line-h2); }
+.pm-event-ad-copy .pm-guide-button { margin-top: var(--pm-guide-s3); border-color: var(--pm-on-solid); }
 .pm-event-list-section h2 { margin-bottom: var(--pm-guide-s3); font-size: var(--pm-guide-text-h2); font-weight: var(--pm-guide-weight-h2); line-height: var(--pm-guide-line-h2); }
 .pm-event-filters { display: grid; grid-template-columns: minmax(0,2fr) repeat(2,minmax(0,1fr)) auto; gap: var(--pm-guide-s3); margin-bottom: var(--pm-guide-s2); }
 .pm-event-filters label { display: grid; gap: var(--pm-guide-s1); min-width: 0; }
@@ -61,8 +61,8 @@
 .pm-event-listing-row .pm-guide-button { margin-left: auto; }
 .pm-event-sponsor-meta { display: flex; align-items: center; flex-wrap: wrap; gap: var(--pm-guide-s2); font-size: var(--pm-guide-text-meta); color: var(--pm-guide-blue); }
 .pm-event-sponsor-meta span { padding: var(--pm-guide-s1) var(--pm-guide-s2); border-radius: var(--pm-guide-radius-sm); background: var(--pm-event-sponsor-pill); color: var(--pm-guide-amber); font-weight: var(--pm-guide-weight-control); }
-.pm-event-host-promo { display: flex; align-items: center; justify-content: space-between; gap: var(--pm-guide-s4); padding: var(--pm-guide-s4); border-radius: var(--pm-guide-radius-card); color: var(--pm-guide-white); background: var(--pm-event-promo-overlay),url('/images/home/prototype/hero-community.webp') center/cover; }
-.pm-event-host-promo strong { display: block; color: var(--pm-guide-white); font-size: var(--pm-guide-text-control); font-weight: var(--pm-guide-weight-h2); }
+.pm-event-host-promo { display: flex; align-items: center; justify-content: space-between; gap: var(--pm-guide-s4); padding: var(--pm-guide-s4); border-radius: var(--pm-guide-radius-card); color: var(--pm-on-solid); background: var(--pm-event-promo-overlay),url('/images/home/prototype/hero-community.webp') center/cover; }
+.pm-event-host-promo strong { display: block; color: var(--pm-on-solid); font-size: var(--pm-guide-text-control); font-weight: var(--pm-guide-weight-h2); }
 .pm-event-host-promo p { font-size: var(--pm-guide-text-body); color: var(--pm-event-on-dark); }
 .pm-event-host-promo .pm-guide-button { white-space: nowrap; }
 .pm-event-empty { padding: var(--pm-guide-s8) var(--pm-guide-s4); text-align: center; border: 1px solid var(--pm-guide-line); border-radius: var(--pm-guide-radius-card); }

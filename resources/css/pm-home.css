@@ -392,14 +392,14 @@
 
 .pm-home .pm-pathway-exam-actions .pm-button {
     border-radius: var(--radius);
-    background: var(--primary);
-    color: var(--surface);
+    background: var(--pm-action-blue);
+    color: var(--pm-on-solid);
     white-space: nowrap;
     gap: 5px;
 }
 
 .pm-home .pm-pathway-exam-actions .pm-button:hover {
-    background: var(--primary-hover);
+    background: var(--pm-action-hover);
 }
 
 .pm-home .pm-pathway-plan-link {
@@ -433,7 +433,7 @@
 }
 
 .pm-home .pm-pathway-dots button.is-active {
-    background: var(--primary);
+    background: var(--pm-action-blue);
 }
 
 .pm-home .pm-pathway-footer-divider {
@@ -903,8 +903,8 @@
 }
 
 .pm-home .pm-home-community-card .pm-filter-pill.active {
-    color: var(--surface);
-    background: var(--primary);
+    color: var(--pm-on-solid);
+    background: var(--pm-action-blue);
 }
 
 .pm-home .pm-home-community-card .pm-filter-pill:not(.active):hover {

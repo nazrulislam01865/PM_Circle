@@ -18,6 +18,9 @@ final class SaveInterviewQuestionRequest extends FormRequest
             'set_id' => ['required', 'integer', Rule::exists('interview_question_sets', 'id')],
             'type' => ['required', 'string', Rule::exists('master_data_options', 'value')->where('category', 'interview_type')],
             'text' => ['required', 'string', 'min:10', 'max:4000'],
+            'topic' => ['nullable', 'string', 'max:150'],
+            'difficulty' => ['nullable', Rule::in(['Easy', 'Medium', 'Hard'])],
+            'answer_guidance' => ['nullable', 'string', 'max:4000'],
             'is_active' => ['required', 'boolean'],
             'sort_order' => ['required', 'integer', 'min:0', 'max:65535'],
         ];

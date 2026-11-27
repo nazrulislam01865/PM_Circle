@@ -25,6 +25,20 @@ final class AiGateway
     /** Admission is transactional; no external request is made until durable reservation commits. */
     public function submit(User $user, array $input): array
     {
+        try {
+            return $this->admit($user, $input);
+        } catch (AiFailure $failure) {
+            // A rejected admission has already rolled back. Never send alerts in the financial transaction.
+            if (($user->account_preferences['usageNotify'] ?? false)
+                && in_array($failure->safeCode, ['INSUFFICIENT_CREDITS', 'AI_TOKEN_LIMIT_REACHED'], true)) {
+                app(\App\Domain\Notifications\ActivityNotifier::class)->forAiLimit($user->id, $failure->safeCode);
+            }
+            throw $failure;
+        }
+    }
+
+    private function admit(User $user, array $input): array
+    {
         $featureCode = (string) $input['feature'];
         if (in_array($featureCode, ['scenario_generate', 'trend_draft'], true)) {
             throw new AiFailure('FEATURE_UNAVAILABLE', 404);
@@ -139,7 +153,9 @@ final class AiGateway
                 'payload_encrypted' => Crypt::encryptString(json_encode([
                     'subject' => $input['subject'] ?? [], 'consent' => (bool) ($input['consent'] ?? false),
                     'message' => $input['message'] ?? null, 'context' => $context,
-                    'instructions' => $prompt->template,
+                    'instructions' => $prompt->template. (($user->account_preferences['aiLanguage'] ?? 'English') === 'বাংলা'
+                        ? "\nWrite member-facing coaching text in Bangla. Preserve JSON keys, enum values, scoring rules, identifiers and required output structure."
+                        : "\nWrite member-facing coaching text in English. Preserve JSON keys, enum values, scoring rules, identifiers and required output structure."),
                 ], JSON_THROW_ON_ERROR)),
                 'model_price_snapshot' => json_encode($priceSnapshot, JSON_THROW_ON_ERROR),
                 'lease_until' => now()->addSeconds((int) config('pm-ai.lease_seconds')),

@@ -126,14 +126,14 @@
     padding: var(--pm-guide-s2) var(--pm-guide-button-pad-inline);
     border: 1px solid transparent;
     border-radius: var(--pm-guide-radius-sm);
-    background: var(--pm-guide-blue);
-    color: var(--pm-guide-white);
+    background: var(--pm-action-blue);
+    color: var(--pm-on-solid);
     font-size: var(--pm-guide-text-control);
     font-weight: var(--pm-guide-weight-control);
     line-height: var(--pm-guide-line-control);
     text-decoration: none;
 }
-.pm-reward-offer-primary:hover { color: var(--pm-guide-white); background: var(--pm-guide-blue-hover); }
+.pm-reward-offer-primary:hover { color: var(--pm-on-solid); background: var(--pm-action-hover); }
 .pm-reward-offer-actions p { color: var(--pm-guide-ink); font-size: var(--pm-guide-text-body); }
 .pm-reward-offer-actions p a { color: var(--pm-guide-blue); text-decoration: underline; text-underline-offset: .18em; font-weight: var(--pm-guide-weight-control); }
 /* Same presentation as the existing promotional-bar link, now a button. */
@@ -141,7 +141,7 @@
     padding: 0;
     border: 0;
     background: none;
-    color: var(--surface);
+    color: var(--pm-on-solid);
     font: inherit;
     text-decoration: underline;
     text-underline-offset: 2px;

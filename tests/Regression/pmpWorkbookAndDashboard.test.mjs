@@ -44,7 +44,7 @@ test('full mock counters are independent from focused practice and AI overview s
     assert.match(controller, /mode = 'full' OR mode IS NULL/);
     assert.match(controller, /mode = 'focused'/);
     assert.match(controller, /'latestScore' => \$latestMockScore/);
-    assert.match(panels, /<strong>AI Tokens<\/strong>/);
+    assert.match(panels, /<h2>AI Tokens<\/h2>/);
     assert.match(panels, /aiUsage\.remaining\.toLocaleString/);
     assert.match(page, /aiUsage=\{currentUsage\}/);
 });

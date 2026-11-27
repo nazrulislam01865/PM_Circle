@@ -35,6 +35,7 @@ final class MemberAchievementsTest extends TestCase
         }
         $course = LearningCourse::query()->create(['slug' => 'achievement-course', 'title' => 'Verified course', 'summary' => 'Summary', 'overview' => 'Overview', 'category' => 'Project Management', 'level' => 'Beginner', 'minutes' => 20, 'thumbnail' => 1, 'access_tier' => 'free', 'is_published' => true, 'objectives' => [], 'outline' => [], 'lessons' => []]);
         DB::table('learning_course_certificates')->insert(['user_id' => $member->id, 'course_id' => $course->id, 'reference' => (string) Str::uuid(), 'member_name' => $member->name, 'course_title' => $course->title, 'issued_at' => $now]);
+        DB::table('learning_course_completions')->insert(['user_id' => $member->id, 'course_id' => $course->id, 'course_title' => $course->title, 'completed_at' => $now]);
         $service = app(MemberAchievements::class);
         $snapshot = $service->snapshot($member);
         $badges = collect($snapshot['badges'])->keyBy('id');
@@ -52,5 +53,19 @@ final class MemberAchievementsTest extends TestCase
         $this->assertSame([], $service->snapshot($member, includeRecord: false)['records']);
         $this->get('/dashboard/features/achievements')->assertRedirect(route('login'));
         $this->actingAs($member)->get('/dashboard/features/achievements')->assertOk()->assertInertia(fn ($page) => $page->component('account/Achievements')->where('snapshot.metrics.posts', 1)->where('snapshot.metrics.courses', 1)->where('member.name', $member->name));
+    }
+    public function test_latest_three_use_real_award_dates_and_stable_ties(): void
+    {
+        $member = User::factory()->create(['onboarding_step' => 3]);
+        $definitions = collect(app(\App\Domain\Achievements\Services\BadgeCatalog::class)->definitions())->where('publishStatus', 'active')->take(4)->values();
+        $now = now()->startOfSecond();
+        foreach ($definitions as $index => $badge) {
+            $earnedAt = match ($index) { 0 => $now->copy()->subDays(10), 1, 2 => $now->copy()->subDay(), default => null };
+            DB::table('achievement_awards')->insert(['user_id' => $member->id, 'badge_id' => $badge['id'], 'snapshot' => json_encode([...$badge, 'status' => 'earned', 'earnedAt' => $earnedAt?->toIso8601String(), 'value' => $badge['target'], 'available' => true]), 'earned_at' => $earnedAt, 'created_at' => $now]);
+        }
+        $latest = app(MemberAchievements::class)->snapshot($member, includeRecord: false, issueAwards: false)['latest'];
+        $this->assertSame([$definitions[3]['id'], $definitions[2]['id'], $definitions[1]['id']], array_column($latest, 'id'));
+        $this->assertNull($latest[0]['earnedAt']);
+        $this->assertArrayNotHasKey('awardOrderAt', $latest[0]);
     }
 }

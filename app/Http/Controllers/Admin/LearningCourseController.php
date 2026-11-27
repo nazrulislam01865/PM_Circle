@@ -85,6 +85,7 @@ final class LearningCourseController extends Controller
                 'outline' => $course->outline ?? [],
                 'lessons' => $course->lessons ?? [],
                 'isPublished' => $course->is_published,
+                'certificateEnabled' => $course->certificate_enabled,
             ],
         ]);
     }

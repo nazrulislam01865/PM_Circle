@@ -15,8 +15,8 @@
 .pm-post-check-progress {padding:var(--s3) var(--s4);margin:var(--s3) 0;border-radius:var(--radius-control);background:var(--blue-soft);}
 .pm-post-check-progress strong {font:var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui);color:var(--ink)}
 .pm-post-check-progress p {margin:var(--s1) 0 var(--s2);font:var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui);color:var(--muted)}
-.pm-post-check-track {height:8px;overflow:hidden;border-radius:999px;background:color-mix(in srgb,var(--blue) 10%,var(--track))}
-.pm-post-check-track div {height:100%;width:20%;border-radius:inherit;background:var(--blue);animation:pm-post-check-motion 2.2s ease-in-out infinite alternate}
+.pm-post-check-track {height:8px;overflow:hidden;border-radius:999px;background:color-mix(in srgb,var(--pm-action-blue) 10%,var(--track))}
+.pm-post-check-track div {height:100%;width:20%;border-radius:inherit;background:var(--pm-action-blue);animation:pm-post-check-motion 2.2s ease-in-out infinite alternate}
 @keyframes pm-post-check-motion {from{transform:translateX(0)}to{transform:translateX(400%)}}
 @media(prefers-reduced-motion: reduce){.pm-post-check-track div{animation:none}}
 .pm-post-check-reason {padding:var(--s3);background:var(--red-soft);border-radius:var(--radius-control);color:var(--red)}

@@ -11,12 +11,10 @@ use App\Support\Onboarding\SignupMasterData;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use App\Domain\Identity\Actions\ActivateFreeMembership;
 use App\Domain\Billing\Actions\SetTemporaryMembership;
 use App\Domain\Identity\Actions\CompleteProfessionalProfile;
 use App\Http\Requests\Onboarding\SaveProfileRequest;
 use App\Models\Plan;
-use App\Models\PlanPrice;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -123,40 +121,38 @@ class OnboardingController extends Controller
         if ($request->user()->onboarding_step >= 3) return to_route('dashboard');
 
         return Inertia::render('auth/RegisterStep3', [
-            'plans' => $this->catalog(),
+            'plans' => $this->catalog(signup: true),
             'temporaryAccessEnabled' => SetTemporaryMembership::enabled(),
         ]);
     }
 
-    public function choosePlan(Request $request, ActivateFreeMembership $action, SetTemporaryMembership $temporary): RedirectResponse
+    public function choosePlan(Request $request, SetTemporaryMembership $temporary): RedirectResponse
     {
         $data = $request->validate([
             'plan' => ['required', Rule::in(['free', 'plus', 'pro'])],
-            'months' => ['required', 'integer', Rule::in([1, 3, 6, 12])],
+            'months' => ['required', 'integer', 'min:1', 'max:60'],
         ]);
-        $price = PlanPrice::query()->whereHas('plan', fn ($query) => $query->where('code', $data['plan'])->where('active', true))
-            ->where('months', $data['months'])->where('active', true)->orderByDesc('version')->first();
-        if (! $price) throw ValidationException::withMessages(['months' => 'This plan duration is unavailable.']);
         if ($data['plan'] !== 'free' && ! SetTemporaryMembership::enabled()) {
             throw ValidationException::withMessages(['plan' => 'This plan is unavailable without checkout or complimentary access. You can start with Free.']);
         }
 
-        $action->execute($request->user());
-        if (SetTemporaryMembership::enabled()) {
-            $temporary->execute($request->user(), $data['plan']);
-        }
+        $temporary->execute($request->user(), $data['plan'], (int) $data['months'], signup: true);
 
         return to_route('dashboard');
     }
 
     /** @return array<int, array<string, mixed>> */
-    public function catalog(): array
+    public function catalog(bool $signup = false): array
     {
         return Plan::query()->where('active', true)
+            ->whereIn('code', ['free', 'plus', 'pro'])
+            ->when($signup, fn ($query) => $query->where('signup_visible', true))
+            ->when($signup && ! SetTemporaryMembership::enabled(), fn ($query) => $query->where('code', 'free'))
             ->orderByRaw("CASE code WHEN 'free' THEN 0 WHEN 'plus' THEN 1 WHEN 'pro' THEN 2 ELSE 3 END")
             ->with(['prices' => fn ($query) => $query->where('active', true)->orderByDesc('version')->orderBy('months')])
             ->get()->map(fn (Plan $plan) => [
-                'code' => $plan->code, 'name' => $plan->name, 'benefits' => $plan->benefits,
+                'code' => $plan->code, 'name' => $plan->name, 'benefits' => $plan->benefits ?? [],
+                ...($signup ? ['signup_badge' => $plan->signup_badge] : []),
                 'prices' => $plan->prices->unique('months')->values()->map(fn ($price) => [
                     'months' => $price->months, 'amount_minor' => $price->amount_minor, 'currency' => $price->currency,
                 ])->all(),

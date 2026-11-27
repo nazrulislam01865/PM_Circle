@@ -530,5 +530,8 @@ final class PmpExamController extends Controller
             'status' => 'completed', 'correct_count' => $correct,
             'finished_at' => now(), 'updated_at' => now(),
         ]);
+        if (request()->user()?->account_preferences['examNotify'] ?? false) {
+            DB::afterCommit(static fn () => app(\App\Domain\Notifications\ActivityNotifier::class)->forPmpCompletion($userId, $attempt));
+        }
     }
 }

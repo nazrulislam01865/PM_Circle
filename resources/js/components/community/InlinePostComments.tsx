@@ -5,7 +5,7 @@ import { ChevronDown } from 'lucide-react';
 import { CommentEngagementActions } from './CommentEngagementActions';
 import { CommentFeedback } from './CommentFeedback';
 import { CommentComposer, type SavedComment } from './CommentComposer';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Avatar } from '@/components/pm/Avatar';
 import type { RequestToJoin } from '@/components/home/HomeEngagement';
 
@@ -28,6 +28,8 @@ function CommentEntry({ comment, postId, rootId, nested = false, canInteract, on
     const [moreReplies, setMoreReplies] = useState<SavedComment[]>([]);
     const [hasMoreReplies, setHasMoreReplies] = useState((comment.replies_count ?? initialServerReplies.length) > initialServerReplies.length);
     const [loadingReplies, setLoadingReplies] = useState(false);
+    const replyRequest = useRef<AbortController | null>(null);
+    useEffect(() => () => replyRequest.current?.abort(), []);
     const [replyError, setReplyError] = useState('');
     const serverReplies = [...initialServerReplies, ...moreReplies];
     const serverIds = new Set(serverReplies.map(reply => reply.id));
@@ -35,23 +37,25 @@ function CommentEntry({ comment, postId, rootId, nested = false, canInteract, on
     const replyTotal = Math.max(comment.replies_count ?? 0, displayedReplies.length);
     const loadMoreReplies = async () => {
         if (loadingReplies || !hasMoreReplies) return;
+        const request = new AbortController(); replyRequest.current = request;
         setLoadingReplies(true); setReplyError('');
         try {
             const after = serverReplies.at(-1)?.id;
             const response = await fetch(`/posts/${postId}/comments/${rootId}/replies${after ? `?after=${after}` : ''}`, {
-                headers: { Accept: 'application/json' }, credentials: 'same-origin',
+                headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: request.signal,
             });
             if (!response.ok) throw new Error('Unable to load replies. Please retry.');
             const result = await response.json() as { data: SavedComment[]; has_more: boolean };
+            if (request.signal.aborted) return;
             setMoreReplies(previous => {
                 const known = new Set([...initialServerReplies.map(reply => reply.id), ...previous.map(reply => reply.id)]);
                 return [...previous, ...result.data.filter(reply => !known.has(reply.id))];
             });
             setHasMoreReplies(result.has_more);
         } catch (error) {
-            setReplyError(error instanceof Error ? error.message : 'Unable to load replies.');
+            if (!request.signal.aborted) setReplyError(error instanceof Error ? error.message : 'Unable to load replies.');
         } finally {
-            setLoadingReplies(false);
+            if (!request.signal.aborted) setLoadingReplies(false);
         }
     };
     return <div className={`pm-inline-comment-item${nested ? ' pm-inline-comment-item--nested' : ''}`}>
@@ -62,7 +66,7 @@ function CommentEntry({ comment, postId, rootId, nested = false, canInteract, on
             {comment.media_url && <CommunityResponsiveImage className="pm-comment-attachment" src={comment.media_url} alt="Comment attachment" sizes="(max-width: 640px) 85vw, 480px"/>}
             <div className="pm-inline-comment-actions">
                 <CommentEngagementActions postId={postId} commentId={comment.id} initial={comment.viewer_reaction ?? (comment.viewer_liked ? 'like' : null)}
-                    total={comment.likes_count} canInteract={canInteract} onJoin={onJoin}
+                    total={comment.likes_count} version={comment.version} canInteract={canInteract} onJoin={onJoin}
                     onReply={() => canInteract ? onToggleReply(comment.id) : onJoin('reply to a comment')}
                     replying={activeReply === comment.id}/>
             </div>
@@ -72,7 +76,7 @@ function CommentEntry({ comment, postId, rootId, nested = false, canInteract, on
                 onCreated={saved => { onCreatedReply(rootId, saved); setExpanded(true); onToggleReply(comment.id); }}/>
             }
             {!nested && (comment.replies.length > 0 || hasMoreReplies) && <div className="pm-inline-comment-branch">
-                <button type="button" className="pm-inline-comment-replies-toggle" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
+                <button type="button" className="pm-inline-comment-replies-toggle" aria-expanded={expanded} onClick={() => { if (expanded) { replyRequest.current?.abort(); setLoadingReplies(false); setMoreReplies([]); setHasMoreReplies((comment.replies_count ?? comment.replies.length) > initialServerReplies.length); } setExpanded(!expanded); }}>
                     {expanded ? 'Hide' : 'View'} {replyTotal} {replyTotal === 1 ? 'reply' : 'replies'}
                 </button>
                 {expanded && displayedReplies.map(reply => <CommentEntry key={reply.id} comment={reply} postId={postId}
@@ -87,7 +91,7 @@ function CommentEntry({ comment, postId, rootId, nested = false, canInteract, on
 
 /** Preview only when expanded; no per-comment database or page navigation calls. */
 export function InlinePostComments({ postId, canInteract, onJoin, onPosted, onClose }: {
-    postId: number; canInteract: boolean; onJoin: RequestToJoin; onPosted: () => void; onClose: () => void;
+    postId: number; canInteract: boolean; onJoin: RequestToJoin; onPosted: (count?: number) => void; onClose: () => void;
 }) {
     const { auth } = usePage<{ auth?: { user?: { name: string; avatar_path?: string | null } | null } }>().props;
     const viewer = { name: auth?.user?.name ?? 'Community member', avatar_path: auth?.user?.avatar_path };
@@ -112,14 +116,14 @@ export function InlinePostComments({ postId, canInteract, onJoin, onPosted, onCl
 
     const addReply = (rootId: number, reply: SavedComment) => {
         setComments(previous => previous.map(comment => comment.id === rootId
-            ? { ...comment, replies: [...comment.replies, reply] } : comment));
-        onPosted();
+            ? { ...comment, replies: comment.replies.some(item => item.id === reply.id) ? comment.replies : [...comment.replies, reply], replies_count: reply.root_replies_count ?? ((comment.replies_count ?? comment.replies.length) + Number(!comment.replies.some(item => item.id === reply.id))) } : comment));
+        onPosted(reply.post_comments_count ?? undefined);
     };
 
     return <section className="pm-inline-comments" aria-label="Comments on this post" id={`inline-comments-${postId}`}>
         <div className="pm-inline-comments-head"><strong>Comments</strong><button type="button" className="pm-inline-close" onClick={onClose} aria-label="Close comments">Close</button></div>
         <CommentComposer postId={postId} avatarName={viewer.name} avatarSrc={viewer.avatar_path}
-            canInteract={canInteract} onJoin={onJoin} onCreated={saved => { setComments(previous => [saved, ...previous]); onPosted(); }}/>
+            canInteract={canInteract} onJoin={onJoin} onCreated={saved => { setComments(previous => [saved, ...previous.filter(item => item.id !== saved.id)]); onPosted(saved.post_comments_count ?? undefined); }}/>
         <div className="pm-inline-comments-sort-row"><label className="pm-inline-sort-control" htmlFor={`comment-sort-${postId}`}>
             <span className="sr-only">Sort comments</span>
             <select id={`comment-sort-${postId}`} value={sort} onChange={event => setSort(event.target.value as typeof sort)}>
@@ -128,7 +132,7 @@ export function InlinePostComments({ postId, canInteract, onJoin, onPosted, onCl
         </label></div>
         {error && <CommentFeedback tone="error" message={error}/>}
         {loading ? <p className="pm-inline-comments-status" role="status">Loading comments...</p> : comments.length === 0 ? <p className="pm-inline-comments-status">No comments yet. Start the conversation.</p> : <div className="pm-inline-comments-list">
-            {comments.map(comment => <CommentEntry key={comment.id} comment={comment} postId={postId} rootId={comment.id}
+            {comments.map(comment => <CommentEntry key={`${sort}-${comment.id}`} comment={comment} postId={postId} rootId={comment.id}
                 viewer={viewer} canInteract={canInteract} onJoin={onJoin} activeReply={activeReply}
                 onToggleReply={id => setActiveReply(previous => previous === id ? null : id)}
                 onCreatedReply={addReply}/>)}

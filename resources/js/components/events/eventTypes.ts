@@ -8,7 +8,7 @@ export type Speaker = { name: string; title: string };
 export type EventDetail = EventPreview & {
     about: string | null; hostType: string | null; publisher: string; venue: string | null; address: string | null;
     coverUrl: string | null; mapUrl: string | null; mapLink: string | null; agenda: AgendaItem[]; speakers: Speaker[]; endTime: string | null;
-    registrationOpen: boolean; discussionOpen: boolean;
+    registrationOpen: boolean; discussionOpen: boolean; startsAt?: string; endsAt?: string | null;
 };
 export type EventAdvertisement = { company: string; initials: string; category: string; title: string; description: string; image: string; action: string; href: string };
 export type EventPageContent = { title: string; description: string; host_title: string; host_description: string; host_visible: boolean; host_action: string; advertisements: EventAdvertisement[] };

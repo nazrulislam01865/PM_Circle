@@ -15,7 +15,7 @@
 .pm-notification-copy { flex: 1; min-width: 0; display: grid; gap: 5px; font-size: var(--text-ui); line-height: var(--line-ui); }
 .pm-notification-copy small { color: var(--muted); font-size: var(--text-xs); }
 .pm-notification-item > svg { flex: none; margin-top: 9px; color: var(--muted); }
-.pm-notification-unread-dot { flex: 0 0 8px; height: 8px; border-radius: 50%; background: var(--pm-primary); margin-top: 12px; }
+.pm-notification-unread-dot { flex: 0 0 8px; height: 8px; border-radius: 50%; background: var(--pm-action-blue); margin-top: 12px; }
 .pm-notification-view-all, .pm-notification-more { display: block; padding: 12px 16px; width: 100%; text-align: center; background: var(--surface); border: 0; color: var(--pm-primary); font-weight: var(--bold); font-size: var(--text-ui); text-decoration: none; cursor: pointer; }
 .pm-notification-view-all:hover, .pm-notification-more:hover { background: var(--canvas); }
 .pm-notification-message { padding: 24px 18px; text-align: center; color: var(--muted); font-size: var(--text-ui); }

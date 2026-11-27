@@ -19,6 +19,9 @@ final class ReactToComment
         }
         return DB::transaction(function () use ($user, $comment, $type, $toggleLike): array {
             EngagementStats::lockReaction($user->id);
+            EngagementStats::lockAccessiblePost($comment->post_id, $user);
+            $comment = EngagementStats::lockComment($comment);
+            abort_unless($comment->isVisible(), 404);
             $query = DB::table('comment_likes')->where('comment_id', $comment->id)->where('user_id', $user->id);
             $old = $query->value('type');
             if ($toggleLike) {
@@ -37,11 +40,12 @@ final class ReactToComment
                 }
             }
 
+            EngagementStats::applyCommentReaction($comment->id, $old, $type);
             if ($old === null && $type !== null) {
                 DB::afterCommit(static fn () => app(\App\Domain\Notifications\ActivityNotifier::class)
                     ->forCommentReaction($user, $comment));
             }
-            return ['reaction' => $type, 'count' => (int) $comment->likes()->count()];
+            return ['comment_id' => $comment->id, 'reaction' => $type, ...EngagementStats::commentSummary($comment->id)];
         }, 3);
     }
 }

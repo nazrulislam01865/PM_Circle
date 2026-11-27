@@ -3,7 +3,7 @@
 .pm-app.pm-pricing-shell .pm-container{width:min(1480px,calc(100% - 64px))}
 .pm-pricing-shell .pm-header{border-bottom:1px solid var(--pm-tone-edf0f2)}
 .pm-pricing-shell .pm-header-inner{min-height:59px;gap:37px}
-.pm-pricing-shell :is(.pm-header,.pm-footer) .pm-brand-icon-monogram{width:42px;height:42px;display:grid;place-items:center;color:var(--surface);font-weight:var(--pm-font-weight-800);font-size:var(--type-body);letter-spacing: var(--pm-tracking-neg-p8px);background:linear-gradient(140deg,var(--pm-tone-0783de),var(--pm-tone-0755aa))}
+.pm-pricing-shell :is(.pm-header,.pm-footer) .pm-brand-icon-monogram{width:42px;height:42px;display:grid;place-items:center;color:var(--pm-on-solid);font-weight:var(--pm-font-weight-800);font-size:var(--type-body);letter-spacing: var(--pm-tracking-neg-p8px);background:linear-gradient(140deg,var(--pm-tone-0783de),var(--pm-tone-0755aa))}
 .pm-pricing-shell :is(.pm-header,.pm-footer) .pm-brand-icon-monogram::before{content:none}
 .pm-pricing-shell .pm-header .pm-brand-copy strong,.pm-pricing-shell .pm-footer .pm-brand-copy strong{font-size:var(--type-lead);font-weight:var(--pm-font-weight-800);letter-spacing: var(--pm-tracking-neg-p45px)}
 .pm-pricing-shell :is(.pm-header,.pm-footer) .pm-brand-copy small{font-size:var(--pm-font-size-10px);letter-spacing:0;margin-top:2px;font-weight:var(--pm-font-weight-500);color:var(--pm-tone-737b88)}
@@ -37,7 +37,7 @@
 .pm-compare-table thead .pm-compare-header-feature span{font-size:var(--pm-font-size-13px);color:var(--pm-tone-686f7c)}
 .pm-compare-table .pm-compare-plus{background:var(--pm-tone-f0f7ff);color:var(--pm-tone-0758ba)}
 .pm-compare-table thead .pm-compare-plus{padding-top:32px}
-.pm-compare-recommended{position:absolute;top:5px;left:50%;transform:translateX(-50%);background:var(--pm-tone-257bcc);color:var(--surface);border-radius:var(--pm-radius-18px);padding:3px 13px;font-size:var(--pm-font-size-11px);font-weight:var(--type-weight-semibold);line-height:var(--type-line-h3);white-space:nowrap}
+.pm-compare-recommended{position:absolute;top:5px;left:50%;transform:translateX(-50%);background:var(--pm-tone-257bcc);color:var(--pm-on-solid);border-radius:var(--pm-radius-18px);padding:3px 13px;font-size:var(--pm-font-size-11px);font-weight:var(--type-weight-semibold);line-height:var(--type-line-h3);white-space:nowrap}
 .pm-compare-table thead th b .pm-compare-per-month{display:inline;color:inherit;font-size:var(--type-caption);font-weight:var(--type-weight-bold)}
 .pm-compare-duration select{margin:3px auto 1px;min-height:var(--pm-control-dimension-32px);max-width:100%;background:var(--surface);color:var(--pm-tone-344257);border:1px solid var(--pm-tone-c3d2e7);border-radius:var(--pm-radius-6px);padding:var(--pm-control-padding-5px) var(--pm-control-padding-9px);font-size:var(--type-caption);cursor:pointer}
 .pm-compare-duration select:disabled{cursor:not-allowed;opacity:.6}
@@ -62,7 +62,7 @@
 .pm-compare-table tfoot td{padding:15px 9px}
 .pm-compare-table tfoot tr{height:72px}
 .pm-compare-table tfoot a{min-width:135px;max-width:100%;min-height:40px;border-color:var(--pm-tone-377ebc);font-size:var(--pm-font-size-13px);white-space:nowrap}
-.pm-compare-table tfoot .pm-compare-plus a{border-color:var(--pm-tone-0e66c3);background:var(--pm-tone-0869d8);color:var(--surface)}
+.pm-compare-table tfoot .pm-compare-plus a{border-color:var(--pm-tone-0e66c3);background:var(--pm-tone-0869d8);color:var(--pm-on-solid)}
 .pm-compare-fineprint{margin:9px 12px 23px;font-size:var(--type-caption);color:var(--pm-tone-85858b);line-height:var(--pm-line-height-1p65)}
 .pm-compare-import{display:flex;align-items:center;gap:22px;padding:15px 18px;min-height:173px;border-color:var(--pm-tone-e4e4e3);background:var(--surface)}
 .pm-compare-import-art{width:164px;height:140px;flex:none}
@@ -118,7 +118,7 @@
 .pm-membership-access svg{color:var(--pm-tone-1165be);flex:none}
 .pm-compare-error{color:var(--pm-tone-a31926);background:var(--pm-tone-fff2f2);border:1px solid var(--pm-tone-e5b7bd);padding:10px 14px;border-radius:var(--pm-radius-6px);margin:0 0 14px;font-size:var(--pm-font-size-13px)}
 .pm-compare-table tfoot button.pm-button{min-width:135px;max-width:100%;min-height:var(--pm-guide-button-height);border-color:var(--pm-tone-377ebc);font-size:var(--pm-font-size-13px);white-space:nowrap}
-.pm-compare-table tfoot .pm-compare-plus button.pm-button{border-color:var(--pm-tone-0e66c3);background:var(--pm-tone-0869d8);color:var(--surface)}
+.pm-compare-table tfoot .pm-compare-plus button.pm-button{border-color:var(--pm-tone-0e66c3);background:var(--pm-tone-0869d8);color:var(--pm-on-solid)}
 .pm-compare-table tfoot button.pm-button:disabled{cursor:not-allowed;opacity:.65}
 @media(max-width:960px){.pm-compare-table tfoot button.pm-button{min-width:0;width:100%}}
 @media(max-width:760px){.pm-membership-comparison .pm-compare-page{padding:24px 0 30px}.pm-membership-notice{margin:-6px 0 18px;justify-content:flex-start}}
@@ -145,9 +145,9 @@
 .pm-public-compare .pm-compare-table thead th > span:not(.pm-compare-recommended), .pm-public-compare .pm-compare-table thead th small { color: var(--pm-guide-muted); font-size: var(--pm-guide-text-meta); }
 .pm-public-compare .pm-compare-table thead .pm-compare-plus { padding-top: var(--pm-guide-s2); }
 .pm-public-compare .pm-compare-table .pm-compare-plus { background: var(--pm-guide-pale); color: var(--pm-guide-blue); }
-.pm-public-compare .pm-compare-recommended { background: var(--pm-guide-blue); border-radius: var(--pm-guide-radius-pill); font-size: var(--pm-guide-text-meta); padding: var(--pm-guide-s1) var(--pm-guide-s2); max-width: calc(100% - var(--pm-guide-s2)); white-space: normal; position: static; display: inline-block; transform: none; margin-bottom: var(--pm-guide-s2); }
-.pm-public-compare .pm-compare-duration { display: block; margin-block: var(--pm-guide-s2); }
-.pm-public-compare .pm-compare-duration .pm-dropdown-trigger { width: 100%; min-width: 0; min-height: var(--pm-guide-button-height); }
+.pm-public-compare .pm-compare-recommended { background: var(--pm-action-blue); border-radius: var(--pm-guide-radius-pill); font-size: var(--pm-guide-text-meta); padding: var(--pm-guide-s1) var(--pm-guide-s2); max-width: calc(100% - var(--pm-guide-s2)); white-space: normal; position: static; display: inline-block; transform: none; margin-bottom: var(--pm-guide-s2); }
+.pm-compare-duration { display: block; margin-block: var(--pm-guide-s2); }
+.pm-compare-duration .pm-dropdown-trigger { width: 100%; min-width: 0; min-height: var(--pm-guide-button-height); }
 .pm-public-compare .pm-compare-table tbody tr.pm-compare-group th { background: var(--pm-guide-soft); color: var(--pm-guide-ink); padding: var(--pm-guide-s2) var(--pm-guide-s4); font-size: var(--pm-guide-text-meta); }
 .pm-public-compare .pm-compare-table tbody tr:not(.pm-compare-group) th { padding: var(--pm-guide-s2) var(--pm-guide-s4); }
 .pm-public-compare .pm-compare-row-label { gap: var(--pm-guide-s3); }
@@ -157,8 +157,8 @@
 .pm-public-compare .pm-compare-table tbody td { padding: var(--pm-guide-s2); line-height: var(--pm-guide-line-body); }
 .pm-public-compare .pm-compare-table tfoot th { font-size: var(--pm-guide-text-meta); padding: var(--pm-guide-s3) var(--pm-guide-s4); }
 .pm-public-compare .pm-compare-table tfoot a, .pm-public-compare .pm-compare-import-action { min-height: var(--pm-guide-button-height); min-width: 0; max-width: 100%; white-space: normal; font-size: var(--pm-guide-text-control); border-color: var(--pm-guide-blue); }
-.pm-public-compare .pm-compare-table tfoot .pm-compare-plus a { background: var(--pm-guide-blue); color: var(--pm-guide-white); }
-.pm-public-compare .pm-compare-table tfoot .pm-compare-plus a:hover { background: var(--pm-guide-blue-hover); }
+.pm-public-compare .pm-compare-table tfoot .pm-compare-plus a { background: var(--pm-action-blue); color: var(--pm-on-solid); }
+.pm-public-compare .pm-compare-table tfoot .pm-compare-plus a:hover { background: var(--pm-action-hover); }
 .pm-public-compare .pm-compare-fineprint { margin: var(--pm-guide-s3) 0 var(--pm-guide-s6); font-size: var(--pm-guide-text-meta); color: var(--pm-guide-muted); }
 .pm-public-compare .pm-compare-import { margin-top: var(--pm-guide-s6); gap: var(--pm-guide-s4); padding: var(--pm-guide-card-padding); border-color: var(--pm-guide-line); border-radius: var(--pm-guide-radius-card); }
 .pm-public-compare .pm-compare-import h2 { font-size: var(--pm-guide-text-h3); line-height: var(--pm-guide-line-h3); color: var(--pm-guide-ink); font-weight: var(--pm-guide-weight-h2); }

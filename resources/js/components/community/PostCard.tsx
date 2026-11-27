@@ -21,6 +21,7 @@ export type PostPreview = {
     likes_count?: number;
     reactions_count?: number;
     reaction_breakdown?: ReactionCounts;
+    engagement_version?: number | null;
     viewer_reaction?: ReactionType | null;
     comments_count: number;
     published_at: string | null;
@@ -48,8 +49,8 @@ export function PostCard({
     post: PostPreview;
     isGuest?: boolean;
     onJoin?: RequestToJoin;
-    onReactionChange?: (reaction: ReactionType | null, count: number, counts: ReactionCounts) => void;
-    onCommentAdded?: () => void;
+    onReactionChange?: (reaction: ReactionType | null, count: number, counts: ReactionCounts, version?: number | null) => void;
+    onCommentAdded?: (count?: number) => void;
     onSavedChange?: (saved: boolean) => void;
     onHiddenChange?: (hidden: boolean) => void;
     onRemoved?: () => void;
@@ -107,7 +108,7 @@ export function PostCard({
 
             <footer className="pm-card-action-bar">
                 {post.viewer_hidden ? <span className="pm-post-hidden-hint">Hidden post · Use the post menu to unhide before interacting.</span> : <PostEngagementActions postId={post.id} initial={post.viewer_reaction}
-                    total={post.reactions_count ?? post.likes_count ?? 0} breakdown={post.reaction_breakdown} comments={post.comments_count}
+                    total={post.reactions_count ?? post.likes_count ?? 0} breakdown={post.reaction_breakdown} version={post.engagement_version} comments={post.comments_count}
                     canInteract={!isGuest} onJoin={onJoin} onReactionChange={onReactionChange} onCommentAdded={onCommentAdded} showSave secondary={secondary} inlineComments={mode === 'feed'} />}
                 {isGuest && mode === 'feed' && <Link href={`/posts/${post.id}`} className="pm-read-discussion-link">Read discussion →</Link>}
             </footer>

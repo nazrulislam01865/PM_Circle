@@ -55,7 +55,6 @@
     overflow-wrap: anywhere;
 }
 :is(.pm-profile-page, .pm-settings-workspace) .pm-privacy-field-row .pm-privacy-select {
-    display: block;
     width: 100%;
     min-height: var(--control-height);
     height: var(--control-height);

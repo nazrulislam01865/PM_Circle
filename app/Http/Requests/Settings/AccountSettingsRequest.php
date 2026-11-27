@@ -24,10 +24,15 @@ final class AccountSettingsRequest extends FormRequest
             }],
             'visibility' => ['sometimes', 'required', Rule::in(['public', 'members_only', 'private'])],
         ];
-        foreach (config('account_settings') as $page) {
+        $pages = \App\Domain\Identity\Services\AccountSettingsCatalog::hasInterviewInput($this->all())
+            ? \App\Domain\Identity\Services\AccountSettingsCatalog::pages() : config('account_settings');
+        foreach ($pages as $page) {
             foreach ($page[3] as $group) {
                 foreach ($group[1] as $field) {
-                    if ($field['mode'] !== 'preference') continue;
+                    if ($field['mode'] !== 'preference') {
+                        if (isset($field['options'])) $rules[$field['id']] = ['prohibited'];
+                        continue;
+                    }
                     $rules[$field['id']] = $field['type'] === 'toggle'
                         ? ['sometimes', 'required', 'boolean']
                         : ($field['type'] === 'time'
@@ -37,6 +42,11 @@ final class AccountSettingsRequest extends FormRequest
             }
         }
 
+        $keys = ProfileFieldPrivacy::keys();
+        $rules['field_visibility_patch'] = ['sometimes', 'array:'.implode(',', $keys), 'min:1', 'max:'.count($keys), 'prohibits:field_visibility'];
+        foreach ($keys as $key) {
+            $rules['field_visibility_patch.'.$key] = ['sometimes', 'required', Rule::in(['public', 'community', 'private'])];
+        }
         return array_merge($rules, ProfileFieldPrivacy::validationRules());
     }
 }

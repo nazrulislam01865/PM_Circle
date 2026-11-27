@@ -8,7 +8,7 @@
 .pm-member-overview-completion-label { display:flex; justify-content:space-between; gap:var(--s2); font:var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui); color:var(--muted); }
 .pm-member-overview-completion-label strong { font-weight:var(--semibold); }
 .pm-member-overview-progress { margin: var(--s2) 0 var(--s3); width:100%; height:var(--bar-height); background:var(--track); border-radius:var(--radius-pill); overflow:hidden; }
-.pm-member-overview-progress > span { display:block; height:100%; background:var(--blue); border-radius:inherit; }
+.pm-member-overview-progress > span { display:block; height:100%; background:var(--pm-action-blue); border-radius:inherit; }
 .pm-member-overview-profile-links { display:grid; grid-template-columns:1fr 1fr; gap:0; border-top:1px solid var(--border); padding-top:var(--s3); }
 .pm-member-overview-profile-links a { display:inline-flex; align-items:center; justify-content:center; gap:var(--s1); padding:0 var(--s1); min-width:0; text-align:center; font:var(--semibold) var(--text-sm)/var(--line-sm) var(--font-ui); color:var(--blue); white-space:normal; }
 .pm-member-overview-profile-links a + a { border-left:1px solid var(--border); }

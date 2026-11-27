@@ -28,6 +28,7 @@ final class AiRuntimeSettings
     private ?array $registeredModels = null;
     private array $resolvedSecrets = [];
     private array $overrides = [];
+    private array $explicitCredentials = [];
 
     public function credential(string $slot): ?string
     {
@@ -47,6 +48,12 @@ final class AiRuntimeSettings
         if ($slot === 'anthropic_api_key' && ! DB::table('ai_workspace_providers')->where('adapter', 'anthropic')->where('is_default', true)->where('status', 'Active')->exists()) return null;
         $key = config('pm-ai.'.$slot);
         return is_string($key) && $key !== '' ? $key : null;
+    }
+
+    public function hasAssignedCredential(string $slot): bool
+    {
+        $this->credential($slot);
+        return isset($this->credentials[$slot]);
     }
 
     public function credentialName(string $slot): ?string
@@ -77,13 +84,17 @@ final class AiRuntimeSettings
     public function selectCredential(string $slot, int $id): bool
     {
         unset($this->overrides[$slot]);
-        $row = DB::table('ai_workspace_credentials as c')->join('ai_workspace_providers as p', 'p.id', '=', 'c.provider_id')
+        $cacheKey = $slot.':'.$id;
+        if (! array_key_exists($cacheKey, $this->explicitCredentials)) {
+            $row = DB::table('ai_workspace_credentials as c')->join('ai_workspace_providers as p', 'p.id', '=', 'c.provider_id')
             ->where('c.id', $id)->whereIn('c.slot', self::explicitCredentialSlots($slot))->where('c.enabled', true)->where('p.status', 'Active')
             ->where('p.adapter', self::SLOTS[$slot]['provider'])
             ->first(['c.id', 'c.name', 'c.secret_encrypted', 'c.daily_budget_usd']);
-        if (! $row) return false;
-        $this->overrides[$slot] = ['secret' => Crypt::decryptString($row->secret_encrypted), 'name' => $row->name,
-            'accounting' => ['ref' => 'credential:'.$row->id, 'limit' => $row->daily_budget_usd === null ? null : (float) $row->daily_budget_usd]];
+            $this->explicitCredentials[$cacheKey] = $row ? ['secret' => Crypt::decryptString($row->secret_encrypted), 'name' => $row->name,
+            'accounting' => ['ref' => 'credential:'.$row->id, 'limit' => $row->daily_budget_usd === null ? null : (float) $row->daily_budget_usd]] : null;
+        }
+        if (! $this->explicitCredentials[$cacheKey]) return false;
+        $this->overrides[$slot] = $this->explicitCredentials[$cacheKey];
         return true;
     }
 
@@ -119,5 +130,6 @@ final class AiRuntimeSettings
         $this->credentials = $this->limits = $this->registeredModels = null;
         $this->resolvedSecrets = [];
         $this->overrides = [];
+        $this->explicitCredentials = [];
     }
 }

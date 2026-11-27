@@ -7,6 +7,7 @@ use App\Models\Comment;
 use App\Models\Post;
 use App\Models\ScenarioResponse;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -68,25 +69,43 @@ final class ActivityNotifier
             route('scenarios.show', $scenarioSlug, false));
     }
 
-    private function send(int $recipientId, int $actorId, string $eventKey, string $type, string $message, string $url): void
+    public function forCourseCompletion(int $userId, int $courseId): void
+    {
+        $this->send($userId, null, 'course-completed:'.$courseId, 'learning', 'You completed a course. View your learning record.', route('dashboard.learning.my-learning', [], false));
+    }
+
+    public function forPmpCompletion(int $userId, int $attempt): void
+    {
+        $this->send($userId, null, 'pmp-completed:'.$attempt, 'exam', 'Your PMP practice exam result is ready.', route('exams.pmp.result', ['attempt' => $attempt], false));
+    }
+
+    public function forEventRegistration(int $userId, int $eventId, string $slug): void
+    {
+        $this->send($userId, null, 'event-registration:'.$eventId, 'event', 'Your event registration has been recorded.', route('events.show', $slug, false));
+    }
+
+    public function forAiLimit(int $userId, string $code): void
+    {
+        if (! in_array($code, ['INSUFFICIENT_CREDITS', 'AI_TOKEN_LIMIT_REACHED'], true)) return;
+        $message = $code === 'INSUFFICIENT_CREDITS' ? 'Your AI request could not start because your credit balance is insufficient.' : 'Your AI request could not start because your PMP token allowance is insufficient.';
+        $this->send($userId, null, 'ai-limit:'.$code.':'.now('UTC')->toDateString(), 'ai_usage', $message, route('membership.index', [], false));
+    }
+
+    private function send(int $recipientId, ?int $actorId, string $eventKey, string $type, string $message, string $url): void
     {
         if ($recipientId <= 0 || $recipientId === $actorId) return;
 
         try {
             // Only optional social activity uses these preferences; transactional mail and admin alerts are untouched.
-            $recipient = User::query()->whereKey($recipientId)->first(['id', 'account_preferences']);
+            $recipient = User::query()->whereKey($recipientId)->where('status', 'active')->first(['id', 'account_preferences', 'email_verified_at']);
             if (! $recipient) return;
             $preferences = $recipient->account_preferences ?? [];
-            $challenge = str_starts_with($eventKey, 'scenario-');
-            if (($preferences['inapp'] ?? true) === false
-                || ($preferences[$challenge ? 'challengeNotify' : 'communityNotify'] ?? true) === false) return;
-            if (($preferences['quiet'] ?? false) === true) {
-                $start = $preferences['quietStart'] ?? '22:00';
-                $end = $preferences['quietEnd'] ?? '07:00';
-                $zone = $preferences['timezone'] ?? 'Asia/Dhaka';
-                $time = now($zone)->format('H:i');
-                if ($start !== $end && ($start < $end ? $time >= $start && $time < $end : $time >= $start || $time < $end)) return;
-            }
+            $now = CarbonImmutable::now('UTC');
+            if (! ActivityPreferences::allows($preferences, $eventKey, $now)) return;
+            $inApp = ($preferences['inapp'] ?? true) === true;
+            // Only actually verified addresses receive optional email, even in demo mode.
+            $due = $recipient->email_verified_at ? ActivityPreferences::emailDue($preferences, $now) : null;
+            if (! $inApp && $due === null) return;
             // Database-level uniqueness protects against double requests and retried moderation jobs.
             $inserted = DB::table('notifications')->insertOrIgnore([
                 'id' => (string) Str::uuid(),
@@ -96,10 +115,13 @@ final class ActivityNotifier
                 'event_key' => $eventKey,
                 'data' => json_encode(['message' => $message, 'url' => $url], JSON_THROW_ON_ERROR),
                 'read_at' => null,
+                'in_app' => $inApp,
+                'email_due_at' => $due,
+                'email_status' => $due ? 'pending' : null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-            if ($inserted > 0) {
+            if ($inserted > 0 && $inApp) {
                 BroadcastNotificationUpdate::dispatch($recipientId)->onQueue('default');
             }
         } catch (Throwable $exception) {

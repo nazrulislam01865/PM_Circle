@@ -68,7 +68,7 @@
 .pm-post-composer-card-action svg { flex: none; }
 
 .pm-post-composer-card-action:is(.is-selected, :hover) {
-    background: color-mix(in srgb, var(--blue) 12%, var(--blue-soft));
+    background: color-mix(in srgb, var(--pm-action-blue) 12%, var(--blue-soft));
     color: var(--blue);
 }
 
@@ -157,3 +157,6 @@
 .pm-post-content-image { display: block; max-width: 100%; max-height: 480px; width: auto; height: auto; margin-top: 12px; object-fit: contain; border: 1px solid var(--pm-line); border-radius: var(--pm-radius-8px); }
 .pm-dash-feed-body.pm-post-content, .pm-card-body.pm-post-content, .pm-post-body.pm-post-content { display: block; }
 
+
+/* Keep private moderation cards separated from the discussion feed. */
+.pm-community-post-checks { margin-bottom: var(--s3); }

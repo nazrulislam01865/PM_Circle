@@ -85,6 +85,7 @@ final class AiWorkspaceController extends Controller
             $daily = in_array($code, ['scenario_generate', 'daily_challenge_review'], true);
             $slot = $daily ? 'daily_challenge_api_key' : ($code === 'trend_draft' && $trends === 'gemini' ? 'gemini_api_key' : 'api_key');
             $href = $daily ? '/admin/ai/daily-challenge' : (str_starts_with($code, 'pmp_') ? '/admin/ai/pmp-settings' : ($code === 'trend_draft' ? '/admin/ai/career-trends' : '/admin/ai/usage-management'));
+            if ($code === 'interview_answer_review') $href = '/admin/interview-preparation?tab=settings';
             $result[] = ['code' => $code, 'name' => match ($code) {
                 'scenario_generate' => 'Daily Challenge Generation', 'daily_challenge_review' => 'Daily Challenge Review',
                 'interview_answer_review' => 'Interview Preparation · Answer review',
@@ -243,8 +244,9 @@ final class AiWorkspaceController extends Controller
             'models' => $this->connectionModels($feature, $slot, $operation['model'], $routing),
             'selected' => $selected === null ? 'default' : (string) $selected,
             'default_name' => $default['name'] ?? null, 'credential_name' => $routing->primaryName($feature, $slot),
-            'connection' => in_array($feature, ['scenario_generate', 'daily_challenge_review'], true)
-                ? app(\App\Domain\AI\Services\FeatureConnectionStatus::class)->status($feature === 'scenario_generate' ? 'daily-challenge' : 'daily-challenge-review', $operation['model'], (bool) DB::table('ai_features')->where('code', $feature)->value('enabled')) : null,
+            'connection' => $feature === 'trend_draft' ? [...app(\App\Domain\AI\Services\TrendAiConnection::class)->status(AiRuntimeSettings::SLOTS[$slot]['provider'], $operation['model'], $operation['enabled']), 'configured' => $routing->primaryConfigured($feature, $slot) && filled($operation['model'])] : app(\App\Domain\AI\Services\FeatureConnectionStatus::class)->status(match ($feature) {
+                'scenario_generate' => 'daily-challenge', 'daily_challenge_review' => 'daily-challenge-review', 'pmp_explain' => 'pmp', 'pmp_followup' => 'pmp-followup', 'feed_moderation' => 'feed-moderation',
+            }, $operation['model'], $operation['enabled']),
             'credentials' => $options,
             'providers' => array_values(array_map(fn ($profile) => ['value' => (string) $profile['id'], 'label' => $profile['name']], array_filter($profiles, fn ($profile) => $profile['adapter'] === AiRuntimeSettings::SLOTS[$slot]['provider'] && $profile['status'] === 'Active'))),
         ])->header('Cache-Control', 'no-store');
@@ -290,12 +292,13 @@ final class AiWorkspaceController extends Controller
     {
         abort_unless(in_array($feature, ['scenario_generate', 'daily_challenge_review', 'pmp_explain', 'pmp_followup', 'feed_moderation', 'trend_draft'], true), 404);
         $provider = $feature === 'trend_draft' ? app(CareerTrendSettings::class)->get()['ai_provider'] : 'openai';
+        $catalog = $feature === 'feed_moderation' ? null : DB::table('ai_features')->where('code', $feature)->first(['model', 'enabled']);
         $model = match ($feature) {
             'feed_moderation' => match (config('pm-ai.post_check_provider')) { 'omni' => OmniPostModerationService::MODEL, 'responses' => PostContentCheckService::MODEL, default => null },
-            'trend_draft' => $provider === 'gemini' ? config('pm-ai.gemini_trend_model') : DB::table('ai_features')->where('code', $feature)->value('model'),
-            default => DB::table('ai_features')->where('code', $feature)->value('model'),
+            'trend_draft' => $provider === 'gemini' ? config('pm-ai.gemini_trend_model') : $catalog?->model,
+            default => $catalog?->model,
         };
-        return ['slot' => AiFeatureRouting::slot($feature, $provider), 'model' => $model,
+        return ['slot' => AiFeatureRouting::slot($feature, $provider), 'model' => $model, 'enabled' => $feature === 'feed_moderation' ? (bool) config('pm-ai.post_check_enabled') : (bool) $catalog?->enabled,
             'primary_credential_id' => DB::table('ai_workspace_feature_routes')->where('feature_code', $feature)->value('primary_credential_id')];
     }
 
@@ -305,6 +308,7 @@ final class AiWorkspaceController extends Controller
         abort_unless(in_array($feature, AiFeatureRouting::codes(), true), 404);
         $data = $request->validate(['primary_model' => ['required','string','max:80'], 'primary_credential_id' => ['nullable','integer','min:1'], 'backup_credential_id' => ['nullable','integer','min:1'], 'backup_model' => ['nullable','string','max:80'], 'strategy' => ['required',Rule::in(['primary_only','priority_failover'])], 'daily_usd' => ['sometimes','nullable','numeric','min:0','max:100000']]);
         if (array_key_exists('daily_usd', $data)) $access->authorize($request->user(), 'ai.manage_quotas');
+        if (isset(AiFeatureCatalog::FEATURES[$feature])) $data += $request->validate(['enabled' => ['sometimes', 'boolean']]);
         if (in_array($feature, ['resume_extract', 'resume_analyze', 'resume_rewrite', 'interview_answer_review'], true)) {
             $extract = $feature === 'resume_extract';
             $data += $request->validate([

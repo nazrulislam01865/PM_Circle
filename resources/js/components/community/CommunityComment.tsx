@@ -5,13 +5,13 @@ import { ChevronDown } from 'lucide-react';
 import { CommentEngagementActions } from './CommentEngagementActions';
 import { CommentComposer, type SavedComment } from './CommentComposer';
 import type { ReactionType } from '@/components/home/HomeEngagement';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Avatar } from '@/components/pm/Avatar';
 
 export type CommunityCommentData = {
     id: number; body: string; media_url?: string | null; created_at: string; likes_count: number;
     author: { name: string; id?: number; profile_url?: string | null; profile?: { avatar_path?: string | null } | null }; replies: CommunityCommentData[];
-    replies_count?: number; viewer_reaction?: ReactionType | null;
+    replies_count?: number; root_replies_count?: number | null; engagement_version?: number | null; version?: number | null; viewer_reaction?: ReactionType | null;
 };
 const relativeTime = (created: string) => {
     const minutes = Math.max(1, Math.floor((Date.now() - Date.parse(created)) / 60000));
@@ -32,7 +32,7 @@ export function CommunityComment({ comment, postId, postAuthor, canInteract, lik
     canInteract: boolean; likedIds: number[]; viewerReactions?: Record<number, ReactionType>;
     nested?: boolean; demo?: boolean; replyParentId?: number;
     viewer: { name: string; avatar_path?: string | null };
-    onCommentAdded?: () => void; onCreatedReply?: (comment: CommunityCommentData) => void;
+    onCommentAdded?: (count?: number) => void; onCreatedReply?: (comment: CommunityCommentData) => void;
 }) {
     const [replying, setReplying] = useState(false);
     const [expanded, setExpanded] = useState(false);
@@ -40,33 +40,38 @@ export function CommunityComment({ comment, postId, postAuthor, canInteract, lik
     const [moreReplies, setMoreReplies] = useState<CommunityCommentData[]>([]);
     const [hasMoreReplies, setHasMoreReplies] = useState((comment.replies_count ?? comment.replies?.length ?? 0) > (comment.replies?.length ?? 0));
     const [loadingReplies, setLoadingReplies] = useState(false);
+    const replyRequest = useRef<AbortController | null>(null);
+    useEffect(() => () => replyRequest.current?.abort(), []);
     const [replyError, setReplyError] = useState('');
     const liked = likedIds.includes(comment.id);
     const viewerReaction = comment.viewer_reaction ?? viewerReactions?.[comment.id] ?? (liked ? 'like' : null);
     const parentId = replyParentId ?? comment.id;
     const serverReplies = [...(comment.replies ?? []), ...moreReplies];
-    const replies = [...serverReplies, ...newReplies];
-    const replyTotal = Math.max(comment.replies_count ?? 0, replies.length);
+    const replies = [...new Map([...serverReplies, ...newReplies].map(item => [item.id, item])).values()];
+    const [confirmedReplyTotal, setConfirmedReplyTotal] = useState<number | null>(null);
+    const replyTotal = Math.max(confirmedReplyTotal ?? comment.replies_count ?? 0, replies.length);
 
     const loadMoreReplies = async () => {
         if (loadingReplies || !hasMoreReplies) return;
+        const request = new AbortController(); replyRequest.current = request;
         setLoadingReplies(true); setReplyError('');
         try {
             const after = serverReplies.at(-1)?.id;
             const response = await fetch(`/posts/${postId}/comments/${comment.id}/replies${after ? `?after=${after}` : ''}`, {
-                headers: { Accept: 'application/json' }, credentials: 'same-origin',
+                headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: request.signal,
             });
             if (!response.ok) throw new Error('Unable to load replies. Please retry.');
             const result = await response.json() as { data: SavedComment[]; has_more: boolean };
+            if (request.signal.aborted) return;
             setMoreReplies(previous => {
                 const known = new Set([...comment.replies.map(reply => reply.id), ...previous.map(reply => reply.id)]);
                 return [...previous, ...result.data.filter(reply => !known.has(reply.id)).map(displaySaved)];
             });
             setHasMoreReplies(result.has_more);
         } catch (error) {
-            setReplyError(error instanceof Error ? error.message : 'Unable to load replies.');
+            if (!request.signal.aborted) setReplyError(error instanceof Error ? error.message : 'Unable to load replies.');
         } finally {
-            setLoadingReplies(false);
+            if (!request.signal.aborted) setLoadingReplies(false);
         }
     };
 
@@ -74,8 +79,8 @@ export function CommunityComment({ comment, postId, postAuthor, canInteract, lik
         const savedReply = displaySaved(saved);
         setReplying(false);
         if (nested) onCreatedReply?.(savedReply);
-        else { setNewReplies(previous => [...previous, savedReply]); setExpanded(true); }
-        onCommentAdded?.();
+        else { setNewReplies(previous => [...previous.filter(item => item.id !== savedReply.id), savedReply]); if (saved.root_replies_count != null) setConfirmedReplyTotal(saved.root_replies_count); setExpanded(true); }
+        onCommentAdded?.(saved.post_comments_count ?? undefined);
     };
 
     // Both initial and paginated comments receive a server-authorized URL.
@@ -87,7 +92,7 @@ export function CommunityComment({ comment, postId, postAuthor, canInteract, lik
             {comment.body && <p>{comment.body}</p>}
             {comment.media_url && <CommunityResponsiveImage className="pm-comment-attachment" src={comment.media_url} alt="Comment attachment" sizes="(max-width: 640px) 85vw, 480px"/>}
             <div className="pm-thread-actions"><CommentEngagementActions postId={postId} commentId={comment.id}
-                initial={viewerReaction} total={comment.likes_count} canInteract={canInteract} onJoin={() => router.visit('/login')}
+                initial={viewerReaction} total={comment.likes_count} version={comment.engagement_version ?? comment.version} canInteract={canInteract} onJoin={() => router.visit('/login')}
                 onReply={() => canInteract ? setReplying(previous => !previous) : router.visit('/login')}
                 replying={replying}/></div>
             {replying && canInteract && <CommentComposer postId={postId} parentId={parentId} compact
@@ -95,14 +100,14 @@ export function CommunityComment({ comment, postId, postAuthor, canInteract, lik
                 canInteract={canInteract} onJoin={() => router.visit('/login')} onCancel={() => setReplying(false)}
                 onCreated={handleReply}/>}
             {!nested && (replies.length > 0 || hasMoreReplies) && <div className="pm-thread-branch">
-                <button type="button" className="pm-thread-toggle" aria-expanded={expanded} onClick={() => setExpanded(previous => !previous)}>
+                <button type="button" className="pm-thread-toggle" aria-expanded={expanded} onClick={() => { if (expanded) { replyRequest.current?.abort(); setLoadingReplies(false); setMoreReplies([]); setHasMoreReplies(replyTotal > (comment.replies?.length ?? 0)); } setExpanded(previous => !previous); }}>
                     <ChevronDown size={15} className={expanded ? 'pm-rotate' : ''} aria-hidden="true"/>
                     {expanded ? 'Hide' : 'View'} {replyTotal} {replyTotal === 1 ? 'reply' : 'replies'}
                 </button>
                 {expanded && replies.map(child => <CommunityComment key={child.id} comment={child} postId={postId}
                     postAuthor={postAuthor} canInteract={canInteract} likedIds={likedIds} viewerReactions={viewerReactions}
                     nested demo={demo} replyParentId={comment.id} viewer={viewer} onCommentAdded={onCommentAdded}
-                    onCreatedReply={saved => { setNewReplies(previous => [...previous, saved]); setExpanded(true); }}/>) }
+                    onCreatedReply={saved => { setNewReplies(previous => [...previous.filter(item => item.id !== saved.id), saved]); if (saved.root_replies_count != null) setConfirmedReplyTotal(saved.root_replies_count); setExpanded(true); }}/>) }
                 {expanded && hasMoreReplies && <button type="button" className="pm-thread-toggle" disabled={loadingReplies} onClick={() => { void loadMoreReplies(); }}>{loadingReplies ? 'Loading replies...' : 'Load more replies'}</button>}
                 {expanded && replyError && <p role="alert">{replyError}</p>}
             </div>}

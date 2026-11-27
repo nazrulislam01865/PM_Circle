@@ -53,7 +53,7 @@ final class OpenAiResponsesProvider implements AiProvider
         $moderationClient = ($feature === 'trend_draft' || $careerReview)
             ? Http::withToken($key)->acceptJson()->connectTimeout(4)->timeout(8) : $client;
         if ($daily && $useExternalModeration) {
-            $postCheckKey = app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential('post_check_api_key');
+            $postCheckKey = app(\App\Domain\AI\Services\AiFeatureRouting::class)->moderationSecret();
             if (! is_string($postCheckKey) || trim($postCheckKey) === '') {
                 throw new AiFailure('MODERATION_UNAVAILABLE', 503);
             }

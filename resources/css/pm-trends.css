@@ -10,7 +10,7 @@
 .pm-trends-filters { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:13px; }
 .pm-trends .pm-trend-filter { display:inline-flex; align-items:center; justify-content:center; gap:11px; min-width:117px; min-height:var(--pm-control-dimension-40px); padding:var(--pm-control-padding-7px) var(--pm-control-padding-17px); border:1px solid var(--divider); border-radius:var(--radius); background:var(--surface); color:var(--text); font-family:var(--font); font-size:var(--type-small); font-weight:var(--type-weight-semibold); line-height:var(--type-line-h4); box-shadow:var(--pm-shadow); white-space:nowrap; }
 .pm-trends .pm-trend-filter:first-child { min-width:120px; }
-.pm-trends .pm-trend-filter.is-selected { background:var(--primary); color:var(--surface); border-color:var(--primary); }
+.pm-trends .pm-trend-filter.is-selected { background:var(--pm-action-blue); color:var(--pm-on-solid); border-color:var(--primary); }
 .pm-trends .pm-trend-filter:hover:not(.is-selected) { background:var(--primary-soft); border-color:var(--primary); }
 .pm-trend-cards { display:grid; gap:6px; }
 .pm-trend-card { display:grid; grid-template-columns:250px minmax(0,1fr) 124px; gap:20px; align-items:center; min-height:123px; padding:12px 17px; background:var(--surface); border:1px solid var(--divider); border-radius:var(--card-radius); box-shadow:var(--pm-shadow); }

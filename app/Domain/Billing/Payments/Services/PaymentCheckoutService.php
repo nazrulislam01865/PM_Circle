@@ -21,7 +21,7 @@ final class PaymentCheckoutService
         return $this->create($user, 'membership', $priceId, $clientKey);
     }
 
-    public function aiCredits(User $user, int $packageId, string $clientKey): array
+    public function aiCredits(User $user, int $packageId, string $clientKey, ?string $provider = null): array
     {
         if (! config('pm-ai.purchases_enabled')) {
             throw new PaymentFailure('PURCHASES_DISABLED', 503);
@@ -31,22 +31,23 @@ final class PaymentCheckoutService
             || $plan['source'] !== 'subscription') {
             throw new PaymentFailure('NOT_ENTITLED', 403);
         }
-        return $this->create($user, 'ai_credit', $packageId, $clientKey);
+        return $this->create($user, 'ai_credit', $packageId, $clientKey, $provider);
     }
 
-    private function create(User $user, string $type, int $productId, string $clientKey): array
+    private function create(User $user, string $type, int $productId, string $clientKey, ?string $requestedProvider = null): array
     {
         // Reject payment initiation before inserting any financial row if no provider is approved.
-        $gateway = $this->gateways->get();
+        $gateway = $type === 'ai_credit' ? $this->gateways->forAiRefill($requestedProvider) : $this->gateways->get();
         $provider = $gateway->provider();
 
-        [$order, $new] = DB::transaction(function () use ($user, $type, $productId, $clientKey, $provider): array {
+        [$order, $new] = DB::transaction(function () use ($user, $type, $productId, $clientKey, $provider, $requestedProvider): array {
             // The user lock serializes check-then-insert idempotency on PostgreSQL and SQLite.
             DB::table('users')->where('id', $user->id)->lockForUpdate()->first(['id']);
             $previous = DB::table('payment_orders')->where('user_id', $user->id)
                 ->where('idempotency_key', $clientKey)->first();
             if ($previous) {
-                if ($previous->product_type !== $type || (int) $previous->product_id !== $productId) {
+                if ($previous->product_type !== $type || (int) $previous->product_id !== $productId
+                    || ($requestedProvider !== null && $previous->provider !== $provider)) {
                     throw new PaymentFailure('IDEMPOTENCY_KEY_REUSED', 409);
                 }
                 return [$previous, false];
@@ -63,8 +64,10 @@ final class PaymentCheckoutService
                     'price_version' => (int) $product->version];
             } else {
                 $product = DB::table('ai_credit_packages')->where('id', $productId)
-                    ->where('active', true)->first();
-                if (! $product || (int) $product->credits < 1 || (int) $product->credits > 1000000) {
+                    ->where('active', true)->lockForUpdate()->first();
+                if (! $product || (int) $product->credits < 1 || (int) $product->credits > 1000000
+                    || ($product->expires_after_days !== null
+                        && ((int) $product->expires_after_days < 1 || (int) $product->expires_after_days > 3650))) {
                     throw new PaymentFailure('PACKAGE_NOT_AVAILABLE', 404);
                 }
                 $snapshot = ['code' => $product->code, 'version' => (int) $product->version,

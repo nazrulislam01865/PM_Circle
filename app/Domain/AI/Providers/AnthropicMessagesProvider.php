@@ -49,8 +49,7 @@ final class AnthropicMessagesProvider implements AiProvider
 
     private function moderate(string $text): void
     {
-        $runtime = app(AiRuntimeSettings::class);
-        $key = $runtime->credential('post_check_api_key') ?: $runtime->credential('api_key');
+        $key = app(\App\Domain\AI\Services\AiFeatureRouting::class)->moderationSecret(allowLegacyDefault: true);
         if (! $key) throw new AiFailure('MODERATION_UNAVAILABLE', 503);
         try { $response = Http::withToken($key)->acceptJson()->withoutRedirecting()->connectTimeout(4)->timeout(8)->post(config('pm-ai.endpoint').'/moderations', ['model' => 'omni-moderation-latest', 'input' => $text]); }
         catch (ConnectionException) { throw new AiFailure('MODERATION_UNAVAILABLE', 503); }

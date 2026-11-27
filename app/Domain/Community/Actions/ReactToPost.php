@@ -6,6 +6,7 @@ use App\Domain\Community\Services\EngagementStats;
 use App\Models\Post;
 use App\Models\User;
 use App\Support\Community\ReactionIconCatalog;
+use App\Domain\Community\Queries\PostReactionSummary;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -19,6 +20,7 @@ final class ReactToPost
         }
         return DB::transaction(function () use ($user, $post, $type, $includeBreakdown): int|array {
             EngagementStats::lockReaction($user->id);
+            $post = EngagementStats::lockAccessiblePost($post->id, $user);
             $old = DB::table('post_reactions')->where('post_id', $post->id)
                 ->where('user_id', $user->id)->value('type');
 
@@ -43,26 +45,12 @@ final class ReactToPost
             }
 
             if ($includeBreakdown) {
-                $breakdown = array_fill_keys(ReactionIconCatalog::allTypes(), 0);
-                $reads = EngagementStats::readsEnabled();
-                $stats = $reads ? DB::table('post_engagement_stats')->where('post_id', $post->id)->first() : null;
-                if ($stats) {
-                    foreach (EngagementStats::TYPES as $reaction) {
-                        $breakdown[$reaction] = (int) $stats->{$reaction.'_count'};
-                    }
-                }
-                if (! $stats || (int) $stats->other_reactions_count > 0) {
-                    $rows = DB::table('post_reactions')->where('post_id', $post->id)
-                        ->when($stats !== null, fn ($query) => $query->whereNotIn('type', EngagementStats::TYPES))
-                        ->groupBy('type')->selectRaw('type, COUNT(*) AS total')->pluck('total', 'type');
-                    foreach ($rows as $reaction => $total) $breakdown[$reaction] = (int) $total;
-                }
-                return ['reaction' => $type, 'count' => array_sum($breakdown), 'breakdown' => $breakdown];
+                $summary = PostReactionSummary::forPost($post->id);
+                return ['post_id' => $post->id, 'reaction' => $type, 'count' => array_sum($summary['counts']),
+                    'breakdown' => $summary['counts'], 'reaction_breakdown' => $summary['counts'], 'version' => $summary['version']];
             }
-
-            return EngagementStats::readsEnabled()
-                ? (int) DB::table('post_engagement_stats')->where('post_id', $post->id)->value('reactions_count')
-                : (int) DB::table('post_reactions')->where('post_id', $post->id)->count();
+            $total = EngagementStats::readsEnabled() ? DB::table('post_engagement_stats')->where('post_id', $post->id)->value('reactions_count') : null;
+            return $total === null ? DB::table('post_reactions')->where('post_id', $post->id)->count() : (int) $total;
         }, 3);
     }
 }

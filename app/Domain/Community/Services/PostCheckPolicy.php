@@ -34,7 +34,7 @@ final class PostCheckPolicy
     public function assertOperational(): void
     {
         if (! config('pm-ai.enabled') || ! config('pm-ai.post_check_enabled')
-            || ! filled(app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential('post_check_api_key'))
+            || ! app(\App\Domain\AI\Services\AiFeatureRouting::class)->configured('feed_moderation', 'post_check_api_key')
             || ! in_array(config('pm-ai.post_check_provider', 'responses'), ['responses', 'omni'], true)
             || (config('pm-ai.post_check_provider', 'responses') === 'responses'
                 && ((float) app(\App\Domain\AI\Services\AiRuntimeSettings::class)->budget('post_check_daily_budget_usd') < 0.02

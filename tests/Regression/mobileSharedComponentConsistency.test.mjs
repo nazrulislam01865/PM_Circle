@@ -28,7 +28,7 @@ test('real public and member posts share one reaction count and persist the brea
     assert.match(js('components/community/PostCardV2.tsx'),/<PostEngagementActions/);
     assert.doesNotMatch(js('components/community/PostCardV2.tsx'),/buttonLabel=|prototypeIcon/);
     assert.match(js('components/community/PostEngagementActions.tsx'),/showCount=\{false\}/);
-    assert.match(js('components/community/PostEngagementActions.tsx'),/onReactionChange\?\.\(reaction, count, next\)/);
+    assert.match(js('components/community/PostEngagementActions.tsx'),/onReactionChange\?\.\(reaction, count, next, responseVersion\)/);
     assert.match(js('components/dashboard/DashboardFeed.tsx'),/reactionBreakdown: counts/);
     assert.match(js('pages/community/Feed.tsx'),/reaction_breakdown: counts/);
     assert.match(mobile,/\.pm-post-reaction-stack \{ display: inline-flex/);

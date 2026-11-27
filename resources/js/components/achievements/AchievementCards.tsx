@@ -11,6 +11,7 @@ export function achievementDate(value: string) {
     return new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeZone: 'Asia/Dhaka' }).format(new Date(value.length === 10 ? `${value}T12:00:00+06:00` : value));
 }
 export function badgeRequirement(badge: AchievementBadge) {
+    if (badge.mode === 'completion') return `${badge.target} of ${badge.targetLabels?.length ?? badge.target} selected activities completed${badge.targetLabels?.length ? `: ${badge.targetLabels.join(', ')}` : ''}.`;
     return badge.metric === 'profile' ? `Reach ${badge.target}% profile completion.` : `${badge.target} ${badge.unit}.`;
 }
 export function badgeProgressText(badge: AchievementBadge) {
@@ -19,9 +20,11 @@ export function badgeProgressText(badge: AchievementBadge) {
     return `${Math.min(badge.value, badge.target)} / ${badge.target} · ${remaining}${badge.metric === 'profile' ? ' percentage points' : ' more'} to unlock`;
 }
 export function BadgeMedal({ badge }: { badge: AchievementBadge }) {
-    const palette = ['light', 'dark', 'edge'].reduce((style, key) => ({ ...style, [`--medal-${key}`]: `var(--achievement-${badge.metric}-${key})` }), {}) as CSSProperties;
+    const art = badge.art ?? badge.metric;
+    if (badge.artworkUrl) return <span className={`pm-ach-medal is-${badge.status}`} aria-hidden="true"><img className="pm-ach-custom-art" src={badge.artworkUrl} alt=""/></span>;
+    const palette = ['light', 'dark', 'edge'].reduce((style, key) => ({ ...style, [`--medal-${key}`]: `var(--achievement-${art}-${key})` }), {}) as CSSProperties;
     return <span className={`pm-ach-medal tier-${badge.tier} is-${badge.status}`} style={palette} aria-hidden="true">
-        <span className="pm-ach-medal-face"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.55" strokeLinecap="round" strokeLinejoin="round"><path d={medalPaths[badge.metric] ?? medalPaths.courses}/></svg></span>
+        <span className="pm-ach-medal-face"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.55" strokeLinecap="round" strokeLinejoin="round"><path d={medalPaths[art] ?? medalPaths.courses}/></svg></span>
         <span className="pm-ach-medal-tier">{['I', 'II', 'III'][badge.tier - 1]}</span>
     </span>;
 }

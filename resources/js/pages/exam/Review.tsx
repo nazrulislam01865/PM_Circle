@@ -11,7 +11,8 @@ export default function Review({ shell, attempt, questions, responses }: {
     questions: ExamQuestion[];
     responses: ExamResponses;
 }) {
-    const query = new URLSearchParams(usePage().url.split('?')[1] ?? '');
+    const page = usePage<{auth?: {user?: {settings?: {show_rationales?: boolean}} | null}}>();
+    const query = new URLSearchParams(page.url.split('?')[1] ?? '');
     const requested = query.get('filter');
     const initial: ReviewFilter = requested === 'incorrect' || requested === 'missed' ? 'missed'
         : requested === 'unanswered' || requested === 'flagged' ? requested : 'all';
@@ -22,7 +23,7 @@ export default function Review({ shell, attempt, questions, responses }: {
             <Link href="/exams/pmp?tab=history">PMP® Exam Simulator</Link><span aria-hidden="true">›</span>
             <span aria-current="page">Question Review</span>
         </nav>
-        <PmpExamReviewView questions={questions} responses={responses} total={attempt.total} correct={attempt.correct} initial={initial}
+        <PmpExamReviewView questions={questions} responses={responses} total={attempt.total} correct={attempt.correct} initial={initial} showRationales={page.props.auth?.user?.settings?.show_rationales !== false}
             actions={<Link className="pm-review-outline-button" href="/exams/pmp?tab=history"><ArrowLeft aria-hidden="true" size={15}/>Back to Exam History</Link>}
             renderQuestionFooter={(question, metadata) => <PmpQuestionAiChat key={question.id} attemptId={attempt.id} questionId={question.id} questionMeta={metadata}/>}/>
     </ExamPage>;

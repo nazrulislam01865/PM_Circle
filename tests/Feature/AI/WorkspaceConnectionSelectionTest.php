@@ -39,4 +39,16 @@ final class WorkspaceConnectionSelectionTest extends TestCase
         $this->actingAs($member)->getJson($url)->assertForbidden();
         $this->putJson($url, $data)->assertForbidden();
     }
+    public function test_explicit_workspace_safety_credential_overrides_default_without_fallback(): void
+    {
+        config()->set(['pm-ai.api_key' => 'synthetic-legacy-key', 'pm-ai.post_check_api_key' => null]);
+        $provider = DB::table('ai_workspace_providers')->where('adapter', 'openai')->where('is_default', true)->value('id');
+        $id = DB::table('ai_workspace_credentials')->insertGetId(['slot' => 'post_check_api_key', 'name' => 'Selected safety', 'secret_encrypted' => Crypt::encryptString('synthetic-safety-key'), 'suffix' => 'key', 'enabled' => true, 'provider_id' => $provider, 'health_code' => 'OPERATION_VERIFIED', 'checked_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('ai_workspace_feature_routes')->insert(['feature_code' => 'feed_moderation', 'strategy' => 'primary_only', 'primary_credential_id' => $id, 'created_at' => now(), 'updated_at' => now()]);
+        $routing = app(AiFeatureRouting::class);
+        $this->assertSame('synthetic-safety-key', $routing->moderationSecret());
+        DB::table('ai_workspace_credentials')->where('id', $id)->update(['enabled' => false]);
+        app(\App\Domain\AI\Services\AiRuntimeSettings::class)->forget();
+        $this->assertNull($routing->moderationSecret(allowLegacyDefault: true));
+    }
 }

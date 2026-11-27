@@ -69,8 +69,8 @@
 }
 
 .pm-btn-primary {
-    background-color: var(--pm-dash-blue);
-    color: var(--surface);
+    background-color: var(--pm-action-blue);
+    color: var(--pm-on-solid);
     border-color: var(--pm-dash-blue);
 }
 
@@ -81,7 +81,7 @@
 
 .pm-btn-secondary {
     background-color: var(--surface);
-    color: var(--pm-tone-1e293b);
+    color: var(--pm-theme-fg-pm-tone-1e293b);
     border-color: var(--pm-tone-cbd5e1);
 }
 
@@ -151,7 +151,7 @@
     left: 0;
     right: 0;
     height: 3px;
-    background-color: var(--primary);
+    background-color: var(--pm-action-blue);
     border-radius: var(--pm-radius-3px) var(--pm-radius-3px) 0 0;
 }
 
@@ -230,7 +230,7 @@
     right: 14px;
     background: var(--pm-color-fx-546);
     backdrop-filter: blur(4px);
-    color: var(--surface);
+    color: var(--pm-on-solid);
     border: 1px solid var(--pm-color-fx-547);
     border-radius: var(--pm-radius-6px);
     padding: var(--pm-control-padding-6px) var(--space-3);
@@ -285,8 +285,8 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: var(--primary);
-    color: var(--surface);
+    background: var(--pm-action-blue);
+    color: var(--pm-on-solid);
     border: 2px solid var(--surface);
     display: flex;
     align-items: center;
@@ -454,13 +454,13 @@
 .pm-project-thumb {
     width: 100%;
     height: 130px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--pm-tone-1e293b) 100%);
+    background: linear-gradient(135deg, var(--pm-action-blue) 0%, var(--pm-tone-1e293b) 100%);
     border-radius: var(--pm-radius-8px);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: var(--surface);
+    color: var(--pm-on-solid);
     gap: 8px;
     box-shadow: inset 0 0 0 1px var(--pm-color-fx-559);
 }
@@ -513,7 +513,7 @@
 
 .pm-skill-tag {
     background: var(--pm-tone-f1f5f9);
-    color: var(--pm-tone-1e293b);
+    color: var(--pm-theme-fg-pm-tone-1e293b);
     font-size: var(--pm-font-size-13px);
     font-weight: var(--pm-font-weight-500);
     padding: 6px 12px;
@@ -525,7 +525,7 @@
 }
 
 .pm-skill-tag .pm-chip-del {
-    color: var(--pm-tone-94a3b8);
+    color: var(--pm-theme-fg-pm-tone-94a3b8);
     background: none;
     border: none;
     cursor: pointer;
@@ -620,7 +620,7 @@
     width: 38px;
     height: 38px;
     background: var(--pm-tone-2563eb);
-    color: var(--surface);
+    color: var(--pm-on-solid);
     border-radius: var(--pm-radius-6px);
     display: flex;
     align-items: center;
@@ -710,7 +710,7 @@
 .pm-label {
     font-size: var(--pm-font-size-13p5px);
     font-weight: var(--type-weight-semibold);
-    color: var(--pm-tone-1e293b);
+    color: var(--pm-theme-fg-pm-tone-1e293b);
 }
 
 .pm-input,
@@ -738,7 +738,7 @@
 .pm-char-count {
     align-self: flex-end;
     font-size: var(--type-caption);
-    color: var(--pm-tone-94a3b8);
+    color: var(--pm-theme-fg-pm-tone-94a3b8);
     margin-top: 2px;
 }
 
@@ -759,7 +759,7 @@
     cursor: pointer;
     font-size: var(--pm-font-size-15px);
     font-weight: var(--type-weight-semibold);
-    color: var(--pm-tone-1e293b);
+    color: var(--pm-theme-fg-pm-tone-1e293b);
     border: none;
     width: 100%;
     text-align: left;
@@ -809,7 +809,7 @@
     gap: 8px;
     font-size: var(--pm-font-size-13p5px);
     font-weight: var(--type-weight-semibold);
-    color: var(--pm-tone-94a3b8);
+    color: var(--pm-theme-fg-pm-tone-94a3b8);
 }
 
 .pm-step-item.is-done {
@@ -833,8 +833,8 @@
 }
 
 .pm-step-item.is-current .pm-step-num {
-    background: var(--primary);
-    color: var(--surface);
+    background: var(--pm-action-blue);
+    color: var(--pm-on-solid);
     border-color: var(--primary);
 }
 
@@ -857,7 +857,7 @@
 .pm-comparison-tbl td {
     padding: 14px;
     border-bottom: 1px solid var(--pm-tone-f1f5f9);
-    color: var(--pm-tone-1e293b);
+    color: var(--pm-theme-fg-pm-tone-1e293b);
     vertical-align: middle;
 }
 
@@ -932,7 +932,7 @@
 }
 
 .pm-switch input:checked + .pm-slider {
-    background-color: var(--primary);
+    background-color: var(--pm-action-blue);
 }
 
 .pm-switch input:checked + .pm-slider:before {
@@ -1035,7 +1035,7 @@
 .pm-profile-record-toggle {
     flex: 1; display: flex; justify-content: space-between; align-items: center; gap: 12px;
     min-width: 0; padding: var(--pm-control-padding-14px) var(--pm-control-padding-18px); text-align: left; font: inherit; font-weight: var(--type-weight-semibold);
-    border: 0; background: transparent; color: var(--pm-tone-1e293b); cursor: pointer;
+    border: 0; background: transparent; color: var(--pm-theme-fg-pm-tone-1e293b); cursor: pointer;
 }
 .pm-profile-record-toggle:hover { background: var(--pm-tone-eff6ff); }
 .pm-profile-record-delete { padding: 0 16px; border: 0; background: transparent; color: var(--danger); cursor: pointer; }

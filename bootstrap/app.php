@@ -35,6 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
         );
 
         $middleware->web(append: [
+            \App\Http\Middleware\AuthenticateMemberSession::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
@@ -68,6 +69,14 @@ return Application::configure(basePath: dirname(__DIR__))
                     default => route('admin.events.index'),
                 };
                 return redirect()->to($route, 303)->withErrors(['event' => "Too many event requests. Try again in {$retryAfter} seconds."]);
+            }
+
+            if ($request->is('settings/account/revoke-sessions')) {
+                return redirect()->route('account-settings.edit', [], 303)->withErrors(['password' => "Too many attempts. Try again in {$retryAfter} seconds."]);
+            }
+
+            if ($request->is('settings/account') && $request->isMethod('PATCH')) {
+                return redirect()->route('account-settings.edit', [], 303)->withErrors(['settings' => "Too many settings updates. Try again in {$retryAfter} seconds."]);
             }
 
             if (! $request->isMethod('POST')) {

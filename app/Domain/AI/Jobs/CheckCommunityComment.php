@@ -28,7 +28,12 @@ final class CheckCommunityComment implements ShouldQueue
     public int $timeout = 90;
     public array $backoff = [15, 60, 180];
 
-    public function __construct(public int $commentId) {}
+    public ?int $revision = null;
+
+    public function __construct(public int $commentId, ?int $revision = null)
+    {
+        $this->revision = $revision;
+    }
 
     public function handle(PostContentCheckService $checker, PostCheckPolicy $policy): void
     {
@@ -36,9 +41,9 @@ final class CheckCommunityComment implements ShouldQueue
             $this->release(60);
             return;
         }
-        $comment = Comment::query()->with(['post:id,body,status', 'parent:id,body,check_status'])
+        $comment = Comment::query()->with(['post:id,body,status', 'parent:id,post_id,parent_id,body,check_status,deleted_at'])
             ->find($this->commentId);
-        if (! $comment || $comment->check_status !== 'pending_check') return;
+        if (! $comment || $comment->check_status !== 'pending_check' || ($this->revision !== null && $this->revision !== (int) $comment->check_version)) return;
         $run = DB::table('comment_check_runs')->where('comment_id', $comment->id)->first();
         if (! $run || ! app(PostCheckBudget::class)->claim('comment_check_runs', $run->id)) return;
 
@@ -70,9 +75,13 @@ final class CheckCommunityComment implements ShouldQueue
             $cost = round(($result['input_tokens'] * 0.05 + $result['output_tokens'] * 0.40) / 1000000, 8);
             DB::transaction(function () use ($comment, $run, $result, $policy, $cost): void {
                 if (config('community.engagement_write_gate')) throw new RuntimeException('POST_CHECK_OUTCOME_UNKNOWN');
-                if (EngagementStats::writesEnabled()) EngagementStats::lockMember($comment->author_id);
-                $locked = Comment::query()->whereKey($comment->id)->lockForUpdate()->first();
-                if (! $locked || $locked->check_status !== 'pending_check') return;
+                EngagementStats::lockMember($comment->author_id);
+                $post = \App\Models\Post::withTrashed()->whereKey($comment->post_id)->lockForUpdate()->first();
+                if (! $post) return;
+                $locked = Comment::withTrashed()->whereKey($comment->id)->first();
+                if (! $locked) return;
+                $locked = EngagementStats::lockComment($locked);
+                if ($locked->trashed() || $locked->check_status !== 'pending_check' || (int) $locked->check_version !== (int) $comment->check_version) return;
                 if ($result['violates']) {
                     $locked->check_status = 'restricted';
                     $locked->check_reason = $result['reason'];
@@ -85,7 +94,7 @@ final class CheckCommunityComment implements ShouldQueue
                     $locked->check_status = 'approved';
                     $locked->check_reason = null;
                     DB::afterCommit(static function () use ($locked): void {
-                        app(\App\Domain\Notifications\ActivityNotifier::class)->forComment($locked);
+                        if ($locked->isVisible()) app(\App\Domain\Notifications\ActivityNotifier::class)->forComment($locked);
                         app(CommunityImageVariants::class)->queue('local', $locked->media_path);
                     });
                 }
@@ -109,8 +118,18 @@ final class CheckCommunityComment implements ShouldQueue
 
     public function failed(?Throwable $exception): void
     {
-        Comment::query()->whereKey($this->commentId)->where('check_status', 'pending_check')
-            ->update(['check_status' => 'check_error',
-                'check_reason' => 'We could not check your comment. Please try again.']);
+        if (config('community.engagement_write_gate')) {
+            // Preserve the pending record for operator replay after the gate opens.
+            return;
+        }
+        DB::transaction(function (): void {
+            $comment = Comment::query()->find($this->commentId);
+            if (! $comment) return;
+            EngagementStats::lockMember($comment->author_id);
+            EngagementStats::lockPost($comment->post_id);
+            $locked = EngagementStats::lockComment($comment);
+            if ($locked->trashed() || $locked->check_status !== 'pending_check' || ($this->revision !== null && $this->revision !== (int) $locked->check_version)) return;
+            $locked->forceFill(['check_status' => 'check_error', 'check_reason' => 'We could not check your comment. Please try again.'])->save();
+        }, 3);
     }
 }

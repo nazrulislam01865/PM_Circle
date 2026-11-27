@@ -37,7 +37,7 @@
 .pm-learn-progress-wrap > span { font-size: var(--type-caption); color: var(--pm-tone-596982); min-width: 29px; text-align: right; }
 .pm-learn-levels { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 12px; }
 .pm-learn-levels button { border-radius: var(--pm-radius-17px); padding: var(--pm-control-padding-7px) var(--pm-control-padding-17px); border: 1px solid var(--pm-tone-d9e5f0); background: var(--surface); font-size: var(--type-caption); color: var(--pm-tone-283750); }
-.pm-learn-levels button.active { background: var(--learn-blue); color: var(--surface); border-color: var(--learn-blue); }
+.pm-learn-levels button.active { background: var(--learn-blue); color: var(--pm-on-solid); border-color: var(--learn-blue); }
 .pm-learn-filters { display: flex; gap: 10px; margin-bottom: 13px; }
 .pm-learn-search { display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0; border: 1px solid var(--learn-border); background: var(--surface); height: var(--pm-control-dimension-39px); padding: 0 var(--space-3); border-radius: var(--pm-radius-6px); color: var(--pm-tone-546580); }
 .pm-learn-search input { flex: 1; outline: none; background: transparent; min-width: 0; font-size: var(--pm-font-size-13px); }
@@ -102,8 +102,8 @@
 .pm-learn-medals { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; text-align: center; }
 .pm-learn-medals > div { display: flex; align-items: center; flex-direction: column; gap: 4px; }
 .pm-learn-medals span { border: 2px solid var(--pm-tone-f2b53b); width: 45px; height: 45px; display: grid; place-items: center; border-radius: 50%; color: var(--pm-tone-e3a32f); font-size: var(--type-h2); }
-.pm-learn-medals > div:nth-child(2) span { color: var(--pm-tone-0968da); border-color: var(--pm-tone-0968da); }
-.pm-learn-medals > div:nth-child(3) span { color: var(--pm-tone-09847d); border-color: var(--pm-tone-09847d); }
+.pm-learn-medals > div:nth-child(2) span { color: var(--pm-theme-fg-pm-tone-0968da); border-color: var(--pm-tone-0968da); }
+.pm-learn-medals > div:nth-child(3) span { color: var(--pm-theme-fg-pm-tone-09847d); border-color: var(--pm-tone-09847d); }
 .pm-learn-medals b { font-size: var(--pm-font-size-10px); line-height: var(--type-line-h1); }
 .pm-learn-medals small { font-size: var(--pm-font-size-10px); color: var(--learn-muted); line-height: var(--type-line-h1); }
 .pm-learn-next-heading { display: block; font-size: var(--type-caption); }

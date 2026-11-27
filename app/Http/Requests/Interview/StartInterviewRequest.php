@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Interview;
 
 use App\Domain\Interview\QuestionCatalog;
+use App\Domain\Interview\PracticeSettings;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -18,6 +19,13 @@ final class StartInterviewRequest extends FormRequest
     public function catalogChoices(): array
     {
         return $this->catalogChoices ??= app(QuestionCatalog::class)->choices();
+    }
+
+    private ?array $practiceSettings = null;
+
+    public function practiceSettings(): array
+    {
+        return $this->practiceSettings ??= PracticeSettings::load();
     }
 
     public function rules(): array

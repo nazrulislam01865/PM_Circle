@@ -16,16 +16,19 @@ final class AiCreditCheckoutController extends Controller
 {
     public function packages(Request $request, PaymentGatewayManager $gateways): JsonResponse
     {
-        $enabled = (bool) config('pm-ai.purchases_enabled') && $gateways->ready();
-        return response()->json(['enabled' => $enabled,
-            'provider' => $enabled ? $gateways->get()->provider() : null,
-            'packages' => $enabled
-                ? DB::table('ai_credit_packages')->where('active', true)
-                    ->where('currency', 'BDT')
-                    ->whereBetween('credits', [1, 1000000])
-                    ->whereBetween('price_minor', [1, 100000000])
-                    ->orderBy('price_minor')->get(['id', 'code', 'title', 'credits',
-                        'price_minor', 'currency', 'expires_after_days']) : []]);
+        $providers = $gateways->aiRefillProviders();
+        // The catalog remains visible while payment activation is pending; no fake prices or links.
+        return response()->json(['enabled' => $providers !== [],
+            'provider' => $providers[0] ?? null, // Legacy client compatibility.
+            'providers' => $providers,
+            'packages' => DB::table('ai_credit_packages')->where('active', true)
+                ->where('currency', 'BDT')
+                ->whereBetween('credits', [1, 1000000])
+                ->whereBetween('price_minor', [1, 100000000])
+                ->where(fn ($query) => $query->whereNull('expires_after_days')
+                    ->orWhereBetween('expires_after_days', [1, 3650]))
+                ->orderBy('price_minor')->orderBy('id')->get(['id', 'code', 'title', 'credits',
+                    'price_minor', 'currency', 'expires_after_days'])]);
     }
 
     public function checkout(Request $request, AiCheckoutService $service): JsonResponse
@@ -33,10 +36,11 @@ final class AiCreditCheckoutController extends Controller
         $data = $request->validate([
             'package_id' => ['required', 'integer', 'min:1'],
             'client_request_key' => ['required', 'uuid'],
+            'provider' => ['nullable', 'in:bkash,sslcommerz'],
         ]);
         try {
             return response()->json($service->checkout($request->user(),
-                $data['package_id'], $data['client_request_key']), 202);
+                $data['package_id'], $data['client_request_key'], $data['provider'] ?? null), 202);
         } catch (AiFailure|PaymentFailure $e) {
             return response()->json(['code' => $e->safeCode], $e->httpStatus);
         }

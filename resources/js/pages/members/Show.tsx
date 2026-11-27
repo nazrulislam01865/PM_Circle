@@ -34,7 +34,7 @@ export default function Show({ member, overview, posts, activeTab, following, is
                 <div className="pm-profile-top-actions ml-auto flex-wrap">
                     <Link href="/members" className="pm-btn pm-btn-secondary"><ArrowLeft size={16}/> All members</Link>
                     {isOwnProfile ? <Link href="/settings/profile" className="pm-btn pm-btn-primary">Edit profile</Link>
-                        : canFollow && <button type="button" className={`pm-btn ${following ? 'pm-btn-secondary' : 'pm-btn-primary'}`} onClick={follow}><UserRoundCheck size={17}/>{following ? 'Following' : canInteract ? 'Follow member' : 'Log in to follow'}</button>}
+                        : (canFollow || following) && <button type="button" className={`pm-btn ${following ? 'pm-btn-secondary' : 'pm-btn-primary'}`} onClick={follow}><UserRoundCheck size={17}/>{following ? 'Following' : canInteract ? 'Follow member' : 'Log in to follow'}</button>}
                 </div>
             </header>
             <nav className="pm-profile-nav-tabs pm-member-tertiary-sticky" aria-label="Member profile tabs">

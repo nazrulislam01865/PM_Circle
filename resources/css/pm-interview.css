@@ -14,13 +14,13 @@
 .pm-interview-card-body { padding: var(--s4); min-width: 0; }
 .pm-interview-home-grid { display: grid; grid-template-columns: minmax(0, 2.08fr) minmax(17.5rem, 1fr); gap: var(--s3); align-items: start; }
 .pm-interview-home-main, .pm-interview-home-side { display: grid; gap: var(--s3); min-width: 0; }
-.pm-interview-hero { position: relative; isolation: isolate; display: flex; overflow: hidden; min-height: var(--pm-interview-hero-height); border-radius: var(--radius-card); background: linear-gradient(112deg, var(--ink), var(--blue) 58%, color-mix(in srgb, var(--blue) 72%, var(--surface))); color: var(--surface); }
-.pm-interview-hero > div:first-child { padding: var(--s5) var(--s6); position: relative; z-index: 1; width: 68%; background: linear-gradient(90deg, var(--ink) 60%, transparent); }
-.pm-interview-hero h2 { color: var(--surface); font-size: var(--text-h2); line-height: var(--line-h2); margin-bottom: var(--s2); }
+.pm-interview-hero { position: relative; isolation: isolate; display: flex; overflow: hidden; min-height: var(--pm-interview-hero-height); border-radius: var(--radius-card); background: linear-gradient(112deg, var(--pm-solid-navy), var(--pm-action-blue) 58%, color-mix(in srgb, var(--pm-action-blue) 72%, var(--surface))); color: var(--pm-on-solid); }
+.pm-interview-hero > div:first-child { padding: var(--s5) var(--s6); position: relative; z-index: 1; width: 68%; background: linear-gradient(90deg, var(--pm-solid-navy) 60%, transparent); }
+.pm-interview-hero h2 { color: var(--pm-on-solid); font-size: var(--text-h2); line-height: var(--line-h2); margin-bottom: var(--s2); }
 .pm-interview-hero ul { display: grid; gap: var(--s1); font-size: var(--text-sm); line-height: var(--line-sm); list-style: none; margin: 0; padding: 0; }
 .pm-interview-hero li { display: flex; align-items: center; gap: var(--s2); }
 .pm-interview-hero li svg { flex: none; }
-.pm-interview-hero-image { position: absolute; right: 0; top: 0; bottom: 0; width: 55%; background: linear-gradient(90deg, var(--blue), transparent 55%), url('/images/interview/industry-hero.webp') center 42% / cover no-repeat; opacity: .9; }
+.pm-interview-hero-image { position: absolute; right: 0; top: 0; bottom: 0; width: 55%; background: linear-gradient(90deg, var(--pm-action-blue), transparent 55%), url('/images/interview/industry-hero.webp') center 42% / cover no-repeat; opacity: .9; }
 .pm-interview-setup .pm-interview-card-body { padding: var(--s3); }
 .pm-interview-setup form { display: grid; gap: var(--s4); }
 .pm-interview-fieldset { min-width: 0; padding: 0; margin: 0; border: 0; }
@@ -36,14 +36,14 @@
 .pm-interview-choice { position: relative; display: flex; justify-content: center; align-items: center; flex-direction: column; gap: var(--s1); min-width: 0; padding: var(--s2) var(--s1); min-height: var(--control-touch); font-size: var(--text-xs); line-height: var(--line-xs); color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-control); cursor: pointer; font-weight: var(--medium); text-align: center; }
 .pm-interview-choice svg { flex: none; color: var(--blue); }
 .pm-interview-choice:hover { background: var(--blue-soft); border-color: var(--blue); }
-.pm-interview-choice.is-selected { background: var(--blue); border-color: var(--blue); color: var(--surface); }
-.pm-interview-choice.is-selected svg { color: var(--surface); }
+.pm-interview-choice.is-selected { background: var(--pm-action-blue); border-color: var(--blue); color: var(--pm-on-solid); }
+.pm-interview-choice.is-selected svg { color: var(--pm-on-solid); }
 .pm-interview-choice.is-selected .pm-interview-selected-mark { position: absolute; left: var(--s1); top: var(--s1); }
 .pm-interview-choice small { display: block; font-weight: var(--regular); color: inherit; font-size: var(--text-xs); }
 .pm-interview-role-grid .pm-interview-choice { flex-direction: row; gap: var(--s1); }
 .pm-interview-options-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(13rem, 1fr); gap: var(--s4); }
 .pm-interview-type { display: inline-flex; align-items: center; justify-content: center; gap: var(--s2); border: 1px solid var(--border); border-radius: var(--radius-control); min-height: var(--control-compact); cursor: pointer; font-size: var(--text-xs); background: var(--surface); padding: var(--s1); }
-.pm-interview-type.is-selected { background: var(--blue); border-color: var(--blue); color: var(--surface); }
+.pm-interview-type.is-selected { background: var(--pm-action-blue); border-color: var(--blue); color: var(--pm-on-solid); }
 .pm-interview-type input { width: 1rem; height: 1rem; margin: 0; accent-color: var(--blue); }
 .pm-interview-type.is-selected input { accent-color: var(--surface); }
 .pm-interview-setup-footer { display: grid; grid-template-columns: minmax(9rem,1fr) minmax(9rem,1fr) minmax(14rem,1.5fr); gap: var(--s3); padding-top: var(--s2); border-top: 1px solid var(--border); }
@@ -64,7 +64,7 @@
 .pm-interview-mini-performance { display: flex; align-items: center; gap: var(--s3); }
 .pm-interview-mini-performance > div:last-child { display: grid; justify-items: start; gap: var(--s2); font-size: var(--text-sm); }
 .pm-interview-mini-performance small { font-size: var(--text-xs); color: var(--muted); }
-.pm-interview-donut { width: var(--pm-interview-score-size); aspect-ratio: 1; flex: none; border-radius: 50%; background: conic-gradient(var(--blue) var(--interview-progress), var(--track) 0); display: grid; place-items: center; }
+.pm-interview-donut { width: var(--pm-interview-score-size); aspect-ratio: 1; flex: none; border-radius: 50%; background: conic-gradient(var(--pm-action-blue) var(--interview-progress), var(--track) 0); display: grid; place-items: center; }
 .pm-interview-practice-donut { --interview-progress: 100%; }
 .pm-interview-donut > div { background: var(--surface); width: 78%; aspect-ratio: 1; border-radius: 50%; display: grid; align-content: center; justify-items: center; }
 .pm-interview-donut strong { font-size: var(--text-stat); line-height: var(--line-stat); font-weight: var(--bold); font-variant-numeric: tabular-nums; }
@@ -94,7 +94,7 @@
 .pm-interview-why h3 { margin-top: var(--s2); font-size: var(--text-h4); }
 .pm-interview-why p { margin-top: var(--s2); font-size: var(--text-body); }
 .pm-interview-progress { position: relative; height: var(--bar-height); width: 100%; overflow: hidden; background: var(--track); border-radius: var(--radius-pill); }
-.pm-interview-progress > span { display: block; height: 100%; background: var(--blue); border-radius: var(--radius-pill); transition: width .2s ease; }
+.pm-interview-progress > span { display: block; height: 100%; background: var(--pm-action-blue); border-radius: var(--radius-pill); transition: width .2s ease; }
 /* Practice and speech/transcription */
 .pm-interview-practice-card { overflow: hidden; }
 .pm-interview-practice-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--s4); padding: var(--s3) var(--s5); border-bottom: 1px solid var(--border); }
@@ -106,13 +106,13 @@
 .pm-interview-time { white-space: nowrap; }
 .pm-interview-practice-content { display: grid; gap: var(--s4); padding: var(--s4) var(--s5); }
 .pm-interview-question { background: var(--blue-soft); border-radius: var(--radius-control); padding: var(--s3) var(--s4); display: flex; align-items: center; gap: var(--s4); }
-.pm-interview-question > span { display: grid; place-items: center; color: var(--surface); background: var(--blue); border-radius: 50%; width: 1.5rem; height: 1.5rem; flex: none; font-weight: var(--bold); }
+.pm-interview-question > span { display: grid; place-items: center; color: var(--pm-on-solid); background: var(--pm-action-blue); border-radius: 50%; width: 1.5rem; height: 1.5rem; flex: none; font-weight: var(--bold); }
 .pm-interview-question h3 { font-size: var(--text-h3); }
 .pm-interview-answer-panel { border: 1px solid var(--border); border-radius: var(--radius-card); overflow: hidden; }
 .pm-interview-answer-tabs { display: flex; align-items: stretch; border-bottom: 1px solid var(--border); background: var(--canvas); }
 .pm-interview-answer-tabs button { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: var(--s2); padding: var(--s3) var(--s4); border: none; background: transparent; color: var(--muted); font-size: var(--text-ui); font-weight: var(--semibold); cursor: pointer; }
 .pm-interview-answer-tabs button.is-active { color: var(--blue); background: var(--surface); }
-.pm-interview-answer-tabs button.is-active::after { position: absolute; content: ''; height: 3px; background: var(--blue); left: 0; right: 0; bottom: 0; border-radius: var(--radius-pill); }
+.pm-interview-answer-tabs button.is-active::after { position: absolute; content: ''; height: 3px; background: var(--pm-action-blue); left: 0; right: 0; bottom: 0; border-radius: var(--radius-pill); }
 .pm-interview-type-box { position: relative; }
 .pm-interview-type-box textarea, .pm-interview-transcript textarea { display: block; width: 100%; resize: vertical; min-height: 11rem; color: var(--ink); background: var(--surface); padding: var(--s4); border: 0; font-size: var(--text-body); line-height: var(--line-body); }
 .pm-interview-type-box textarea { padding-bottom: var(--s8); }
@@ -129,15 +129,15 @@
 .pm-interview-question-links :is(a,button) { display: inline-flex; gap: var(--s1); align-items: center; border: 0; background: none; color: var(--blue); font-size: var(--text-sm); cursor: pointer; }
 .pm-interview-speech-panel { padding: var(--s4); display: grid; gap: var(--s4); }
 .pm-interview-speech-main { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: var(--s6); align-items: center; }
-.pm-interview-mic-orb { width: 6.5rem; height: 6.5rem; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle, var(--blue) 0 40%, var(--blue-soft) 41% 58%, var(--track) 59% 70%, transparent 71%); color: var(--surface); }
+.pm-interview-mic-orb { width: 6.5rem; height: 6.5rem; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle, var(--pm-action-blue) 0 40%, var(--blue-soft) 41% 58%, var(--track) 59% 70%, transparent 71%); color: var(--pm-on-solid); }
 .pm-interview-mic-orb.is-listening { animation: pm-interview-pulse 1.8s ease-in-out infinite; }
 @keyframes pm-interview-pulse { 50% { filter: brightness(1.1); } }
 .pm-interview-speech-activity { min-width: 0; }
 .pm-interview-record-state { display: flex; align-items: center; gap: var(--s2); font-size: var(--text-sm); }
 .pm-interview-record-state > span { display: inline-block; width: .6rem; height: .6rem; background: var(--neutral); border-radius: 50%; }
-.pm-interview-record-state > span.is-recording { background: var(--red); }
+.pm-interview-record-state > span.is-recording { background: var(--pm-solid-red); }
 .pm-interview-waveform { height: 3.5rem; display: flex; align-items: center; justify-content: center; gap: 2px; overflow: hidden; }
-.pm-interview-waveform i { width: 3px; flex: 1; max-width: 3px; border-radius: var(--radius-pill); background: var(--blue); transition: height 60ms ease-out; }
+.pm-interview-waveform i { width: 3px; flex: 1; max-width: 3px; border-radius: var(--radius-pill); background: var(--pm-action-blue); transition: height 60ms ease-out; }
 .pm-interview-saved { display: inline-flex; gap: var(--s2); align-items: center; color: var(--green); font-size: var(--text-ui); font-weight: var(--semibold); }
 .pm-interview-record-controls { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: var(--s3); }
 .pm-interview-speech-timer { padding-left: var(--s5); border-left: 1px solid var(--border); white-space: nowrap; font-size: var(--text-h3); }
@@ -249,7 +249,7 @@
     .pm-interview-heading { align-items: flex-start; }
     .pm-interview-heading h1 { font-size: var(--text-h1); }
     .pm-interview-heading > svg { width: 1.5rem; }
-    .pm-interview-hero > div:first-child { width: 100%; background: linear-gradient(90deg, var(--ink), color-mix(in srgb, var(--ink) 85%, transparent)); }
+    .pm-interview-hero > div:first-child { width: 100%; background: linear-gradient(90deg, var(--pm-solid-navy), color-mix(in srgb, var(--pm-solid-navy) 85%, transparent)); }
     .pm-interview-hero-image { opacity: .2; width: 100%; }
     .pm-interview-industry-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
     .pm-interview-role-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
@@ -387,16 +387,16 @@
 .pm-if-layout.is-single { grid-template-columns:minmax(0,1fr); }
 .pm-if-stack { display:grid; gap:var(--s3); min-width:0; align-content:start; }
 .pm-if-stack-small { display:grid; gap:var(--s2); min-width:0; }
-.pm-if-hero { min-height:var(--pm-interview-flow-hero-height); display:grid; align-content:center; padding:var(--s5) var(--s6); border:1px solid var(--border); border-radius:var(--radius-card); background:linear-gradient(90deg,var(--pm-interview-flow-hero) 40%,transparent 100%),url('/images/interview/role-focused-hero.jpg') right center/auto 100% no-repeat,var(--pm-interview-flow-hero); color:var(--surface); }
-.pm-interview-flow .pm-if-hero h2 { color:var(--surface); font-size:var(--text-h2); line-height:var(--line-h2); }
-.pm-interview-flow .pm-if-hero p { max-width:65%; margin-top:var(--s2); font-size:var(--text-ui); line-height:var(--line-body); color:var(--surface); }
+.pm-if-hero { min-height:var(--pm-interview-flow-hero-height); display:grid; align-content:center; padding:var(--s5) var(--s6); border:1px solid var(--border); border-radius:var(--radius-card); background:linear-gradient(90deg,var(--pm-interview-flow-hero) 40%,transparent 100%),url('/images/interview/role-focused-hero.jpg') right center/auto 100% no-repeat,var(--pm-interview-flow-hero); color:var(--pm-on-solid); }
+.pm-interview-flow .pm-if-hero h2 { color:var(--pm-on-solid); font-size:var(--text-h2); line-height:var(--line-h2); }
+.pm-interview-flow .pm-if-hero p { max-width:65%; margin-top:var(--s2); font-size:var(--text-ui); line-height:var(--line-body); color:var(--pm-on-solid); }
 .pm-if-wizard { overflow:hidden; }
 .pm-if-steps { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:var(--s2); list-style:none; margin:0; padding:var(--s3) var(--s4); border-bottom:1px solid var(--border); background:var(--pm-guide-soft); }
 .pm-if-steps li { display:flex; align-items:center; gap:var(--s2); font-size:var(--text-xs); color:var(--muted); min-width:0; }
 .pm-if-steps li > span { width:var(--s6); height:var(--s6); display:grid; place-items:center; flex:none; background:var(--track); color:var(--muted); border-radius:var(--radius-pill); font-weight:var(--bold); }
 .pm-if-steps li.is-done > span { background:var(--green-soft); color:var(--green); }
 .pm-if-steps li.is-current { color:var(--blue); font-weight:var(--bold); }
-.pm-if-steps li.is-current > span { background:var(--blue); color:var(--surface); }
+.pm-if-steps li.is-current > span { background:var(--pm-action-blue); color:var(--pm-on-solid); }
 .pm-if-pad { display:grid; gap:var(--s3); padding:var(--s5); min-width:0; }
 .pm-if-intro { display:grid; gap:var(--s1); margin-bottom:var(--s2); }
 .pm-interview-flow .pm-if-intro h2 { font-size:var(--text-h2); line-height:var(--line-h2); }
@@ -464,3 +464,5 @@
 @media(max-width: 1100px) { .pm-if-layout { grid-template-columns:minmax(0,1fr) minmax(13rem,.55fr); } }
 @media(max-width: 900px) { .pm-if-layout { grid-template-columns:minmax(0,1fr); } }
 @media(max-width: 600px) { .pm-if-heading { flex-wrap:wrap; } .pm-if-fields { grid-template-columns:minmax(0,1fr); } .pm-if-steps li { flex-direction:column; text-align:center; gap:var(--s1); } .pm-if-pad { padding:var(--s3); } .pm-if-hero { padding:var(--s4); } .pm-interview-flow .pm-if-hero p { max-width:85%; } .pm-if-summary dt { flex-shrink:1; } }
+
+.pm-if-hero-title{white-space:pre-line;overflow-wrap:anywhere}

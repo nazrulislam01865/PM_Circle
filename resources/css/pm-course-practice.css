@@ -7,7 +7,7 @@
 .pm-course-quiz-head p,.pm-course-quiz-navigator p{font-size:var(--text-sm);color:var(--muted)}
 .pm-course-quiz-timer{display:flex;gap:var(--s2);align-items:center;font-variant-numeric:tabular-nums;padding:var(--s2) var(--s3);border:1px solid var(--border);background:var(--surface);border-radius:var(--radius-control)}
 .pm-course-quiz-progress{height:var(--bar-height);background:var(--track);border-radius:var(--radius-pill);overflow:hidden;margin-bottom:var(--s5)}
-.pm-course-quiz-progress span{display:block;height:100%;background:var(--blue)}
+.pm-course-quiz-progress span{display:block;height:100%;background:var(--pm-action-blue)}
 .pm-course-quiz-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(15rem,18rem);gap:var(--s4);align-items:start}
 .pm-course-quiz-question,.pm-course-quiz-navigator{display:grid;gap:var(--s4);padding:var(--s5)}
 .pm-course-quiz-question-meta{display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap;font-size:var(--text-xs);color:var(--muted)}
@@ -28,7 +28,7 @@
 .pm-course-quiz-numbers button{min-height:var(--control-height);background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:var(--radius-control);font-size:var(--text-sm);font-weight:var(--semibold);cursor:pointer}
 .pm-course-quiz-numbers button.is-answered{background:var(--green-soft);border-color:var(--green)}
 .pm-course-quiz-numbers button.is-marked{outline:2px dashed var(--neutral)}
-.pm-course-quiz-numbers button.is-current{color:var(--surface);background:var(--blue);border-color:var(--blue)}
+.pm-course-quiz-numbers button.is-current{color:var(--pm-on-solid);background:var(--pm-action-blue);border-color:var(--blue)}
 .pm-course-quiz-finish{width:100%}
 .pm-course-quiz-error{color:var(--red);font-size:var(--text-sm)}
 .pm-course-quiz-dialog[data-slot="dialog-content"]{display:grid;gap:var(--s4);padding:var(--s6);width:min(30rem,calc(100% - 2 * var(--s4)));max-width:none;background:var(--surface);border-radius:var(--radius-card);color:var(--ink)}

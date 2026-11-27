@@ -10,7 +10,9 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth', 'pm.member'])->group(function () {
     Route::redirect('settings', '/settings/account');
     Route::get('settings/account', [AccountSettingsController::class, 'edit'])->middleware(['verified', 'pm.onboarded'])->name('account-settings.edit');
+    Route::get('settings/account/payments', [AccountSettingsController::class, 'payments'])->middleware(['verified', 'pm.onboarded', 'throttle:30,1'])->name('account-settings.payments');
     Route::patch('settings/account', [AccountSettingsController::class, 'update'])->middleware(['verified', 'pm.onboarded', 'throttle:20,1'])->name('account-settings.update');
+    Route::post('settings/account/revoke-sessions', [AccountSettingsController::class, 'revokeOtherSessions'])->middleware(['verified', 'pm.onboarded', 'throttle:5,1'])->name('account-settings.revoke-sessions');
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');

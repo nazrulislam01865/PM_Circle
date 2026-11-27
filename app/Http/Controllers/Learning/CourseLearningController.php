@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Learning;
 
 use App\Domain\Billing\Queries\CurrentMemberPlan;
+use App\Domain\Learning\Queries\CourseCertificateData;
 use App\Http\Controllers\Controller;
 use App\Models\LearningCourse;
 use App\Models\LearningCourseQuestion;
@@ -11,7 +12,6 @@ use App\Services\Learning\CourseAccess;
 use App\Services\Learning\CourseLessonProgress;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -32,18 +32,19 @@ final class CourseLearningController extends Controller
         $member = $this->member($request);
         return Inertia::render('learning/Certificates', [
             'certificates' => $member ? DB::table('learning_course_certificates')->where('user_id', $member->id)
-                ->orderByDesc('issued_at')->get()->map(fn ($row) => $this->certificateData($row))->all() : [],
+                ->orderByDesc('issued_at')->orderByDesc('id')->get(['reference', 'member_name', 'course_title', 'issued_at'])->map(fn ($row) => CourseCertificateData::fromRecord($row))->all() : [],
             'isMember' => (bool) $member,
         ]);
     }
 
     public function certificate(Request $request, string $reference): Response
     {
+        abort_unless($this->member($request), 403);
         $row = DB::table('learning_course_certificates')->where('user_id', $request->user()->id)
             ->where('reference', $reference)->first();
         abort_unless($row, 404);
         return Inertia::render('learning/CertificateShow', [
-            'certificate' => $this->certificateData($row), 'print' => $request->boolean('print'),
+            'certificate' => CourseCertificateData::fromRecord($row), 'print' => $request->boolean('print'),
         ]);
     }
 
@@ -118,7 +119,7 @@ final class CourseLearningController extends Controller
     private function member(Request $request): ?\App\Models\User
     {
         $user = $request->user();
-        return $user && ! $user->is_admin && $user->onboarding_step >= 3 && $user->hasVerifiedEmail() ? $user : null;
+        return $user && ! $user->is_admin && $user->status === 'active' && $user->onboarding_step >= 3 && $user->hasVerifiedEmail() ? $user : null;
     }
 
     private function course(string $slug): LearningCourse
@@ -155,9 +156,4 @@ final class CourseLearningController extends Controller
             })->orderBy('id');
     }
 
-    private function certificateData(object $row): array
-    {
-        return ['reference' => $row->reference, 'memberName' => $row->member_name, 'courseTitle' => $row->course_title,
-            'issuedAt' => Carbon::parse($row->issued_at)->timezone(config('app.timezone'))->format('j F Y')];
-    }
 }

@@ -10,7 +10,7 @@ test('all nine prototype settings sections have unique row IDs and an explicit i
     assert.deepEqual(sections.map(section => section[0]), ['Account','Security','Privacy','Notifications','Learning & practice','Community','AI & usage','Plan & billing','Data & account']);
     assert.equal(new Set(fields.map(field => field.id)).size, fields.length);
     assert.ok(fields.every(field => field.mode && field.help));
-    assert.equal(byId.renew.mode, 'unavailable');
+    assert.equal(byId.renew.mode, 'readonly');
     assert.equal(byId.mfa.href, '/settings/security');
     assert.deepEqual(sections[2][3], []); // rendered by the shared profile editor, not duplicate rows
     assert.equal(byId.inapp.mode, 'preference');

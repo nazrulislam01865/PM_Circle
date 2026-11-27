@@ -34,7 +34,7 @@ test('guest authentication and discover journeys use the identical HomeHeader', 
 test('logged-in public pages use the shared sidebar shell and exams keep the focused exam screen', () => {
     assert.match(layout, /auth\?\.user && !auth\.user\.is_admin && memberShell/);
     assert.match(layout, /<MemberDashboardLayout dashboard=\{memberShell\}/);
-    assert.match(read('resources/js/pages/exam/Take.tsx'), /<SiteHeader active="\/exams\/pmp" authenticatedMemberNavigation\s*\/>/);
+    assert.match(read('resources/js/pages/exam/Take.tsx'), /<SiteHeader active="\/exams\/pmp" authenticatedMemberNavigation showOffer=\{false\}\s*\/>/);
     assert.match(read('resources/js/layouts/pm/MemberDashboardLayout.tsx'), /<MemberCompactHeader dashboard=\{dashboard\}/);
     assert.match(read('resources/js/layouts/pm/MemberDashboardLayout.tsx'), /<DashboardSidebar dashboard=\{dashboard\}/);
 });

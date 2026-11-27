@@ -55,6 +55,7 @@ final class CommunityEvent extends Model
         return [...$this->listingData(), 'about' => $this->about, 'hostType' => $this->host_type,
             'publisher' => $this->publisher_id ? 'PM Circle Admin' : 'PM Circle', 'venue' => $this->venue, 'address' => $this->address, 'mapLink' => $this->map_link,
             'coverUrl' => $this->coverUrl(), 'mapUrl' => $this->mapUrl(), 'agenda' => $this->agenda ?? [], 'speakers' => $this->speakers ?? [],
+            'startsAt' => $this->starts_at->toIso8601String(), 'endsAt' => $this->ends_at?->toIso8601String(),
             'endTime' => $this->ends_at ? $this->ends_at->copy()->timezone('Asia/Dhaka')->format('d M Y, g:i A').' BDT' : null,
             'registrationOpen' => $this->registration_open && $this->starts_at->isFuture(), 'discussionOpen' => $this->discussion_open];
     }

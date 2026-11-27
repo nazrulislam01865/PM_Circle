@@ -7,7 +7,9 @@ use App\Http\Controllers\Controller;
 use App\Domain\Community\Actions\PublishPost;
 use App\Domain\Community\Services\EngagementStats;
 use App\Domain\Community\Queries\PostReactionSummary;
+use App\Domain\Community\Queries\RelevantCommentPage;
 use App\Domain\Community\Queries\FeedTabAvailability;
+use App\Domain\Community\Queries\PostCheckFeed;
 use App\Http\Requests\Community\StorePostRequest;
 use App\Models\Post;
 use App\Models\Scenario;
@@ -36,7 +38,13 @@ class PostController extends Controller
         $todayScenario = Scenario::query()->where('status', 'published')
             ->latest('published_at')->first(['id', 'slug', 'title', 'summary']);
 
+        $viewer = $request->user();
+        $canCompose = $viewer && $viewer->status === 'active' && ! $viewer->is_admin
+            && $viewer->onboarding_step >= 3 && $viewer->hasVerifiedEmail();
+
         return Inertia::render('community/Feed', [
+            'postChecks' => fn () => $canCompose ? app(PostCheckFeed::class)->forMember($viewer->id) : null,
+            'flashStatus' => fn () => $canCompose ? $request->session()->get('status') : null,
             'posts' => $feed->page($tab, $topic, $search, $request->user()),
             'activeTopic' => $topic,
             'feedTab' => $tab,
@@ -94,7 +102,7 @@ class PostController extends Controller
                     'comments' => 'comments_count', 'reactions' => 'reactions_count',
                     'likes' => 'like_count', 'loves' => 'love_count',
                 };
-                $post->setAttribute($label.'_count', (int) ($stats->{$column} ?? 0));
+                $post->setAttribute($label.'_count', $stats ? (int) $stats->{$column} : null);
             }
         } else {
             $post->loadCount([
@@ -106,20 +114,33 @@ class PostController extends Controller
 
         // One per-post read for the detail page; the feed uses a batched projection.
         if (EngagementStats::readsEnabled()) {
+            $post->setAttribute('engagement_version', $stats->version ?? null);
             foreach (EngagementStats::TYPES as $type) {
-                $post->setAttribute($type.'_count', (int) ($stats->{$type.'_count'} ?? 0));
+                $post->setAttribute($type.'_count', $stats ? (int) $stats->{$type.'_count'} : null);
             }
         }
         PostReactionSummary::attach(collect([$post]));
 
-        $comments = $post->comments()
+        $commentQuery = $post->comments()
             ->visible()->whereNull('parent_id')
             ->with(['author:id,name,status,is_admin,email_verified_at', 'author.profile:id,user_id,role,avatar_path,visibility,field_visibility'])
-            ->withCount(['likes', 'replies' => fn ($query) => $query->visible()])
+            ->withEngagement(true)
             ->with(['replies' => fn ($query) => $query->visible()->orderBy('created_at')->orderBy('id')->limit(2)
-                ->with(['author:id,name,status,is_admin,email_verified_at', 'author.profile:id,user_id,role,avatar_path,visibility,field_visibility'])->withCount('likes')])
-            ->oldest()
-            ->paginate(12);
+                ->with(['author:id,name,status,is_admin,email_verified_at', 'author.profile:id,user_id,role,avatar_path,visibility,field_visibility'])->withEngagement()])
+            ;
+        $commentSort = $request->query('sort') === 'newest' ? 'newest' : 'relevant';
+        if ($commentSort === 'newest') {
+            $page = $commentQuery->orderByDesc('created_at')->orderByDesc('id')->cursorPaginate(12)->appends(['sort' => 'newest']);
+            $commentRows = $page->getCollection();
+            $nextCommentPage = $page->nextPageUrl();
+            $refreshRelevant = false;
+        } else {
+            $ranked = RelevantCommentPage::page($post, $request, $commentQuery->getQuery());
+            $commentRows = $ranked['rows'];
+            $nextCommentPage = $ranked['next'];
+            $refreshRelevant = $ranked['refresh'];
+        }
+
 
         if ($post->topic === 'Poll') $post->load(['pollOptions' => fn ($query) => $query->withCount('votes')]);
         $post->setAttribute('viewer_vote', $request->user() && $post->topic === 'Poll'
@@ -130,14 +151,14 @@ class PostController extends Controller
         MemberProfileAccess::decorateAuthor($post->author, $request->user());
         $post->anonymizeForPublic();
 
-        foreach ($comments->getCollection() as $comment) {
+        foreach ($commentRows as $comment) {
             MemberProfileAccess::decorateAuthor($comment->author, $request->user());
             foreach ($comment->replies as $reply) {
                 MemberProfileAccess::decorateAuthor($reply->author, $request->user());
             }
         }
 
-        $visibleCommentIds = $comments->getCollection()->flatMap(fn ($root) =>
+        $visibleCommentIds = $commentRows->flatMap(fn ($root) =>
             $root->replies->pluck('id')->push($root->id))->all();
         $viewerCommentReactions = $request->user() && $visibleCommentIds
             ? \Illuminate\Support\Facades\DB::table('comment_likes')
@@ -147,7 +168,8 @@ class PostController extends Controller
 
         return Inertia::render('community/PostShow', [
             'post' => $post,
-            'comments' => $comments,
+            'comments' => ['data' => $commentRows, 'next_page_url' => $nextCommentPage, 'refresh_relevant' => $refreshRelevant],
+            'commentSort' => $commentSort,
             'viewerReaction' => $request->user() ? $post->reactions()->where('user_id', $request->user()->id)->value('type') : null,
             'viewerSaved' => $request->user() ? $post->saves()->where('user_id', $request->user()->id)->exists() : false,
             'viewerLikedCommentIds' => $viewerCommentReactions->filter(fn ($type) => $type === 'like')->keys()->values(),
@@ -164,7 +186,7 @@ class PostController extends Controller
                 ->when(EngagementStats::readsEnabled(), fn ($query) => $query
                     ->leftJoin('post_engagement_stats as related_stats', 'related_stats.post_id', '=', 'posts.id')
                     ->select('posts.id', 'posts.title', 'posts.body')
-                    ->selectRaw('COALESCE(related_stats.comments_count, 0) AS comments_count'))
+                    ->selectRaw("COALESCE(related_stats.comments_count, (SELECT COUNT(*) FROM comments c WHERE c.post_id = posts.id AND c.deleted_at IS NULL AND (c.check_status IS NULL OR c.check_status = 'approved') AND (c.parent_id IS NULL OR EXISTS (SELECT 1 FROM comments r WHERE r.id = c.parent_id AND r.post_id = c.post_id AND r.parent_id IS NULL AND r.deleted_at IS NULL AND (r.check_status IS NULL OR r.check_status = 'approved'))))) AS comments_count"))
                 ->when(! EngagementStats::readsEnabled(), fn ($query) => $query->withCount(['comments' => fn ($query) => $query->visible()]))
                 ->latest('posts.published_at')
                 ->limit(2)
@@ -225,6 +247,6 @@ class PostController extends Controller
             'pending_review' => 'Your post is awaiting an additional safety review.',
             default => 'Your post has been published.',
         };
-        return to_route('dashboard')->with('status', $message);
+        return to_route($request->validated('return_to') === 'community' ? 'community.index' : 'dashboard')->with('status', $message);
     }
 }

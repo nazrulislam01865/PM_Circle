@@ -30,13 +30,14 @@ function editorText(root: HTMLElement): string {
     return Array.from(root.childNodes).map(walk).join('').replace(/\n{3,}/g, '\n\n').trim();
 }
 
-export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onUpdated, initialTopic = 'From my project', onSubmissionStateChange, onSubmissionError }: {
+export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onUpdated, initialTopic = 'From my project', returnTo = 'dashboard', onSubmissionStateChange, onSubmissionError }: {
     open: boolean;
     onClose: () => void;
     plan?: DashboardPlan;
     editPost?: EditablePost | null;
     onUpdated?: (updated: { body: string; image_path: string | null; status?: string }) => void;
     initialTopic?: PostComposerTopic;
+    returnTo?: 'dashboard' | 'community';
     onSubmissionStateChange?: (post: PostCheckPreview | null) => void;
     onSubmissionError?: () => void;
 }) {
@@ -133,7 +134,7 @@ export function PostComposerDialog({ open, onClose, plan = 'free', editPost, onU
             payload.append('topic', topic);
             payload.append('visibility', audience);
             payload.append('is_anonymous', identity === 'anonymous' ? '1' : '0');
-            payload.append('return_to', 'dashboard');
+            payload.append('return_to', returnTo);
             if (topic === 'Poll') pollOptions.forEach((option, index) => payload.append(`poll_options[${index}]`, option.trim()));
             router.post('/posts', payload, {
                 preserveScroll: true, forceFormData: true,

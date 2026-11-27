@@ -128,6 +128,7 @@ final class FeatureSettingsController extends Controller
             'daily-challenge' => DB::table('ai_features')->where('code', 'scenario_generate')->value('model'),
             'daily-challenge-review' => DB::table('ai_features')->where('code', 'daily_challenge_review')->value('model'),
             'pmp' => DB::table('ai_features')->where('code', 'pmp_explain')->value('model'),
+            'pmp-followup' => DB::table('ai_features')->where('code', 'pmp_followup')->value('model'),
             'feed-moderation' => $this->feedModel(),
             default => DB::table('ai_features')->where('code', $feature)->value('model'),
         };

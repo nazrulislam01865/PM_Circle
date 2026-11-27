@@ -38,7 +38,7 @@
 .pm-pmp-start-previous-head span, .pm-pmp-start-choose span, .pm-pmp-start-coverage-head span { color: var(--muted); font: var(--medium) var(--text-xs)/var(--line-xs) var(--font-ui); }
 .pm-pmp-start-coverage-head span { color: var(--blue); }
 .pm-pmp-start-coverage-track { width: 100%; height: var(--bar-height); background: var(--track); border-radius: var(--radius-pill); overflow: hidden; }
-.pm-pmp-start-coverage-track span { display: block; height: 100%; border-radius: var(--radius-pill); background: var(--blue); }
+.pm-pmp-start-coverage-track span { display: block; height: 100%; border-radius: var(--radius-pill); background: var(--pm-action-blue); }
 .pm-pmp-start-table-wrap { border: 1px solid var(--border); border-radius: var(--radius-control); overflow: auto; }
 .pm-pmp-start-table { border-collapse: collapse; width: 100%; font: var(--regular) var(--text-sm)/var(--line-sm) var(--font-ui); }
 .pm-pmp-start-table th { text-align: left; color: var(--muted); background: var(--canvas); font: var(--semibold) var(--text-xs)/var(--line-xs) var(--font-ui); }

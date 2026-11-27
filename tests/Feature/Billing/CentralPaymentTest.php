@@ -16,7 +16,9 @@ final class FakeMerchantGateway implements PaymentGateway
     public ?VerifiedPayment $receipt = null;
     public int $starts = 0;
 
-    public function provider(): string { return 'bkash'; }
+    public function __construct(private readonly string $merchant = 'bkash') {}
+
+    public function provider(): string { return $this->merchant; }
 
     public function start(object $order): CheckoutSession
     {
@@ -279,6 +281,65 @@ final class CentralPaymentTest extends TestCase
         $this->assertDatabaseHas('payment_orders', [
             'uuid' => $order['order_id'], 'status' => 'refunded',
         ]);
+    }
+
+    public function test_ai_refills_accept_only_configured_bdt_methods_and_bind_retry_to_method(): void
+    {
+        DB::table('subscriptions')->insert([
+            'user_id' => $this->member->id, 'plan_price_id' => $this->price,
+            'status' => 'active', 'starts_at' => now()->subDay(), 'ends_at' => now()->addMonth(),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        config()->set('pm-ai.purchases_enabled', true);
+        config()->set('payments.ai_refill_providers', ['bkash', 'sslcommerz', 'nagad']);
+        $ssl = new FakeMerchantGateway('sslcommerz');
+        $this->app->instance('payments.gateway.sslcommerz', $ssl);
+        $this->app->instance('payments.gateway.nagad', new FakeMerchantGateway('nagad'));
+        $package = DB::table('ai_credit_packages')->insertGetId([
+            'code' => 'refill', 'version' => 1, 'title' => 'Refill', 'credits' => 25000,
+            'price_minor' => 40000, 'currency' => 'BDT', 'active' => true,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $this->actingAs($this->member)->getJson(route('billing.ai.packages'))
+            ->assertOk()->assertJsonPath('providers', ['bkash', 'sslcommerz'])
+            ->assertJsonPath('packages.0.id', $package);
+        $key = (string) Str::uuid();
+        $payload = ['package_id' => $package, 'client_request_key' => $key, 'provider' => 'sslcommerz'];
+        $first = $this->postJson(route('billing.ai.checkout'), $payload)
+            ->assertStatus(202)->assertJsonPath('amount_minor', 40000)->json();
+        $this->postJson(route('billing.ai.checkout'), $payload)
+            ->assertStatus(202)->assertJsonPath('order_id', $first['order_id']);
+        $this->assertSame(1, $ssl->starts);
+        $this->assertSame(0, $this->gateway->starts);
+        $this->assertDatabaseHas('payment_orders', ['uuid' => $first['order_id'], 'provider' => 'sslcommerz']);
+        $this->postJson(route('billing.ai.checkout'), array_replace($payload, ['provider' => 'bkash']))
+            ->assertStatus(409);
+        $this->postJson(route('billing.ai.checkout'), array_replace($payload, ['provider' => 'nagad']))
+            ->assertUnprocessable();
+        $this->assertDatabaseCount('payment_orders', 1);
+        $ssl->receipt = new VerifiedPayment('sslcommerz', 'ssl-event-1', $first['order_id'],
+            'ssl-txn-1', 40000, 'BDT', 'paid');
+        $this->postJson('/webhooks/payments/sslcommerz', ['event' => 'verified-by-test-adapter'])->assertOk();
+        $this->postJson('/webhooks/payments/sslcommerz', ['event' => 'verified-by-test-adapter'])->assertOk();
+        $this->assertDatabaseCount('ai_credit_grants', 1);
+        $this->assertSame(25000, (int) DB::table('ai_credit_wallets')->where('user_id', $this->member->id)->value('available'));
+    }
+
+    public function test_ai_catalog_can_be_prepared_without_gateway_but_cannot_accept_payment(): void
+    {
+        config()->set('pm-ai.purchases_enabled', false);
+        $package = DB::table('ai_credit_packages')->insertGetId([
+            'code' => 'prepared', 'version' => 1, 'title' => 'Prepared', 'credits' => 10000,
+            'price_minor' => 20000, 'currency' => 'BDT', 'active' => true,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $this->actingAs($this->member)->getJson(route('billing.ai.packages'))
+            ->assertOk()->assertJsonPath('enabled', false)->assertJsonPath('providers', [])
+            ->assertJsonPath('packages.0.id', $package);
+        $this->postJson(route('billing.ai.checkout'), [
+            'package_id' => $package, 'client_request_key' => (string) Str::uuid(), 'provider' => 'bkash',
+        ])->assertStatus(503);
+        $this->assertDatabaseCount('payment_orders', 0);
     }
 
 }

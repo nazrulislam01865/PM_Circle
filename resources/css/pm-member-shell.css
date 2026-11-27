@@ -91,7 +91,7 @@
     bottom: 0;
     left: var(--s1);
     right: var(--s1);
-    background: var(--blue);
+    background: var(--pm-action-blue);
     border-radius: var(--radius-pill) var(--radius-pill) 0 0;
 }
 .pm-member-shell .pm-dash-feed-sticky-controls {
@@ -159,14 +159,14 @@
     min-height: var(--control-height);
     padding: var(--s2) var(--s4);
     border-radius: var(--radius-control);
-    background: var(--blue);
+    background: var(--pm-action-blue);
     border-color: var(--blue);
-    color: var(--surface);
+    color: var(--pm-on-solid);
     font: var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui);
     text-decoration: none;
     white-space: nowrap;
 }
-.pm-member-home-guest-join.pm-button:hover { background: var(--blue-hover); border-color: var(--blue-hover); }
+.pm-member-home-guest-join.pm-button:hover { background: var(--pm-action-hover); border-color: var(--blue-hover); }
 @media (max-width: 960px) {
     .pm-member-home-header.has-guest-actions .pm-member-home-menu-toggle { margin-left: 0; }
 }

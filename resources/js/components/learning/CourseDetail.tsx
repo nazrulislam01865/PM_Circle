@@ -145,7 +145,7 @@ export function CourseDetailExtraPanel({ active, course, reviews = [], ownReview
             ['Does the completion certificate grant PMP certification?', 'The certificate records completion in PM Circle. PMP certification is awarded separately through PMI.'],
             ['What does the study estimate mean?', `${duration(course)} is the catalog estimate, not a guarantee of study time or certification eligibility.`],
         ];
-        const items = [...faq.filter((_, index) => index !== 2 || isPmp(course)), ...(course.presentation?.faq ?? []).map(({question, answer}) => [question, answer])];
+        const items = [...faq.filter((_, index) => index !== 2 || (isPmp(course) && course.certificateEnabled)), ...(course.presentation?.faq ?? []).map(({question, answer}) => [question, answer])];
         return <DetailSection id="questions" title="Q&A">{items.map(([question, answer], index) => <Disclosure key={index} title={question}><p>{answer}</p></Disclosure>)}</DetailSection>;
     }
     return <DetailSection id="reviews" title="Reviews">
@@ -202,7 +202,7 @@ export function CourseAccessCard({ course, practice, resources, isMember, isAuth
         <p>{description}</p>
         <div className="pm-course-detail-access-buttons">{action}<button type="button" className="pm-guide-button is-outline" onClick={onViewCurriculum}>View course outline</button></div>
         {error && <p className="pm-course-practice-error" role="alert">{error}</p>}
-        <ul className="pm-course-detail-perks"><li>{isExamCourse(course) ? 'Self-paced exam-focused study' : 'Self-paced project management study'}</li><li>{notesLabel(course)}</li>{!!course.presentation?.practice_examples?.length && <li>Practice examples</li>}{practice.enabled && practice.available > 0 && <li>Published practice questions</li>}{resources.length > 0 && <li>{resources.length} course {resources.length === 1 ? 'resource' : 'resources'}</li>}{course.lessons.length > 0 && <li>Completion certificate after completing all lessons</li>}</ul>
+        <ul className="pm-course-detail-perks"><li>{isExamCourse(course) ? 'Self-paced exam-focused study' : 'Self-paced project management study'}</li><li>{notesLabel(course)}</li>{!!course.presentation?.practice_examples?.length && <li>Practice examples</li>}{practice.enabled && practice.available > 0 && <li>Published practice questions</li>}{resources.length > 0 && <li>{resources.length} course {resources.length === 1 ? 'resource' : 'resources'}</li>}{course.certificateEnabled && course.lessons.length > 0 && <li>Completion certificate after completing all lessons</li>}</ul>
     </section>;
 }
 

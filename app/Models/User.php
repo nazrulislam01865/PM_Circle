@@ -87,6 +87,17 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         }
     }
 
+    public function delete()
+    {
+        if (! $this->exists) return null;
+        return \Illuminate\Support\Facades\DB::transaction(function () {
+            \App\Domain\Community\Services\EngagementStats::beforeMemberDeletion($this->id);
+            $deleted = parent::delete();
+            if ($deleted !== true) throw new \RuntimeException('Account deletion did not complete.');
+            return $deleted;
+        }, 3);
+    }
+
     public function profile(): HasOne { return $this->hasOne(Profile::class); }
     public function certifications(): HasMany { return $this->hasMany(Certification::class); }
     public function posts(): HasMany { return $this->hasMany(Post::class, 'author_id'); }

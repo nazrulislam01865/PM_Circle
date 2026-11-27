@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { router } from '@inertiajs/react';
+import { PMDropdown } from '@/components/pm/PMDropdown';
 
 export type ProfilePrivacyAudience = 'public' | 'community' | 'private';
 export type ProfilePrivacyFieldGroup = {
@@ -37,8 +38,9 @@ function audienceCanSee(choice: ProfilePrivacyAudience, audience: PreviewAudienc
 }
 
 function VisibilityFields({
-    group, choices, disabled, onChange,
+    group, choices, disabled, onChange, centralized = false,
 }: {
+    centralized?: boolean;
     group: ProfilePrivacyFieldGroup;
     choices: Record<string, ProfilePrivacyAudience>;
     disabled: boolean;
@@ -48,14 +50,14 @@ function VisibilityFields({
         <legend className="pm-privacy-legend">{group.title}</legend>
         {group.fields.map((field) => <div className="pm-privacy-field-row" key={field.key}>
             <label htmlFor={`privacy-${field.key}`} className="pm-privacy-field-label">{field.label}</label>
-            <select
+            {centralized ? <PMDropdown id={`privacy-${field.key}`} value={choices[field.key] ?? 'community'} options={audienceOptions} placeholder="Choose visibility" required disabled={disabled} className="pm-privacy-select" aria-label={field.label} onValueChange={value => onChange(field.key, value as ProfilePrivacyAudience)}/> : <select
                 id={`privacy-${field.key}`}
                 className="pm-select pm-privacy-select"
                 value={choices[field.key] ?? 'community'}
                 onChange={(event) => onChange(field.key, event.target.value as ProfilePrivacyAudience)}
             >
                 {audienceOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
+            </select>}
         </div>)}
     </fieldset>;
 }
@@ -100,7 +102,7 @@ function SavedVisibilityPreview({
 }
 
 /** Shared privacy fields; supporting information is optional for embedded settings. */
-export function ProfilePrivacyEditor({ groups, choices, saved, globalVisibility, savedGlobalVisibility, disabled, onChange, onGlobalChange, children, showSidebar = true }: {
+export function ProfilePrivacyEditor({ groups, choices, saved, globalVisibility, savedGlobalVisibility, disabled, onChange, onGlobalChange, children, showSidebar = true, centralized = true }: {
     groups: ProfilePrivacyFieldGroup[];
     choices: Record<string, ProfilePrivacyAudience>;
     saved: Record<string, ProfilePrivacyAudience>;
@@ -111,6 +113,7 @@ export function ProfilePrivacyEditor({ groups, choices, saved, globalVisibility,
     onGlobalChange: (value: ProfileGlobalVisibility) => void;
     children?: ReactNode;
     showSidebar?: boolean;
+    centralized?: boolean;
 }) {
     return <div className={`pm-privacy-layout${showSidebar ? '' : ' pm-privacy-layout--full'}`}>
         <section className="pm-card pm-privacy-main" aria-labelledby="privacy-editor-heading">
@@ -123,13 +126,13 @@ export function ProfilePrivacyEditor({ groups, choices, saved, globalVisibility,
                     <legend className="pm-privacy-legend">Profile audience</legend>
                     <div className="pm-privacy-field-row">
                         <label htmlFor="privacy-global" className="pm-privacy-field-label">Who can open your profile</label>
-                        <select id="privacy-global" className="pm-select pm-privacy-select" value={globalVisibility} onChange={event => onGlobalChange(event.target.value as ProfileGlobalVisibility)}>
+                        {centralized ? <PMDropdown id="privacy-global" value={globalVisibility} options={[{value:'public',label:'Public'},{value:'members_only',label:'Community only'},{value:'private',label:'Only me'}]} placeholder="Choose audience" required disabled={disabled} className="pm-privacy-select" aria-label="Who can open your profile" onValueChange={value => onGlobalChange(value as ProfileGlobalVisibility)}/> : <select id="privacy-global" className="pm-select pm-privacy-select" value={globalVisibility} onChange={event => onGlobalChange(event.target.value as ProfileGlobalVisibility)}>
                             <option value="public">Public</option><option value="members_only">Community only</option><option value="private">Only me</option>
-                        </select>
+                        </select>}
                     </div>
                     <p className="pm-privacy-confidential pm-privacy-audience-note">Individual field choices can restrict, but cannot expand, your profile audience.</p>
                 </fieldset>
-                {groups.map(group => <VisibilityFields key={group.title} group={group} choices={choices} onChange={onChange} disabled={disabled}/>)}
+                {groups.map(group => <VisibilityFields key={group.title} group={group} choices={choices} onChange={onChange} disabled={disabled} centralized={centralized}/>)}
             </div>
             <p className="pm-privacy-confidential">Your account contact details and uploaded CV are visible only to you.</p>
             {children}

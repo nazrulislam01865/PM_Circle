@@ -121,7 +121,7 @@ export function sampleSnapshot(source: AchievementSnapshot): AchievementSnapshot
         if (earned) awardIndex++;
         return { ...badge, value, available: true, status: earned ? 'earned' as const : value > 0 ? 'progress' as const : 'locked' as const, earnedAt };
     });
-    return { ...source, ...data, badges, latest: newest(badges) };
+    return { ...source, ...data, certificates: [], badges, latest: newest(badges) };
 }
 export function simulate(source: AchievementSnapshot, action: typeof sampleActions[number]): AchievementSnapshot {
     const next = structuredClone(source);

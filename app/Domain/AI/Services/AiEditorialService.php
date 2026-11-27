@@ -108,7 +108,7 @@ final class AiEditorialService
             }
             // Missing moderation configuration is an admission error, not a paid retry.
             $localSmokeTest = app()->environment('local') && config('pm-ai.daily_challenge_skip_generation_moderation', false);
-            if (! $localSmokeTest && ! filled(app(AiRuntimeSettings::class)->credential('post_check_api_key'))) {
+            if (! $localSmokeTest && ! filled(app(AiFeatureRouting::class)->moderationSecret())) {
                 throw new AiFailure('MODERATION_NOT_CONFIGURED', 503);
             }
             DB::table('ai_editorial_drafts')->where('id', $draft->id)->increment('generation_attempts');

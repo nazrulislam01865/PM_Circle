@@ -18,9 +18,9 @@
 .pm-discover-step { color: var(--muted); display: inline-flex; align-items: center; gap: var(--s2); white-space: nowrap; }
 .pm-discover-step.is-current { font-weight: var(--bold); color: var(--blue); }
 .pm-discover-step-number { flex: 0 0 auto; width: var(--s6); height: var(--s6); display: inline-grid; place-items: center; font-size: var(--text-sm); line-height: var(--line-sm); border-radius: 50%; background: transparent; border: 1px solid var(--border); color: var(--muted); }
-.pm-discover-step.is-current .pm-discover-step-number { background: var(--blue); color: var(--surface); border-color: var(--blue); }
+.pm-discover-step.is-current .pm-discover-step-number { background: var(--pm-action-blue); color: var(--pm-on-solid); border-color: var(--blue); }
 .pm-discover-progress { background: var(--border); height: .1875rem; border-radius: var(--radius-pill); overflow: hidden; margin-bottom: var(--s6); }
-.pm-discover-progress > span { display: block; height: 100%; background: var(--blue); opacity: 1; transition: width .15s ease; }
+.pm-discover-progress > span { display: block; height: 100%; background: var(--pm-action-blue); opacity: 1; transition: width .15s ease; }
 .pm-discover-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: var(--s8); box-shadow: 0 1px 2px var(--pm-overlay-0-0-0-2); }
 .pm-discover-eyebrow { margin: 0 0 var(--s3); color: var(--blue); font-size: var(--text-xs); line-height: var(--line-xs); font-weight: var(--bold); letter-spacing: var(--pm-tracking-p12em); }
 .pm-discover-card > h1 { color: var(--ink); font-size: var(--text-h1); line-height: var(--line-h1); font-weight: var(--bold); letter-spacing: var(--pm-tracking-neg-p025em); margin: 0; }
@@ -33,8 +33,8 @@
 .pm-discover-privacy summary { cursor: pointer; }
 .pm-discover-privacy p { color: var(--muted); margin-top: var(--s2); }
 .pm-discover .btn { min-height: var(--control-touch); font-size: var(--text-ui); line-height: var(--line-ui); font-weight: var(--semibold); padding: var(--s2) var(--s5); border-radius: var(--radius-control); white-space: normal; text-decoration: none; }
-.pm-discover .btn:not(.secondary) { background: var(--blue); border-color: var(--blue); color: var(--surface); }
-.pm-discover .btn:not(.secondary):hover { background: var(--blue-hover); border-color: var(--blue-hover); }
+.pm-discover .btn:not(.secondary) { background: var(--pm-action-blue); border-color: var(--blue); color: var(--pm-on-solid); }
+.pm-discover .btn:not(.secondary):hover { background: var(--pm-action-hover); border-color: var(--blue-hover); }
 .pm-discover .btn.secondary { background: var(--surface); color: var(--blue); border-color: var(--blue); }
 .pm-discover .btn.secondary:hover { background: var(--blue-soft); }
 .pm-discover .btn:disabled { color: var(--muted) !important; background: var(--track) !important; border-color: var(--border) !important; opacity: 1; }
@@ -228,7 +228,7 @@
     .pm-discover-page .pm-header, .pm-discover-page .pm-footer,
     .pm-discover-steps, .pm-discover-progress, .pm-discover-actions,
     .pm-discover-print, .pm-discover-final-selected, .pm-discover-pills { display: none !important; }
-    .pm-discover-page, .pm-discover, .pm-discover-main { background: var(--pm-tone-fff) !important; min-height: 0; }
+    .pm-discover-page, .pm-discover, .pm-discover-main { background: var(--pm-theme-bg-pm-tone-fff) !important; min-height: 0; }
     .pm-discover-main { width: 100%; max-width: none; padding: 0; }
     .pm-discover-card { box-shadow: none; break-inside: avoid; }
 }

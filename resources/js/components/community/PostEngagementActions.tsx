@@ -16,10 +16,11 @@ const openCommentPosts = new Set<number>();
 let commentViewer = 0;
 
 /** A single interaction contract for homepage, dashboard and public community posts. */
-export function PostEngagementActions({ postId, initial, total, breakdown = EMPTY_REACTION_COUNTS, comments, canInteract, onJoin, showSave = false, secondary, inlineComments = true, onReactionChange, onCommentAdded }: {
+export function PostEngagementActions({ postId, initial, total, version, breakdown = EMPTY_REACTION_COUNTS, comments, canInteract, onJoin, showSave = false, secondary, inlineComments = true, onReactionChange, onCommentAdded }: {
     postId: number;
     initial?: ReactionType | null;
     total: number;
+    version?: number | null;
     breakdown?: ReactionCounts;
     comments: number;
     canInteract: boolean;
@@ -27,21 +28,26 @@ export function PostEngagementActions({ postId, initial, total, breakdown = EMPT
     showSave?: boolean;
     secondary: PostSecondaryActions;
     inlineComments?: boolean;
-    onReactionChange?: (reaction: ReactionType | null, count: number, counts: ReactionCounts) => void;
-    onCommentAdded?: () => void;
+    onReactionChange?: (reaction: ReactionType | null, count: number, counts: ReactionCounts, version?: number | null) => void;
+    onCommentAdded?: (count?: number) => void;
 }) {
     const isMobile = useIsMobile();
     const viewer = usePage<{ auth?: { user?: { id: number } | null } }>().props.auth?.user?.id ?? 0;
     if (viewer !== commentViewer) { openCommentPosts.clear(); commentViewer = viewer; }
     const [summaryTotal, setSummaryTotal] = useState(total);
     const [summaryCounts, setSummaryCounts] = useState<ReactionCounts>(breakdown);
+    const currentVersion = useRef<number | null>(version ?? null);
     const lastReaction = useRef<ReactionType | null>(initial ?? null);
     useEffect(() => {
+        if (version != null && currentVersion.current != null && version < currentVersion.current) return;
+        currentVersion.current = version ?? null;
         setSummaryTotal(total);
         setSummaryCounts(breakdown);
         lastReaction.current = initial ?? null;
-    }, [postId, breakdown, total, initial]);
-    const handleReactionChange = (reaction: ReactionType | null, count: number, authoritative?: ReactionCounts) => {
+    }, [postId, breakdown, total, initial, version]);
+    const handleReactionChange = (reaction: ReactionType | null, count: number, authoritative?: ReactionCounts, responseVersion?: number | null) => {
+        if (responseVersion != null && currentVersion.current != null && responseVersion < currentVersion.current) return;
+        currentVersion.current = responseVersion ?? currentVersion.current;
         const before = lastReaction.current;
         lastReaction.current = reaction;
         setSummaryTotal(count);
@@ -51,7 +57,7 @@ export function PostEngagementActions({ postId, initial, total, breakdown = EMPT
             if (reaction) next[reaction] = (next[reaction] ?? 0) + 1;
         }
         setSummaryCounts(next);
-        onReactionChange?.(reaction, count, next);
+        onReactionChange?.(reaction, count, next, responseVersion);
     };
     const [expanded, setExpanded] = useState(() => openCommentPosts.has(postId));
     const toggleExpanded = () => setExpanded(previous => {
@@ -66,9 +72,9 @@ export function PostEngagementActions({ postId, initial, total, breakdown = EMPT
     useEffect(() => setCommentCount(comments), [comments, postId]);
     const url = `/posts/${postId}`;
     const reactionSummary = <PostReactionSummary postId={postId} total={summaryTotal} counts={summaryCounts}
-        onRefresh={(count, counts) => { setSummaryTotal(count); setSummaryCounts(counts); }} />;
+        onRefresh={(count, counts, responseVersion) => { if (responseVersion != null && currentVersion.current != null && responseVersion < currentVersion.current) return; currentVersion.current = responseVersion ?? currentVersion.current; setSummaryTotal(count); setSummaryCounts(counts); }} />;
     return <div data-feed-pin={secondary.saveBusy || undefined} className="pm-engagement-shell"><EngagementActionBar className="pm-post-engagement-row">
-        <div className="pm-post-reaction-group"><ReactionPicker endpoint={`${url}/reactions`} initial={initial} total={total} canInteract={canInteract} onJoin={onJoin} onChanged={handleReactionChange} showCount={false} />
+        <div className="pm-post-reaction-group"><ReactionPicker endpoint={`${url}/reactions`} initial={initial} total={total} version={version} canInteract={canInteract} onJoin={onJoin} onChanged={handleReactionChange} showCount={false} />
         {isMobile && (summaryTotal > 0 ? reactionSummary : <span className="pm-post-reaction-zero" aria-label="No reactions">0</span>)}</div>
         {inlineComments ? <button type="button" className="pm-home-action" aria-expanded={expanded} aria-controls={`inline-comments-${postId}`}
             onClick={() => { if (!canInteract) onJoin('comment on a discussion'); else toggleExpanded(); }}>
@@ -83,6 +89,6 @@ export function PostEngagementActions({ postId, initial, total, breakdown = EMPT
         {secondary.copied && <span className="pm-post-copy-status" role="status">Link copied.</span>}
     </EngagementActionBar>
         {inlineComments && expanded && <InlinePostComments postId={postId} canInteract={canInteract} onJoin={onJoin}
-            onPosted={() => { setCommentCount(previous => previous + 1); onCommentAdded?.(); }} onClose={() => { openCommentPosts.delete(postId); setExpanded(false); }} />}
+            onPosted={count => { setCommentCount(previous => count ?? previous + 1); onCommentAdded?.(count); }} onClose={() => { openCommentPosts.delete(postId); setExpanded(false); }} />}
     </div>;
 }

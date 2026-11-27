@@ -13,7 +13,7 @@ type Reactor = {
     avatar_url: string | null;
     profile_url: string | null;
 };
-type ReactionPage = { total: number; counts: ReactionCounts; data: Reactor[]; next_cursor: number | null };
+type ReactionPage = { version?: number | null; total: number; counts: ReactionCounts; data: Reactor[]; next_cursor: number | null };
 type Tab = ReactionType | 'all';
 
 function ReactionMark({ type, size = 18 }: { type: ReactionType; size?: number }) {
@@ -29,7 +29,7 @@ export function PostReactionSummary({ postId, total, counts, onRefresh }: {
     postId: number;
     total: number;
     counts: ReactionCounts;
-    onRefresh: (total: number, counts: ReactionCounts) => void;
+    onRefresh: (total: number, counts: ReactionCounts, version?: number | null) => void;
 }) {
     const [open, setOpen] = useState(false);
     const options = useReactionOptions(true);
@@ -58,7 +58,7 @@ function PostReactionDialog({ postId, initialTotal, initialCounts, onClose, onRe
     initialTotal: number;
     initialCounts: ReactionCounts;
     onClose: () => void;
-    onRefresh: (total: number, counts: ReactionCounts) => void;
+    onRefresh: (total: number, counts: ReactionCounts, version?: number | null) => void;
 }) {
     const [tab, setTab] = useState<Tab>('all');
     const options = useReactionOptions(true);
@@ -99,7 +99,7 @@ function PostReactionDialog({ postId, initialTotal, initialCounts, onClose, onRe
             setCounts(result.counts);
             setUsers(previous => after === null ? result.data : [...previous, ...result.data]);
             setNextCursor(result.next_cursor);
-            onRefreshRef.current(result.total, result.counts);
+            onRefreshRef.current(result.total, result.counts, result.version);
         } catch (failure) {
             if (!request.signal.aborted) setError(failure instanceof Error ? failure.message : 'Unable to load reactions.');
         } finally {

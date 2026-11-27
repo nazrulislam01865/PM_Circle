@@ -15,6 +15,7 @@ type Member = {
     followers_count: number;
     contributions_count: number;
     is_following: boolean;
+    can_follow?: boolean;
 };
 type Filters = { role: string; industry: string; location: string; tab: 'all' | 'following'; sort: 'recent' | 'name' | 'followers' };
 type Props = {
@@ -46,6 +47,7 @@ export default function Directory({ members, search, filters, filterOptions }: P
         if (!viewer) { router.visit('/login'); return; }
         if (submittingMember !== null || member.id === viewer.id) return;
         const current = followStates[member.id] ?? { following: member.is_following, followers: member.followers_count };
+        if (!current.following && member.can_follow === false) return;
         setSubmittingMember(member.id);
         setFollowError('');
         try {
@@ -139,12 +141,12 @@ export default function Directory({ members, search, filters, filterOptions }: P
                     <div className="pm-members-actions">
                         {viewer?.id !== member.id ? <button type="button"
                             className={`pm-members-follow${(followStates[member.id]?.following ?? member.is_following) ? ' is-following' : ''}`}
-                            disabled={submittingMember === member.id}
+                            disabled={submittingMember === member.id || (!(followStates[member.id]?.following ?? member.is_following) && member.can_follow === false)}
                             aria-pressed={followStates[member.id]?.following ?? member.is_following}
                             aria-label={`${(followStates[member.id]?.following ?? member.is_following) ? 'Unfollow' : 'Follow'} ${member.name}`}
                             onClick={() => { void toggleFollowing(member); }}>
                             {(followStates[member.id]?.following ?? member.is_following) ? <Check size={16} aria-hidden="true"/> : <Plus size={16} aria-hidden="true"/>}
-                            {(followStates[member.id]?.following ?? member.is_following) ? 'Following' : 'Follow'}
+                            {(followStates[member.id]?.following ?? member.is_following) ? 'Following' : member.can_follow === false ? 'Not accepting follows' : 'Follow'}
                         </button> : <span className="pm-members-follow-placeholder" aria-hidden="true" />}
                         <Link className="pm-members-profile-button" href={`/members/${member.id}`}>View profile</Link>
                     </div>

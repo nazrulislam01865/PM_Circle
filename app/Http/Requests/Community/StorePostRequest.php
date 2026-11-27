@@ -28,7 +28,7 @@ class StorePostRequest extends FormRequest
             'visibility' => ['sometimes', Rule::in(['public', 'members'])],
             'poll_options' => ['required_if:topic,Poll', 'array', 'min:2', 'max:4'],
             'poll_options.*' => ['required', 'string', 'max:120', 'distinct'],
-            'return_to' => ['sometimes', Rule::in(['dashboard'])],
+            'return_to' => ['sometimes', Rule::in(['dashboard', 'community'])],
         ];
     }
 }

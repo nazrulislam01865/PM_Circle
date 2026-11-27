@@ -1,6 +1,6 @@
 export type InterviewShell = import('@/types/dashboard').DashboardShellData;
 export type QuestionType = string;
-export type InterviewQuestion = { id: string; type: QuestionType; text: string; topic?: string; difficulty?: string; bucket?: string };
+export type InterviewQuestion = { id: string; type: QuestionType; type_label?: string; text: string; topic?: string; difficulty?: string; bucket?: string };
 export type InterviewSession = { id: number; industry: string; role: string; experience: string; profession?: string | null; requestedExperience?: string | null; industryLabel?: string; experienceLabel?: string; roleLabel?: string; count: number; mode: 'type' | 'speak' | 'both'; status: string; createdAt: string; serverNow: string; deadlineAt: string; durationSeconds: number; remainingSeconds: number };
 export type Evaluation = { score: number; summary: string; relevance: number; pm_knowledge: number; clarity: number; communication: number; leadership: number; problem_solving: number; strengths: string[]; improvements: string[]; suggestions: string[]; suggested_answer: string };
 export type InterviewAiOffer = { credits: number };
@@ -28,3 +28,16 @@ export async function interviewApi<T>(url: string, method = 'GET', payload?: unk
     }
     return data as T;
 }
+
+export type InterviewPracticeConfig = {
+    minutes_per_question: number;
+    allow_new_sessions: boolean;
+    allow_job_description: boolean;
+    hero_title: string;
+    hero_description: string;
+    mix_labels: Record<'recommended' | 'common' | 'focus', string>;
+    recommended_common_percent: number;
+    focus_percent: number;
+    focus_common_percent: number;
+    role_profiles: { role: string; profession: string; focus: string[] }[];
+};

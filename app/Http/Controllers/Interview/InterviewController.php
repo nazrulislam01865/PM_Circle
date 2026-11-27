@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Interview;
 use App\Domain\Dashboard\Queries\MemberShell;
 use App\Domain\Interview\QuestionCatalog;
 use App\Domain\Interview\PracticeRubric;
+use App\Domain\Interview\PracticeSettings;
 use App\Domain\Interview\InterviewAiReview;
 use App\Services\Resume\ResumeTextExtractor;
 use Illuminate\Support\Str;
@@ -42,15 +43,17 @@ final class InterviewController extends Controller
 
         $catalog = app(QuestionCatalog::class);
         $choices = $catalog->choices();
+        $settings = PracticeSettings::load();
+        $settings['role_profiles'] = PracticeSettings::roleProfiles($settings, $choices['role']);
         $practiceDefaults = [];
         $preferenceKeys = ['industry', 'role', 'level', 'count', 'answerMode'];
         $preferences = $request->user()->account_preferences ?? [];
-        foreach (config('account_settings') as $page) {
+        foreach (\App\Domain\Identity\Services\AccountSettingsCatalog::pages($choices) as $page) {
             if ($page[0] !== 'Learning & practice') continue;
             foreach ($page[3] as $group) {
                 foreach ($group[1] as $field) {
                     if (in_array($field['id'], $preferenceKeys, true)) {
-                        $practiceDefaults[$field['id']] = $preferences[$field['id']] ?? $field['value'];
+                        $practiceDefaults[$field['id']] = \App\Domain\Identity\Services\AccountSettingsCatalog::resolve($field, (string) ($preferences[$field['id']] ?? $field['value']));
                     }
                 }
             }
@@ -62,13 +65,25 @@ final class InterviewController extends Controller
             'experience' => $choices['experience'], 'types' => $choices['type'],
             'counts' => $choices['count'], 'modes' => $choices['mode'], 'questionSets' => $catalog->publishedSets(),
             'recent' => $recent->map(function ($item) { $item->answered_count = (int) $item->answered_count; return $item; }),
-            'minutesPerQuestion' => $catalog->minutesPerQuestion(),
+            'minutesPerQuestion' => $settings['minutes_per_question'], 'practiceSettings' => $settings,
         ]);
     }
 
     private function selectionData(StartInterviewRequest $request): array
     {
         $data = $request->validated();
+        $settings = $request->practiceSettings();
+        if (! $settings['allow_new_sessions']) {
+            throw ValidationException::withMessages(['count' => 'New interview sessions are temporarily unavailable.']);
+        }
+        if (! $settings['allow_job_description'] && ! empty($data['jd'])) {
+            throw ValidationException::withMessages(['jd' => 'Job description targeting is currently disabled.']);
+        }
+        $profile = PracticeSettings::roleProfiles($settings, [$data['role'] => $request->catalogChoices()['role'][$data['role']]])[0];
+        $data['profession'] = $profile['profession'];
+        if (($data['mix'] ?? null) === 'focus' && array_diff($data['focus'] ?? [], $profile['focus'])) {
+            throw ValidationException::withMessages(['focus' => 'Choose focus areas available for your selected role.']);
+        }
         unset($data['draft']);
         $data['count'] = (int) $data['count'];
         if (isset($data['question_set'])) $data['question_set'] = (int) $data['question_set'];
@@ -82,16 +97,17 @@ final class InterviewController extends Controller
     {
         $data = $this->selectionData($request);
         $choices = $request->catalogChoices();
-        $questions = $catalog->select($data['industry'], $data['role'], $data['experience'], $data['types'], $data['count'], $data['question_set'] ?? null, $data + ['industry_label' => $choices['industry'][$data['industry']], 'role_label' => $choices['role'][$data['role']]]);
+        $questions = $catalog->select($data['industry'], $data['role'], $data['experience'], $data['types'], $data['count'], $data['question_set'] ?? null, $data, $request->practiceSettings(), ['industry' => $choices['industry'][$data['industry']], 'role' => $choices['role'][$data['role']], 'types' => $choices['type']]);
         $draft = (string) Str::uuid();
         // The actual question snapshot is server-side, never accepted from the browser.
         $request->session()->put('interview_draft', ['id' => $draft, 'user' => $request->user()->id,
             'hash' => hash('sha256', json_encode($data, JSON_THROW_ON_ERROR)), 'questions' => $questions, 'expires' => now()->addMinutes(30)->timestamp]);
-        return response()->json(['draft' => $draft, 'questions' => $questions]);
+        return response()->json(['draft' => $draft, 'questions' => PracticeSettings::publicQuestions($questions)]);
     }
 
     public function jdText(Request $request, ResumeTextExtractor $extractor): JsonResponse
     {
+        abort_unless(PracticeSettings::load()['allow_job_description'] && config('pm-interview.enabled'), 403);
         $request->validate(['file' => ['required', 'file', 'mimes:txt,docx,pdf', 'extensions:txt,docx,pdf', 'max:5120']]);
         $file = $request->file('file');
         try {
@@ -109,6 +125,7 @@ final class InterviewController extends Controller
     public function start(StartInterviewRequest $request, QuestionCatalog $catalog): RedirectResponse
     {
         $data = $this->selectionData($request);
+        $choices = $request->catalogChoices();
         if ($request->filled('draft')) {
             $draft = $request->session()->get('interview_draft');
             if (! $draft || $draft['id'] !== $request->validated('draft') || $draft['user'] !== $request->user()->id
@@ -117,10 +134,9 @@ final class InterviewController extends Controller
             }
             $questions = $draft['questions'];
         } else {
-            $questions = $catalog->select($data['industry'], $data['role'], $data['experience'], $data['types'], $data['count'], $data['question_set'] ?? null, isset($data['mix']) ? $data : []);
+            $questions = $catalog->select($data['industry'], $data['role'], $data['experience'], $data['types'], $data['count'], $data['question_set'] ?? null, isset($data['mix']) ? $data : [], $request->practiceSettings(), ['industry' => $choices['industry'][$data['industry']], 'role' => $choices['role'][$data['role']], 'types' => $choices['type']]);
         }
-        $minutes = $catalog->minutesPerQuestion();
-        $choices = $request->catalogChoices();
+        $minutes = $request->practiceSettings()['minutes_per_question'];
         $labels = ['industry' => $choices['industry'][$data['industry']], 'experience' => $choices['experience'][$data['experience']], 'role' => $choices['role'][$data['role']]];
         $id = DB::table('interview_sessions')->insertGetId(['minutes_per_question' => $minutes,
             'user_id' => $request->user()->id, 'industry' => $data['industry'],
@@ -144,7 +160,7 @@ final class InterviewController extends Controller
         return Inertia::render('interview/Practice', [
             'shell' => $shell->forMember($request->user()),
             'session' => $this->sessionData($record),
-            'questions' => json_decode($record->questions, true, 512, JSON_THROW_ON_ERROR),
+            'questions' => PracticeSettings::publicQuestions(json_decode($record->questions, true, 512, JSON_THROW_ON_ERROR)),
             'answers' => $answers->map(fn ($a) => $this->answerData($a))->all(),
             'aiReview' => app(InterviewAiReview::class)->offer($request->user()),
         ]);
@@ -271,7 +287,7 @@ final class InterviewController extends Controller
         $labels = json_decode($selected->target_labels ?? 'null', true) ?? [];
         return Inertia::render('interview/Results', [
             'shell' => $shell->forMember($request->user()), 'history' => $rows,
-            'selected' => $selected, 'answers' => $answers, 'aiReview' => $selected ? app(InterviewAiReview::class)->offer($request->user()) : null, 'questions' => $questions, 'archive' => $session === null,
+            'selected' => $selected, 'answers' => $answers, 'aiReview' => $selected ? app(InterviewAiReview::class)->offer($request->user()) : null, 'questions' => PracticeSettings::publicQuestions($questions), 'archive' => $session === null,
             'industryLabel' => $selected ? ($labels['industry'] ?? QuestionCatalog::INDUSTRIES[$selected->industry] ?? $selected->industry) : null,
             'roleLabel' => $selected ? ($labels['role'] ?? $selected->role) : null,
             'experienceLabel' => $selected ? ($labels['experience'] ?? QuestionCatalog::EXPERIENCE[$selected->experience] ?? $selected->experience) : null,

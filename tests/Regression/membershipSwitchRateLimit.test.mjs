@@ -24,7 +24,7 @@ test('membership switch blocks duplicate clicks synchronously and shows the shar
     const page = read('resources/js/pages/billing/Membership.tsx');
     const comparison = read('resources/js/components/billing/PricingComparisonContent.tsx');
     assert.match(page, /const submitting = useRef\(false\)/);
-    assert.match(page, /if \(!temporaryAccessEnabled \|\| submitting.current \|\| processing !== null \|\| plan === currentPlan\) return;\s*submitting.current = true;/);
+    assert.match(page, /if \(!temporaryAccessEnabled \|\| submitting.current \|\| processing !== null \|\| plan === currentPlan \|\| \(plan !== 'free' && !months\)\) return;\s*submitting.current = true;/);
     assert.match(page, /onFinish: \(\) => \{\s*submitting.current = false;/);
     assert.match(page, /onError: errors => setError\(errors.plan/);
     assert.match(page, /preserveScroll: page => !page.props.errors\?\.plan/);

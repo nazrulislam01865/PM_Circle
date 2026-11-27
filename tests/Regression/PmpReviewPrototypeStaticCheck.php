@@ -20,7 +20,8 @@ $styles = $source('resources/css/pm-pmp-review-prototype.css');
 
 $check(str_contains($page, '<ExamPage shell={shell} className="pm-exam-review-page">')
     && str_contains($page, '<ExamStatus total={total} correct={correct} answered={answered}/>')
-    && str_contains($page, '<PmpReviewExplanation key={question.id} question={question}/>'),
+    && str_contains($page, '<ReviewRationales key={question.id} question={question} initiallyOpen={showRationales}/>')
+    && str_contains($page, '<PmpReviewExplanation question={question}/>'),
     'Review reuses authenticated member layout, scoring, and modular explanation panel');
 $check(str_contains($source('resources/js/components/exam/pmpReviewContent.ts'), "filter === 'missed'")
     && str_contains($source('resources/js/components/exam/pmpReviewContent.ts'), "filter === 'unanswered'")

@@ -249,7 +249,7 @@
 }
 .pm-engagement-shell .pm-inline-comments .pm-comment-engagement > button.pm-home-action:hover:not(:disabled),
 .pm-engagement-shell .pm-inline-comments .pm-inline-close:hover {
-    background: color-mix(in srgb, var(--primary-soft) 80%, var(--primary) 20%);
+    background: color-mix(in srgb, var(--primary-soft) 80%, var(--pm-action-blue) 20%);
     color: var(--text);
 }
 .pm-engagement-shell .pm-inline-comments .pm-comment-engagement > button.pm-home-action:disabled {
@@ -262,12 +262,12 @@
     outline-offset: 3px;
 }
 .pm-engagement-shell .pm-inline-comments .pm-inline-compose-actions .pm-button:not(:disabled) {
-    background: var(--primary);
+    background: var(--pm-action-blue);
     border-color: var(--primary);
-    color: var(--surface);
+    color: var(--pm-on-solid);
 }
 .pm-engagement-shell .pm-inline-comments .pm-inline-compose-actions .pm-button:hover:not(:disabled) {
-    background: var(--primary-hover);
+    background: var(--pm-action-hover);
     border-color: var(--primary-hover);
 }
 .pm-engagement-shell .pm-inline-comments .pm-inline-compose-actions .pm-button:disabled {
@@ -294,5 +294,5 @@
     color: var(--primary);
 }
 .pm-engagement-shell .pm-inline-reply-note button:hover {
-    background: color-mix(in srgb, var(--primary-soft) 80%, var(--primary) 20%);
+    background: color-mix(in srgb, var(--primary-soft) 80%, var(--pm-action-blue) 20%);
 }

@@ -67,14 +67,14 @@
     padding: var(--pm-guide-s2) var(--pm-guide-button-pad-inline);
     border: 1px solid transparent;
     border-radius: var(--pm-guide-radius-sm);
-    background: var(--pm-guide-blue);
-    color: var(--pm-guide-white);
+    background: var(--pm-action-blue);
+    color: var(--pm-on-solid);
     text-align: center;
     text-decoration: none;
     font: var(--pm-guide-weight-control) var(--pm-guide-text-control)/var(--pm-guide-line-control) var(--pm-guide-font);
     cursor: pointer;
 }
-.pm-guide-public-shell .pm-guide-button:hover { background: var(--pm-guide-blue-hover); color: var(--pm-guide-white); }
+.pm-guide-public-shell .pm-guide-button:hover { background: var(--pm-action-hover); color: var(--pm-on-solid); }
 .pm-guide-public-shell .pm-guide-button.is-outline {
     color: var(--pm-guide-blue);
     border-color: var(--pm-guide-blue);

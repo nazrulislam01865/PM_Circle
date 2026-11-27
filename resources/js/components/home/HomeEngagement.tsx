@@ -73,10 +73,10 @@ export function JoinCommunityDialog({ action, onClose, hasAccount }: {
     </Dialog>;
 }
 
-export function ReactionPicker({ endpoint, initial, total, canInteract, onJoin, label = 'post', onChanged, showCount = true, buttonLabel, prototypeIcon = false }: {
-    endpoint: string; initial?: ReactionType | null; total?: number;
+export function ReactionPicker({ endpoint, initial, total, version, canInteract, onJoin, label = 'post', onChanged, showCount = true, buttonLabel, prototypeIcon = false }: {
+    endpoint: string; initial?: ReactionType | null; total?: number; version?: number | null;
     canInteract: boolean; onJoin: RequestToJoin; label?: string;
-    onChanged?: (reaction: ReactionType | null, count: number, breakdown?: Record<string, number>) => void;
+    onChanged?: (reaction: ReactionType | null, count: number, breakdown?: Record<string, number>, version?: number | null) => void;
     showCount?: boolean; buttonLabel?: string; prototypeIcon?: boolean;
 }) {
     const [active, setActive] = useState<ReactionType | null>(initial ?? null);
@@ -89,7 +89,26 @@ export function ReactionPicker({ endpoint, initial, total, canInteract, onJoin, 
     const root = useRef<HTMLDivElement>(null);
     const touch = useRef(false);
 
-    useEffect(() => { setActive(initial ?? null); setCount(total ?? 0); }, [initial, total, endpoint]);
+    const confirmed = useRef({ reaction: initial ?? null, count: total ?? 0, version: version ?? null });
+    const desired = useRef<ReactionType | null>(initial ?? null);
+    const running = useRef(false);
+    const sequence = useRef(0);
+    const changed = useRef(onChanged);
+    changed.current = onChanged;
+    const alive = useRef(true);
+    useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
+    useEffect(() => {
+        const currentVersion = confirmed.current.version;
+        if (version != null && currentVersion != null && version < currentVersion) return;
+        if (running.current && (version == null || (currentVersion != null && version <= currentVersion))) return;
+        confirmed.current = { reaction: initial ?? null, count: total ?? 0, version: version ?? null };
+        if (!running.current) {
+            desired.current = initial ?? null;
+            setActive(initial ?? null); setCount(total ?? 0);
+        } else {
+            setCount(Math.max(0, (total ?? 0) + Number(desired.current !== null) - Number(initial != null)));
+        }
+    }, [initial, total, endpoint, version]);
     useEffect(() => {
         if (!open) return;
         const closeOutside = (event: PointerEvent) => {
@@ -99,59 +118,81 @@ export function ReactionPicker({ endpoint, initial, total, canInteract, onJoin, 
         return () => document.removeEventListener('pointerdown', closeOutside);
     }, [open]);
 
+    const renderIntent = () => {
+        const base = confirmed.current;
+        if (!alive.current) return;
+        setActive(desired.current);
+        setCount(Math.max(0, base.count + Number(desired.current !== null) - Number(base.reaction !== null)));
+    };
     const react = async (type: ReactionType) => {
         if (!canInteract) { onJoin(`react to this ${label}`); setOpen(false); return; }
-        if (busy) return;
-        setBusy(true);
+        desired.current = desired.current === type ? null : type;
+        sequence.current++;
+        renderIntent();
         setError('');
-        const remove = active === type;
-        const previous = { active, count };
-        setActive(remove ? null : type);
-        setCount(Math.max(0, count + (remove ? -1 : active ? 0 : 1)));
+        if (running.current) return;
+        running.current = true;
+        setBusy(true);
         try {
-            const token = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
-            const response = await fetch(endpoint, {
-                method: remove ? 'DELETE' : 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': token,
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                ...(!remove ? { body: JSON.stringify({ type }) } : {}),
-            });
-            if (!response.ok) throw new Error(response.status === 419 ? 'Session expired. Refresh and try again.' : 'Unable to save your reaction. Please try again.');
-            const result: { reaction: ReactionType | null; count: number; breakdown?: Record<string, number> } = await response.json();
-            setActive(result.reaction);
-            setCount(result.count);
-            onChanged?.(result.reaction, result.count, result.breakdown);
-            setOpen(false);
-        } catch (reason) {
-            setActive(previous.active);
-            setCount(previous.count);
-            setError(reason instanceof Error ? reason.message : 'Unable to save your reaction.');
-        } finally { setBusy(false); }
+            // One request per target; clicks received while it is running coalesce to the last intent.
+            while (alive.current) {
+                const intent = desired.current;
+                const localSeq = sequence.current;
+                const token = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+                const send = () => fetch(endpoint, {
+                    method: intent === null ? 'DELETE' : 'POST', credentials: 'same-origin',
+                    headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token, 'X-Requested-With': 'XMLHttpRequest' },
+                    ...(intent === null ? {} : { body: JSON.stringify({ type: intent }) }),
+                });
+                try {
+                    // A network failure is ambiguous. Retry the same desired state, never a toggle.
+                    const response = await send().catch(() => send());
+                    if (!response.ok) throw new Error(response.status === 419 ? 'Session expired. Refresh and try again.' : 'Unable to save your reaction. Please try again.');
+                    const result: { reaction: ReactionType | null; count: number; breakdown?: Record<string, number>; version?: number | null } = await response.json();
+                    if (!alive.current) return;
+                    if (result.version == null || confirmed.current.version == null || result.version >= confirmed.current.version) {
+                        confirmed.current = { reaction: result.reaction, count: result.count, version: result.version ?? null };
+                        changed.current?.(result.reaction, result.count, result.breakdown, result.version);
+                    }
+                    if (localSeq === sequence.current) {
+                        desired.current = confirmed.current.reaction;
+                        renderIntent(); setOpen(false); break;
+                    }
+                    renderIntent();
+                    if (desired.current === confirmed.current.reaction) break;
+                } catch (reason) {
+                    if (!alive.current) return;
+                    if (localSeq === sequence.current) {
+                        desired.current = confirmed.current.reaction;
+                        renderIntent();
+                        setError(reason instanceof Error ? reason.message : 'Unable to save your reaction.');
+                        break;
+                    }
+                    // A newer intent supersedes the failed one; send it even if it equals the last confirmation.
+                    renderIntent();
+                }
+            }
+        } finally { running.current = false; if (alive.current) setBusy(false); }
     };
     const chosen = allOptions.find(reaction => reaction.type === active);
     const selectedType = active ?? 'like';
     const archivedSelection = active !== null && !options.some(option => option.type === active);
     return <div data-feed-pin={busy || open || undefined} className="pm-home-reaction-root" ref={root} data-open={open ? 'true' : 'false'}>
         <button type="button" className={`pm-home-action pm-home-reaction-main${active ? ` is-${active}` : ''}`}
-            disabled={busy} aria-label={chosen ? `${chosen.label} reaction. Select to remove or choose a different reaction` : `Like this ${label}`}
+            aria-busy={busy} aria-label={chosen ? `${chosen.label} reaction. Select to remove or choose a different reaction` : `Like this ${label}`}
             aria-pressed={Boolean(active)} aria-haspopup="true" aria-expanded={open}
             onPointerDown={event => { touch.current = event.pointerType === 'touch'; }}
-            onClick={() => { if (touch.current) { setOpen(value => !value); touch.current = false; } else void react(active ?? 'like'); }}>
+            onClick={() => { if (touch.current) { setOpen(value => !value); touch.current = false; } else void react(desired.current ?? 'like'); }}>
             <ReactionGlyph type={selectedType} size={19} prototypeLikeIcon={prototypeIcon && !active}/>
             <span className="pm-home-reaction-label">{chosen?.label ?? buttonLabel ?? 'Like'}</span>
             {showCount && count > 0 && <span className="pm-home-reaction-count">{count}</span>}
         </button>
         <div className="pm-home-reaction-options" data-many={options.length > 7 || archivedSelection ? 'true' : undefined} role="group" aria-label={`Choose reaction to ${label}`}>
             {options.map(({ type, label: name }) => <button key={type} type="button"
-                title={name} className={`pm-home-reaction-choice is-${type}`} disabled={busy}
+                title={name} className={`pm-home-reaction-choice is-${type}`}
                 aria-label={`${name} reaction`} aria-pressed={active === type}
                 onClick={() => { void react(type); }}><ReactionGlyph type={type} size={23}/></button>)}
-            {archivedSelection && <button type="button" className="pm-home-reaction-remove-archived" disabled={busy}
+            {archivedSelection && <button type="button" className="pm-home-reaction-remove-archived"
                 onClick={() => { if (active) void react(active); }}>Remove previous reaction</button>}
         </div>
         {error && <span className="pm-home-reaction-error" role="alert">{error}</span>}

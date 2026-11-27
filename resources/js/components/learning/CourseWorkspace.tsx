@@ -39,7 +39,7 @@ export function EnrolledCourseCard({ course, root }: { course: EnrolledCourse; r
         <div className="pm-learn-v3-course-body"><span className="pm-learn-v3-meta">{course.category}</span><h3><Link href={detail}>{course.title}</Link></h3>
             <CourseProgress {...course}/>
             <div className="pm-course-workspace-actions">{!course.eligible ? <Link href="/membership" className="pm-guide-button">Upgrade to continue</Link> : course.total > 0 ? <Link href={courseLessonHref(root, course.slug, course.next)} className="pm-guide-button">{completed ? 'Review course' : 'Continue learning'}</Link> : null}
-                {completed && course.certificate ? <Link href={`${root}/certificates/${course.certificate}`} className="pm-guide-button is-outline">Certificate</Link> : <Link href={detail} className="pm-guide-button is-outline">Course details</Link>}
+                <Link href={detail} className="pm-guide-button is-outline">Course details</Link>{course.certificate && <Link href={`${root}/certificates/${course.certificate}`} className="pm-guide-button is-outline">Certificate</Link>}
             </div>
         </div>
     </article>;
@@ -47,5 +47,5 @@ export function EnrolledCourseCard({ course, root }: { course: EnrolledCourse; r
 
 export function CertificateCard({ certificate, root }: { certificate: CourseCertificate; root: string }) {
     const href = `${root}/certificates/${certificate.reference}`;
-    return <CourseWorkspacePanel className="pm-course-certificate-card"><span className="pm-learn-v3-pill is-free">Completed</span><h2>{certificate.courseTitle}</h2><p>Issued {certificate.issuedAt}</p><div className="pm-course-workspace-actions"><Link className="pm-guide-button" href={href}>View certificate</Link><a className="pm-guide-button" href={`${href}?print=1`} target="_blank" rel="noopener noreferrer">Download PDF</a></div></CourseWorkspacePanel>;
+    return <CourseWorkspacePanel className="pm-course-certificate-card"><span className="pm-learn-v3-pill is-free">Certificate earned</span><h2>{certificate.courseTitle}</h2><p>Issued {certificate.issuedAt}</p><div className="pm-course-workspace-actions"><Link className="pm-guide-button" href={href}>View certificate</Link><a className="pm-guide-button" href={`${href}?print=1`} target="_blank" rel="noopener noreferrer">Download PDF</a></div></CourseWorkspacePanel>;
 }

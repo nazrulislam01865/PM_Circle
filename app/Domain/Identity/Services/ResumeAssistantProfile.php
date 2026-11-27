@@ -12,13 +12,10 @@ final class ResumeAssistantProfile
 {
     public function snapshot(User $user): array
     {
-        $user->loadMissing(['profile', 'experiences', 'educations', 'certifications']);
+        $user->loadMissing(['profile', 'experiences', 'educations', 'certifications', 'profileProjects']);
         $profile = $user->profile;
-        $document = $profile?->private_resume_document;
-        if ($document === null) {
-            $user->loadMissing('profileProjects');
-            $document = ResumeDocument::fromProfile($user);
-        }
+        $profileDocument = ResumeDocument::fromProfile($user);
+        $document = $profile?->private_resume_document ?? $profileDocument;
         $experience = $user->experiences->first();
         $education = $user->educations->sortBy('id')->first();
         $certification = $user->certifications->sortBy('id')->first();
@@ -41,7 +38,7 @@ final class ResumeAssistantProfile
             'educations' => $user->educations->sortBy('id')->skip(1)->map->only(['degree', 'institution', 'year'])->values()->all(),
             'certifications' => $user->certifications->sortBy('id')->skip(1)->pluck('name')->values()->all(),
         ];
-        return ['fields' => $fields, 'extra' => $extra, 'document' => $document, 'version' => hash('sha256', json_encode([$fields, $extra, $document, $experience?->id, $experience?->job_title, $experience?->organization, $education?->id, $certification?->id], JSON_THROW_ON_ERROR))];
+        return ['fields' => $fields, 'extra' => $extra, 'document' => $document, 'version' => hash('sha256', json_encode([$fields, $extra, $document, $profileDocument, $experience?->id, $experience?->job_title, $experience?->organization, $education?->id, $certification?->id], JSON_THROW_ON_ERROR))];
     }
 
     public function submit(User $user, array $input): void
@@ -55,7 +52,7 @@ final class ResumeAssistantProfile
             $old = $snapshot['fields'];
             $data = array_map(fn ($value) => trim((string) $value), array_intersect_key($input, $old));
             if (array_key_exists('document', $input)) {
-                // The new document owns repeatable CV entries; do not silently replace public records.
+                // Repeatable CV entries use the reviewed document, not the legacy leading-entry fields.
                 $data = array_intersect_key($data, array_flip(['name', 'email', 'role', 'location', 'summary']));
             }
             $changed = fn ($key) => array_key_exists($key, $data) && $data[$key] !== $old[$key];
@@ -76,10 +73,8 @@ final class ResumeAssistantProfile
                 }
                 $profile->city = $parts[0]; $profile->country = $parts[1] ?? '';
                 $details = $profile->editor_details ?? [];
-                if (isset($details['compact']['display_location'])) {
-                    $details['compact']['display_location'] = $data['location'];
-                    $profile->editor_details = $details;
-                }
+                $details['compact']['display_location'] = $data['location'];
+                $profile->editor_details = $details;
             }
             if ($changed('skills')) {
                 $skills = array_values(array_unique(array_filter(array_map('trim', preg_split('/[,\r\n]+/', $data['skills'])))));
@@ -125,7 +120,10 @@ final class ResumeAssistantProfile
                 if ($cert) throw ValidationException::withMessages(['certification' => 'Edit existing credentials in Edit profile.']);
                 $user->certifications()->create(['name' => $data['certification']]);
             }
-            if (array_key_exists('document', $input)) $profile->private_resume_document = $input['document'];
+            if (array_key_exists('document', $input)) {
+                if ($input['sync_profile'] ?? false) app(ResumeProfileSync::class)->apply($user, $profile, $input['document']);
+                $profile->private_resume_document = $input['document'];
+            }
             if ($profile->isDirty()) $profile->save();
         });
     }

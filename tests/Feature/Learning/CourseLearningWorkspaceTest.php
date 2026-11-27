@@ -31,7 +31,7 @@ final class CourseLearningWorkspaceTest extends TestCase
         return LearningCourse::query()->create([
             'slug' => 'workspace-test', 'title' => 'Workspace course', 'summary' => 'Summary', 'overview' => 'Overview',
             'category' => 'Project Management', 'level' => 'Beginner', 'minutes' => 20, 'thumbnail' => 1,
-            'access_tier' => $tier, 'is_published' => true, 'practice_enabled' => true,
+            'access_tier' => $tier, 'is_published' => true, 'practice_enabled' => true, 'certificate_enabled' => true,
             'objectives' => ['Understand lessons'], 'outline' => [['title' => 'Introduction', 'topics' => ['First lesson']]],
             'lessons' => [['title' => 'First lesson', 'body' => 'Private first lesson.'], ['title' => 'Second lesson', 'body' => 'Private second lesson.']],
         ]);
@@ -93,14 +93,50 @@ final class CourseLearningWorkspaceTest extends TestCase
         $this->postJson($url.'1/notes', ['lessonKey' => $keys[0], 'notes' => 'Private note'])->assertOk();
         $this->postJson($url.'1/complete', ['lessonKey' => $keys[0]])->assertOk()->assertJsonPath('percent', 50);
         $this->assertDatabaseCount('learning_course_certificates', 0);
+        $this->assertDatabaseCount('learning_course_completions', 0);
         $this->postJson($url.'2/complete', ['lessonKey' => $keys[1]])->assertOk()->assertJsonPath('percent', 100);
         $this->postJson($url.'2/complete', ['lessonKey' => $keys[1]])->assertOk()->assertJsonPath('percent', 100);
         $this->assertDatabaseCount('learning_course_certificates', 1);
+        $this->assertDatabaseCount('learning_course_completions', 1);
         $this->assertDatabaseHas('learning_course_lesson_progress', ['user_id' => $member->id, 'lesson_key' => $keys[0], 'notes' => 'Private note']);
         $reference = DB::table('learning_course_certificates')->value('reference');
+        $this->get('/dashboard/learning/courses/'.$course->slug)->assertInertia(fn (Assert $page) => $page
+            ->where('certificate.reference', $reference)->where('certificate.memberName', $member->name)
+            ->where('certificate.courseTitle', $course->title)->where('course.certificateEnabled', true));
+        $this->get('/dashboard/learning/my-learning')->assertInertia(fn (Assert $page) => $page->where('courses.0.certificate', $reference));
+        $this->get('/dashboard/features/achievements')->assertInertia(fn (Assert $page) => $page
+            ->where('snapshot.metrics.courses', 1)->where('snapshot.metrics.certificates', 1)->where('snapshot.certificates.0.reference', $reference));
+        $course->update(['certificate_enabled' => false]);
+        $this->get('/dashboard/learning/courses/'.$course->slug)->assertInertia(fn (Assert $page) => $page
+            ->where('certificate.reference', $reference)->where('course.certificateEnabled', false));
         $this->get('/dashboard/learning/certificates/'.$reference)->assertInertia(fn (Assert $page) => $page->component('learning/CertificateShow')->where('certificate.reference', $reference));
         $this->actingAs($other)->get($url.'1')->assertInertia(fn (Assert $page) => $page->where('notes', '')->where('progress.completed', 0));
         $this->get('/learning/certificates/'.$reference)->assertNotFound();
+        $this->get('/dashboard/learning/courses/'.$course->slug)->assertInertia(fn (Assert $page) => $page->where('certificate', null));
+        $this->get('/dashboard/features/achievements')->assertInertia(fn (Assert $page) => $page->where('snapshot.certificates', []));
+    }
+
+    public function test_course_without_certificate_still_records_completion_and_badges(): void
+    {
+        $course = $this->course();
+        $course->update(['certificate_enabled' => false]);
+        $member = $this->member();
+        $this->enroll($member, $course);
+        $keys = array_column(app(CourseLessonProgress::class)->lessons($course), 'key');
+        $url = '/learning/courses/'.$course->slug.'/lessons/';
+        $this->actingAs($member)->postJson($url.'1/complete', ['lessonKey' => $keys[0]])->assertOk();
+        $this->postJson($url.'2/complete', ['lessonKey' => $keys[1]])->assertOk()->assertJsonPath('percent', 100);
+        $this->postJson($url.'2/complete', ['lessonKey' => $keys[1]])->assertOk();
+        $this->assertDatabaseCount('learning_course_completions', 1);
+        $this->assertDatabaseCount('learning_course_certificates', 0);
+        $this->get('/dashboard/learning/my-learning')->assertInertia(fn (Assert $page) => $page
+            ->where('courses.0.percent', 100)->where('courses.0.certificate', null));
+        $this->get('/dashboard/features/achievements')->assertInertia(fn (Assert $page) => $page
+            ->where('snapshot.metrics.courses', 1)->where('snapshot.metrics.certificates', 0)->where('snapshot.certificates', []));
+        // Toggling on does not retroactively issue certificates from a replayed completion.
+        $course->update(['certificate_enabled' => true]);
+        $this->postJson($url.'2/complete', ['lessonKey' => $keys[1]])->assertOk();
+        $this->assertDatabaseCount('learning_course_certificates', 0);
     }
 
     public function test_stale_keys_and_cross_lesson_questions_are_rejected(): void

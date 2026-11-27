@@ -2,30 +2,36 @@
 
 namespace App\Domain\Achievements\Queries;
 
+use App\Domain\Achievements\Services\BadgeCatalog;
+use App\Domain\Achievements\Services\AwardLedger;
+use App\Domain\Achievements\Services\SpecificWorkProgress;
 use App\Domain\Identity\Services\ProfileCompleteness;
+use App\Domain\Learning\Queries\CourseCertificateData;
 use App\Models\User;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
-/** Read-only projection of verified member activity. No browser-supplied awards or per-badge queries. */
+/** Batched projection of verified member activity; award persistence is delegated to the ledger. */
 final class MemberAchievements
 {
     public const RECORD_LIMIT = 30;
 
-    public function snapshot(User $user, bool $includeRecord = true): array
+    public function snapshot(User $user, bool $includeRecord = true, bool $issueAwards = true): array
     {
-        $definitions = config('achievements.badges');
+        $definitions = app(BadgeCatalog::class)->definitions();
         $id = $user->getKey();
         $driver = DB::connection()->getDriverName();
         $seconds = $driver === 'pgsql'
             ? 'GREATEST(0, LEAST(EXTRACT(EPOCH FROM (finished_at - started_at)), 14400))'
             : 'MAX(0, MIN(ROUND((julianday(finished_at) - julianday(started_at)) * 86400), 14400))';
 
-        // A certificate is the existing, idempotent proof of a completed course.
+        // Course completion and certificate issuance are independent achievements.
         $sources = [
+            DB::table('learning_course_completions')->where('user_id', $id)
+                ->selectRaw("id, 'courses' AS metric, completed_at AS occurred_at, course_title AS title, 'Course' AS kind, 'Completed' AS detail, 0 AS seconds"),
             DB::table('learning_course_certificates')->where('user_id', $id)
-                ->selectRaw("id, 'courses' AS metric, issued_at AS occurred_at, course_title AS title, 'Course certificate' AS kind, 'Issued · PM Circle course completion' AS detail, 0 AS seconds"),
+                ->selectRaw("id, 'certificates' AS metric, issued_at AS occurred_at, course_title AS title, 'Course certificate' AS kind, 'Issued · PM Circle course completion' AS detail, 0 AS seconds"),
             DB::table('pmp_exam_attempts')->where('user_id', $id)->where('status', 'completed')->whereNotNull('finished_at')
                 ->selectRaw("id, CASE WHEN mode = 'focused' THEN 'focused' ELSE 'exams' END AS metric, finished_at AS occurred_at, CASE WHEN mode = 'focused' THEN 'PMP focused practice' ELSE 'PMP mock exam' END AS title, 'Simulator' AS kind, 'Completed · ' || CAST(COALESCE(correct_count, 0) AS TEXT) || ' of ' || CAST(total_questions AS TEXT) || ' correct' AS detail, {$seconds} AS seconds"),
             DB::table('posts')->where('author_id', $id)->where('status', 'published')->whereNull('deleted_at')
@@ -65,21 +71,21 @@ final class MemberAchievements
         // A threshold may be crossed on any exam, not just the first 25. Calculate its
         // original timestamp before limiting the returned rows.
         $dated = DB::query()->fromSub($ranked, 'ranked')->select('ranked.*');
-        foreach ($definitions as $definition) {
-            if ($definition['metric'] === 'minutes') {
-                $target = (int) $definition['target'];
-                $dated->selectRaw("MIN(CASE WHEN running_seconds >= ? THEN occurred_at END) OVER () AS minutes_{$target}", [$target * 60]);
-            }
+        foreach (array_unique(array_column(array_filter($definitions, fn ($b) => $b['metric'] === 'minutes'), 'target')) as $minutesTarget) {
+            $target = (int) $minutesTarget;
+            $dated->selectRaw("MIN(CASE WHEN running_seconds >= ? THEN occurred_at END) OVER () AS minutes_{$target}", [$target * 60]);
         }
+        $thresholds = array_values(array_unique(array_column(array_filter($definitions, fn ($b) => $b['mode'] === 'milestone' && $b['target'] > 25 && ! in_array($b['metric'], ['minutes', 'profile'], true)), 'target')));
         $rows = DB::query()->fromSub($dated, 'dated')
-            ->where(function (Builder $q) use ($includeRecord): void {
+            ->where(function (Builder $q) use ($includeRecord, $thresholds): void {
                 $q->where('sequence', '<=', 25);
+                if ($thresholds !== []) $q->orWhereIn('sequence', $thresholds);
                 if ($includeRecord) {
                     $q->orWhere(fn (Builder $recent) => $recent->whereNotIn('metric', ['posts', 'replies'])->where('recent_rank', '<=', self::RECORD_LIMIT));
                 }
             })->orderBy('occurred_at')->orderBy('metric')->orderBy('id')->get();
-        $metrics = array_fill_keys(array_unique(array_column($definitions, 'metric')), 0);
-        $supported = ['courses', 'certificates', 'exams', 'pmpExams', 'challenges', 'posts', 'replies', 'interviews', 'profile', 'minutes'];
+        $metrics = array_fill_keys(array_unique([...array_column(config('achievements.badges'), 'metric'), ...array_column($definitions, 'metric')]), 0);
+        $supported = BadgeCatalog::SUPPORTED;
         $metrics['profile'] = app(ProfileCompleteness::class)->percentage($user);
         $metrics['minutes'] = (int) floor(max(0, (float) ($rows->first()?->total_seconds ?? 0)) / 60);
         $dates = [];
@@ -101,26 +107,37 @@ final class MemberAchievements
             if ($includeRecord && $row->occurred_at !== null && $row->kind !== '' && $row->recent_rank <= self::RECORD_LIMIT) {
                 $record = ['id' => $row->metric.'-'.$row->id, 'type' => $row->kind, 'name' => $row->title, 'detail' => $row->detail, 'date' => $this->date($row->occurred_at)];
                 $records[] = $record;
-                if ($row->metric === 'courses') {
-                    $records[] = [...$record, 'id' => 'course-completed-'.$row->id, 'type' => 'Course', 'detail' => 'Completed'];
-                }
             }
         }
-        $metrics['certificates'] = $metrics['courses'];
         $metrics['pmpExams'] = $metrics['exams'];
-        $dates['certificates'] = $dates['courses'] ?? [];
         $dates['pmpExams'] = $dates['exams'] ?? [];
-        $badges = array_map(function (array $badge) use ($metrics, $supported, $dates): array {
+        $workProgress = app(SpecificWorkProgress::class)->completed($user, $definitions, $metrics, $dates);
+        $badges = array_map(function (array $badge) use ($metrics, $supported, $dates, $workProgress): array {
+            if ($badge['mode'] === 'completion') {
+                $matches = array_intersect_key($workProgress, array_flip($badge['targets']));
+                $value = count($matches);
+                $earned = $value >= $badge['target'];
+                $times = array_values($matches);
+                sort($times);
+                return [...$badge, 'value' => $value, 'available' => $badge['publishStatus'] === 'active', 'status' => $earned ? 'earned' : ($value > 0 ? 'progress' : 'locked'), 'earnedAt' => $earned ? ($times[$badge['target'] - 1] ?? null) : null];
+            }
             $metric = $badge['metric'];
             $value = $metrics[$metric];
-            $earned = $value >= $badge['target'];
+            $earned = in_array($metric, $supported, true) && $value >= $badge['target'];
             return [...$badge, 'value' => $value, 'available' => in_array($metric, $supported, true),
                 'status' => $earned ? 'earned' : ($value > 0 ? 'progress' : 'locked'),
                 'earnedAt' => $earned ? ($dates[$metric][$badge['target']] ?? null) : null];
         }, $definitions);
-        // Profile completion has no historical threshold timestamp; do not invent one.
+        $badges = app(AwardLedger::class)->reconcile($user, $badges, $issueAwards);
+        // Use actual completion time, or recorded award time when the historical threshold is unknown.
+        // A stable ledger ID breaks ties; never fabricate the displayed earnedAt date.
         $latest = array_values(array_filter($badges, fn ($badge) => $badge['status'] === 'earned'));
-        usort($latest, fn ($a, $b) => strcmp($b['earnedAt'] ?? '', $a['earnedAt'] ?? ''));
+        usort($latest, fn ($a, $b) => ($b['awardOrderAt'] ?? ($b['earnedAt'] ? Carbon::parse($b['earnedAt'])->getTimestamp() : 0))
+            <=> ($a['awardOrderAt'] ?? ($a['earnedAt'] ? Carbon::parse($a['earnedAt'])->getTimestamp() : 0))
+            ?: ($b['awardOrderId'] ?? 0) <=> ($a['awardOrderId'] ?? 0) ?: strcmp($a['id'], $b['id']));
+        $stripOrder = fn ($badge) => array_diff_key($badge, array_flip(['awardOrderAt', 'awardOrderId']));
+        $latest = array_map($stripOrder, $latest);
+        $badges = array_map($stripOrder, $badges);
         usort($records, fn ($a, $b) => strcmp($b['date'], $a['date']) ?: strcmp($a['id'], $b['id']));
 
         $paths = $includeRecord ? DB::table('learning_paths as p')
@@ -134,7 +151,13 @@ final class MemberAchievements
             ->map(fn ($path) => ['id' => (int) $path->id, 'title' => $path->title, 'slug' => $path->slug,
                 'completedActivities' => (int) $path->completed, 'totalActivities' => (int) $path->total])->all() : [];
 
-        return ['badges' => $badges, 'metrics' => $metrics, 'latest' => array_slice($latest, 0, 3),
+        // Only the full achievements page needs certificate cards; profile/dashboard badge previews do not.
+        $certificates = $includeRecord ? DB::table('learning_course_certificates')->where('user_id', $id)
+            ->orderByDesc('issued_at')->orderByDesc('id')->limit(self::RECORD_LIMIT)
+            ->get(['reference', 'member_name', 'course_title', 'issued_at'])
+            ->map(fn ($row) => CourseCertificateData::fromRecord($row))->all() : [];
+
+        return ['certificates' => $certificates, 'badges' => $badges, 'metrics' => $metrics, 'latest' => array_slice($latest, 0, 3),
             'paths' => $paths, 'records' => $records, 'recordLimit' => self::RECORD_LIMIT];
     }
 

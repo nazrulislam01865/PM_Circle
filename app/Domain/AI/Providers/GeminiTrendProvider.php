@@ -68,7 +68,7 @@ final class GeminiTrendProvider implements AiProvider
 
     private function moderate(string $text): void
     {
-        $key = app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential('post_check_api_key') ?: app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential('api_key');
+        $key = app(\App\Domain\AI\Services\AiFeatureRouting::class)->moderationSecret(allowLegacyDefault: true);
         if (! is_string($key) || trim($key) === '') {
             throw new AiFailure('MODERATION_UNAVAILABLE', 503);
         }

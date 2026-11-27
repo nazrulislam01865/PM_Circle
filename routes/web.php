@@ -81,6 +81,13 @@ Route::middleware(['auth', 'pm.admin', 'verified'])->prefix('admin')->name('admi
     Route::post('/comment-reviews/{comment}', [PostModerationController::class, 'reviewComment'])->middleware('throttle:30,1')->name('comment-reviews.update');
     Route::get('/comment-reviews/{comment}/media', [PostModerationController::class, 'reviewCommentMedia'])->middleware('throttle:60,1')->name('comment-reviews.media');
     Route::patch('/post-reports/{report}', [PostModerationController::class, 'update'])->middleware('throttle:30,1')->whereNumber('report')->name('post-reports.update');
+    Route::get('/achievements', [\App\Http\Controllers\Admin\AchievementBadgeController::class, 'index'])->name('achievements.index');
+    Route::post('/achievements/badges/{badge?}', [\App\Http\Controllers\Admin\AchievementBadgeController::class, 'save'])->middleware('throttle:20,1')->name('achievements.save');
+    Route::patch('/achievements/badges/{badge}/status', [\App\Http\Controllers\Admin\AchievementBadgeController::class, 'status'])->middleware('throttle:20,1')->name('achievements.status');
+    Route::post('/achievements/badges/{badge}/duplicate', [\App\Http\Controllers\Admin\AchievementBadgeController::class, 'duplicate'])->middleware('throttle:20,1')->name('achievements.duplicate');
+    Route::delete('/achievements/badges/{badge}', [\App\Http\Controllers\Admin\AchievementBadgeController::class, 'destroy'])->middleware('throttle:20,1')->name('achievements.destroy');
+    Route::post('/achievements/work', [\App\Http\Controllers\Admin\AchievementBadgeController::class, 'customWork'])->middleware('throttle:20,1')->name('achievements.work');
+    Route::post('/achievements/awards/{award}/revoke', [\App\Http\Controllers\Admin\AchievementBadgeController::class, 'revoke'])->whereNumber('award')->middleware('throttle:20,1')->name('achievements.revoke');
     Route::get('/profile-rewards', [ProfileRewardSettingsController::class, 'edit'])->name('profile-rewards.edit');
     Route::put('/profile-rewards', [ProfileRewardSettingsController::class, 'update'])->middleware('throttle:10,1')->name('profile-rewards.update');
     Route::get('/legal/{document}', [\App\Http\Controllers\Admin\LegalPageController::class, 'edit'])->whereIn('document', ['terms', 'privacy'])->name('legal.edit');
@@ -147,6 +154,10 @@ Route::middleware(['auth', 'pm.admin', 'verified'])->prefix('admin')->name('admi
     Route::get('/navigation', [MasterDataController::class, 'navigationIndex'])->name('navigation.index');
     Route::post('/navigation', [MasterDataController::class, 'store'])->middleware('throttle:20,1')->name('navigation.store');
     Route::patch('/navigation/{masterDataOption}', [MasterDataController::class, 'update'])->middleware('throttle:30,1')->name('navigation.update');
+    Route::get('/membership-validity', [\App\Http\Controllers\Admin\MembershipValidityController::class, 'index'])->middleware('throttle:60,1')->name('membership-validity.index');
+    Route::put('/membership-validity/signup-plans/{plan}', [\App\Http\Controllers\Admin\MembershipValidityController::class, 'saveSignupPlan'])->whereIn('plan', ['free', 'plus', 'pro'])->middleware('throttle:20,1')->name('membership-validity.signup-plans');
+    Route::put('/membership-validity/durations', [\App\Http\Controllers\Admin\MembershipValidityController::class, 'saveDuration'])->middleware('throttle:20,1')->name('membership-validity.durations');
+    Route::put('/membership-validity/members/{member}', [\App\Http\Controllers\Admin\MembershipValidityController::class, 'updateGrant'])->whereNumber('member')->middleware('throttle:20,1')->name('membership-validity.members');
     Route::get('/master-data', [MasterDataController::class, 'index'])->name('master-data.index');
     Route::post('/master-data', [MasterDataController::class, 'store'])->middleware('throttle:20,1')->name('master-data.store');
     Route::patch('/master-data/{masterDataOption}', [MasterDataController::class, 'update'])->middleware('throttle:30,1')->name('master-data.update');
@@ -424,6 +435,7 @@ Route::middleware(['auth', 'pm.admin', 'verified', 'throttle:60,1'])
 
         Route::get('/usage', [$management, 'usage'])->name('usage');
         Route::put('/features', [$management, 'saveFeature'])->name('features.save');
+        Route::get('/prompts/interview_answer_review', [$management, 'interviewPrompt'])->name('prompts.interview');
         Route::post('/prompts', [$management, 'publishPrompt'])->name('prompts.publish');
         Route::post('/model-prices', [$management, 'publishPrice'])->name('model-prices.publish');
         $dashboard = \App\Http\Controllers\Admin\AI\AiUsageDashboardController::class;
@@ -453,9 +465,9 @@ Route::middleware(['auth', 'pm.admin', 'verified', 'throttle:60,1'])
         Route::put('/feed-moderation', [$featureSettings, 'updateFeed'])->name('feed-moderation.update');
         Route::post('/feed-moderation/test', [$featureSettings, 'testModeration'])->withoutMiddleware('throttle:60,1')->middleware('throttle:admin-ai-diagnostic')->name('feed-moderation.test');
         Route::post('/feature-connection/{feature}', [$featureSettings, 'connection'])
-            ->whereIn('feature', ['daily-challenge', 'daily-challenge-review', 'pmp', 'feed-moderation', 'resume_analyze', 'resume_rewrite', 'interview_answer_review'])->withoutMiddleware('throttle:60,1')->middleware('throttle:admin-ai-diagnostic')->name('feature-connection');
+            ->whereIn('feature', ['daily-challenge', 'daily-challenge-review', 'pmp', 'feed-moderation', 'pmp-followup', 'resume_analyze', 'resume_rewrite', 'interview_answer_review'])->withoutMiddleware('throttle:60,1')->middleware('throttle:admin-ai-diagnostic')->name('feature-connection');
         Route::get('/feature-connection/{feature}/{uuid}', [$featureSettings, 'connectionStatus'])
-            ->whereIn('feature', ['daily-challenge', 'daily-challenge-review', 'pmp', 'resume_analyze', 'resume_rewrite', 'interview_answer_review'])->whereUuid('uuid')->withoutMiddleware('throttle:60,1')->middleware('throttle:admin-ai-diagnostic-status')->name('feature-connection.status');
+            ->whereIn('feature', ['daily-challenge', 'daily-challenge-review', 'pmp', 'resume_analyze', 'pmp-followup', 'resume_rewrite', 'interview_answer_review'])->whereUuid('uuid')->withoutMiddleware('throttle:60,1')->middleware('throttle:admin-ai-diagnostic-status')->name('feature-connection.status');
         $daily = \App\Http\Controllers\Admin\DailyChallenge\DailyChallengeController::class;
         Route::get('/daily-challenge', [$daily, 'index'])->name('daily-challenge.index');
         Route::put('/daily-challenge', [$daily, 'update'])->name('daily-challenge.update');
@@ -475,6 +487,7 @@ Route::middleware(['auth', 'pm.admin', 'verified', 'throttle:60,1'])
         Route::patch('/editorial/{draft}', [$editorial, 'edit'])->whereNumber('draft')->name('editorial.edit');
         Route::post('/editorial/{draft}/approve', [$editorial, 'approve'])->whereNumber('draft')->name('editorial.approve');
         Route::post('/editorial/{draft}/publish', [$editorial, 'publish'])->whereNumber('draft')->name('editorial.publish');
+        Route::get('/refill-packages', [$credits, 'index'])->name('refill-packages');
         Route::get('/packages', [$credits, 'packages'])->name('packages');
         Route::post('/packages', [$credits, 'publishPackage'])->name('packages.publish');
         Route::post('/packages/{package}/disable', [$credits, 'disablePackage'])
@@ -502,5 +515,5 @@ Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded'])
 // One shared endpoint for membership and AI events. A verified provider adapter is mandatory; default rejects.
 Route::post('/webhooks/payments/{provider}',
     [\App\Http\Controllers\Billing\AiCreditCheckoutController::class, 'webhook'])
-    ->middleware('throttle:30,1')->where('provider', 'bkash|nagad')
+    ->middleware('throttle:30,1')->where('provider', 'bkash|nagad|sslcommerz')
     ->name('webhooks.ai-payments');

@@ -228,7 +228,7 @@
     transform: translateX(0); visibility: visible; pointer-events: auto;
     box-shadow: 10px 0 32px color-mix(in srgb, var(--ink) 14%, transparent);
 }
-.pm-member-exam-compact .pm-dash-scrim { position: fixed; display: block; inset: 0; z-index: 120; background: color-mix(in srgb, var(--ink) 42%, transparent); border: 0; }
+.pm-member-exam-compact .pm-dash-scrim { position: fixed; display: block; inset: 0; z-index: 120; background: color-mix(in srgb, var(--pm-solid-navy) 42%, transparent); border: 0; }
 .pm-member-exam-compact .pm-dash-drawer-close { display: inline-flex; align-items: center; justify-content: center; }
 .pm-member-exam-compact .pm-dash-sidebar-close { display: none; }
 /* Member header controls: Search, Notifications, Account (profile links stay in the account menu). */
@@ -316,7 +316,7 @@
         pointer-events: auto;
         box-shadow: 10px 0 32px color-mix(in srgb, var(--ink) 14%, transparent);
     }
-    .pm-member-sidebar-layout .pm-dash-scrim { display: block; position: fixed; inset: 0; z-index: 120; border: 0; background: color-mix(in srgb, var(--ink) 42%, transparent); }
+    .pm-member-sidebar-layout .pm-dash-scrim { display: block; position: fixed; inset: 0; z-index: 120; border: 0; background: color-mix(in srgb, var(--pm-solid-navy) 42%, transparent); }
     .pm-member-sidebar-layout .pm-dash-drawer-close { display: inline-flex; align-items: center; justify-content: center; }
     .pm-member-sidebar-layout .pm-dash-sidebar-close, .pm-member-sidebar-layout .pm-member-sidebar-expand { display: none; }
     .pm-member-sidebar-layout .pm-member-sidebar-trigger { display: inline-flex; align-items: center; justify-content: center; }

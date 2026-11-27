@@ -34,6 +34,7 @@ class Post extends Model
             'tags' => 'array',
             'claps_count' => 'integer',
             'comments_count' => 'integer',
+            'engagement_version' => 'integer',
             'reactions_count' => 'integer',
             'likes_count' => 'integer',
             'loves_count' => 'integer',
@@ -51,6 +52,25 @@ class Post extends Model
     {
         static::created(function (self $post): void {
             \App\Domain\Community\Services\EngagementStats::ensureRow($post->id);
+        });
+    }
+
+    public function save(array $options = [])
+    {
+        if ($this->exists) return parent::save($options);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($options) {
+            \App\Domain\Community\Services\EngagementStats::assertWritesOpen();
+            if ($this->author_id) \App\Domain\Community\Services\EngagementStats::lockMember((int) $this->author_id);
+            return parent::save($options);
+        });
+    }
+
+    public function delete()
+    {
+        return \Illuminate\Support\Facades\DB::transaction(function () {
+            \App\Domain\Community\Services\EngagementStats::assertWritesOpen();
+            \App\Domain\Community\Services\EngagementStats::lockPost($this->id);
+            return parent::delete();
         });
     }
 

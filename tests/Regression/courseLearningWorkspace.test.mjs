@@ -63,3 +63,23 @@ test('lesson actions handle server errors without raw Inertia dialogs and no unc
     assert.match(lesson, /No documents are published for this lesson/);
     assert.match(read('resources/js/pages/learning/CertificateShow.tsx'), /window.print\(\)/);
 });
+
+test('optional certificate uses existing issuance transaction and shared certificate card on both surfaces', () => {
+    const editor = read('resources/js/pages/admin/LearningCourseEditor.tsx');
+    const request = read('app/Http/Requests/Admin/SaveLearningCourseRequest.php');
+    const migration = read('database/migrations/2026_11_27_000002_add_optional_course_certificates.php');
+    const achievements = read('app/Domain/Achievements/Queries/MemberAchievements.php');
+    assert.match(editor, /certificate_enabled: false/);
+    assert.match(editor, /Provide certificate after course completion/);
+    assert.match(request, /'certificate_enabled' => \['sometimes', 'required', 'boolean'\]/);
+    assert.match(migration, /boolean\('certificate_enabled'\)->default\(false\)/);
+    assert.match(migration, /learning_course_completions/);
+    assert.match(service, /if \(\$course->certificate_enabled\)/);
+    assert.match(service, /if \(\$completedNow &&/);
+    assert.match(achievements, /'certificates' AS metric/);
+    assert.match(achievements, /'courses' AS metric/);
+    assert.doesNotMatch(achievements, /\$metrics\['certificates'\] = \$metrics\['courses'\]/);
+    assert.match(read('resources/js/pages/learning/CourseShow.tsx'), /certificate && <CertificateCard/);
+    assert.match(read('resources/js/pages/account/Achievements.tsx'), /data.certificates.map\(certificate => <CertificateCard/);
+    assert.match(read('resources/js/components/achievements/achievementState.ts'), /certificates: \[\]/);
+});

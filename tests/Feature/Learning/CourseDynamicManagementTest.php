@@ -55,6 +55,23 @@ final class CourseDynamicManagementTest extends TestCase
         DB::table('learning_demo_course_enrollments')->insert(['user_id' => $member->id, 'course_slug' => $course->slug, 'created_at' => now(), 'updated_at' => now()]);
     }
 
+    public function test_admin_can_enable_and_disable_course_certificate(): void
+    {
+        $admin = $this->member(true);
+        $payload = [...$this->payload(), 'certificate_enabled' => true];
+        $this->actingAs($admin)->post('/admin/learning/courses', ['course_payload' => json_encode($payload, JSON_THROW_ON_ERROR)])
+            ->assertSessionHasNoErrors()->assertRedirect();
+        $course = LearningCourse::query()->where('slug', 'dynamic-learning-test')->firstOrFail();
+        $this->assertTrue($course->certificate_enabled);
+        $base = '/admin/learning/courses/'.$course->id;
+        $this->get($base.'/edit')->assertInertia(fn (Assert $page) => $page->where('course.certificateEnabled', true));
+        $payload['lessons'] = $course->lessons;
+        $payload['certificate_enabled'] = false;
+        $this->put($base, $payload)->assertSessionHasNoErrors()->assertRedirect();
+        $this->assertFalse($course->fresh()->certificate_enabled);
+        $this->put($base, [...$payload, 'certificate_enabled' => 'invalid'])->assertSessionHasErrors('certificate_enabled');
+    }
+
     public function test_catalog_uses_real_enrollments_and_published_ratings(): void
     {
         $course = $this->createCourse();
@@ -78,6 +95,7 @@ final class CourseDynamicManagementTest extends TestCase
     public function test_admin_creates_course_and_public_metadata_without_leaking_private_lessons(): void
     {
         $course = $this->createCourse();
+        $this->assertFalse($course->certificate_enabled);
         $this->assertTrue(Str::isUuid($course->lessons[0]['uid']));
         $this->assertNotSame($course->lessons[0]['uid'], $course->lessons[1]['uid']);
         auth()->logout();

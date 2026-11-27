@@ -19,7 +19,7 @@ function money(minor: number): string {
 /** The single comparison experience for public pricing and authenticated membership management. */
 export function PricingComparisonContent({ plans, renderAction, notice, error, billingFineprint, content }: {
     plans: Plan[];
-    renderAction: (plan: PricingPlanCode) => ReactNode;
+    renderAction: (plan: PricingPlanCode, months?: number) => ReactNode;
     notice?: ReactNode;
     error?: string | null;
     billingFineprint?: string;
@@ -30,12 +30,15 @@ export function PricingComparisonContent({ plans, renderAction, notice, error, b
     const profileImport = settings['profile-import'];
     const durationLabel = (months: number) => months === 1 ? comparison.monthlyLabel : months === 12 ? comparison.yearlyLabel : `${months} ${comparison.monthsLabel}`;
     const [duration, setDuration] = useState(1);
+    const [proDuration, setProDuration] = useState(1);
     const planByCode = (code: PricingPlanCode) => plans.find(plan => plan.code === code);
     const planPrice = (code: PricingPlanCode, months = 1) =>
         planByCode(code)?.prices.find(price => price.months === months)?.amount_minor;
 
     const plusOptions = [...(planByCode('plus')?.prices ?? [])].sort((a, b) => a.months - b.months);
     const selectedPlus = plusOptions.find(option => option.months === duration) ?? plusOptions[0];
+    const proOptions = [...(planByCode('pro')?.prices ?? [])].sort((a, b) => a.months - b.months);
+    const selectedPro = proOptions.find(option => option.months === proDuration) ?? proOptions[0];
     const plusMonthly = selectedPlus ? money(selectedPlus.amount_minor / selectedPlus.months) : null;
 
     return <div className={`pm-compare-page${content ? ' pm-public-compare' : ''}`}>
@@ -58,20 +61,20 @@ export function PricingComparisonContent({ plans, renderAction, notice, error, b
                         <strong>{content ? planByCode('plus')?.name ?? 'Plus' : 'Plus'}</strong>
                         <b>{plusMonthly ? <>{plusMonthly} <span className="pm-compare-per-month">{comparison.perMonth}</span></> : comparison.priceUnavailable}</b>
                         <div className="pm-compare-duration">
-                            {content ? <PMDropdown id="pm-compare-duration" aria-label={comparison.durationLabel} required value={String(selectedPlus?.months ?? '')} onValueChange={value => setDuration(Number(value))} options={plusOptions.map(option => ({value: String(option.months), label: durationLabel(option.months)}))} placeholder={comparison.priceUnavailable} disabled={!plusOptions.length}/> : <select aria-label={comparison.durationLabel} value={selectedPlus?.months ?? ''} onChange={event => setDuration(Number(event.target.value))} disabled={!plusOptions.length}>
-                                {plusOptions.map(option => <option key={option.months} value={option.months}>{durationLabel(option.months)}</option>)}
-                            </select>}
+                            <PMDropdown id="pm-compare-duration" aria-label={comparison.durationLabel} required value={String(selectedPlus?.months ?? '')} onValueChange={value => setDuration(Number(value))} options={plusOptions.map(option => ({value: String(option.months), label: durationLabel(option.months)}))} placeholder={comparison.priceUnavailable} disabled={!plusOptions.length}/>
                         </div>
                         <small>{plusOptions.filter(option => option.months !== 1).map(option => `${durationLabel(option.months)}: ${money(option.amount_minor)}`).join(' · ')}</small>
                     </th>
-                    <th scope="col"><strong>{content ? planByCode('pro')?.name ?? 'Pro' : 'Pro'}</strong><b>{planPrice('pro') == null ? comparison.priceUnavailable : <>{money(planPrice('pro')!)} <span className="pm-compare-per-month">{comparison.perMonth}</span></>}</b><span>{comparison.proNote}</span></th>
+                    <th scope="col"><strong>{content ? planByCode('pro')?.name ?? 'Pro' : 'Pro'}</strong><b>{selectedPro ? <>{money(selectedPro.amount_minor / selectedPro.months)} <span className="pm-compare-per-month">{comparison.perMonth}</span></> : comparison.priceUnavailable}</b><span>{comparison.proNote}</span>
+                        {(proOptions.length > 1 || (selectedPro && selectedPro.months !== 1)) && <div className="pm-compare-duration"><PMDropdown id="pm-compare-pro-duration" aria-label="Pro duration" required value={String(selectedPro?.months ?? '')} onValueChange={value => setProDuration(Number(value))} options={proOptions.map(option => ({value: String(option.months), label: durationLabel(option.months)}))} placeholder={comparison.priceUnavailable}/></div>}
+                    </th>
                 </tr></thead>
                 <PlanComparisonRows sections={[settings.community, settings.learning, settings.career]}/>
                 <tfoot><tr>
                     <th scope="row">{actions.title}</th>
                     <td>{renderAction('free')}</td>
-                    <td className="pm-compare-plus">{renderAction('plus')}</td>
-                    <td>{renderAction('pro')}</td>
+                    <td className="pm-compare-plus">{renderAction('plus', selectedPlus?.months)}</td>
+                    <td>{renderAction('pro', selectedPro?.months)}</td>
                 </tr></tfoot>
             </table>
         </div>

@@ -34,7 +34,7 @@ final class TrendAiConnection
 
     private function moderationKey(string $provider): ?string
     {
-        return $provider === 'gemini' ? (app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential('post_check_api_key') ?: app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential('api_key')) : $this->key('openai');
+        return $provider === 'gemini' ? (app(\App\Domain\AI\Services\AiFeatureRouting::class)->moderationSecret(allowLegacyDefault: true)) : $this->key('openai');
     }
 
     public function configurationIssue(string $provider, ?string $model): ?string

@@ -31,7 +31,7 @@
 .pm-dropdown-trigger:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 .pm-dropdown-trigger[aria-invalid="true"] { border-color: var(--red); }
 .pm-dropdown-trigger:disabled { background: var(--track); color: var(--muted); cursor: not-allowed; }
-.pm-dropdown-chevron { display: inline-flex; flex: 0 0 auto; color: var(--muted); }
+.pm-dropdown-chevron { display: inline-flex; flex: 0 0 auto; margin-inline-start: auto; color: var(--muted); }
 .pm-dropdown-chevron svg { width: var(--icon); height: var(--icon); }
 .pm-dropdown-trigger[data-state="open"] .pm-dropdown-chevron svg { transform: rotate(180deg); }
 

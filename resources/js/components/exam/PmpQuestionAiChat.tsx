@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import { AlertCircle, ChevronDown, ChevronUp, LoaderCircle, MessageCircle, Send, Sparkles } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 
@@ -67,6 +68,7 @@ async function requestJson<T>(path: string, options?: RequestInit): Promise<T> {
 
 /** Question-specific chat: only IDs are submitted; exam content is fetched again by Laravel. */
 export function PmpQuestionAiChat({ attemptId, questionId, questionMeta }: { attemptId: number; questionId: number; questionMeta: string }) {
+    const warnLowBalance = usePage<{auth?: {user?: {settings?: {warn_low_balance?: boolean}} | null}}>().props.auth?.user?.settings?.warn_low_balance !== false;
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [session, setSession] = useState<ChatSession | null>(null);
@@ -228,6 +230,7 @@ export function PmpQuestionAiChat({ attemptId, questionId, questionMeta }: { att
                 {error && <p className="pm-review-ai-error" role="alert"><AlertCircle size={16} aria-hidden="true"/> {error}</p>}
                 {session.limit_error && <p className="pm-review-ai-notice" role="status">{describeError(session.limit_error)}</p>}
                 {quotaReached && <p className="pm-review-ai-notice" role="status">Your daily, billing-cycle or question chat limit has been reached.</p>}
+                {warnLowBalance && ((session.tokens && session.tokens.allocated > 0 && session.tokens.remaining > 0 && session.tokens.remaining <= session.tokens.allocated * 0.1) || (settings?.enabled && settings.cost > 0 && session.credits_available >= settings.cost && session.credits_available < settings.cost * 2)) && <p className="pm-review-ai-notice" role="status">Your AI balance is running low. Check your available tokens and credits before continuing.</p>}
                 {session.tokens?.remaining === 0 && <p className="pm-review-ai-notice" role="status">Your allocated PMP AI tokens are exhausted for this membership cycle.</p>}
                 {settings?.enabled && session.credits_available < settings.cost &&
                     <p className="pm-review-ai-notice" role="status">You need {settings.cost} AI credits for the next reply. Current balance: {session.credits_available}.</p>}

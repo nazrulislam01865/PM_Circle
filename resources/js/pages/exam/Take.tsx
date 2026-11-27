@@ -61,10 +61,8 @@ export default function Take({ attempt, questions, responses: initial }: {
     const selected = responses[question.id] ?? initialResponse;
     const answeredCount = questions.filter(q => Boolean(responses[q.id]?.choice)).length;
     const markedIndexes = questions.flatMap((q, i) => responses[q.id]?.marked ? [i] : []);
-    // A learner may review earlier questions, but cannot skip ahead of the first unanswered one.
-    const firstUnansweredIndex = questions.findIndex(q => !responses[q.id]?.choice);
-    const lastUnlockedIndex = firstUnansweredIndex < 0 ? questions.length - 1 : firstUnansweredIndex;
-    const canVisit = (target: number) => target <= index || target <= lastUnlockedIndex;
+    // Every issued question is available, even if earlier questions are unanswered.
+    const canVisit = (target: number) => Number.isInteger(target) && target >= 0 && target < questions.length;
 
     const persist = (questionId: number, response: ExamResponse) => {
         const previous = pending.current.get(questionId);
@@ -97,8 +95,7 @@ export default function Take({ attempt, questions, responses: initial }: {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [attempt.id]);
     const goto = (next: number, keepMarkedReview = false) => {
-        // Flagged review revisits encountered questions; ordinary forward progress remains gated.
-        if (next < 0 || next >= questions.length || (!keepMarkedReview && !canVisit(next))) return;
+        if (!canVisit(next)) return;
         lastSelection.current = null;
         if (!keepMarkedReview) setReviewingMarked(false);
         setIndex(next);
@@ -229,7 +226,7 @@ export default function Take({ attempt, questions, responses: initial }: {
         const initialRemaining = examSecondsUntilExpiry(attempt.expiresAt, Date.now(), serverClockOffset);
         return Number.isFinite(initialRemaining) && initialRemaining > 0 ? initialRemaining : 1;
     }, [attempt.id, attempt.durationSeconds, attempt.expiresAt, serverClockOffset]);
-    return <div className="pm-app pm-exam pm-exam-taking"><Head title="PMP Practice Exam"/><SiteHeader active="/exams/pmp" authenticatedMemberNavigation/>
+    return <div className="pm-app pm-exam pm-exam-taking"><Head title="PMP Practice Exam"/><SiteHeader active="/exams/pmp" authenticatedMemberNavigation showOffer={false}/>
         <PmpExamTakingView questions={questions} responses={responses} index={index} selected={selected} seconds={seconds} duration={duration}
             guideOpen={guideOpen} strikeMode={strikeMode} highlightMode={highlightMode} reviewingMarked={reviewingMarked}
             markedIndexes={markedIndexes} navStart={navStart} strikes={tools.strikes[question.id] ?? []} highlights={tools.highlights[question.id]?.prompt ?? []}

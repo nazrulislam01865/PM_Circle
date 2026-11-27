@@ -12,9 +12,9 @@ final class AiCheckoutService
     public function __construct(private readonly PaymentCheckoutService $checkout,
         private readonly PaymentSettlementService $settlement) {}
 
-    public function checkout(User $user, int $packageId, string $clientKey): array
+    public function checkout(User $user, int $packageId, string $clientKey, ?string $provider = null): array
     {
-        return $this->checkout->aiCredits($user, $packageId, $clientKey);
+        return $this->checkout->aiCredits($user, $packageId, $clientKey, $provider);
     }
 
     public function acceptWebhook(string $provider, string $payload, array $headers): void

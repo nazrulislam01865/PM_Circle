@@ -85,9 +85,9 @@ final class FeedQuery
             $query->leftJoin('post_engagement_stats as engagement_stats',
                 'engagement_stats.post_id', '=', 'posts.id')
                 ->select($columns)
-                ->selectRaw('COALESCE(engagement_stats.comments_count, 0) AS comments_count')
-                ->selectRaw('COALESCE(engagement_stats.reactions_count, 0) AS reactions_count')
-                ->selectRaw('COALESCE(engagement_stats.like_count, 0) AS likes_count');
+                ->selectRaw('engagement_stats.comments_count AS comments_count')
+                ->selectRaw('engagement_stats.reactions_count AS reactions_count')
+                ->selectRaw('engagement_stats.like_count AS likes_count');
             PostReactionSummary::selectStats($query, 'engagement_stats');
         } else {
             $query->withCount([
@@ -191,6 +191,7 @@ final class FeedQuery
                 'comments' => $post['comments_count'] ?? 0,
                 'reactions' => $post['reactions_count'] ?? 0,
                 'reactionBreakdown' => $post['reaction_breakdown'] ?? [],
+                'engagementVersion' => $post['engagement_version'] ?? null,
                 'saved' => (bool) ($post['viewer_saved'] ?? false),
                 'hidden' => (bool) ($post['viewer_hidden'] ?? false),
                 'isOwner' => (bool) ($post['viewer_is_author'] ?? false),

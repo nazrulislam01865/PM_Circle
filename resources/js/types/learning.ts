@@ -31,6 +31,7 @@ export type CourseReview = { id: number; rating: number; body: string };
 export type OwnCourseReview = { rating: number; body: string; is_published: boolean };
 export type DemoCourseDetailData = Omit<DemoCourseData, 'enrolled' | 'saved'> & {
     lessons: { title: string; body: string | null; hasVideo?: boolean; sectionTitle?: string | null; topicTitle?: string | null }[];
+    certificateEnabled?: boolean;
     presentation?: CoursePresentation;
     overview?: string;
     objectives?: string[];

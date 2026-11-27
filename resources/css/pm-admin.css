@@ -30,8 +30,8 @@
 .pm-admin-meta{font-size:var(--text-sm);display:flex;align-items:center;gap:var(--s2);color:var(--muted)}
 .pm-admin-button{display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);padding:var(--s2) var(--s3);min-height:var(--control-height);border:1px solid var(--control-border);border-radius:var(--radius-control);font:var(--pm-guide-weight-control) var(--text-ui)/var(--line-ui) var(--font-ui);background:var(--surface);color:var(--ink);text-decoration:none;cursor:pointer;white-space:nowrap}
 .pm-admin-button:hover{background:var(--canvas)}
-.pm-admin-button-primary{background:var(--blue);border-color:var(--blue);color:var(--surface)}
-.pm-admin-button-primary:hover{background:var(--blue-hover);color:var(--surface)}
+.pm-admin-button-primary{background:var(--pm-action-blue);border-color:var(--blue);color:var(--pm-on-solid)}
+.pm-admin-button-primary:hover{background:var(--pm-action-hover);color:var(--pm-on-solid)}
 .pm-admin-button-quiet{color:var(--blue);border-color:var(--blue)}
 .pm-admin-button:disabled,.pm-admin-icon-actions button:disabled,.pm-admin-string-row button:disabled{opacity:.5;cursor:not-allowed}
 .pm-admin-editor-toolbar{display:flex;justify-content:space-between;align-items:center;gap:var(--s4)}
@@ -126,7 +126,7 @@
 .pm-admin-submenu-link:hover{background:var(--canvas);color:var(--blue)}
 .pm-admin-submenu-link.is-active{background:var(--blue-soft);color:var(--blue);font-weight:var(--semibold)}
 .pm-admin-submenu-marker{width:.375rem;height:.375rem;border-radius:50%;background:var(--border);flex:none}
-.pm-admin-submenu-link.is-active .pm-admin-submenu-marker{background:var(--blue)}
+.pm-admin-submenu-link.is-active .pm-admin-submenu-marker{background:var(--pm-action-blue)}
 .pm-admin-submenu-status{color:var(--red);font:var(--medium) var(--text-xs)/var(--line-xs) var(--font-ui)}
 .pm-admin-master-intro{display:flex;align-items:flex-start;gap:var(--s4)}
 .pm-admin-master-intro>svg{color:var(--blue);flex:none}
@@ -278,7 +278,7 @@
 /* PMP bank editor: shared admin controls and design-token spacing. */
 .pm-pmp-bank-tabs { display: flex; gap: var(--s2, .5rem); flex-wrap: wrap; margin-block: var(--s4, 1rem); border-bottom: 1px solid var(--border, var(--pm-tone-dce4ee)); }
 .pm-pmp-bank-tabs button { background: none; border: 0; padding: var(--s3, .75rem) var(--s4, 1rem); color: var(--muted, var(--pm-tone-4c5d74)); font: inherit; cursor: pointer; }
-.pm-pmp-bank-tabs button.is-active { color: var(--blue, var(--pm-tone-075eb5)); border-bottom: 2px solid currentColor; font-weight: var(--bold); }
+.pm-pmp-bank-tabs button.is-active { color: var(--blue, var(--pm-theme-fg-pm-tone-075eb5)); border-bottom: 2px solid currentColor; font-weight: var(--bold); }
 .pm-pmp-bank-panel { margin-block-end: var(--s4, 1rem); padding: var(--s5, 1.25rem); display: grid; gap: var(--s4, 1rem); min-width: 0; }
 .pm-pmp-bank-panel h2 { font-size: var(--text-h3); line-height: var(--line-h3); font-weight: var(--semibold); }
 .pm-pmp-bank-description { display: flex; align-items: flex-start; gap: var(--s2, .5rem); font-size: var(--text-sm, .8125rem); line-height: var(--line-sm, 1.25rem); color: var(--muted, var(--pm-tone-4c5d74)); }
@@ -308,7 +308,7 @@
 .pm-pmp-bank-status.is-active { background: var(--green-soft, var(--pm-tone-e9f6ef)); color: var(--green, var(--pm-tone-187448)); }
 .pm-pmp-bank-pagination { display: flex; gap: var(--s2, .5rem); flex-wrap: wrap; }
 .pm-pmp-bank-pagination a, .pm-pmp-bank-pagination span { padding: var(--s2, .5rem); border: 1px solid var(--border, var(--pm-tone-dce4ee)); border-radius: var(--radius-control, .5rem); }
-.pm-pmp-bank-pagination .is-active { border-color: var(--blue, var(--pm-tone-075eb5)); color: var(--blue, var(--pm-tone-075eb5)); }
+.pm-pmp-bank-pagination .is-active { border-color: var(--blue, var(--pm-tone-075eb5)); color: var(--blue, var(--pm-theme-fg-pm-tone-075eb5)); }
 .pm-pmp-bank-form .pm-admin-field textarea { width: 100%; min-height: 4rem; resize: vertical; }
 @media (max-width: 55rem) { .pm-pmp-bank-filters { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 42rem) { .pm-pmp-bank-import, .pm-pmp-bank-filters { grid-template-columns: minmax(0, 1fr); } .pm-pmp-bank-row-actions { flex-wrap: wrap; } }
@@ -364,8 +364,8 @@
 .pm-pmp-import-progress { display: grid; gap: var(--s2, .5rem); min-width: 0; font: var(--medium) var(--text-sm)/var(--line-sm) var(--font-ui); }
 .pm-pmp-import-progress progress { display: block; width: 100%; height: .625rem; accent-color: var(--blue); border: 0; border-radius: var(--radius-pill); overflow: hidden; }
 .pm-pmp-import-progress progress::-webkit-progress-bar { background: var(--track); border-radius: var(--radius-pill); }
-.pm-pmp-import-progress progress::-webkit-progress-value { background: var(--blue); border-radius: var(--radius-pill); }
-.pm-pmp-import-progress progress::-moz-progress-bar { background: var(--blue); }
+.pm-pmp-import-progress progress::-webkit-progress-value { background: var(--pm-action-blue); border-radius: var(--radius-pill); }
+.pm-pmp-import-progress progress::-moz-progress-bar { background: var(--pm-action-blue); }
 
 /* PMP administration: make live exam rules discoverable without additional queries. */
 .pm-pmp-bank-stats { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(19rem, 2fr); }
@@ -429,7 +429,7 @@
 .pm-course-admin-pagination{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--s3);font-size:var(--text-sm);color:var(--muted)}
 .pm-course-admin-pagination nav{display:flex;flex-wrap:wrap;gap:var(--s1)}
 .pm-course-admin-page{display:inline-flex;align-items:center;justify-content:center;min-height:var(--control-compact);min-width:var(--control-compact);padding:var(--s1) var(--s2);border:1px solid var(--border);border-radius:var(--radius-control);color:var(--blue);text-decoration:none}
-.pm-course-admin-page.is-active{background:var(--blue);color:white;border-color:var(--blue)}
+.pm-course-admin-page.is-active{background:var(--pm-action-blue);color:white;border-color:var(--blue)}
 .pm-course-admin-page.is-disabled{color:var(--muted);opacity:.5}
 .pm-course-admin-editor{display:grid;gap:var(--s4)}
 .pm-course-admin-editor-head{justify-content:flex-start}
@@ -468,7 +468,7 @@
 .pm-course-content-stack .pm-admin-field>span:first-child{font:var(--semibold) var(--text-ui)/var(--line-ui) var(--font-ui)}
 .pm-course-content-upload{display:grid;gap:var(--s1);font-size:var(--text-sm);color:var(--muted)}
 .pm-course-content-track{height:var(--bar-height);background:var(--track);border-radius:var(--radius-pill);overflow:hidden}
-.pm-course-content-track>span{display:block;height:100%;background:var(--blue);transition:width .18s}
+.pm-course-content-track>span{display:block;height:100%;background:var(--pm-action-blue);transition:width .18s}
 .pm-course-content-question-form{display:grid;gap:var(--s4);padding:var(--s4);border-radius:var(--radius-card);border:1px solid var(--border);background:var(--canvas)}
 .pm-course-content-form-grid,.pm-course-content-resource-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s3)}
 .pm-course-content-form-actions{display:flex;justify-content:flex-end;align-items:center;gap:var(--s2);flex-wrap:wrap}
@@ -682,3 +682,33 @@
 .pm-footer-admin-editor { min-inline-size: 0; }
 .pm-footer-admin-editor .pm-admin-repeat-card { display: grid; gap: var(--s3); min-width: 0; }
 .pm-footer-admin-preview > .pm-member-footer { grid-column: auto; grid-row: auto; }
+
+/* Signup validity: compact, scoped layouts using the shared admin controls and tokens. */
+.pm-validity-admin .pm-course-admin-heading h2{font-size:var(--text-h3);line-height:var(--line-h3)}
+.pm-validity-admin .pm-course-admin-section>h2{font-size:var(--text-h3);line-height:var(--line-h3)}
+.pm-validity-admin .pm-course-admin-section>p{font-size:var(--text-sm);color:var(--muted)}
+.pm-validity-admin .pm-admin-field>span{font-size:var(--text-ui);font-weight:var(--pm-guide-weight-control)}
+.pm-validity-toolbar,.pm-validity-search{display:flex;align-items:end;gap:var(--s3);flex-wrap:wrap}
+.pm-validity-toolbar .pm-admin-field{width:min(100%,16rem)}
+.pm-validity-toolbar>.pm-admin-hint{padding-block:var(--s2)}
+.pm-validity-search .pm-admin-field{flex:1;min-width:min(100%,16rem)}
+.pm-validity-edit-form{border:1px solid var(--border);border-radius:var(--radius-control);padding:var(--s4);background:var(--canvas)}
+.pm-validity-edit-form h3{font-size:var(--text-h4);line-height:var(--line-h4);font-weight:var(--semibold)}
+.pm-validity-edit-form input[readonly]{background:var(--canvas);color:var(--muted)}
+.pm-validity-member-summary{display:grid;gap:var(--s2);overflow-wrap:anywhere}
+.pm-validity-member-summary>div:first-child{display:grid;gap:var(--s1)}
+.pm-validity-member-summary>small,.pm-validity-member-summary>div:first-child small{font-size:var(--text-sm);color:var(--muted)}
+.pm-validity-member-summary>.pm-course-admin-status{justify-self:start}
+.pm-validity-term-details{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s3);margin:var(--s2) 0}
+.pm-validity-term-details dt{font-size:var(--text-sm);color:var(--muted)}
+.pm-validity-term-details dd{font-size:var(--text-ui);font-weight:var(--semibold);margin:0}
+@media(max-width:45rem){.pm-validity-search .pm-admin-field,.pm-validity-search>.pm-admin-button{flex-basis:100%}.pm-validity-term-details{grid-template-columns:1fr}.pm-validity-edit-form .pm-admin-editor-actions>*{flex:1}}
+
+/* Refill catalog: reuse admin tokens and keep page-specific actions aligned. */
+.pm-admin-content:has(>.pm-refill-admin)>.pm-admin-page-heading{display:flex;align-items:center;justify-content:space-between;gap:var(--s4);flex-wrap:wrap}
+.pm-admin-content:has(>.pm-refill-admin)>.pm-admin-page-heading>.pm-admin-button{margin-inline-start:auto}
+.pm-refill-admin .pm-admin-field :is(input,textarea)[aria-invalid="true"]{border-color:var(--red)}
+.pm-refill-admin .pm-refill-required{color:var(--red);font-weight:var(--bold)}
+.pm-refill-admin .pm-refill-save-actions,.pm-refill-admin .pm-course-admin-row-actions{justify-content:flex-end}
+.pm-refill-admin .pm-course-admin-table th:last-child{text-align:right}
+@media(max-width:45rem){.pm-refill-admin .pm-admin-editor-toolbar>.pm-admin-button{align-self:flex-end}}

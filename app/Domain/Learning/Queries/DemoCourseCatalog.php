@@ -64,6 +64,7 @@ final class DemoCourseCatalog
         return [
             ...$course->catalogData(),
             'overview' => $course->overview,
+            'certificateEnabled' => $course->certificate_enabled,
             'presentation' => $course->presentationData(),
             'objectives' => $course->objectives ?? [],
             'outline' => $course->outline ?? [],

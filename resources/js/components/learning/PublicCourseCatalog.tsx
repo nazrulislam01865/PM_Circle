@@ -113,7 +113,8 @@ function StartingPoint({ courses, courseHref, settings }: { courses: DemoCourseD
 export function PublicCourseCatalog({ courses, memberView = false, settings }: { courses: DemoCourseData[]; memberView?: boolean; settings: CatalogSettings }) {
     const pageUrl = usePage().url;
     const courseHref = (slug: string) => memberView ? `/dashboard/learning/courses/${encodeURIComponent(slug)}` : demoCourseHref(slug);
-    const { rewardPromotion } = usePage<{ rewardPromotion?: RewardPromotionData | null }>().props;
+    const { rewardPromotion, auth } = usePage<{ rewardPromotion?: RewardPromotionData | null; auth?: {user?: {settings?: {learning_interest?: string}} | null} }>().props;
+    const interest = auth?.user?.settings?.learning_interest;
     const [search, setSearch] = useState(() => new URLSearchParams(pageUrl.split('?')[1] || '').get('search') || '');
     const [topic, setTopic] = useState<Topic>('All topics');
     const [level, setLevel] = useState('all');
@@ -129,11 +130,15 @@ export function PublicCourseCatalog({ courses, memberView = false, settings }: {
         const result = courses.filter(course => (!query || `${course.title} ${course.summary} ${course.category} ${course.level}`.toLocaleLowerCase().includes(query))
             && matchesTopic(course, topic) && (level === 'all' || course.level === level)
             && (access === 'all' || course.accessTier === access));
+        if (sort === 'recommended' && interest) {
+            const matches = (course: DemoCourseData) => course.category.toLowerCase() === interest.toLowerCase();
+            result.sort((a, b) => Number(matches(b)) - Number(matches(a)));
+        }
         if (sort === 'title') result.sort((a, b) => a.title.localeCompare(b.title));
         if (sort === 'shortest') result.sort((a, b) => a.minutes - b.minutes);
         if (sort === 'longest') result.sort((a, b) => b.minutes - a.minutes);
         return result;
-    }, [courses, search, topic, level, access, sort]);
+    }, [courses, search, topic, level, access, sort, interest]);
     const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
     const currentPage = Math.min(page, pageCount);
     const shown = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);

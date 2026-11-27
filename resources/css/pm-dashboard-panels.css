@@ -16,7 +16,7 @@
 .pm-dash-feed-body { margin-left: 77px; color: var(--pm-tone-40506b); font-size: var(--type-small); line-height: var(--pm-line-height-1p43); }
 .pm-dash-feed-actions { display: flex; align-items: center; justify-content: space-between; gap: 5px; margin-top: 10px; }
 .pm-dash-feed-actions a, .pm-dash-feed-actions button { display: inline-flex; align-items: center; gap: 8px; color: var(--pm-tone-33435e); border: 0; background: none; white-space: nowrap; font-size: var(--pm-font-size-13px); padding: var(--space-1) var(--pm-control-padding-6px); }
-.pm-dash-feed-actions a:hover, .pm-dash-feed-actions button:hover { color: var(--pm-tone-0869e5); }
+.pm-dash-feed-actions a:hover, .pm-dash-feed-actions button:hover { color: var(--pm-theme-fg-pm-tone-0869e5); }
 .pm-dash-feed-actions button[aria-pressed='true'] { color: var(--pm-tone-075fcc); font-weight: var(--pm-font-weight-750); }
 .pm-dash-feed-actions svg { flex: none; }
 .pm-dash-save { margin-left: auto; }
@@ -30,8 +30,8 @@
 .pm-dash-profile-identity strong { font-size: var(--type-body); font-weight: var(--pm-font-weight-800); }
 .pm-dash-profile-identity p { display: flex; align-items: center; gap: 5px; color: var(--pm-tone-45556f); font-size: var(--type-small); }
 .pm-dash-profile-photo { position: relative; flex: none; }
-.pm-dash-camera { position: absolute; right: -4px; bottom: 2px; border-radius: 50%; display: grid; place-items: center; background: var(--pm-dash-blue); color: var(--surface); width: 28px; height: 28px; border: 2px solid var(--surface); }
-.pm-dash-camera:hover { color: var(--surface); background: var(--pm-tone-004fbd); }
+.pm-dash-camera { position: absolute; right: -4px; bottom: 2px; border-radius: 50%; display: grid; place-items: center; background: var(--pm-action-blue); color: var(--pm-on-solid); width: 28px; height: 28px; border: 2px solid var(--surface); }
+.pm-dash-camera:hover { color: var(--pm-on-solid); background: var(--pm-tone-004fbd); }
 .pm-dash-profile-progress { display: flex; align-items: center; gap: 12px; margin: 14px 0 16px; }
 .pm-dash-profile-progress > div { flex: 1; height: 13px; overflow: hidden; border-radius: var(--pm-radius-8px); background: var(--pm-tone-dce2ea); }
 .pm-dash-profile-progress > div span { display: block; height: 100%; border-radius: inherit; background: var(--pm-tone-0869e5); }

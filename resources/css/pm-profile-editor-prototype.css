@@ -110,8 +110,8 @@
     accent-color: var(--primary);
 }
 .pm-compact-progress progress::-webkit-progress-bar { background: var(--divider); border-radius: var(--radius-pill); }
-.pm-compact-progress progress::-webkit-progress-value { background: var(--primary); border-radius: var(--radius-pill); }
-.pm-compact-progress progress::-moz-progress-bar { background: var(--primary); border-radius: var(--radius-pill); }
+.pm-compact-progress progress::-webkit-progress-value { background: var(--pm-action-blue); border-radius: var(--radius-pill); }
+.pm-compact-progress progress::-moz-progress-bar { background: var(--pm-action-blue); border-radius: var(--radius-pill); }
 .pm-compact-progress strong { color: var(--primary); font-variant-numeric: tabular-nums; }
 .pm-profile-page--editor .pm-compact-section {
     padding: var(--space-4) var(--s5) var(--s5);

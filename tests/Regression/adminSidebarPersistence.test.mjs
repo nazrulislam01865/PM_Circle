@@ -16,12 +16,12 @@ test('all admin groups retain expansion state and active route opens its group',
     for (const [flag, group, setter] of [
         ['isAiWorkspace', 'workspace', 'setWorkspaceOpen'], ['isAi', 'ai', 'setAiOpen'],
         ['isHomepage', 'home', 'setHomeOpen'], ['isMaster', 'master', 'setMasterOpen'],
-        ['isNavigation', 'navigation', 'setNavOpen'], ['isPmp', 'pmp', 'setPmpOpen'],
+        ['isNavigation', 'navigation', 'setNavOpen'], ['isPmp', 'pmp', 'setPmpOpen'], ['isAchievements', 'achievements', 'setAchievementsOpen'],
     ]) {
         assert.ok(layout.includes(`useState(() => ${flag} || adminSidebarState.groups.${group})`));
         assert.ok(layout.includes(`if (${flag}) ${setter}(true)`));
     }
-    assert.match(layout, /adminSidebarState\.groups = \{ workspace: workspaceOpen, ai: aiOpen, home: homeOpen, master: masterOpen, navigation: navOpen, pmp: pmpOpen \}/);
+    assert.match(layout, /adminSidebarState\.groups = \{ workspace: workspaceOpen, ai: aiOpen, home: homeOpen, master: masterOpen, navigation: navOpen, pmp: pmpOpen, achievements: achievementsOpen \}/);
     assert.match(layout, /!window\.matchMedia\('\(max-width: 45rem\)'\)\.matches/g);
     assert.match(layout, /onClick=\{\(\) => setMobileOpen\(false\)\}/);
 });

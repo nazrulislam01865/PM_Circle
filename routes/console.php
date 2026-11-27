@@ -152,3 +152,15 @@ if (config('pm-ai.enabled') && config('pm-ai.editorial_enabled')) {
     Schedule::command('ai:prepare-scenarios')->everyFifteenMinutes()->withoutOverlapping();
     Schedule::command('daily-challenge:publish')->everyFiveMinutes()->withoutOverlapping();
 }
+
+// One indexed scan; transport work stays on the existing default queue.
+Schedule::call(function (): void {
+    $batches = \Illuminate\Support\Facades\DB::table('notifications')
+        ->where('notifiable_type', \App\Models\User::class)
+        ->where('email_status', 'pending')->where('email_due_at', '<=', now())
+        ->select(['notifiable_id', 'email_due_at'])->groupBy('notifiable_id', 'email_due_at')
+        ->orderBy('email_due_at')->orderBy('notifiable_id')->limit(200)->get();
+    foreach ($batches as $batch) {
+        \App\Jobs\DeliverActivityEmail::dispatch((int) $batch->notifiable_id, (string) $batch->email_due_at)->onQueue('default');
+    }
+})->name('notifications:dispatch-optional-email')->everyMinute()->withoutOverlapping();

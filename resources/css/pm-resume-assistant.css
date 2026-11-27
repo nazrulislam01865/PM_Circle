@@ -114,6 +114,8 @@
 .pm-resume-builder :is(.pm-resume-editor-section,.pm-resume-preview-only) { scroll-margin-top: var(--pm-resume-rail-top); }
 @container pm-resume-builder (max-width: 52rem) {
     .pm-resume-builder-aside { position: static; max-height: none; overflow: visible; scrollbar-gutter: auto; }
+    /* Keep the live document ahead of quality and preview actions in the stacked layout. */
+    .pm-resume-builder-aside > .pm-resume-preview-card { order: -1; }
 }
 @media (max-height: 36rem) {
     .pm-resume-builder-aside { position: static; max-height: none; overflow: visible; scrollbar-gutter: auto; }

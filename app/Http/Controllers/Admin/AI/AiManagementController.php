@@ -68,7 +68,13 @@ final class AiManagementController extends Controller
         }
         $actor = $request->user();
         DB::transaction(function () use ($data, $code, $actor, $access): void {
-            $before = DB::table('ai_features')->where('code', $code)->lockForUpdate()->first();
+            $pmp = in_array($code, ['pmp_explain', 'pmp_followup'], true);
+            $rows = $pmp ? DB::table('ai_features')->whereIn('code', ['pmp_explain', 'pmp_followup'])->orderBy('code')->lockForUpdate()->get()->keyBy('code') : null;
+            $before = $pmp ? $rows->get($code) : DB::table('ai_features')->where('code', $code)->lockForUpdate()->first();
+            if ($pmp && (($code === 'pmp_explain' && ! $data['enabled'] && $rows->get('pmp_followup')?->enabled)
+                || ($code === 'pmp_followup' && $data['enabled'] && ! $rows->get('pmp_explain')?->enabled))) {
+                abort(422, 'Enable question explanations before follow-up tutoring. Disable follow-up tutoring first.');
+            }
             $old = $before ? (array) $before : null;
             $payload = collect($data)->except(['code', 'reason'])->all();
             $payload['tariff_version'] = $before
@@ -87,6 +93,17 @@ final class AiManagementController extends Controller
         return response()->json(['saved' => true]);
     }
 
+    public function interviewPrompt(Request $request, AiAdminAccess $access): JsonResponse
+    {
+        $access->authorize($request->user(), 'ai.manage_prompts');
+        $prompt = DB::table('ai_features as f')->join('ai_prompt_versions as p', function ($join) {
+            $join->on('p.feature_code', '=', 'f.code')->on('p.version', '=', 'f.prompt_version');
+        })->where('f.code', 'interview_answer_review')->whereNotNull('p.published_at')
+            ->first(['p.version', 'p.template', 'p.evaluation_reference']);
+        abort_unless($prompt, 404, 'No active interview review prompt is configured.');
+        return response()->json($prompt);
+    }
+
     public function publishPrompt(Request $request, AiAdminAccess $access,
         AiFeatureCatalog $catalog): JsonResponse
     {
@@ -96,11 +113,20 @@ final class AiManagementController extends Controller
             'template' => ['required', 'string', 'min:30', 'max:12000'],
             'evaluation_reference' => ['required', 'string', 'min:5', 'max:160'],
             'reason' => ['required', 'string', 'min:8', 'max:500'],
+            'activate' => ['sometimes', 'boolean'],
+            'expected_version' => ['required_if:activate,true', 'integer', 'min:1'],
         ]);
+        if (! empty($data['activate'])) {
+            abort_unless($data['feature'] === 'interview_answer_review', 422);
+            $access->authorize($request->user(), 'ai.manage_features');
+        }
         $version = DB::transaction(function () use ($request, $data, $catalog, $access): int {
             // Serialize per-feature version creation with the feature row.
             $feature = DB::table('ai_features')->where('code', $data['feature'])->lockForUpdate()->first();
             abort_unless($feature, 404, 'Create the disabled feature record first.');
+            if (! empty($data['activate']) && (int) $feature->prompt_version !== (int) $data['expected_version']) {
+                abort(409, 'The active prompt changed. Reload it before publishing.');
+            }
             $version = (int) DB::table('ai_prompt_versions')->where('feature_code', $data['feature'])
                 ->max('version') + 1;
             $id = DB::table('ai_prompt_versions')->insertGetId([
@@ -113,6 +139,11 @@ final class AiManagementController extends Controller
             ]);
             $access->audit($request->user()->id, 'prompt.publish', 'ai_prompt_versions', $id,
                 null, ['feature' => $data['feature'], 'version' => $version], $data['reason']);
+            if (! empty($data['activate'])) {
+                DB::table('ai_features')->where('id', $feature->id)->update(['prompt_version' => $version, 'updated_at' => now()]);
+                $access->audit($request->user()->id, 'prompt.activate', 'ai_features', $feature->id,
+                    ['prompt_version' => $feature->prompt_version], ['prompt_version' => $version], $data['reason']);
+            }
             return $version;
         }, 3);
         return response()->json(['version' => $version], 201);

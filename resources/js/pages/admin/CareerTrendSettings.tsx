@@ -1,7 +1,7 @@
 import { WorkspaceConnectionPicker } from '@/components/admin/ai/WorkspaceConnectionPicker';
 import { Head, router, useForm } from '@inertiajs/react';
 import { CalendarDays, Clock3, FileText, ShieldCheck, X } from 'lucide-react';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { AdminLayout } from '@/layouts/admin/AdminLayout';
 import { IntegrationCard, ConnectionDialogContent } from '@/components/admin/ai/ConnectionControls';
 import { useDiagnosticTest } from '@/components/admin/ai/useDiagnosticTest';
@@ -41,6 +41,8 @@ export default function CareerTrendSettings({ settings, options, connections }: 
     const form = useForm<Settings>(settings);
     const [connectionOpen, setConnectionOpen] = useState(false);
     const [routingBusy, setRoutingBusy] = useState(false);
+    const [operationReady, setOperationReady] = useState(false);
+    const onOperationState = useCallback((_code: string, _saved: unknown, ready: boolean) => setOperationReady(ready), []);
     const [tested, setTested] = useState<Partial<Record<Provider, Connection>>>({});
     const { busy: testing, retrySeconds, begin, finish, rateLimited } = useDiagnosticTest();
     const abortTest = useRef<AbortController | null>(null);
@@ -55,12 +57,12 @@ export default function CareerTrendSettings({ settings, options, connections }: 
         onChange={value => form.setData(key, value)} error={errorFor(key)} required/>;
     const multi = (key: 'topics' | 'target_levels', label: string) => <AdminCreatableMultiChoice id={`career-trends-${key}`} label={label} options={options[key]}
         value={form.data[key]} onChange={value => form.setData(key, value)} maxSelections={500} error={errorFor(key)}/>;
-    const showDialog = (kind: 'draft' | 'connection') => { setDialog(kind); setConnectionOpen(kind === 'connection'); dialogRef.current?.showModal(); };
+    const showDialog = (kind: 'draft' | 'connection') => { setDialog(kind); setOperationReady(false); setConnectionOpen(kind === 'connection'); dialogRef.current?.showModal(); };
     useEffect(() => { setTested({}); }, [connections]);
     const connection = tested[form.data.ai_provider] ?? connections[form.data.ai_provider];
     const testConnection = async () => {
         const provider = form.data.ai_provider;
-        if (routingBusy) return;
+        if (routingBusy || !operationReady || provider !== settings.ai_provider) return;
         if (!begin()) return;
         setTestError('');
         const controller = new AbortController(); abortTest.current = controller;
@@ -134,7 +136,7 @@ export default function CareerTrendSettings({ settings, options, connections }: 
         <dialog ref={dialogRef} onClose={() => setConnectionOpen(false)} className="pm-career-settings-dialog pm-ai-connection-dialog" aria-labelledby="career-dialog-title">
             <div className="pm-career-settings-dialog-head"><h2 id="career-dialog-title">{dialog === 'draft' ? 'Preview draft' : 'Manage connection'}</h2><button type="button" className="pm-admin-button" aria-label="Close dialog" onClick={() => dialogRef.current?.close()}><X size={18}/></button></div>
             {dialog === 'draft' ? <><p className="pm-admin-hint">Template preview only. No AI request is made. Automatic draft generation and scheduled publication are not active.</p><h3>{form.data.title_pattern.replaceAll('{week_start}', schedule.weekStart)}</h3><p>Proposed publication: {schedule.publish} ({form.data.timezone})</p><ul>{options.sections.filter(option => form.data.sections.includes(option.value)).map(option => <li key={option.value}>{option.label}</li>)}</ul></> : <>
-                <ConnectionDialogContent id="career-provider" provider={form.data.ai_provider} options={Object.values(connections).map(item => ({ value: item.provider, label: item.label }))} onChange={value => { if (!testing && (value === 'openai' || value === 'gemini')) { form.setData('ai_provider', value); setTestError(''); } }} connection={connection} portalContainer={dialogRef.current} testing={testing} retrySeconds={retrySeconds} error={testError} onTest={testConnection} onClose={() => dialogRef.current?.close()} routingBusy={routingBusy} hint="Test makes a small, budgeted generation request and verifies mandatory moderation. It does not create or publish a report. Select a provider here, then Save settings before assigning its workspace credentials.">{connectionOpen && (form.data.ai_provider === settings.ai_provider ? <WorkspaceConnectionPicker operations={[{value: 'trend_draft', label: 'Career Trends'}]} portalContainer={dialogRef.current} disabled={testing} onBusy={setRoutingBusy} onHealthChanged={() => { setTested({}); router.reload({only:['connections']}); }} onSaved={() => { setTested({}); router.reload({only:['connections']}); }}/> : <p className="pm-admin-hint">Save the provider selection first to manage its credentials.</p>)}</ConnectionDialogContent>
+                <ConnectionDialogContent id="career-provider" provider={form.data.ai_provider} options={Object.values(connections).map(item => ({ value: item.provider, label: item.label }))} onChange={value => { if (!testing && (value === 'openai' || value === 'gemini')) { form.setData('ai_provider', value); setTestError(''); } }} connection={connection} portalContainer={dialogRef.current} testing={testing} retrySeconds={retrySeconds} error={testError} testDisabled={!operationReady || form.data.ai_provider !== settings.ai_provider} onTest={testConnection} onClose={() => dialogRef.current?.close()} routingBusy={routingBusy} hint="Test makes a small, budgeted generation request and verifies mandatory moderation. It does not create or publish a report. Select a provider here, then Save settings before assigning its workspace credentials.">{connectionOpen && (form.data.ai_provider === settings.ai_provider ? <WorkspaceConnectionPicker operations={[{value: 'trend_draft', label: 'Career Trends'}]} onOperationState={onOperationState} portalContainer={dialogRef.current} disabled={testing} onBusy={setRoutingBusy} onHealthChanged={() => { setTested({}); router.reload({only:['connections']}); }} onSaved={() => { setTested({}); router.reload({only:['connections']}); }}/> : <p className="pm-admin-hint">Save the provider selection first to manage its credentials.</p>)}</ConnectionDialogContent>
             </>}
             {dialog === 'draft' && <button type="button" className="pm-admin-button pm-admin-button-primary" onClick={() => dialogRef.current?.close()}>Close</button>}
         </dialog>

@@ -73,6 +73,14 @@ final class AiFeatureRouting
         finally { app(AiRuntimeSettings::class)->clearCredentialSelection($slot); }
     }
 
+    /** Shared mandatory safety route. An explicit disabled assignment must fail closed. */
+    public function moderationSecret(bool $allowLegacyDefault = false): ?string
+    {
+        $key = $this->primarySecret('feed_moderation', 'post_check_api_key');
+        if ($key || ! $allowLegacyDefault || $this->route('feed_moderation')?->primary_credential_id !== null || app(AiRuntimeSettings::class)->hasAssignedCredential('post_check_api_key')) return $key;
+        return app(AiRuntimeSettings::class)->credential('api_key');
+    }
+
     public function primaryAccounting(string $feature, string $slot): ?array
     {
         try { return $this->selectPrimary($feature, $slot) ? app(AiRuntimeSettings::class)->credentialAccounting($slot) : null; }
@@ -146,7 +154,14 @@ final class AiFeatureRouting
     public function save(string $feature, array $data, int $actor, AiAdminAccess $access): void
     {
         DB::transaction(function () use ($feature, $data, $actor, $access): void {
-            $row = DB::table('ai_features')->where('code', $feature)->lockForUpdate()->first();
+            // Serialize PMP toggles with the dedicated settings page in the same lock order.
+            $pmp = in_array($feature, ['pmp_explain', 'pmp_followup'], true) && array_key_exists('enabled', $data);
+            $pmpRows = $pmp ? DB::table('ai_features')->whereIn('code', ['pmp_explain', 'pmp_followup'])->orderBy('code')->lockForUpdate()->get()->keyBy('code') : null;
+            $row = $pmp ? $pmpRows->get($feature) : DB::table('ai_features')->where('code', $feature)->lockForUpdate()->first();
+            if ($pmp && (($feature === 'pmp_explain' && ! $data['enabled'] && $pmpRows->get('pmp_followup')?->enabled)
+                || ($feature === 'pmp_followup' && $data['enabled'] && ! $pmpRows->get('pmp_explain')?->enabled))) {
+                throw ValidationException::withMessages(['enabled' => 'Enable question explanations before follow-up tutoring. Disable follow-up tutoring first.']);
+            }
             $provider = $feature === 'trend_draft' ? app(\App\Domain\Careers\Services\CareerTrendSettings::class)->get()['ai_provider'] : 'openai';
             $model = match ($feature) {
                 'feed_moderation' => PostContentCheckService::selectedModel(),
@@ -182,21 +197,25 @@ final class AiFeatureRouting
                     if (array_key_exists($input, $data)) $values[$column] = $data[$input];
                 }
             }
-            if (in_array($feature, ['resume_analyze', 'resume_rewrite', 'interview_answer_review'], true)) {
+            if (isset(AiFeatureCatalog::FEATURES[$feature]) && (array_key_exists('enabled', $data) || in_array($feature, ['resume_analyze', 'resume_rewrite', 'interview_answer_review'], true))) {
                 if (! $row) throw ValidationException::withMessages(['primary_model' => 'Run the AI feature migrations first.']);
                 $settings = [];
                 foreach (['enabled' => 'enabled', 'request_daily_limit' => 'daily_limit', 'output_token_limit' => 'max_output_tokens', 'credit_tariff' => 'credit_tariff'] as $input => $column) {
                     if (array_key_exists($input, $data)) $settings[$column] = $data[$input];
                 }
-                if (($settings['enabled'] ?? $row->enabled) && ! DB::table('ai_prompt_versions')->where('feature_code', $feature)->where('version', $row->prompt_version)->whereNotNull('published_at')->exists()) {
+                if (($settings['enabled'] ?? $row->enabled) && ! $row->enabled && ! DB::table('ai_prompt_versions')->where('feature_code', $feature)->where('version', $row->prompt_version)->whereNotNull('published_at')->exists()) {
                     throw ValidationException::withMessages(['enabled' => 'Publish the feature prompt first.']);
                 }
                 if (isset($settings['credit_tariff']) && (int) $settings['credit_tariff'] !== (int) $row->credit_tariff) $settings['tariff_version'] = $row->tariff_version + 1;
-                if ($settings) DB::table('ai_features')->where('id', $row->id)->update([...$settings, 'updated_at' => now()]);
                 $valuesForAudit = $settings;
             }
+            $settings = $valuesForAudit ?? [];
+            if ($row && $provider === 'openai' && $row->model !== $model) $settings['model'] = $model;
+            if ($row) {
+                $settings = array_filter($settings, fn ($value, $key) => ($value === null) !== ($row->{$key} === null) || $value != $row->{$key}, ARRAY_FILTER_USE_BOTH);
+                if ($settings) DB::table('ai_features')->where('id', $row->id)->update([...$settings, 'updated_at' => now()]);
+            }
             DB::table('ai_workspace_feature_routes')->upsert([['feature_code' => $feature, ...$values, 'created_at' => now(), 'updated_at' => now()]], ['feature_code'], [...array_keys($values), 'updated_at']);
-            if ($row && $provider === 'openai' && $row->model !== $model) DB::table('ai_features')->where('id', $row->id)->update(['model' => $model, 'updated_at' => now()]);
             $access->audit($actor, 'feature.route.update', 'ai_features', $row?->id ?? 0, null, [...$values, ...($valuesForAudit ?? [])], 'AI routing updated: '.$feature);
         }, 3);
         $this->forget();

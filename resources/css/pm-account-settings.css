@@ -30,7 +30,7 @@
 .pm-settings-row .pm-btn { white-space: normal; text-align: center; max-width: 100%; padding: var(--s2) var(--s3); }
 .pm-settings-workspace .pm-settings-switch { display: block; appearance: none; width: 2.375rem; height: 1.375rem; border: 1px solid var(--control-border); border-radius: var(--radius-pill); background: var(--track); position: relative; cursor: pointer; margin: 0; }
 .pm-settings-switch::before { content: ''; position: absolute; width: .9375rem; height: .9375rem; top: .15625rem; left: .1875rem; background: white; border-radius: var(--radius-pill); box-shadow: var(--pm-guide-shadow); }
-.pm-settings-workspace .pm-settings-switch:checked { background: var(--blue); border-color: var(--blue); }
+.pm-settings-workspace .pm-settings-switch:checked { background: var(--pm-action-blue); border-color: var(--blue); }
 .pm-settings-switch:checked::before { left: 1.125rem; }
 .pm-settings-switch:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 .pm-settings-workspace :is(button,input,select):disabled { opacity: .65; cursor: not-allowed; }
@@ -49,10 +49,6 @@
 .pm-settings-workspace[data-text-size=large] .pm-settings-copy h4 { font-size: var(--text-h3); }
 .pm-settings-workspace[data-text-size=large] .pm-settings-copy p { font-size: var(--pm-guide-text-lead); }
 .pm-settings-workspace[data-reduce-motion=true] *, .pm-settings-workspace[data-reduce-motion=true] *::before { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
-.pm-settings-theme-dark { color-scheme: dark; color: var(--pm-guide-body-color); background: var(--canvas); }
-.pm-settings-theme-dark .pm-btn-secondary { color: var(--ink); background: var(--surface); border-color: var(--border); }
-.pm-settings-theme-dark .pm-btn-primary { background: var(--pm-settings-dark-action); border-color: var(--pm-settings-dark-action); color: white; }
-.pm-settings-theme-dark .pm-settings-danger { color: var(--red); border-color: var(--red); }
 @container pm-account (max-width: 33.75rem) {
     .pm-settings-card-body { padding-inline: var(--s3); }
     .pm-settings-card-title { padding-inline: var(--s3); }
@@ -69,3 +65,7 @@
     .pm-settings-row:has(.pm-settings-control, .pm-btn) .pm-settings-control-wrap { max-width: 100%; width: 100%; }
     .pm-settings-row .pm-settings-control { width: 100%; }
 }
+
+.pm-settings-dialog.pm-settings-payment-dialog { max-width: min(56rem, calc(100vw - var(--s6))); width: 100%; max-height: calc(100dvh - var(--s6)); overflow-y: auto; }
+.pm-settings-payment-dialog .pm-account-table-wrap { max-width: 100%; overflow-x: auto; }
+.pm-settings-payment-dialog .pm-account-table-wrap small { overflow-wrap: anywhere; }

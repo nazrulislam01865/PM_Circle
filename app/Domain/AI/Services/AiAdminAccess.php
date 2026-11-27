@@ -12,9 +12,9 @@ final class AiAdminAccess
         abort_unless($actor->is_admin === true && $actor->status === 'active' && $actor->email_verified_at !== null,
             403, 'An active, verified administrator account is required.');
 
-        // Feature settings and editorial workflows belong to the administrator role.
-        // Keep explicit authorization for unrelated financial and operational privileges.
-        if (in_array($permission, ['ai.manage_features', 'ai.manage_editorial'], true)) {
+        // Feature settings, editorial workflows and refill catalog management belong to the administrator role.
+        // Keep explicit authorization for direct credit grants and other operational privileges.
+        if (in_array($permission, ['ai.manage_features', 'ai.manage_editorial', 'ai.manage_packages'], true)) {
             return;
         }
 

@@ -13,7 +13,7 @@ final class NotificationController extends Controller
     public function index(Request $request): JsonResponse
     {
         $rows = DB::table('notifications')
-            ->where('notifiable_type', User::class)->where('notifiable_id', $request->user()->id);
+            ->where('notifiable_type', User::class)->where('notifiable_id', $request->user()->id)->where('in_app', true);
         $unread = (clone $rows)->whereNull('read_at')->count();
         $page = $rows->orderByDesc('created_at')->orderByDesc('id')
             ->cursorPaginate(20, ['id', 'type', 'data', 'read_at', 'created_at']);
@@ -37,7 +37,7 @@ final class NotificationController extends Controller
     public function read(Request $request, string $notification): JsonResponse
     {
         DB::table('notifications')->where('id', $notification)
-            ->where('notifiable_type', User::class)->where('notifiable_id', $request->user()->id)
+            ->where('notifiable_type', User::class)->where('notifiable_id', $request->user()->id)->where('in_app', true)
             ->whereNull('read_at')->update(['read_at' => now(), 'updated_at' => now()]);
 
         return response()->json(['ok' => true])->header('Cache-Control', 'private, no-store');
@@ -46,7 +46,7 @@ final class NotificationController extends Controller
     public function readAll(Request $request): JsonResponse
     {
         DB::table('notifications')->where('notifiable_type', User::class)
-            ->where('notifiable_id', $request->user()->id)->whereNull('read_at')
+            ->where('notifiable_id', $request->user()->id)->where('in_app', true)->whereNull('read_at')
             ->update(['read_at' => now(), 'updated_at' => now()]);
 
         return response()->json(['ok' => true])->header('Cache-Control', 'private, no-store');

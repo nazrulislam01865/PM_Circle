@@ -67,7 +67,7 @@ final class MemberDirectoryController extends Controller
             ->when($tab === 'following', fn ($query) => $viewerId
                 ? $query->whereIn('users.id', DB::table('member_follows')->where('follower_id', $viewerId)->select('followed_id'))
                 : $query->whereRaw('1 = 0'))
-            ->select(['users.id', 'users.name', 'users.created_at'])
+            ->select(['users.id', 'users.name', 'users.created_at', 'users.account_preferences'])
             ->with(['profile' => fn ($query) => $query->select('id', 'user_id', 'role', 'headline', 'industry', 'city', 'country', 'avatar_path', 'visibility', 'field_visibility')])
             ->withCount(['posts as contributions_count' => fn ($query) => $query
                 ->where('status', 'published')->where('visibility', 'public')->where('is_anonymous', false)])
@@ -84,7 +84,7 @@ final class MemberDirectoryController extends Controller
                 ->orderByDesc('subscriptions.ends_at')->limit(1)]);
 
         if (SetTemporaryMembership::enabled()) {
-            $query->addSelect(['temporary_plan' => DB::table('temporary_memberships')
+            $query->addSelect(['temporary_plan' => \App\Domain\Billing\Queries\CurrentMemberPlan::activeComplimentaryGrants()
                 ->select('plan_code')->whereColumn('user_id', 'users.id')->limit(1)]);
         }
         if ($viewerId) {
@@ -117,6 +117,7 @@ final class MemberDirectoryController extends Controller
             'followers_count' => (int) $member->followers_count,
             'contributions_count' => (int) $member->contributions_count,
             'is_following' => (bool) ($member->viewer_follows ?? false),
+            'can_follow' => ($member->account_preferences['follow'] ?? 'Members only') !== 'No one',
         ]);
 
         return Inertia::render('members/Directory', [
@@ -193,7 +194,7 @@ final class MemberDirectoryController extends Controller
             'following' => $viewer ? DB::table('member_follows')->where('follower_id', $viewer->id)->where('followed_id', $member->id)->exists() : false,
             'overview' => $overview->forMember($member, $profile, $viewer, $tab === 'overview'),
             'activeTab' => $tab,
-            'canFollow' => $profile->visibility === 'public',
+            'canFollow' => $profile->visibility === 'public' && ($member->account_preferences['follow'] ?? 'Members only') !== 'No one',
             'canInteract' => in_array('members_only', ProfileFieldPrivacy::profileAudiences($viewer), true),
             'posts' => $feed->page('all', 'All', null, $viewer, $tab === 'posts' ? ($filters['cursor'] ?? null) : null, false, $member->id),
         ]);
@@ -202,12 +203,16 @@ final class MemberDirectoryController extends Controller
     public function follow(Request $request, User $member)
     {
         abort_if($request->user()->id === $member->id, 422, 'You cannot follow yourself.');
-        abort_unless($member->is_admin !== true && $member->status === 'active'
-            && $member->profile()->where('visibility', 'public')->exists(), 404);
-        $inserted = DB::table('member_follows')->insertOrIgnore([
-            'follower_id' => $request->user()->id, 'followed_id' => $member->id,
-            'created_at' => now(), 'updated_at' => now(),
-        ]);
+        $inserted = DB::transaction(function () use ($request, $member) {
+            $target = User::query()->whereKey($member->id)->lockForUpdate()->firstOrFail();
+            abort_unless($target->is_admin !== true && $target->status === 'active' && $target->hasVerifiedEmail()
+                && $target->profile()->where('visibility', 'public')->exists(), 404);
+            abort_if(($target->account_preferences['follow'] ?? 'Members only') === 'No one', 403, 'This member is not accepting new followers.');
+            return DB::table('member_follows')->insertOrIgnore([
+                'follower_id' => $request->user()->id, 'followed_id' => $target->id,
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
+        }, 3);
         if ($inserted) {
             app(\App\Domain\Notifications\ActivityNotifier::class)->forFollow($request->user(), $member);
         }

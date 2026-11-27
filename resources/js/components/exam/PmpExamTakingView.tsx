@@ -64,7 +64,7 @@ export function PmpExamTakingView({ questions, responses, index, selected, secon
                             <button className="btn pm-exam-action" disabled={markedPosition === markedCount - 1} onClick={() => goto(markedIndexes[markedPosition + 1], true)}>Next Marked <ArrowRight size={18}/></button></div>
                         : <div className="pm-exam-nextprev"><button className="btn secondary pm-exam-action" disabled={index === 0} onClick={() => goto(index - 1)}><ArrowLeft size={18}/>Previous</button>
                             {index === questions.length - 1 ? <button className="btn pm-exam-action" onClick={onFinal}>{finalLabel} <ArrowRight size={18}/></button>
-                                : <button className="btn pm-exam-action" disabled={!canVisit(index + 1)} title={!canVisit(index + 1) ? 'Answer this and preceding questions to continue' : undefined} onClick={() => goto(index + 1)}>Next <ArrowRight size={18}/></button>}</div>}</footer>
+                                : <button className="btn pm-exam-action" disabled={!canVisit(index + 1)} onClick={() => goto(index + 1)}>Next <ArrowRight size={18}/></button>}</div>}</footer>
             </section><PmpExamNavigator questions={questions} responses={responses} currentIndex={index}
                 pageStart={navStart} onPageStartChange={onPageStartChange} canVisit={canVisit}
                 onNavigate={(target, marked) => onNavigate(target, marked)}

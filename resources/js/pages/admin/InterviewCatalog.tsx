@@ -1,23 +1,26 @@
 import { AdjacentPagination } from '@/components/pm/Pagination';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { BookOpen, CheckCircle2, Clock3, Download, Layers3, Pencil, Plus, Search, Settings2, Trash2, UploadCloud, X } from 'lucide-react';
+import { BookOpen, CheckCircle2, Download, Layers3, Pencil, Plus, Search, Settings2, Trash2, UploadCloud, X } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { InterviewReviewPrompt } from '@/components/admin/InterviewReviewPrompt';
+import { InterviewPracticeSettings } from '@/components/admin/InterviewPracticeSettings';
+import type { InterviewPracticeConfig } from '@/components/interview/types';
 import { AdminChoice } from '@/components/admin/AdminChoice';
 import { AdminLayout } from '@/layouts/admin/AdminLayout';
 
 type Option = { id: number; group: string; key: string; label: string; is_active: boolean; sort_order: number };
 type QuestionSet = { id: number; title: string; description: string | null; industry: string | null; role: string | null; experience: string | null; is_active: boolean; sort_order: number; question_count: number | string };
-type Question = { id: number; set_id: number; type: string; text: string; is_active: boolean; sort_order: number; set_title: string };
+type Question = { id: number; set_id: number; type: string; text: string; is_active: boolean; sort_order: number; set_title: string; topic: string | null; difficulty: string | null; answer_guidance: string | null };
 type Pagination = { data: Question[]; total: number; from: number | null; to: number | null; prev_page_url: string | null; next_page_url: string | null };
-type Props = { options: Option[]; sets: QuestionSet[]; questions: Pagination; settings: { minutes_per_question: number }; filters: { search: string; set: number } };
+type Props = { options: Option[]; sets: QuestionSet[]; questions: Pagination; settings: InterviewPracticeConfig; filters: { search: string; set: number } };
 type Tab = 'options' | 'sets' | 'questions' | 'settings';
 type Editor = { kind: 'option' | 'set' | 'question'; id?: number } | null;
 type FormData = Record<string, string | number | boolean | null>;
 type Deleting = { kind: 'option' | 'set' | 'question'; id: number; name: string } | null;
 const groups = [
     { key: 'industry', name: 'Industries', description: 'Which industries members can practise in' },
-    { key: 'role', name: 'PM roles', description: 'Available interview job roles' },
+    { key: 'role', name: 'Interview roles', description: 'Available interview job roles' },
     { key: 'experience', name: 'Experience levels', description: 'Experience selections for members' },
     { key: 'type', name: 'Question types', description: 'General, behavioral, situational and more' },
     { key: 'count', name: 'Question counts', description: 'How many questions members can request' },
@@ -26,7 +29,7 @@ const groups = [
 const base = '/admin/interview-preparation';
 const optionEmpty = { group: 'industry', key: '', label: '', is_active: true, sort_order: 10 };
 const setEmpty = { title: '', description: '', industry: null, role: null, experience: null, is_active: false, sort_order: 10 };
-const questionEmpty = { set_id: 0, type: 'General', text: '', is_active: true, sort_order: 10 };
+const questionEmpty = { set_id: 0, type: 'General', text: '', topic: '', difficulty: '', answer_guidance: '', is_active: true, sort_order: 10 };
 
 export default function InterviewCatalog({ options, sets, questions, settings, filters }: Props) {
     const { flash } = usePage<{ flash?: { status?: string } }>().props;
@@ -45,7 +48,6 @@ export default function InterviewCatalog({ options, sets, questions, settings, f
     const [busy, setBusy] = useState(false);
     const [search, setSearch] = useState(filters.search);
     const [setFilter, setSetFilter] = useState(String(filters.set || ''));
-    const [minutes, setMinutes] = useState(settings.minutes_per_question);
     const active = (group: string) => options.filter(option => option.group === group && option.is_active);
     const labelFor = (group: string, value: string) => options.find(option => option.group === group && option.key === value)?.label ?? value;
     const change = (key: string, value: FormData[string]) => setForm(previous => ({ ...previous, [key]: value }));
@@ -64,6 +66,7 @@ export default function InterviewCatalog({ options, sets, questions, settings, f
         const url = `${base}/${name}${id ? `/${id}` : ''}`;
         const payload = { ...form };
         if (kind === 'set') for (const key of ['industry', 'role', 'experience', 'description']) if (!payload[key]) payload[key] = null;
+        if (kind === 'question') for (const key of ['topic', 'difficulty', 'answer_guidance']) if (!payload[key]) payload[key] = null;
         if (kind === 'option' && id) { delete payload.key; delete payload.group; }
         setBusy(true); setErrors({});
         router.visit(url, {
@@ -110,11 +113,6 @@ export default function InterviewCatalog({ options, sets, questions, settings, f
     const confirmDelete = (kind: NonNullable<Deleting>['kind'], id: number, name: string) => {
         setDeleteError(''); setDeleting({ kind, id, name });
     };
-    const saveSettings = (event: FormEvent) => {
-        event.preventDefault(); setBusy(true); setErrors({});
-        router.put(`${base}/settings`, { minutes_per_question: minutes }, { preserveScroll: true,
-            onError: next => setErrors(next), onFinish: () => setBusy(false) });
-    };
     const optionSelect = (name: string, field: string, value: string) => <AdminChoice
         key={field} id={`interview-set-${field}`} label={name} value={value} contentClassName="pm-interview-admin-choice-content"
         onChange={next => change(field, next || null)}
@@ -122,7 +120,7 @@ export default function InterviewCatalog({ options, sets, questions, settings, f
         options={options.filter(item => item.group === field).map(item => ({ value: item.key, label: `${item.label}${item.is_active ? '' : ' (inactive)'}` }))}
         error={errors[field]}/>;
 
-    return <AdminLayout active={base} title="Interview preparation" subtitle="Manage interview choices from central Master Data, question sets, questions and practice timing.">
+    return <AdminLayout active={base} title="Interview preparation" subtitle="Manage interview choices from central Master Data, question sets, questions and practice settings.">
         <Head title="Interview preparation | PM Circle Admin"/>
         {flash?.status && <p className="pm-admin-notice pm-admin-notice-success" role="status"><CheckCircle2 size={17}/>{flash.status}</p>}
         <div className="pm-interview-admin-stats">
@@ -131,7 +129,7 @@ export default function InterviewCatalog({ options, sets, questions, settings, f
             <div className="pm-admin-panel"><Settings2 size={20}/><span>Active options</span><strong>{options.filter(item => item.is_active).length}</strong></div>
         </div>
         <div role="tablist" aria-label="Interview administration" className="pm-interview-admin-tabs">
-            {([['options', 'Member options'], ['sets', 'Question sets'], ['questions', 'Question bank'], ['settings', 'Timing']] as const).map(([key, name]) => <button type="button" key={key} role="tab" aria-selected={tab === key} onClick={() => setTab(key)}>{name}</button>)}
+            {([['options', 'Member options'], ['sets', 'Question sets'], ['questions', 'Question bank'], ['settings', 'Practice settings']] as const).map(([key, name]) => <button type="button" key={key} role="tab" aria-selected={tab === key} onClick={() => setTab(key)}>{name}</button>)}
         </div>
         {tab === 'options' && <p className="pm-interview-admin-master-note">These member options share the <Link href="/admin/master-data?category=interview_industry">central Master Data</Link> records; changes here also appear there.</p>}
         {tab === 'options' && <div className="pm-interview-admin-groups">{groups.map(group => <section className="pm-admin-panel" key={group.key}>
@@ -149,14 +147,11 @@ export default function InterviewCatalog({ options, sets, questions, settings, f
         {tab === 'questions' && <section className="pm-admin-panel">
             <div className="pm-interview-admin-title"><div><h2>Question bank</h2><p>Questions from published sets are selected for new practice sessions. Previously started interviews are unchanged.</p></div><div className="pm-interview-admin-header-actions"><button type="button" disabled={!sets.length} className="pm-admin-button" onClick={() => { setImportErrors({}); setImportFile(null); setImportOpen(true); }}><UploadCloud size={17}/> Import questions</button><button type="button" disabled={!sets.length || !active('type').length} className="pm-admin-button pm-admin-button-primary" onClick={() => startCreate('question')}><Plus size={17}/> Add question</button></div></div>
             <form className="pm-interview-admin-filters" onSubmit={filter} role="search"><label className="pm-admin-field"><span>Search questions</span><input value={search} onChange={event => setSearch(event.target.value)} type="search" placeholder="Search question text"/></label><AdminChoice id="interview-filter-set" label="Question set" value={setFilter} onChange={setSetFilter} placeholder="All sets" clearable options={sets.map(item => ({ value: String(item.id), label: item.title }))}/><button type="submit" className="pm-admin-button"><Search size={17}/> Filter</button></form>
-            <div className="pm-interview-admin-record-list">{questions.data.map(item => <article className="pm-interview-admin-record" key={item.id}><div className="pm-interview-admin-record-text"><small>{item.set_title} · {labelFor('type', item.type)}</small><h3>{item.text}</h3></div><span className={`pm-interview-admin-status ${item.is_active ? 'is-active' : ''}`}>{item.is_active ? 'Active' : 'Hidden'}</span><button type="button" className="pm-admin-button" onClick={() => startEdit('question', item)}><Pencil size={15}/> Edit</button><button type="button" className="pm-admin-button pm-interview-admin-delete" onClick={() => confirmDelete('question', item.id, item.text)}><Trash2 size={15}/> Delete</button></article>)}
+            <div className="pm-interview-admin-record-list">{questions.data.map(item => <article className="pm-interview-admin-record" key={item.id}><div className="pm-interview-admin-record-text"><small>{item.set_title} · {labelFor('type', item.type)}{item.difficulty ? ` · ${item.difficulty}` : ''}{item.topic ? ` · ${item.topic}` : ''}</small><h3>{item.text}</h3></div><span className={`pm-interview-admin-status ${item.is_active ? 'is-active' : ''}`}>{item.is_active ? 'Active' : 'Hidden'}</span><button type="button" className="pm-admin-button" onClick={() => startEdit('question', item)}><Pencil size={15}/> Edit</button><button type="button" className="pm-admin-button pm-interview-admin-delete" onClick={() => confirmDelete('question', item.id, item.text)}><Trash2 size={15}/> Delete</button></article>)}
                 {questions.data.length === 0 && <p className="pm-interview-admin-muted">No questions match these filters.</p>}</div>
             <div className="pm-interview-admin-pagination"><span>{questions.from ?? 0}–{questions.to ?? 0} of {questions.total}</span><AdjacentPagination previous={questions.prev_page_url} next={questions.next_page_url} label="Interview question pages"/></div>
         </section>}
-        {tab === 'settings' && <section className="pm-admin-panel pm-interview-admin-settings"><div className="pm-interview-admin-title"><div><h2>Practice timing</h2><p>Set the estimated time per question. Existing sessions keep their original timing.</p></div><Clock3 size={24}/></div><form onSubmit={saveSettings}>
-            <label className="pm-admin-field"><span>Minutes per question</span><input min="1" max="30" required type="number" value={minutes} onChange={event => setMinutes(Number(event.target.value))}/></label>{errors.minutes_per_question && <p role="alert" className="pm-interview-admin-error">{errors.minutes_per_question}</p>}
-            <button className="pm-admin-button pm-admin-button-primary" disabled={busy} type="submit">{busy ? 'Saving…' : 'Save timing'}</button></form><p className="pm-interview-admin-muted">AI evaluation and credit usage are not enabled by this setting.</p>
-        </section>}
+        {tab === 'settings' && <div className="pm-interview-config"><InterviewPracticeSettings settings={settings} roles={options.filter(item => item.group === 'role').map(item => ({ value: item.key, label: `${item.label}${item.is_active ? '' : ' (inactive)'}` }))}/><InterviewReviewPrompt/></div>}
         {importOpen && <Dialog open onOpenChange={open => { if (!open && !busy) closeImport(); }}><DialogContent className="pm-interview-admin-modal pm-interview-import-modal" showCloseButton={false} onPointerDownOutside={event => event.preventDefault()}>
             <header><div><DialogTitle>Import interview questions</DialogTitle><DialogDescription>Add multiple questions to a selected set.</DialogDescription></div><button type="button" aria-label="Close import dialog" disabled={busy} onClick={closeImport}><X size={20}/></button></header>
             <form className="pm-interview-import-form" onSubmit={importQuestions}>
@@ -188,23 +183,25 @@ export default function InterviewCatalog({ options, sets, questions, settings, f
         </DialogContent></Dialog>}
         {editor && <Dialog open onOpenChange={open => { if (!open && !busy) setEditor(null); }}><DialogContent className="pm-interview-admin-modal" showCloseButton={false} onPointerDownOutside={event => event.preventDefault()}>
             <header><div><DialogTitle>{editor.id ? `Edit ${editor.kind}` : `Add ${editor.kind}`}</DialogTitle><DialogDescription>{editor.id ? 'Change the fields you need and save.' : 'Enter the details for this new record.'}</DialogDescription></div><button type="button" aria-label="Close dialog" disabled={busy} onClick={() => setEditor(null)}><X size={20}/></button></header>
-            <form onSubmit={submit}>
+            <form noValidate onSubmit={submit}>
                 {editor.kind === 'option' && <>
                     <AdminChoice id="interview-option-group" contentClassName="pm-interview-admin-choice-content" label="Option group" disabled={Boolean(editor.id)} required value={String(form.group ?? '')} onChange={next => change('group', next)} options={groups.map(group => ({ value: group.key, label: group.name }))} />
-                    <label className="pm-admin-field"><span>Value / key (cannot change after creation)</span><input disabled={Boolean(editor.id)} required maxLength={100} value={String(form.key ?? '')} onChange={event => change('key', event.target.value)} placeholder="e.g. energy, Junior PM, General"/>{errors.key && <small className="pm-interview-admin-error">{errors.key}</small>}</label>
-                    <label className="pm-admin-field"><span>Display label</span><input required maxLength={150} value={String(form.label ?? '')} onChange={event => change('label', event.target.value)}/></label>
+                    <label className="pm-admin-field"><span>Value / key (cannot change after creation) <span className="pm-admin-error pm-interview-required">*</span></span><input disabled={Boolean(editor.id)} required maxLength={100} value={String(form.key ?? '')} onChange={event => change('key', event.target.value)} placeholder="e.g. energy, Junior PM, General"/>{errors.key && <small className="pm-interview-admin-error">{errors.key}</small>}</label>
+                    <label className="pm-admin-field"><span>Display label <span className="pm-admin-error pm-interview-required">*</span></span><input required maxLength={150} value={String(form.label ?? '')} onChange={event => change('label', event.target.value)}/></label>
                 </>}
                 {editor.kind === 'set' && <>
-                    <label className="pm-admin-field"><span>Set name</span><input required maxLength={180} value={String(form.title ?? '')} onChange={event => change('title', event.target.value)}/></label>
+                    <label className="pm-admin-field"><span>Set name <span className="pm-admin-error pm-interview-required">*</span></span><input required maxLength={180} value={String(form.title ?? '')} onChange={event => change('title', event.target.value)}/></label>
                     <label className="pm-admin-field"><span>Description</span><textarea rows={2} maxLength={500} value={String(form.description ?? '')} onChange={event => change('description', event.target.value)}/></label>
                     <div className="pm-interview-admin-grid">{optionSelect('Industry', 'industry', String(form.industry ?? ''))}{optionSelect('Role', 'role', String(form.role ?? ''))}{optionSelect('Experience', 'experience', String(form.experience ?? ''))}</div>
                 </>}
                 {editor.kind === 'question' && <>
                     <div className="pm-interview-admin-grid"><AdminChoice id="interview-question-set" contentClassName="pm-interview-admin-choice-content" label="Question set" required value={String(form.set_id ?? '')} onChange={next => change('set_id', Number(next))} options={sets.map(item => ({ value: String(item.id), label: item.title }))} error={errors.set_id}/>
                         <AdminChoice id="interview-question-type" contentClassName="pm-interview-admin-choice-content" label="Question type" required value={String(form.type ?? '')} onChange={next => change('type', next)} options={options.filter(item => item.group === 'type' && (item.is_active || item.key === form.type)).map(item => ({ value: item.key, label: `${item.label}${item.is_active ? '' : ' (inactive)'}` }))} error={errors.type}/></div>
-                    <label className="pm-admin-field"><span>Interview question</span><textarea required rows={5} minLength={10} maxLength={4000} value={String(form.text ?? '')} onChange={event => change('text', event.target.value)} placeholder="Write a clear, realistic interview question"/><small>Optional placeholders: {'{role}'}, {'{industry}'}, {'{scenario}'}</small></label>
+                    <label className="pm-admin-field"><span>Interview question <span className="pm-admin-error pm-interview-required">*</span></span><textarea required rows={5} minLength={10} maxLength={4000} value={String(form.text ?? '')} onChange={event => change('text', event.target.value)} placeholder="Write a clear, realistic interview question"/><small>Optional placeholders: {'{role}'}, {'{industry}'}, {'{scenario}'}</small></label>
+                    <div className="pm-interview-admin-grid"><label className="pm-admin-field"><span>Topic (optional)</span><input maxLength={150} value={String(form.topic ?? '')} onChange={event => change('topic', event.target.value)}/></label><AdminChoice id="interview-question-difficulty" contentClassName="pm-interview-admin-choice-content" label="Difficulty" clearable placeholder="Automatic" value={String(form.difficulty ?? '')} onChange={next => change('difficulty', next || null)} options={['Easy', 'Medium', 'Hard'].map(value => ({ value, label: value }))} error={errors.difficulty}/></div>
+                    <label className="pm-admin-field"><span>Suggested answer / coaching guidance (optional)</span><textarea rows={4} maxLength={4000} value={String(form.answer_guidance ?? '')} onChange={event => change('answer_guidance', event.target.value)}/><small>Shown in feedback after submission; also supplied to AI coaching when requested.</small></label>
                 </>}
-                <div className="pm-interview-admin-grid"><label className="pm-admin-field"><span>Display order</span><input required type="number" min={0} max={65535} value={Number(form.sort_order ?? 0)} onChange={event => change('sort_order', Number(event.target.value))}/></label><label className="pm-interview-admin-checkbox"><input type="checkbox" checked={Boolean(form.is_active)} onChange={event => change('is_active', event.target.checked)}/><span>{editor.kind === 'set' ? 'Publish set' : 'Active / visible to members'}</span></label></div>
+                <div className="pm-interview-admin-grid"><label className="pm-admin-field"><span>Display order <span className="pm-admin-error pm-interview-required">*</span></span><input required type="number" min={0} max={65535} value={Number(form.sort_order ?? 0)} onChange={event => change('sort_order', Number(event.target.value))}/></label><label className="pm-interview-admin-checkbox"><input type="checkbox" checked={Boolean(form.is_active)} onChange={event => change('is_active', event.target.checked)}/><span>{editor.kind === 'set' ? 'Publish set' : 'Active / visible to members'}</span></label></div>
                 {Object.entries(errors).map(([key, value]) => <p className="pm-interview-admin-error" role="alert" key={key}>{value}</p>)}
                 <footer><button type="button" className="pm-admin-button" disabled={busy} onClick={() => setEditor(null)}>Cancel</button><button className="pm-admin-button pm-admin-button-primary" disabled={busy} type="submit">{busy ? 'Saving…' : 'Save changes'}</button></footer>
             </form>

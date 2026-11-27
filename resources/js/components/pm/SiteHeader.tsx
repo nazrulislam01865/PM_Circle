@@ -16,14 +16,16 @@ type HeaderProps = {
     brandPlacement?: 'always' | 'mobile';
     brandHref?: string;
     authenticatedMemberNavigation?: boolean;
+    /** Keep promotional content out of the active exam workspace. */
+    showOffer?: boolean;
 };
 
 /** Both guests and signed-in members render the same shared navigation component. */
-export function SiteHeader({ active, actions, brandHref, joinLabel, authenticatedMemberNavigation = false }: HeaderProps) {
+export function SiteHeader({ active, actions, brandHref, joinLabel, authenticatedMemberNavigation = false, showOffer = true }: HeaderProps) {
     const [navigationOpen, setNavigationOpen] = useState(false);
     const { auth, memberShell, rewardPromotion } = usePage<{ auth?: { user?: { is_admin?: boolean } | null }; memberShell?: DashboardShellData | null; rewardPromotion?: { discountLabel: string } | null }>().props;
     if (authenticatedMemberNavigation && memberShell && auth?.user && !auth.user.is_admin) {
-        const label = rewardPromotion?.discountLabel;
+        const label = showOffer ? rewardPromotion?.discountLabel : undefined;
         const header = <div className="pm-member-exam-navigation pm-member-exam-compact">
             {label && <HomeOfferBar discountLabel={label}/>}
             <DashboardSidebar dashboard={memberShell} open={navigationOpen} close={() => setNavigationOpen(false)} collapsed={false} onToggle={() => setNavigationOpen(value => !value)}/>

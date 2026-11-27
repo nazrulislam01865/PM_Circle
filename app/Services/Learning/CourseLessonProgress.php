@@ -67,14 +67,25 @@ final class CourseLessonProgress
             abort_unless(in_array($key, array_column($lessons, 'key'), true), 409, 'This lesson has changed. Reload and review the updated content.');
             $identity = ['user_id' => $user->id, 'course_id' => $course->id, 'lesson_key' => $key];
             DB::table('learning_course_lesson_progress')->insertOrIgnore([...$identity, 'created_at' => now(), 'updated_at' => now()]);
-            DB::table('learning_course_lesson_progress')->where($identity)->whereNull('completed_at')
+            $completedNow = DB::table('learning_course_lesson_progress')->where($identity)->whereNull('completed_at')
                 ->update(['completed_at' => now(), 'updated_at' => now()]);
             $summary = $this->summary($lessons, $this->records($user, $course->id));
-            if ($summary['total'] > 0 && $summary['completed'] === $summary['total']) {
-                DB::table('learning_course_certificates')->insertOrIgnore([
-                    'user_id' => $user->id, 'course_id' => $course->id, 'reference' => (string) Str::uuid(),
-                    'member_name' => $user->name, 'course_title' => $course->title, 'issued_at' => now(),
+            if ($completedNow && $summary['total'] > 0 && $summary['completed'] === $summary['total']) {
+                $completedAt = now();
+                // Completion is an achievement even when the course offers no certificate.
+                $newCompletion = DB::table('learning_course_completions')->insertOrIgnore([
+                    'user_id' => $user->id, 'course_id' => $course->id,
+                    'course_title' => $course->title, 'completed_at' => $completedAt,
                 ]);
+                if ($newCompletion && ($user->account_preferences['learnNotify'] ?? false)) {
+                    DB::afterCommit(static fn () => app(\App\Domain\Notifications\ActivityNotifier::class)->forCourseCompletion($user->id, $course->id));
+                }
+                if ($course->certificate_enabled) {
+                    DB::table('learning_course_certificates')->insertOrIgnore([
+                        'user_id' => $user->id, 'course_id' => $course->id, 'reference' => (string) Str::uuid(),
+                        'member_name' => $user->name, 'course_title' => $course->title, 'issued_at' => $completedAt,
+                    ]);
+                }
             }
             return $summary;
         });

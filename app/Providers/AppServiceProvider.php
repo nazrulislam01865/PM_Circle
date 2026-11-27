@@ -24,6 +24,8 @@ class AppServiceProvider extends ServiceProvider
             \App\Domain\Billing\Payments\Gateways\UnconfiguredGateway::class);
         $this->app->bind('payments.gateway.nagad',
             \App\Domain\Billing\Payments\Gateways\UnconfiguredGateway::class);
+        $this->app->bind('payments.gateway.sslcommerz',
+            \App\Domain\Billing\Payments\Gateways\UnconfiguredGateway::class);
     }
 
     /**

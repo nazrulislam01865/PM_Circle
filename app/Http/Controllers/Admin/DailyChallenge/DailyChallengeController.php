@@ -44,7 +44,7 @@ final class DailyChallengeController extends Controller
                 'gateway' => (bool) config('pm-ai.enabled'),
                 'editorial' => (bool) config('pm-ai.editorial_enabled'),
                 'separate_key' => app(\App\Domain\AI\Services\AiFeatureRouting::class)->configured('scenario_generate', 'daily_challenge_api_key'),
-                'moderation_key' => filled(app(\App\Domain\AI\Services\AiRuntimeSettings::class)->credential('post_check_api_key')),
+                'moderation_key' => filled(app(\App\Domain\AI\Services\AiFeatureRouting::class)->moderationSecret()),
                 'model' => 'gpt-5-nano',
                 'generation_feature' => (bool) ($features->get('scenario_generate')?->enabled)
                     && $features->get('scenario_generate')?->model === 'gpt-5-nano'

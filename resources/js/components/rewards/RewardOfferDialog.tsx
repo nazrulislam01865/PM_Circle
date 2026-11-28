@@ -12,7 +12,7 @@ export function useRewardOfferDialog(): (() => void) | null {
 
 const offerSteps = [
     { title: 'Create your free account', description: 'Register and verify your email.' },
-    { title: 'Complete your profile', description: 'Fill in the required details until your profile reaches 100%.' },
+    { title: 'Complete your profile', description: 'Fill in the ten required profile details to qualify for the reward.' },
     { title: 'Find your discount code', description: 'Copy the discount code from your profile.' },
     { title: 'Apply it at checkout', description: 'Enter the code when purchasing a PM Circle Exam Simulator.' },
 ] as const;

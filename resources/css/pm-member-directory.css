@@ -31,10 +31,10 @@
 .pm-members-tabs a { display: inline-flex; align-items: center; min-height: var(--control-height); padding: var(--s2) var(--s3); border-bottom: 3px solid transparent; margin-bottom: -1px; color: var(--ink); font: var(--medium) var(--text-ui)/var(--line-ui) var(--font-ui); text-decoration: none; }
 .pm-members-tabs a:hover { color: var(--blue); }
 .pm-members-tabs a.is-active { border-color: var(--blue); color: var(--blue); font-weight: var(--semibold); }
-.pm-members-subheading { display: flex; justify-content: space-between; align-items: center; min-height: var(--control-height); gap: var(--s3); color: var(--muted); font-size: var(--text-sm); }
-.pm-members-sort { display: flex; align-items: center; gap: var(--s1); }
-.pm-members-sort .pm-dropdown-trigger { min-height: var(--control-compact); width: 158px; border: 0; background: transparent; padding: var(--s1); font: var(--medium) var(--text-sm)/var(--line-sm) var(--font-ui); }
-.pm-members-sort .pm-dropdown-trigger:hover { background: var(--blue-soft); }
+.pm-members-subheading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; min-height: var(--control-height); gap: var(--s3); color: var(--muted); font-size: var(--text-sm); }
+.pm-members-sort { display: flex; align-items: center; gap: var(--s2); min-width: 0; max-width: 100%; }
+/* Inherit the shared dropdown height, border, typography and interaction states. */
+.pm-members-sort .pm-dropdown-trigger { width: 12rem; }
 .pm-members-list { --pm-members-action-column: calc(15rem + var(--s3)); border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--surface); overflow: hidden; }
 .pm-members-row { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .85fr) var(--pm-members-action-column); align-items: center; gap: var(--s4); min-height: 74px; padding: var(--s2) var(--s4); border-bottom: 1px solid var(--border); }
 .pm-members-row:last-child { border-bottom: 0; }

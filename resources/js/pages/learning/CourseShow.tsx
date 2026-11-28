@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     CourseAccessCard, CourseDetailCurriculum, CourseDetailExtraPanel, CourseDetailHero,
     CourseDetailPracticePanel, CourseDetailResourcesPanel,
@@ -30,6 +30,17 @@ export default function CourseShow({ course, isMember, isAuthenticated, eligible
     const [submitting, setSubmitting] = useState(false);
     const [saving, setSaving] = useState(false);
     const [shareStatus, setShareStatus] = useState('');
+    const [shareLink, setShareLink] = useState('');
+    const shareTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const shareAttempt = useRef(0);
+    useEffect(() => {
+        setShareStatus('');
+        setShareLink('');
+        return () => {
+            shareAttempt.current += 1;
+            if (shareTimer.current !== null) clearTimeout(shareTimer.current);
+        };
+    }, [course.slug]);
     const [enrollmentError, setEnrollmentError] = useState('');
     const [saveError, setSaveError] = useState('');
     const actionLock = useRef(false);
@@ -70,20 +81,25 @@ export default function CourseShow({ course, isMember, isAuthenticated, eligible
         });
     };
     const share = async () => {
+        const attempt = ++shareAttempt.current;
+        if (shareTimer.current !== null) clearTimeout(shareTimer.current);
+        shareTimer.current = null;
         setShareStatus('');
+        setShareLink('');
         // Share the public course URL, never the member-only workspace URL.
         const publicUrl = new URL(demoCourseHref(course.slug), window.location.origin).href;
         try {
-            if (navigator.share) {
-                await navigator.share({ title: course.title, url: publicUrl });
-                setShareStatus('Course shared.');
-            } else {
-                await navigator.clipboard.writeText(publicUrl);
-                setShareStatus('Course link copied.');
-            }
-        } catch (error) {
-            if (error instanceof Error && error.name === 'AbortError') return;
-            setShareStatus(`Share unavailable. Copy this link: ${publicUrl}`);
+            await navigator.clipboard.writeText(publicUrl);
+            if (attempt !== shareAttempt.current) return;
+            setShareStatus('Course link copied.');
+            shareTimer.current = setTimeout(() => {
+                setShareStatus('');
+                shareTimer.current = null;
+            }, 2500);
+        } catch {
+            if (attempt !== shareAttempt.current) return;
+            setShareLink(publicUrl);
+            setShareStatus('Select and copy the course link below.');
         }
     };
 
@@ -96,7 +112,7 @@ export default function CourseShow({ course, isMember, isAuthenticated, eligible
                     <span aria-current="page">{course.title}</span>
                 </nav>
                 <div className="pm-course-detail-grid">
-                    <CourseDetailHero course={course} isMember={isMember} saved={saved} saving={saving || submitting} onSave={toggleSave} onShare={share} shareStatus={shareStatus} saveError={saveError} />
+                    <CourseDetailHero course={course} isMember={isMember} saved={saved} saving={saving || submitting} onSave={toggleSave} onShare={share} shareStatus={shareStatus} shareLink={shareLink} saveError={saveError} />
                     <div className="pm-course-detail-main">
                         <CourseDetailTabs onChange={jump} />
                         <CourseDetailOverview course={course} />

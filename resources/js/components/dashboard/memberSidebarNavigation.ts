@@ -1,5 +1,5 @@
 /** Approved member menu order, with nested course and exam navigation. */
-export type MemberSidebarId = 'home' | 'learning' | 'course-group' | 'courses' | 'certificates' | 'exams' | 'pmp' | 'scrum' | 'challenge' | 'profile' | 'resume' | 'interview' | 'badges' | 'community' | 'members' | 'saved' | 'plan' | 'settings' | 'activity' | 'help';
+export type MemberSidebarId = 'home' | 'learning' | 'course-group' | 'courses' | 'certificates' | 'exams' | 'pmp' | 'scrum' | 'challenge' | 'profile' | 'resume' | 'interview' | 'badges' | 'community' | 'members' | 'saved' | 'saved-courses' | 'plan' | 'settings' | 'activity' | 'help';
 export type MemberSidebarItem = { id: MemberSidebarId; label: string; href: string; premium?: boolean };
 export type MemberSidebarEntry = MemberSidebarItem | { id: 'course-group' | 'exams'; label: string; children: MemberSidebarItem[]; premium?: boolean };
 export const memberSidebarGroups: { title: string; items: MemberSidebarEntry[] }[] = [
@@ -17,9 +17,10 @@ export const memberSidebarGroups: { title: string; items: MemberSidebarEntry[] }
     ] },
     { title: 'Profile & career', items: [
         { id: 'profile', label: 'My profile', href: '/settings/profile' },
-        { id: 'resume', label: 'AI Resume Assistant', href: '/settings/profile?tab=assistant', premium: true },
-        { id: 'interview', label: 'Interview preparation', href: '/interview-preparation' },
-        { id: 'badges', label: 'Achievements', href: '/dashboard/features/achievements' },
+        { id: 'resume', label: 'AI Resume Assistant', href: '/settings/profile?tab=assistant' },
+        { id: 'interview', label: 'Interview preparation', href: '/interview-preparation', premium: true },
+        { id: 'badges', label: 'Achievements', href: '/dashboard/features/achievements', premium: true },
+        { id: 'saved-courses', label: 'Saved courses', href: '/saved-courses' },
     ] },
     { title: 'Community', items: [
         { id: 'community', label: 'Community feed', href: '/community' },
@@ -29,7 +30,7 @@ export const memberSidebarGroups: { title: string; items: MemberSidebarEntry[] }
     { title: 'Account', items: [
         { id: 'plan', label: 'Plan & usage', href: '/membership' },
         { id: 'settings', label: 'Settings', href: '/settings/account' },
-        { id: 'activity', label: 'Activity log', href: '/activity-log' },
+        { id: 'activity', label: 'Activity log', href: '/activity-log', premium: true },
     ] },
 ];
 
@@ -66,6 +67,7 @@ export function memberSidebarActive(url: string): MemberSidebarId | undefined {
     if (within('/community') || within('/posts')) return 'community';
     if (within('/members')) return 'members';
     if (within('/saved-posts')) return 'saved';
+    if (within('/saved-courses')) return 'saved-courses';
     if (within('/membership') || within('/billing')) return 'plan';
     if (within('/settings') || path === '/dashboard/features/notifications') return 'settings';
     if (within('/activity-log')) return 'activity';

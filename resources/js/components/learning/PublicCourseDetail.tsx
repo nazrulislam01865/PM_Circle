@@ -26,10 +26,10 @@ type Props = {
 
 function CoursePublicEnrollment({ course, isMember, isAuthenticated, eligible, enrolled, memberTier, submitting, onEnroll }: Pick<Props, 'course' | 'isMember' | 'isAuthenticated' | 'eligible' | 'enrolled' | 'memberTier' | 'submitting' | 'onEnroll'>) {
     const canRead = isMember && enrolled && eligible;
-    const paid = course.accessTier === 'paid';
+    const paid = course.accessTier !== 'free';
     if (canRead) return <><a className="pm-guide-button" href="#course-curriculum">View curriculum</a><p>Your enrollment is active. Continue learning below.</p></>;
     if (!isMember) return <><Link className="pm-guide-button" href={isAuthenticated ? '/join/step/2' : '/register'}>Join to start learning</Link><p>Course outline is public. Sign up to continue.</p></>;
-    if (!eligible) return <><Link className="pm-guide-button" href="/membership">Explore Plus &amp; Pro</Link><p>This course is included with Plus or Pro membership.</p></>;
+    if (!eligible) return <><Link className="pm-guide-button" href="/membership">{course.accessTier === 'pro' ? 'Explore Pro' : 'Explore Plus & Pro'}</Link><p>{course.accessTier === 'pro' ? 'This course requires Pro membership.' : 'This course is included with Plus or Pro membership.'}</p></>;
     return <><button type="button" className="pm-guide-button" onClick={onEnroll} disabled={submitting} aria-busy={submitting}>{submitting ? 'Enrolling…' : 'Enroll to start learning'}</button><p>{paid ? `Included with your ${memberTier === 'plus' ? 'Plus' : 'Pro'} membership.` : 'Free for PM Circle community members.'}</p></>;
 }
 
@@ -47,7 +47,7 @@ export function PublicCourseDetail(props: Props) {
             <div className="pm-course-public-layout">
                 <div className="pm-course-public-main">
                     <header className="pm-course-public-heading">
-                        <div className="pm-course-public-eyebrow"><span className={`pm-course-public-access${course.accessTier === 'free' ? ' is-free' : ' is-paid'}`}>{course.accessTier === 'free' ? 'Free' : 'Paid'}</span><span aria-hidden="true">·</span><span>{course.category}</span></div>
+                        <div className="pm-course-public-eyebrow"><span className={`pm-course-public-access${course.accessTier === 'free' ? ' is-free' : ' is-paid'}`}>{course.accessTier === 'free' ? 'Free' : course.accessTier === 'pro' ? 'Pro' : 'Plus & Pro'}</span><span aria-hidden="true">·</span><span>{course.category}</span></div>
                         <h1>{course.title}</h1>
                         <p>{course.summary}</p>
                         <nav aria-label="On this page" className="pm-course-public-anchor-links"><a href="#course-learn">What you'll learn</a><a href="#course-curriculum">Curriculum</a><a href="#course-audience">Who it’s for</a></nav>

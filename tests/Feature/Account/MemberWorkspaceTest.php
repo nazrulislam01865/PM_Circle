@@ -38,13 +38,13 @@ final class MemberWorkspaceTest extends TestCase
         foreach (['free', 'plus'] as $plan) {
             $this->grantPlan($member, $plan);
             $this->get('/membership')->assertOk()->assertInertia(fn ($page) => $page->component('billing/PlanUsage')
-                ->where('access.pmp', $plan === 'plus')->where('access.resume', false));
-            $this->get('/dashboard/resume-assistant')->assertForbidden();
+                ->where('access.pmp', $plan === 'plus')->where('access.resume', true));
+            $this->get('/dashboard/resume-assistant')->assertOk();
             $this->postJson('/ai/requests', ['feature' => 'resume_analyze', 'client_request_key' => (string) Str::uuid(), 'accepted_max_credits' => 0])->assertForbidden()->assertJsonPath('code', 'NOT_ENTITLED');
-            $this->getJson('/ai/resume-drafts')->assertForbidden();
+            $plan === 'free' ? $this->getJson('/ai/resume-drafts')->assertForbidden() : $this->getJson('/ai/resume-drafts')->assertOk();
         }
         $this->grantPlan($member, 'free');
-        $this->get('/exams/pmp')->assertForbidden();
+        $this->get('/exams/pmp')->assertRedirect('/exam-simulator/pmp/details');
         $this->grantPlan($member, 'pro');
         $this->get('/membership')->assertOk()->assertInertia(fn ($page) => $page->where('access.pmp', true)->where('access.resume', true));
         $this->get('/dashboard/resume-assistant')->assertOk()->assertInertia(fn ($page) => $page->component('account/ResumeAssistant')->where('resumes', []));
@@ -69,7 +69,7 @@ final class MemberWorkspaceTest extends TestCase
                 $scrum->assertOk()->assertInertia(fn ($page) => $page->component('public/ComingSoon'));
             } else {
                 $scrum->assertForbidden();
-                $this->get('/exams/pmp')->assertForbidden();
+                $this->get('/exams/pmp')->assertRedirect('/exam-simulator/pmp/details');
                 $this->getJson('/exams/pmp/start-options')->assertForbidden();
                 $this->getJson('/exams/pmp/ai-usage')->assertForbidden();
             }

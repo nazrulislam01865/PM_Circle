@@ -31,6 +31,7 @@ final class InterviewController extends Controller
 
     public function index(Request $request, MemberShell $shell): Response
     {
+        $plan = $this->practicePlan($request);
         $userId = $request->user()->id;
         // Only the latest completed and resumable session are needed in the right rail.
         $recent = DB::table('interview_sessions as s')->where('s.user_id', $userId)
@@ -63,7 +64,7 @@ final class InterviewController extends Controller
             'industries' => $choices['industry'], 'roles' => $choices['role'],
             'practiceDefaults' => $practiceDefaults,
             'experience' => $choices['experience'], 'types' => $choices['type'],
-            'counts' => $choices['count'], 'modes' => $choices['mode'], 'questionSets' => $catalog->publishedSets(),
+            'counts' => array_intersect_key($choices['count'], array_flip(\App\Domain\Billing\Queries\MemberFeatureAccess::interviewCounts($plan))), 'modes' => $choices['mode'], 'questionSets' => $catalog->publishedSets(),
             'recent' => $recent->map(function ($item) { $item->answered_count = (int) $item->answered_count; return $item; }),
             'minutesPerQuestion' => $settings['minutes_per_question'], 'practiceSettings' => $settings,
         ]);
@@ -107,6 +108,7 @@ final class InterviewController extends Controller
 
     public function jdText(Request $request, ResumeTextExtractor $extractor): JsonResponse
     {
+        $this->practicePlan($request);
         abort_unless(PracticeSettings::load()['allow_job_description'] && config('pm-interview.enabled'), 403);
         $request->validate(['file' => ['required', 'file', 'mimes:txt,docx,pdf', 'extensions:txt,docx,pdf', 'max:5120']]);
         $file = $request->file('file');
@@ -156,6 +158,7 @@ final class InterviewController extends Controller
     {
         $record = $this->owned($request, $session);
         if ($record->status === 'completed') return to_route('interview.results.show', ['session' => $session]);
+        $this->ensureQuestionCount($request, (int) $record->question_count);
         $answers = $this->answersQuery($session)->orderBy('a.position')->get();
         return Inertia::render('interview/Practice', [
             'shell' => $shell->forMember($request->user()),
@@ -179,6 +182,7 @@ final class InterviewController extends Controller
         $answer = DB::transaction(function () use ($request, $session, $data) {
             $record = DB::table('interview_sessions')->where('id', $session)
                 ->where('user_id', $request->user()->id)->lockForUpdate()->firstOrFail();
+            $this->ensureQuestionCount($request, (int) $record->question_count);
             abort_unless($record->status === 'in_progress', 409);
             abort_unless($data['position'] < $record->question_count, 422);
             // Typed answers remain available as a fallback when browser speech recognition is unavailable.
@@ -242,6 +246,7 @@ final class InterviewController extends Controller
     public function retry(Request $request, int $session, int $position): JsonResponse
     {
         $record = $this->owned($request, $session);
+        $this->ensureQuestionCount($request, (int) $record->question_count);
         abort_unless($record->status === 'in_progress', 409);
         $updated = DB::table('interview_answers')->where('interview_session_id', $session)
             ->where('position', $position)->whereIn('status', ['submitted', 'pending', 'evaluated', 'failed', 'skipped'])->delete();
@@ -255,6 +260,7 @@ final class InterviewController extends Controller
             $record = DB::table('interview_sessions')->where('id', $session)
                 ->where('user_id', $request->user()->id)->lockForUpdate()->firstOrFail();
             if ($record->status === 'completed') return;
+            $this->ensureQuestionCount($request, (int) $record->question_count);
             $summary = DB::table('interview_answers')->where('interview_session_id', $session)
                 ->whereIn('status', ['submitted', 'pending', 'evaluated', 'skipped'])
                 ->selectRaw('COUNT(*) as submitted, COUNT(score) as scored, COALESCE(SUM(score), 0) as total_score')->first();
@@ -292,6 +298,18 @@ final class InterviewController extends Controller
             'roleLabel' => $selected ? ($labels['role'] ?? $selected->role) : null,
             'experienceLabel' => $selected ? ($labels['experience'] ?? QuestionCatalog::EXPERIENCE[$selected->experience] ?? $selected->experience) : null,
         ]);
+    }
+
+    private function practicePlan(Request $request): string
+    {
+        $plan = app(\App\Domain\Billing\Queries\CurrentMemberPlan::class)->code($request->user());
+        abort_unless(\App\Domain\Billing\Queries\MemberFeatureAccess::allows($plan, 'plus'), 403);
+        return $plan;
+    }
+
+    private function ensureQuestionCount(Request $request, int $count): void
+    {
+        abort_unless(in_array($count, \App\Domain\Billing\Queries\MemberFeatureAccess::interviewCounts($this->practicePlan($request)), true), 403);
     }
 
     private function owned(Request $request, int $session): object

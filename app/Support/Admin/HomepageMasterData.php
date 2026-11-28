@@ -104,7 +104,7 @@ final class HomepageMasterData
         // Fixed choices represent application behaviors; admins may relabel/reorder/hide,
         // but cannot introduce unsupported access tiers, resource handlers or answer types.
         $fixed = [
-            'course_access' => ['free', 'paid'],
+            'course_access' => ['free', 'paid', 'pro'],
             'course_question_kind' => ['question', 'scenario'],
             'course_question_difficulty' => ['Easy', 'Moderate', 'Hard'],
             'course_resource_kind' => ['file', 'link'],

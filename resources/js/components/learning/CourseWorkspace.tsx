@@ -1,3 +1,4 @@
+import { CourseSavedMarker } from './CourseSavedMarker';
 import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { Link, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
@@ -8,7 +9,7 @@ export function CourseWorkspace({ title, description, children, lesson = false }
     const root = courseLearningRoot(usePage().url);
     return <PublicLayout active="/learning" guideLayout banner={{title, description, parents: lesson ? [{label: 'My Learning', href: '/learning/my-learning'}] : [{label: 'Learn & Practice', href: '/learning'}], currentLabel: lesson ? 'Lesson' : title}}>
         <div className="pm-learn-v3 pm-course-workspace"><div className="pm-learn-v3-wrap">
-            <LegacyPageHeading><header className="pm-course-workspace-heading">
+            <LegacyPageHeading><header className={`pm-course-workspace-heading${lesson ? ' is-lesson-heading' : ''}`}>
                 <nav className="pm-learn-v3-crumb" aria-label="Breadcrumb">{lesson ? <><Link href={`${root}/my-learning`}>My Learning</Link><span>/</span><span aria-current="page">Lesson</span></> : <><Link href={root.startsWith('/dashboard') ? '/dashboard' : '/'}>Home</Link><span>/</span><Link href={root}>Learn &amp; Practice</Link><span>/</span><span aria-current="page">{title}</span></>}</nav>
                 <h1 className={lesson ? 'is-lesson-title' : undefined}>{title}</h1><p>{description}</p>
             </header></LegacyPageHeading>
@@ -35,6 +36,7 @@ export function EnrolledCourseCard({ course, root }: { course: EnrolledCourse; r
     const fallback = `/images/learning/course-${course.thumbnail}.webp`;
     const detail = `${root}/courses/${encodeURIComponent(course.slug)}`;
     return <article className="pm-learn-v3-course pm-course-enrolled-card">
+        {course.saved && <CourseSavedMarker title={course.title} />}
         <Link href={detail} className="pm-learn-v3-course-image" aria-label={`View ${course.title}`}><img key={course.coverUrl || fallback} src={course.coverUrl || fallback} alt="" loading="lazy" decoding="async" onError={event => { const image = event.currentTarget; if (image.getAttribute('src') !== fallback) image.src = fallback; else image.style.visibility = 'hidden'; }}/></Link>
         <div className="pm-learn-v3-course-body"><span className="pm-learn-v3-meta">{course.category}</span><h3><Link href={detail}>{course.title}</Link></h3>
             <CourseProgress {...course}/>

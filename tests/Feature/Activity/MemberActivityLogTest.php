@@ -22,7 +22,10 @@ final class MemberActivityLogTest extends TestCase
 
     private function member(): User
     {
-        return User::factory()->create(['onboarding_step' => 3]);
+        $user = User::factory()->create(['onboarding_step' => 3]);
+        config()->set('pm-circle.temporary_paid_access_enabled', true);
+        DB::table('temporary_memberships')->insert(['user_id' => $user->id, 'plan_code' => 'plus', 'created_at' => now(), 'updated_at' => now()]);
+        return $user;
     }
 
     private function post(User $author, string $title = 'Project kickoff checklist'): Post

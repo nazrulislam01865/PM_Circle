@@ -8,7 +8,7 @@ const read = path => readFileSync(new URL(`../../${path}`, import.meta.url), 'ut
 test('member sidebar contains exactly the four prototype groups, their order and submenu labels', () => {
     assert.deepEqual(memberSidebarGroups.map(g => [g.title, g.items.map(i => i.label)]), [
         ['Learn & practise', ['Courses', 'Exam Simulator', 'Daily challenge']],
-        ['Profile & career', ['My profile', 'AI Resume Assistant', 'Interview preparation', 'Achievements']],
+        ['Profile & career', ['My profile', 'AI Resume Assistant', 'Interview preparation', 'Achievements', 'Saved courses']],
         ['Community', ['Community feed', 'Members', 'Saved posts']],
         ['Account', ['Plan & usage', 'Settings', 'Activity log']],
     ]);

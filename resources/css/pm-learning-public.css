@@ -36,7 +36,7 @@
 .pm-learn-v3-results { min-width: 0; }
 .pm-learn-v3-meta { font-size: var(--pm-guide-text-meta); color: var(--pm-guide-muted); line-height: var(--pm-guide-line-body); }
 .pm-learn-v3-rows { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: var(--pm-guide-card-gap); align-items: stretch; grid-auto-rows: 1fr; }
-.pm-learn-v3-course { display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid var(--pm-guide-line); border-radius: var(--pm-guide-radius-sm); background: var(--pm-guide-white); box-shadow: var(--pm-guide-shadow); }
+.pm-learn-v3-course { display: flex; flex-direction: column; position: relative; min-width: 0; overflow: hidden; border: 1px solid var(--pm-guide-line); border-radius: var(--pm-guide-radius-sm); background: var(--pm-guide-white); box-shadow: var(--pm-guide-shadow); }
 .pm-learn-v3-course:hover, .pm-learn-v3-course:focus-within { border-color: var(--pm-guide-hover-border); }
 .pm-learn-v3-course-image { display: block; width: 100%; aspect-ratio: 16 / 10; overflow: hidden; background: var(--pm-guide-pale); }
 .pm-learn-v3-course-image img { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -99,3 +99,11 @@
     .pm-learn-v3-dialog-header { flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) { .pm-learn-v3 { scroll-behavior: auto; } }
+
+/* Saved state sits on the cover without changing card dimensions or the course link. */
+.pm-learn-v3 .pm-course-saved-marker { position: absolute; inset-block-start: var(--s2); inset-inline-end: var(--s2); z-index: 1; display: inline-flex; align-items: center; justify-content: center; width: var(--control-height); height: var(--control-height); padding: var(--s2); border: 1px solid var(--pm-guide-line); border-radius: var(--radius-control); background: var(--pm-guide-white); color: var(--pm-guide-blue); }
+.pm-learn-v3 span.pm-course-saved-marker { pointer-events: none; }
+.pm-learn-v3 button.pm-course-saved-marker:hover { background: var(--pm-guide-pale); }
+.pm-learn-v3 button.pm-course-saved-marker:disabled { cursor: wait; opacity: .65; }
+.pm-saved-courses .pm-saved-courses-privacy { margin-block-end: var(--s4); color: var(--pm-guide-muted); font-size: var(--pm-guide-text-meta); }
+.pm-saved-courses .pm-validation-error { margin-block-end: var(--s3); }

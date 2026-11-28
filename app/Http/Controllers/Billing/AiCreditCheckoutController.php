@@ -16,7 +16,8 @@ final class AiCreditCheckoutController extends Controller
 {
     public function packages(Request $request, PaymentGatewayManager $gateways): JsonResponse
     {
-        $providers = $gateways->aiRefillProviders();
+        $plan = app(\App\Domain\Billing\Queries\CurrentMemberPlan::class)->details($request->user());
+        $providers = $plan['source'] === 'subscription' && in_array($plan['code'], ['plus', 'pro'], true) ? $gateways->aiRefillProviders() : [];
         // The catalog remains visible while payment activation is pending; no fake prices or links.
         return response()->json(['enabled' => $providers !== [],
             'provider' => $providers[0] ?? null, // Legacy client compatibility.

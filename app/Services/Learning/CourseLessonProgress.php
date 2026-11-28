@@ -103,7 +103,10 @@ final class CourseLessonProgress
     {
         $courses = LearningCourse::query()->where('is_published', true)->whereIn('slug',
             DB::table('learning_demo_course_enrollments')->where('user_id', $user->id)->select('course_slug'))
-            ->orderBy('sort_order')->orderBy('id')->get(['id', 'slug', 'title', 'summary', 'category', 'level', 'minutes', 'thumbnail', 'cover_path', 'access_tier', 'lessons']);
+            ->orderBy('sort_order')->orderBy('id')
+            ->select(['id', 'slug', 'title', 'summary', 'category', 'level', 'minutes', 'thumbnail', 'cover_path', 'access_tier', 'lessons'])
+            ->addSelect(['saved_course_id' => DB::table('learning_demo_course_saves')->where('user_id', $user->id)
+                ->whereColumn('course_slug', 'learning_courses.slug')->select('id')->limit(1)])->get();
         if ($courses->isEmpty()) {
             return [];
         }
@@ -114,7 +117,8 @@ final class CourseLessonProgress
         return $courses->map(function (LearningCourse $course) use ($tier, $records, $certificates): array {
             $summary = $this->summary($this->lessons($course), $records->get($course->id, collect())->keyBy('lesson_key'));
             return [...$course->catalogData(), ...collect($summary)->except('lessons')->all(),
-                'eligible' => $course->access_tier === 'free' || in_array($tier, ['plus', 'pro'], true),
+                'saved' => $course->getAttribute('saved_course_id') !== null,
+                'eligible' => \App\Domain\Billing\Queries\MemberFeatureAccess::allowsCourse($tier, $course->access_tier),
                 'certificate' => $certificates->get($course->id)];
         })->all();
     }

@@ -100,18 +100,18 @@ class ProfileController extends Controller
             : ['id' => null, 'status' => 'empty', 'step' => 1, 'filename' => null, 'comparisons' => [], 'warnings' => [], 'history' => [], 'ai_enabled' => (bool) app(\App\Domain\AI\Services\ResumeExtractionSettings::class)->enabled()];
 
         // The dashboard and profile must use the exact same server-side criteria.
-        $completenessScore = app(ProfileCompleteness::class)->percentage($user);
+        $scores = app(ProfileCompleteness::class)->scores($user);
 
-        $stats = $activeTab === 'overview' ? app(\App\Domain\Dashboard\Queries\MemberDashboardStats::class)->forMember($user) : null;
         $plan = app(\App\Domain\Billing\Queries\CurrentMemberPlan::class)->code($user);
+        $stats = $activeTab === 'overview' ? app(\App\Domain\Dashboard\Queries\MemberDashboardStats::class)->forMember($user, $plan) : null;
 
         return Inertia::render('settings/profile', [
             'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
             'activeTab' => $activeTab,
-            'canUseAssistant' => $user->hasVerifiedEmail() && $user->onboarding_step >= 3 && \App\Domain\Billing\Queries\MemberFeatureAccess::allows($plan, \App\Domain\AI\Services\AiFeatureCatalog::FEATURES['resume_analyze']['min_plan']),
+            'canUseAssistant' => $user->hasVerifiedEmail() && $user->onboarding_step >= 3,
             'privacyFieldGroups' => $activeTab === 'privacy' ? ProfileFieldPrivacy::groups() : [],
-            'profileReward' => app(ProfileCompletionRewardService::class)->forMember($user, $completenessScore),
+            'profileReward' => app(ProfileCompletionRewardService::class)->forMember($user, $scores['core']),
             'profileData' => [
                 'id' => $user->id,
                 'name' => $user->name,
@@ -137,7 +137,8 @@ class ProfileController extends Controller
                 'plan_label' => ucfirst($plan).' member',
                 'location_label' => $profile->editor_details['compact']['display_location'] ?? implode(', ', array_filter([$profile->city, $profile->country])),
                 'status_label' => $profile->open_to_opportunities ? 'Open to opportunities' : 'Not actively looking',
-                'completeness' => $completenessScore,
+                'completeness' => $scores['profile'],
+                'completion_missing' => $scores['missing'],
                 'insights' => [
                     'views' => $stats['overview']['insights']['last30'] ?? 0,
                     'change' => (string) ($stats['overview']['insights']['thisWeek'] ?? 0),
@@ -382,13 +383,20 @@ class ProfileController extends Controller
         $user = $request->user();
         $profile = $user->profile;
 
-        if ($profile && $profile->avatar_path) {
+        if ($profile) {
             $storedPath = $profile->getRawOriginal('avatar_path');
+            $details = $profile->editor_details ?? [];
+            unset($details['profile_photo_url']);
             $profile->avatar_path = null;
-            $profile->save();
+            if ($details !== ($profile->editor_details ?? [])) {
+                $profile->editor_details = $details;
+            }
+            if ($profile->isDirty()) {
+                $profile->save();
+            }
             $user->setRelation('profile', $profile);
 
-            if (str_starts_with($storedPath, '/storage/profile-avatars/')) {
+            if (is_string($storedPath) && str_starts_with($storedPath, '/storage/profile-avatars/')) {
                 Storage::disk('public')->delete(substr($storedPath, strlen('/storage/')));
             }
         }
@@ -408,10 +416,6 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
-        if ($request->input('source') === 'linkedin_export' &&
-            ! in_array(app(CurrentMemberPlan::class)->code($user), ['plus', 'pro'], true)) {
-            abort(403, 'LinkedIn export imports require Plus or Pro membership.');
-        }
         $file = $request->file('resume');
         $path = $file->store('resumes/'.$user->id, 'local');
         abort_unless(is_string($path) && $path !== '', 500, 'Resume could not be stored.');

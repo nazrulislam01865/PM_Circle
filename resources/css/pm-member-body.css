@@ -112,6 +112,17 @@
     flex-basis: min(35%, 14.6875rem);
 }
 .pm-member-sidebar-layout .pm-dash-body .pm-catalog-course-info { min-width: 0; overflow-wrap: anywhere; }
+/* Prioritise the upper Home cards while reading posts. Native top sticky
+   keeps them below the header and releases the full rail at the grid end.
+   There is no negative inset, nested scroll container or scroll listener. */
+@container member-workspace (width > 53.125rem) {
+    .pm-member-sidebar-layout.pm-member-home .pm-dash-body .pm-dash-right {
+        --pm-home-overview-top: calc(var(--header-height) + var(--pm-member-offer-top, 0px) + var(--s4));
+        position: sticky;
+        top: var(--pm-home-overview-top);
+        align-self: start;
+    }
+}
 @container member-workspace (max-width: 53.125rem) {
     .pm-member-sidebar-layout .pm-dash-body :is(.pm-profile-overview-grid, .pm-catalog-layout, .pm-challenge-layout, .pm-member-public-content .pm-two-column, .pm-profile-page .pm-privacy-layout, .pm-event-detail-layout),
     .pm-member-sidebar-layout.pm-member-home .pm-dash-body .pm-dash-columns {

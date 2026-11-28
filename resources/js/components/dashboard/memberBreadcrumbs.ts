@@ -28,7 +28,7 @@ export function memberBreadcrumbs(url: string, props: Record<string, unknown> = 
     const path = parsed.pathname.replace(/\/+$/, '') || '/';
     const tab = parsed.searchParams.get('tab');
     const within = (base: string) => path === base || path.startsWith(`${base}/`);
-    if (path === '/' || path === '/dashboard' || path === '/dashboard/home') return parsed.searchParams.get('view') === 'community' ? trail(community, feed) : trail();
+    if (path === '/' || path === '/dashboard' || path === '/dashboard/home') return parsed.searchParams.get('view') === 'community' ? trail(community, feed) : [];
     const learning = path.replace(/^\/dashboard(?=\/learning(?:\/|$))/, '');
     if (learning === '/learning') {
         if (tab === 'my-learning') return trail(learn, myLearning);
@@ -83,8 +83,10 @@ export function memberBreadcrumbs(url: string, props: Record<string, unknown> = 
     if (path === '/dashboard/features/notifications') return trail(account, current('Notifications'));
     if (within('/members')) return path === '/members' ? trail(community, members) : trail(community, members, current(text(field(props.member,'name'), 'Member profile')));
     if (path === '/saved-posts') return trail(community, current('Saved posts'));
+    if (path === '/saved-courses') return trail(career, current('Saved courses'));
     if (within('/posts')) return trail(community, feed, current('Member post'));
     if (within('/community')) return trail(community, feed);
+    if (/^\/events\/host\/\d+\/registrants$/.test(path)) return trail(community, {label:'Events',href:'/events'}, {label:'My events',href:'/events/create'}, current('Registrants'));
     if (within('/events')) return path === '/events' ? trail(community, current('Events')) : trail(community, {label:'Events',href:'/events'}, current(path === '/events/create' ? 'Create event' : text(field(props.event,'title'), 'Event details')));
     if (path === '/membership' || path === '/pricing') return trail(account, current(path === '/pricing' ? 'Compare plans' : 'Plan & usage'));
     if (path === '/settings/account') return trail(account, settings);

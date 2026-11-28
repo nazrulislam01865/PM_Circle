@@ -100,3 +100,8 @@
 @media (max-width: 28rem) { .pm-profile-main-col .pm-ach-badge-grid { grid-template-columns: minmax(0,1fr); } }
 
 .pm-profile-main-col > .pm-ach-panel { container-type: inline-size; }
+
+/* Only the achievements workspace: section titles and their child card titles.
+   Shared badge cards on the profile retain their approved compact treatment. */
+.pm-ach-workspace .pm-ach-panel h2, .pm-ach-workspace .pm-ach-profile-cover h2 { font-size: var(--text-h2); line-height: var(--line-h2); font-weight: var(--pm-guide-weight-h2); }
+.pm-ach-workspace .pm-ach-panel h3, .pm-ach-workspace .pm-ach-dialog h3 { font: var(--bold) var(--text-h3)/var(--line-h3) var(--font-ui); }

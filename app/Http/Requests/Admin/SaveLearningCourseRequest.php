@@ -74,7 +74,7 @@ final class SaveLearningCourseRequest extends FormRequest
             'category' => ['required', 'string', 'max:100', Rule::in($choices['course_category'])],
             'level' => ['required', 'string', 'max:20', Rule::in($choices['course_level'])],
             'minutes' => ['required', 'integer', 'between:1,100000'],
-            'access_tier' => ['required', Rule::in(array_intersect($choices['course_access'], ['free', 'paid']))],
+            'access_tier' => ['required', Rule::in(array_intersect($choices['course_access'], ['free', 'paid', 'pro']))],
             'is_published' => ['required', 'boolean'],
             'certificate_enabled' => ['sometimes', 'required', 'boolean'],
             'sort_order' => ['sometimes', 'integer', 'between:0,100000'],

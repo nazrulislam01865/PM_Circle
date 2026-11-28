@@ -14,7 +14,7 @@ export function HomeCertification({ content, promotion }: { content: HomepagePre
         <HomeSectionTitle id="pm-pathway-exams-title" title={content.heading} description={content.description} action={content.button_label} href={content.button_url}/>
         {promotion && <div className="pm-v2-reward"><div className="pm-v2-reward-icon"><Gift aria-hidden="true"/></div><div>
             <strong>Complete your profile. Get {promotion.discountLabel.replace(/\s+off$/i, '')} off.</strong>
-            <p>Reach 100% profile completion to receive a discount code for any PM Circle Exam Simulator.</p>
+            <p>Complete the required profile fields to receive a discount code for any PM Circle Exam Simulator.</p>
         </div><button type="button" className="pm-v2-button" onClick={() => openOffer?.()}>See how it works</button></div>}
         <HomeCarouselControls label="exam cards" previous={() => moveCard(scroller, -1)} next={() => moveCard(scroller, 1)}/>
         <div className="pm-v2-card-track pm-v2-exam-track" ref={scroller} tabIndex={0} role="region" aria-label="Certification simulators">

@@ -21,7 +21,7 @@ export type DemoCourseData = {
     minutes: number;
     thumbnail: number;
     coverUrl?: string | null;
-    accessTier: 'free' | 'paid';
+    accessTier: 'free' | 'paid' | 'pro';
     rating?: number | null; reviewCount?: number; learnerCount?: number;
     enrolled: boolean;
     saved: boolean;
@@ -75,7 +75,7 @@ export const learningActivityHref = (slug: string, module: number, activity: num
 
 export type CourseLessonSummary = { position: number; title: string; completed: boolean; hasVideo?: boolean };
 export type CourseLessonProgress = { lessons: CourseLessonSummary[]; completed: number; total: number; percent: number; next: number };
-export type EnrolledCourse = Omit<DemoCourseData, 'enrolled' | 'saved'> & Omit<CourseLessonProgress, 'lessons'> & { eligible: boolean; certificate: string | null };
+export type EnrolledCourse = Omit<DemoCourseData, 'enrolled'> & Omit<CourseLessonProgress, 'lessons'> & { eligible: boolean; certificate: string | null };
 export type CourseCertificate = { reference: string; memberName: string; courseTitle: string; issuedAt: string };
 export type CourseLesson = CourseLessonSummary & { key: string; body: string; video_url?: string | null; takeaway?: string | null; when_to_apply?: string | null; example?: string | null; application?: string | null; references?: string | null; faq?: { question: string; answer: string }[] };
 export const courseLearningRoot = (url: string) => url.startsWith('/dashboard/learning') ? '/dashboard/learning' : '/learning';

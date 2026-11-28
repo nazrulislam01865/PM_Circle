@@ -1,5 +1,4 @@
-/* Discover PM uses the existing shared SiteHeader and the approved design tokens. */
-.pm-discover-page { display: flex; flex-direction: column; min-height: 100vh; }
+/* Discover PM uses PublicLayout and the approved design tokens. */
 .pm-discover {
     flex: 1;
     min-height: 0;
@@ -13,7 +12,9 @@
 }
 .pm-discover *, .pm-discover *::before, .pm-discover *::after { box-sizing: border-box; }
 .pm-discover a { color: var(--blue); }
-.pm-discover-main { width: min(100% - 2 * var(--s4), 47rem); margin-inline: auto; padding-top: calc(var(--s10) + var(--s4)); padding-bottom: calc(var(--s10) + var(--s4)); flex: 1 0 auto; }
+.pm-discover-main { width: var(--pm-v2-container-width); max-width: 100%; min-width: 0; margin-inline: auto; padding-block: var(--pm-guide-s6) var(--pm-guide-s12); flex: 1 0 auto; }
+/* The member layout already supplies its own content rail. */
+.pm-member-sidebar-layout .pm-discover-main { width: 100%; padding-block: 0 var(--s6); }
 .pm-discover-steps { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: var(--s3); margin-bottom: var(--s4); font-size: var(--text-sm); line-height: var(--line-sm); }
 .pm-discover-step { color: var(--muted); display: inline-flex; align-items: center; gap: var(--s2); white-space: nowrap; }
 .pm-discover-step.is-current { font-weight: var(--bold); color: var(--blue); }
@@ -23,7 +24,8 @@
 .pm-discover-progress > span { display: block; height: 100%; background: var(--pm-action-blue); opacity: 1; transition: width .15s ease; }
 .pm-discover-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: var(--s8); box-shadow: 0 1px 2px var(--pm-overlay-0-0-0-2); }
 .pm-discover-eyebrow { margin: 0 0 var(--s3); color: var(--blue); font-size: var(--text-xs); line-height: var(--line-xs); font-weight: var(--bold); letter-spacing: var(--pm-tracking-p12em); }
-.pm-discover-card > h1 { color: var(--ink); font-size: var(--text-h1); line-height: var(--line-h1); font-weight: var(--bold); letter-spacing: var(--pm-tracking-neg-p025em); margin: 0; }
+.pm-discover-card > #pm-discover-title { color: var(--ink); font-size: var(--text-h1); line-height: var(--line-h1); font-weight: var(--pm-guide-static-h1-weight); letter-spacing: var(--pm-guide-tracking-h1); margin: 0; }
+.pm-discover-card > h2#pm-discover-title { font-size: var(--text-h2); line-height: var(--line-h2); font-weight: var(--pm-guide-weight-h2); letter-spacing: var(--pm-guide-tracking-h2); }
 .pm-discover-description { margin: var(--s4) 0 var(--s6); color: var(--muted); font-size: var(--text-body); line-height: var(--line-body); }
 .pm-discover-info { margin: 0 0 var(--s5); background: var(--blue-soft); border-radius: var(--radius-control); padding: var(--s5); }
 .pm-discover-info h2, .pm-discover-feedback h2 { font-size: var(--text-h4); line-height: var(--line-h4); font-weight: var(--bold); margin: 0 0 var(--s3); }
@@ -92,7 +94,7 @@
 @media (prefers-reduced-motion: reduce) { .pm-discover-progress > span { transition: none; } }
 
 /* Additional career-exploration screens. All colors, type and controls use the site tokens. */
-.pm-discover-card > h1 + :not(.pm-discover-description) { margin-top: var(--s6); }
+.pm-discover-card > #pm-discover-title + :not(.pm-discover-description) { margin-top: var(--s6); }
 .pm-discover-career-info {
     background: var(--blue-soft);
     border-radius: var(--radius-control);
@@ -225,10 +227,12 @@
     .pm-discover-career-info, .pm-discover-career-outline { padding: var(--s4); }
 }
 @media print {
-    .pm-discover-page .pm-header, .pm-discover-page .pm-footer,
+    .pm-app:has(.pm-discover-page) :is(.pm-header, .pm-footer, .pm-v2-header, .pm-v2-site-footer, .pm-v2-offer-bar, .pm-public-page-banner, .pm-member-compact-header, .pm-dash-sidebar, .pm-member-footer, .pm-member-breadcrumb),
     .pm-discover-steps, .pm-discover-progress, .pm-discover-actions,
     .pm-discover-print, .pm-discover-final-selected, .pm-discover-pills { display: none !important; }
     .pm-discover-page, .pm-discover, .pm-discover-main { background: var(--pm-theme-bg-pm-tone-fff) !important; min-height: 0; }
-    .pm-discover-main { width: 100%; max-width: none; padding: 0; }
+    .pm-app:has(.pm-discover-page) .pm-member-content-frame { display: block; }
+    .pm-app:has(.pm-discover-page) .pm-dash-body,
+    .pm-app:has(.pm-discover-page) .pm-discover-main { width: 100%; max-width: none; padding: 0; }
     .pm-discover-card { box-shadow: none; break-inside: avoid; }
 }

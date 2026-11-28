@@ -3,6 +3,14 @@ import { MemberDashboardLayout } from '@/layouts/pm/MemberDashboardLayout';
 import type { DashboardShellData } from '@/types/dashboard';
 import type { ReactNode } from 'react';
 
+/** Section heading for the standalone account settings cards. */
+export function MemberSettingsHeading({ title, description }: { title: string; description: string }) {
+    return <header className="pm-member-settings-section-heading">
+        <h2>{title}</h2>
+        <p>{description}</p>
+    </header>;
+}
+
 /** All authenticated settings pages use the same PM Circle navigation shell. */
 export function MemberSettingsPage({ active, children }: { active: 'security' | 'appearance'; children: ReactNode }) {
     const { memberShell } = usePage<{ memberShell?: DashboardShellData }>().props;

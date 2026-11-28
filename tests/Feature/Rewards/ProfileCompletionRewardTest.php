@@ -55,6 +55,15 @@ final class ProfileCompletionRewardTest extends TestCase
         $this->assertDatabaseCount('profile_completion_rewards', 0);
     }
 
+    public function test_profile_completion_ignores_blank_skills_and_recovers_when_a_skill_is_saved(): void
+    {
+        $user = $this->member();
+        $user->profile()->update(['skills' => ['', '   ']]);
+        $this->assertSame(90, app(ProfileCompleteness::class)->percentage($user->fresh()));
+        $user->profile()->update(['skills' => ['', 'Agile']]);
+        $this->assertSame(100, app(ProfileCompleteness::class)->percentage($user->fresh()));
+    }
+
     public function test_complete_profile_gets_a_unique_reusable_code_only_once(): void
     {
         $user = $this->member();

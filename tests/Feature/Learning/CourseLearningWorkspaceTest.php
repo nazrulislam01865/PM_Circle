@@ -42,6 +42,39 @@ final class CourseLearningWorkspaceTest extends TestCase
         DB::table('learning_demo_course_enrollments')->insert(['user_id' => $member->id, 'course_slug' => $course->slug, 'created_at' => now(), 'updated_at' => now()]);
     }
 
+    public function test_saved_courses_are_private_persistent_and_visible_on_course_cards(): void
+    {
+        $course = $this->course('paid');
+        $member = $this->member();
+        $other = $this->member();
+        $detail = '/learning/courses/'.$course->slug;
+        $save = $detail.'/save';
+        $this->get('/saved-courses')->assertRedirect(route('login'));
+        $this->post($save)->assertRedirect(route('login'));
+
+        $this->actingAs($member)->from($detail)->post($save)->assertRedirect($detail);
+        $this->from($detail)->post($save)->assertRedirect($detail);
+        $this->assertDatabaseCount('learning_demo_course_saves', 1);
+        $this->get($detail)->assertInertia(fn (Assert $page) => $page->where('saved', true)->where('enrolled', false)->where('course.lessons.0.body', null));
+        $this->get('/learning')->assertInertia(fn (Assert $page) => $page->where('courses', fn ($courses) => collect($courses)->firstWhere('slug', $course->slug)['saved'] === true));
+        $this->get('/saved-courses')->assertInertia(fn (Assert $page) => $page->component('learning/SavedCourses')->has('courses.data', 1)->where('courses.data.0.slug', $course->slug)->where('courses.data.0.saved', true)->missing('courses.data.0.lessons'));
+        $this->enroll($member, $course);
+        $this->get('/dashboard/learning/my-learning')->assertInertia(fn (Assert $page) => $page->where('courses.0.saved', true));
+
+        $this->actingAs($other)->get('/saved-courses')->assertInertia(fn (Assert $page) => $page->has('courses.data', 0));
+        $this->from('/saved-courses')->delete($save)->assertRedirect('/saved-courses');
+        $this->assertDatabaseHas('learning_demo_course_saves', ['user_id' => $member->id, 'course_slug' => $course->slug]);
+
+        $this->actingAs($member)->from('/saved-courses')->delete($save)->assertRedirect('/saved-courses');
+        $this->get('/saved-courses')->assertInertia(fn (Assert $page) => $page->has('courses.data', 0));
+        $this->get($detail)->assertInertia(fn (Assert $page) => $page->where('saved', false));
+        $this->get('/dashboard/learning/my-learning')->assertInertia(fn (Assert $page) => $page->where('courses.0.saved', false));
+        $this->from($detail)->post($save)->assertRedirect($detail);
+        $course->update(['is_published' => false]);
+        $this->get('/saved-courses')->assertInertia(fn (Assert $page) => $page->has('courses.data', 0));
+        $this->post($save)->assertNotFound();
+    }
+
     public function test_guest_and_unenrolled_members_receive_public_outline_only(): void
     {
         $course = $this->course();

@@ -15,11 +15,12 @@ test('both compact cards are between earned badges and profile insights', () => 
 });
 test('plan and simulator links use existing protected destinations and real entitlement', () => {
     assert.match(cards, /href="\/membership" action="View usage"/);
-    assert.match(cards, /href="\/exams\/pmp\/enter" action="View simulator access"/);
+    assert.match(cards, /href="\/exams\/pmp\/enter" action="View exam simulator"/);
+    assert.match(cards, /href="\/dashboard\/learning\/my-learning"[^>]*>Continue learning/);
     assert.match(cards, /planUsage.examAccess \? 'Included' : 'Premium access'/);
     assert.match(query, /MemberFeatureAccess::allowsExamSimulator\(\$actualPlan\)/);
     assert.match(query, /'plan' => \$actualPlan/);
-    assert.match(read('app/Http/Controllers/Exam/PmpExamController.php'), /\? to_route\('exams.pmp.index'\)\s*: to_route\('pricing'\)/);
+    assert.match(read('app/Http/Controllers/Exam/PmpExamController.php'), /\? to_route\('exams.pmp.index'\)\s*: to_route\('exams.pmp.public'\)/);
 });
 test('quota is read only for entitled users, no sample balance or usage ledger on homepage', () => {
     assert.match(query, /\$tokens = \$examAccess\s*\? app\(PmpAiUsageReadModel::class\)->summary\(\$user, includeActivity: false\)/);

@@ -3,18 +3,12 @@
 namespace App\Http\Requests\Settings;
 
 use Illuminate\Foundation\Http\FormRequest;
-use App\Domain\AI\Services\AiFeatureCatalog;
-use App\Domain\Billing\Queries\CurrentMemberPlan;
-use App\Domain\Billing\Queries\MemberFeatureAccess;
 
 final class ResumeAssistantRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user() && MemberFeatureAccess::allows(
-            app(CurrentMemberPlan::class)->code($this->user()),
-            AiFeatureCatalog::FEATURES['resume_analyze']['min_plan'],
-        );
+        return $this->user() !== null;
     }
 
     public function withValidator($validator): void

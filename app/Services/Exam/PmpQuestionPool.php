@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 final class PmpQuestionPool
 {
     /** @return list<int> */
-    public function usedActiveIds(int $userId): array
+    public function usedActiveIds(int $userId, string $plan = 'pro'): array
     {
         // PostgreSQL JSON arrays are expanded inside the database rather than loading
         // entire attempt histories and JSON payloads into PHP. DISTINCT bounds the result
@@ -29,6 +29,7 @@ final class PmpQuestionPool
                     ->where('questions.is_active', true);
             })
             ->where('attempts.user_id', $userId)
+            ->when($plan === 'plus', fn ($q) => $q->whereIn('questions.difficulty', ['Easy', 'Moderate']))
             ->distinct()
             ->pluck('questions.id')
             ->map(static fn ($id): int => (int) $id)

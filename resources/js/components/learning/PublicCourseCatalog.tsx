@@ -1,3 +1,4 @@
+import { CourseSavedMarker } from './CourseSavedMarker';
 import type { CatalogSettings } from '@/components/learning/catalogSettings';
 import { AdminChoice } from '@/components/admin/AdminChoice';
 import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
@@ -18,7 +19,7 @@ function matchesTopic(course: DemoCourseData, topic: Topic): boolean {
     return topic === 'All topics' || course.category === topic;
 }
 
-function CatalogCourseTile({ course, href, buttonLabel }: { course: DemoCourseData; href: string; buttonLabel: string }) {
+export function CatalogCourseTile({ course, href, buttonLabel, onRemove, busy }: { course: DemoCourseData; href: string; buttonLabel: string; onRemove?: () => void; busy?: boolean }) {
     const free = course.accessTier === 'free';
     const duration = course.minutes > 0
         ? course.minutes >= 60 ? `${Number((course.minutes / 60).toFixed(1))} ${course.minutes === 60 ? 'hr' : 'hrs'}` : `${course.minutes} min`
@@ -26,6 +27,7 @@ function CatalogCourseTile({ course, href, buttonLabel }: { course: DemoCourseDa
 
     const fallback = `/images/learning/course-${course.thumbnail}.webp`;
     return <article className="pm-learn-v3-course pm-learn-v3-catalog-card">
+        {course.saved && <CourseSavedMarker title={course.title} onRemove={onRemove} busy={busy} />}
         <Link href={href} className="pm-learn-v3-course-image" aria-label={`View ${course.title}`}>
             <img key={course.coverUrl || fallback} src={course.coverUrl || fallback} alt="" loading="lazy" decoding="async" onError={event => { const image = event.currentTarget; if (image.getAttribute('src') !== fallback) image.src = fallback; else image.style.visibility = 'hidden'; }} />
         </Link>

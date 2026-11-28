@@ -1,8 +1,7 @@
-import { MemberSettingsPage } from '@/components/dashboard/MemberSettingsPage';
+import { MemberSettingsHeading, MemberSettingsPage } from '@/components/dashboard/MemberSettingsPage';
 import { Form, Head } from '@inertiajs/react';
 import { useRef } from 'react';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
-import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import { Button } from '@/components/ui/button';
@@ -27,11 +26,8 @@ export default function Security(props: Props) {
         <MemberSettingsPage active="security">
             <Head title="Security settings" />
 
-            <h1 className="sr-only">Security settings</h1>
-
-            <div className="space-y-6">
-                <Heading
-                    variant="small"
+            <section className="pm-member-settings-card">
+                <MemberSettingsHeading
                     title="Update password"
                     description="Ensure your account is using a long, random password to stay secure"
                 />
@@ -56,11 +52,11 @@ export default function Security(props: Props) {
                             currentPasswordInput.current?.focus();
                         }
                     }}
-                    className="space-y-6"
+                    className="pm-member-settings-form"
                 >
                     {({ errors, processing }) => (
                         <>
-                            <div className="grid gap-2">
+                            <div className="pm-member-settings-field">
                                 <Label htmlFor="current_password">
                                     Current password
                                 </Label>
@@ -69,7 +65,7 @@ export default function Security(props: Props) {
                                     id="current_password"
                                     ref={currentPasswordInput}
                                     name="current_password"
-                                    className="mt-1 block w-full"
+                                    className="block w-full"
                                     autoComplete="current-password"
                                     placeholder="Current password"
                                 />
@@ -77,14 +73,14 @@ export default function Security(props: Props) {
                                 <InputError message={errors.current_password} />
                             </div>
 
-                            <div className="grid gap-2">
+                            <div className="pm-member-settings-field">
                                 <Label htmlFor="password">New password</Label>
 
                                 <PasswordInput
                                     id="password"
                                     ref={passwordInput}
                                     name="password"
-                                    className="mt-1 block w-full"
+                                    className="block w-full"
                                     autoComplete="new-password"
                                     placeholder="New password"
                                     passwordrules={props.passwordRules}
@@ -93,7 +89,7 @@ export default function Security(props: Props) {
                                 <InputError message={errors.password} />
                             </div>
 
-                            <div className="grid gap-2">
+                            <div className="pm-member-settings-field">
                                 <Label htmlFor="password_confirmation">
                                     Confirm password
                                 </Label>
@@ -101,7 +97,7 @@ export default function Security(props: Props) {
                                 <PasswordInput
                                     id="password_confirmation"
                                     name="password_confirmation"
-                                    className="mt-1 block w-full"
+                                    className="block w-full"
                                     autoComplete="new-password"
                                     placeholder="Confirm password"
                                     passwordrules={props.passwordRules}
@@ -112,7 +108,7 @@ export default function Security(props: Props) {
                                 />
                             </div>
 
-                            <div className="flex items-center gap-4">
+                            <div className="pm-member-settings-actions">
                                 <Button
                                     disabled={processing}
                                     data-test="update-password-button"
@@ -123,7 +119,7 @@ export default function Security(props: Props) {
                         </>
                     )}
                 </Form>
-            </div>
+            </section>
 
             <ManageTwoFactor
                 canManageTwoFactor={props.canManageTwoFactor}

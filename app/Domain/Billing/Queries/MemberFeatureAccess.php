@@ -12,6 +12,16 @@ final class MemberFeatureAccess
         return isset($rank[$plan], $rank[$minimum]) && $rank[$plan] >= $rank[$minimum];
     }
 
+    public static function allowsCourse(string $plan, string $tier): bool
+    {
+        return self::allows($plan, $tier === 'paid' ? 'plus' : $tier);
+    }
+
+    public static function interviewCounts(string $plan): array
+    {
+        return match ($plan) { 'plus' => [5, 10], 'pro' => [5, 10, 20], default => [] };
+    }
+
     public static function allowsExamSimulator(string $plan): bool
     {
         return self::allows($plan, 'plus');
@@ -25,11 +35,17 @@ final class MemberFeatureAccess
 
     public function forPlan(string $plan): array
     {
-        $minimum = AiFeatureCatalog::FEATURES['resume_analyze']['min_plan']; // Both existing resume operations require Pro in the approved catalog.
+        $minimum = AiFeatureCatalog::FEATURES['resume_rewrite']['min_plan'];
         return [
             'examSimulator' => self::allowsExamSimulator($plan),
             'pmp' => self::allowsExamSimulator($plan), // Backward-compatible PMP usage projection.
-            'resume' => self::allows($plan, $minimum),
+            'resume' => self::allows($plan, 'free'),
+            'events' => self::allows($plan, 'plus'),
+            'resumeAi' => self::allows($plan, $minimum),
+            'interview' => self::allows($plan, 'plus'),
+            'achievements' => self::allows($plan, 'plus'),
+            'activity' => self::allows($plan, 'plus'),
+            'insights' => self::allows($plan, 'plus'),
             'resumeMinimum' => $minimum,
         ];
     }

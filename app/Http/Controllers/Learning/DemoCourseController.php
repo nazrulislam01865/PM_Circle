@@ -23,7 +23,7 @@ final class DemoCourseController extends Controller
         $member = $request->user();
         $joined = $member && ! $member->is_admin && $member->status === 'active' && (int) $member->onboarding_step >= 3 && $member->hasVerifiedEmail();
         $tier = $joined ? $plans->code($member) : 'free';
-        $eligible = $record['accessTier'] === 'free' || in_array($tier, ['plus', 'pro'], true);
+        $eligible = \App\Domain\Billing\Queries\MemberFeatureAccess::allowsCourse($tier, $record['accessTier']);
         $enrolled = $joined && DB::table('learning_demo_course_enrollments')
             ->where('user_id', $member->id)->where('course_slug', $course)->exists();
         $saved = $joined && DB::table('learning_demo_course_saves')
@@ -92,13 +92,20 @@ final class DemoCourseController extends Controller
         ]);
     }
 
+    public function saved(Request $request, DemoCourseCatalog $catalog): Response
+    {
+        return Inertia::render('learning/SavedCourses', [
+            'courses' => $catalog->savedFor($request->user()),
+        ]);
+    }
+
     public function enroll(Request $request, string $course, DemoCourseCatalog $catalog, CurrentMemberPlan $plans): RedirectResponse
     {
         $accessTier = $catalog->accessTier($course);
         abort_unless($accessTier, 404);
 
         // Paid-labelled courses carry no separate charge for active Plus/Pro subscribers.
-        abort_unless($accessTier === 'free' || in_array($plans->code($request->user()), ['plus', 'pro'], true), 403);
+        abort_unless($accessTier === 'free' || \App\Domain\Billing\Queries\MemberFeatureAccess::allowsCourse($plans->code($request->user()), $accessTier), 403);
         DB::table('learning_demo_course_enrollments')->insertOrIgnore([
             'user_id' => $request->user()->id,
             'course_slug' => $course,

@@ -74,7 +74,11 @@ final class CommunityEventTest extends TestCase
         $data = ['title' => 'Member workshop', 'description' => 'Practice together', 'category' => 'Workshop', 'host' => 'Member',
             'starts_at' => now('Asia/Dhaka')->addDays(3)->format('Y-m-d\TH:i'), 'format' => 'online',
             'open_to_everyone' => true, 'registration_open' => true, 'discussion_open' => true, 'sponsored' => true, 'status' => 'published'];
+        $this->actingAs($member)->post('/events', $data)->assertForbidden();
+        config()->set('pm-circle.temporary_paid_access_enabled', true);
+        \Illuminate\Support\Facades\DB::table('temporary_memberships')->insert(['user_id' => $member->id, 'plan_code' => 'plus', 'created_at' => now(), 'updated_at' => now()]);
         $this->actingAs($member)->post('/events', $data)->assertRedirect('/events/create');
+        $this->post('/events', array_replace($data, ['title' => 'Second workshop']))->assertSessionHasErrors('title');
         $event = CommunityEvent::query()->where('title', 'Member workshop')->firstOrFail();
         $this->assertSame('pending', $event->status);
         $this->assertFalse($event->sponsored);

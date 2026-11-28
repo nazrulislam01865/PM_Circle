@@ -63,7 +63,7 @@ export function CompactProfileEditor({ profile, onImport, onCancel }: Props) {
     const [draft, setDraft] = useState(baseline);
     const [saving, setSaving] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
-    const [completion, setCompletion] = useState(profile.completeness);
+    const completion = profile.completeness;
     const dirty = Object.keys(draft).some(key => draft[key as keyof Draft] !== baseline[key as keyof Draft]);
     const field = (key: keyof Draft, label: string, type: Field['type'] = 'text', required = false) =>
         <ProfileInput key={key} id={`compact-field-${key}`} field={{ key, label, type, required, full: type === 'textarea' }}
@@ -90,7 +90,6 @@ export function CompactProfileEditor({ profile, onImport, onCancel }: Props) {
                 const fresh = next ? draftFromProfile(next) : draft;
                 setBaseline(fresh);
                 setDraft(fresh);
-                if (next) setCompletion(next.completeness);
             },
             onError: next => {
                 setErrors(next);
@@ -108,7 +107,7 @@ export function CompactProfileEditor({ profile, onImport, onCancel }: Props) {
         setDetailed(true);
     };
     if (detailed) return <>
-        <div className="pm-compact-mode"><button type="button" className="pm-btn pm-btn-secondary pm-btn-sm" onClick={() => { if (!window.confirm('Return to the compact editor? Unsaved detailed edits will be discarded.')) return; const fresh = draftFromProfile(profile); setBaseline(fresh); setDraft(fresh); setCompletion(profile.completeness); setDetailed(false); }}>Return to compact editor</button></div>
+        <div className="pm-compact-mode"><button type="button" className="pm-btn pm-btn-secondary pm-btn-sm" onClick={() => { if (!window.confirm('Return to the compact editor? Unsaved detailed edits will be discarded.')) return; const fresh = draftFromProfile(profile); setBaseline(fresh); setDraft(fresh); setDetailed(false); }}>Return to compact editor</button></div>
         <ProfileEditorPrototype profile={profile} onImport={onImport} onCancel={onCancel} />
     </>;
     return <form className="pm-card pm-compact-editor" onSubmit={submit}>

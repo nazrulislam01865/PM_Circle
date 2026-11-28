@@ -16,7 +16,7 @@ final class AiFeatureCatalog
         'ask_ai' => ['family' => 'feature:ask_ai', 'min_plan' => 'plus', 'chat' => true],
         'interview_answer_review' => ['family' => 'feature:interview', 'min_plan' => 'plus', 'chat' => false],
         'resume_analyze' => ['family' => 'feature:resume', 'min_plan' => 'pro', 'chat' => false],
-        'resume_rewrite' => ['family' => 'feature:resume', 'min_plan' => 'pro', 'chat' => false],
+        'resume_rewrite' => ['family' => 'feature:resume', 'min_plan' => 'plus', 'chat' => false],
         'scenario_generate' => ['family' => 'feature:editorial', 'min_plan' => 'staff', 'chat' => false],
         'trend_draft' => ['family' => 'feature:editorial', 'min_plan' => 'staff', 'chat' => false],
     ];

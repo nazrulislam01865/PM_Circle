@@ -59,14 +59,55 @@ final class EventPreviewController extends Controller
 
     public function create(Request $request): Response
     {
+        abort_unless(\App\Domain\Billing\Queries\MemberFeatureAccess::allows(app(\App\Domain\Billing\Queries\CurrentMemberPlan::class)->code($request->user()), 'plus'), 403);
         return Inertia::render('events/Create', ['notice' => $request->session()->get('event_notice'), 'submissions' => CommunityEvent::query()
             ->where('creator_id', $request->user()->id)->latest('id')->paginate(10, ['id', 'title', 'slug', 'status'])]);
     }
 
     public function store(SaveEventRequest $request, EventWriter $writer): RedirectResponse
     {
-        $writer->save($request);
+        abort_unless(\App\Domain\Billing\Queries\MemberFeatureAccess::allows(app(\App\Domain\Billing\Queries\CurrentMemberPlan::class)->code($request->user()), 'plus'), 403);
+        DB::transaction(function () use ($request, $writer): void {
+            $id = $request->user()->id;
+            DB::table('users')->where('id', $id)->lockForUpdate()->first(['id']);
+            $start = now('Asia/Dhaka')->startOfMonth();
+            $end = $start->copy()->addMonthNoOverflow();
+            if (CommunityEvent::query()->where('creator_id', $id)->where('created_at', '>=', $start->utc())->where('created_at', '<', $end->utc())->exists()) {
+                throw ValidationException::withMessages(['title' => 'Your plan allows one event submission per calendar month.']);
+            }
+            $writer->save($request);
+        });
         return to_route('events.create')->with('event_notice', 'Your event has been submitted for administrator review.');
+    }
+
+    private function hostedEvent(Request $request, int $event): CommunityEvent
+    {
+        abort_unless(\App\Domain\Billing\Queries\MemberFeatureAccess::allows(app(\App\Domain\Billing\Queries\CurrentMemberPlan::class)->code($request->user()), 'plus'), 403);
+        return CommunityEvent::query()->where('creator_id', $request->user()->id)->findOrFail($event);
+    }
+
+    public function registrants(Request $request, int $event): \Symfony\Component\HttpFoundation\Response
+    {
+        $hosted = $this->hostedEvent($request, $event);
+        return Inertia::render('events/Registrants', ['event' => $hosted->only(['id', 'title']),
+            'registrations' => DB::table('community_event_registrations')->where('event_id', $hosted->id)->orderByDesc('id')->paginate(20, ['id', 'name', 'email', 'phone', 'role', 'created_at'])])->toResponse($request)->header('Cache-Control', 'private, no-store');
+    }
+
+    public function downloadRegistrants(Request $request, int $event): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $hosted = $this->hostedEvent($request, $event);
+        return response()->streamDownload(function () use ($hosted): void {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['Name', 'Email', 'Phone', 'Role', 'Registered at'], ',', '"', '');
+            foreach (DB::table('community_event_registrations')->where('event_id', $hosted->id)->select(['id', 'name', 'email', 'phone', 'role', 'created_at'])->lazyById(250) as $row) {
+                $values = array_map(static function ($value): string {
+                    $value = (string) $value;
+                    return preg_match('/^[\s]*[=+@-]|^[\t\r\n]/u', $value) ? "'".$value : $value;
+                }, [$row->name, $row->email, $row->phone, $row->role, $row->created_at]);
+                fputcsv($out, $values, ',', '"', '');
+            }
+            fclose($out);
+        }, 'event-'.$hosted->id.'-registrants.csv', ['Content-Type' => 'text/csv; charset=UTF-8', 'Cache-Control' => 'private, no-store']);
     }
 
     public function register(Request $request, string $slug): RedirectResponse

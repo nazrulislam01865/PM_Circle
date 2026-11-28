@@ -64,7 +64,7 @@ export function MemberHomeOverview({ dashboard, statistics, planUsage }: { dashb
         </OverviewSummaryCard>
 
         <OverviewSummaryCard title="Practice & results" icon={<ClipboardList aria-hidden="true" />}
-            href="/exams/pmp/enter" action="View simulator access">
+            href="/exams/pmp/enter" action="View exam simulator">
             <div className="pm-member-overview-summary-row">
                 <span className="pm-member-overview-summary-copy">PMP Exam Simulator</span>
                 <span className="pm-member-overview-summary-pill">
@@ -92,13 +92,7 @@ export function MemberHomeOverview({ dashboard, statistics, planUsage }: { dashb
                 <div><span>Scenarios completed</span><strong>{learning.scenarios}</strong></div>
                 <div><span>Learning level</span><strong>Level {learning.level}</strong></div>
             </div>
-            <Link href="/dashboard/learning" className="pm-member-overview-link">Continue learning <ArrowRight size={17} aria-hidden="true" /></Link>
-        </section>
-
-        <section className="pm-dash-card pm-member-overview-card pm-member-home-syllabus">
-            <h2>Exam syllabus</h2>
-            <div className="pm-member-overview-rows"><div><span>{overview.syllabus.name}</span><strong>{overview.syllabus.status}</strong></div></div>
-            <Link href="/exams/pmp" className="pm-member-overview-link">View syllabus <ArrowRight size={17} aria-hidden="true" /></Link>
+            <Link href="/dashboard/learning/my-learning" className="pm-member-overview-link">Continue learning <ArrowRight size={17} aria-hidden="true" /></Link>
         </section>
 
         <section className="pm-dash-card pm-member-overview-card pm-member-home-contribution">
@@ -110,7 +104,7 @@ export function MemberHomeOverview({ dashboard, statistics, planUsage }: { dashb
             </div>
             <Link href="/activity-log" className="pm-member-overview-link">View activity <ArrowRight size={17} aria-hidden="true" /></Link>
         </section>
-        </> : <>{['Profile insights', 'Your learning', 'Exam syllabus', 'Community contribution'].map(title => <SummaryPending key={title} title={title} prop="statistics"/>)}</>}
+        </> : <>{['Profile insights', 'Your learning', 'Community contribution'].map(title => <SummaryPending key={title} title={title} prop="statistics"/>)}</>}
     </>;
 }
 

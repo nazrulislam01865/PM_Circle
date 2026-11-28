@@ -23,12 +23,14 @@ test('every logged-out PublicLayout uses the exact homepage navigation and its s
 });
 
 test('guest authentication and discover journeys use the identical HomeHeader', () => {
-    for (const source of [auth, discover]) {
+    for (const source of [auth]) {
         assert.match(source, /const isGuest = !(?:usePage|auth\?\.user)/);
         assert.match(source, /isGuest \? <HomeHeader\s*\/> : <SiteHeader/);
         assert.match(source, /isGuest \? ' pm-home-v2-shell'/);
         assert.match(source, /<SiteFooter\s*\/>/);
     }
+    assert.match(discover, /<PublicLayout\b/);
+    assert.doesNotMatch(discover, /<(HomeHeader|SiteHeader|SiteFooter)\b/);
 });
 
 test('logged-in public pages use the shared sidebar shell and exams keep the focused exam screen', () => {

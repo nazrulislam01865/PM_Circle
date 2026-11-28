@@ -220,6 +220,8 @@ Route::get('/events', [EventPreviewController::class, 'index'])->name('events.in
 Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded'])->group(function (): void {
     Route::get('/events/create', [EventPreviewController::class, 'create'])->name('events.create');
     Route::post('/events', [EventPreviewController::class, 'store'])->middleware('throttle:5,1')->name('events.store');
+    Route::get('/events/host/{event}/registrants', [EventPreviewController::class, 'registrants'])->whereNumber('event')->name('events.registrants');
+    Route::get('/events/host/{event}/registrants/download', [EventPreviewController::class, 'downloadRegistrants'])->whereNumber('event')->middleware('throttle:10,1')->name('events.registrants.download');
 });
 Route::get('/events/{slug}', [EventPreviewController::class, 'show'])->where('slug', '[a-z0-9-]+')->name('events.show');
 Route::post('/events/{slug}/register', [EventPreviewController::class, 'register'])->where('slug', '[a-z0-9-]+')->middleware('throttle:5,1')->name('events.register');
@@ -315,6 +317,7 @@ Route::middleware(['auth', 'pm.member', 'verified', 'pm.onboarded'])->group(func
     Route::get('/activity-log/entries', [\App\Http\Controllers\Account\ActivityLogController::class, 'entries'])->middleware('throttle:30,1')->name('activity-log.entries');
     Route::delete('/activity-log/history', [\App\Http\Controllers\Account\ActivityLogController::class, 'clear'])->middleware('throttle:5,1')->name('activity-log.clear');
     Route::get('/saved-posts', SavedPostsController::class)->name('saved-posts.index');
+    Route::get('/saved-courses', [DemoCourseController::class, 'saved'])->name('saved-courses.index');
     Route::post('/members/{member}/follow', [MemberDirectoryController::class, 'follow'])->middleware('throttle:30,1')->whereNumber('member')->name('members.follow');
     Route::delete('/members/{member}/follow', [MemberDirectoryController::class, 'unfollow'])->whereNumber('member')->name('members.unfollow');
     Route::get('/membership', [TemporaryMembershipController::class, 'index'])->name('membership.index');

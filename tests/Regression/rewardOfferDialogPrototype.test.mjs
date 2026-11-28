@@ -29,7 +29,7 @@ test('modal exactly carries the offer message, four steps and guest/member desti
         'Get {discountLabel} off your Exam Simulator',
         'Complete your PM Circle profile to unlock a discount code.',
         'Create your free account', 'Register and verify your email.',
-        'Complete your profile', 'Fill in the required details until your profile reaches 100%.',
+        'Complete your profile', 'Fill in the ten required profile details to qualify for the reward.',
         'Find your discount code', 'Copy the discount code from your profile.',
         'Apply it at checkout', 'Enter the code when purchasing a PM Circle Exam Simulator.',
         'Register & complete profile', 'Already a member?', 'Log in',

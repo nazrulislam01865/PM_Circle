@@ -275,7 +275,7 @@ export const ResumeImportsTab = forwardRef<ResumeImportsHandle, Props>(function 
             <section className="pm-resume-panel" aria-labelledby="linkedin-import-title">
                 <header className="pm-resume-panel-heading">
                     <h3 id="linkedin-import-title"><span className="pm-resume-linkedin-mark">in</span> Import from LinkedIn</h3>
-                    <span className="pm-resume-plan-tag">Plus & Pro</span>
+                    <span className="pm-resume-plan-tag">All plans</span>
                 </header>
                 <div className="pm-resume-field">
                     <label htmlFor="pm-resume-linkedin">LinkedIn profile URL</label>

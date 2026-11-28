@@ -35,8 +35,9 @@ $assert(str_contains($visibility, "path === '/dashboard'") && ! str_contains($vi
     'Public homepage has shared footer; dashboard and active exam stay excluded');
 $assert(str_contains($learning, '<MemberDashboardLayout') && ! str_contains($learning, '<LearningFooter />'),
     'Learning member pages do not render a second footer');
-$assert(str_contains($read('resources/js/components/discover-pm/DiscoverShell.tsx'), '<SiteFooter />'),
-    'Discover PM retains its existing shared footer');
+$discover = $read('resources/js/components/discover-pm/DiscoverShell.tsx');
+$assert(str_contains($discover, '<PublicLayout') && ! str_contains($discover, '<SiteFooter'),
+    'Discover PM inherits the shared footer through PublicLayout');
 $assert(str_contains($footer, 'pm-v2-site-footer')
     && str_contains($legacy, 'return <HomeFooter content={content}/>')
     && str_contains($footerCss, '.pm-v2-site-footer .pm-v2-container')

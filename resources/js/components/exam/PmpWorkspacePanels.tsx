@@ -1,7 +1,7 @@
 import { Link } from '@inertiajs/react';
 import {
     ArrowRight, Bookmark, CalendarDays, Check, CheckCircle2, ChevronDown, ChevronRight,
-    CircleHelp, Clock3, Coins, FileCheck2, Info, Layers3, Play, Sparkles, Target, RefreshCcw, BarChart3,
+    CircleHelp, Clock3, Coins, FileCheck2, Layers3, Play, Sparkles, Target, RefreshCcw, BarChart3,
 } from 'lucide-react';
 import { Fragment, useEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import { examResult, examReview } from '@/components/exam/ExamShared';
@@ -186,8 +186,7 @@ export function PmpOverview({ attempts, planCode, planDetails, targetExamDate, a
 
     return <Surface>
         <div className="pm-pmp-overview-heading">
-            <div><h1>My PMP Exam Simulator</h1>
-                <span className="pm-pmp-sample-tag"><Info size={13}/> Your exam activity</span></div>
+            <div><h1>My PMP Exam Simulator</h1></div>
             <div className="pm-pmp-heading-action"><PrimaryAction onClick={onStart} disabled={!availableQuestions || starting}>
                 <Play size={17} fill="currentColor"/> {starting ? 'Starting exam...' : 'Start a New Mock Exam'}
             </PrimaryAction><span>{!examEnabled ? 'New mock exams are currently paused by the administrator.'
@@ -319,11 +318,11 @@ export function PmpPerformance({ attempts, topics, onStart, onFocus, starting, c
         { label: 'Completed mocks', value: `${group.length}` },
     ];
     return <Surface>
-        <div className="pm-pmp-section-heading"><div><h1>Performance and Preparation</h1>
-            <div className="pm-pmp-performance-filters">
-                <PMDropdown id="pmp-performance-category" aria-label="Exam category" required value={mode} onValueChange={value => setMode(value as 'full' | 'short')} placeholder="Exam category" options={[{value:'full',label:`Full mocks (${fullQuestionCount} questions)`},{value:'short',label:'Short practice'}]}/>
-                <PMDropdown id="pmp-performance-range" aria-label="Performance history range" required value={String(limit)} onValueChange={value => setLimit(Number(value))} placeholder="History range" options={[{value:'5',label:'Last 5 completed'},{value:'10',label:'Last 10 completed'},{value:'20',label:'Last 20 completed'}]}/>
-            </div></div><span className="pm-pmp-sample-tag"><Info size={14}/> Your practice data</span></div>
+        <div className="pm-pmp-section-heading"><div><h1>Performance and Preparation</h1><p>Track your exam performance, review topic accuracy and focus your preparation.</p></div></div>
+        <div className="pm-pmp-performance-filters">
+            <PMDropdown id="pmp-performance-category" aria-label="Exam category" required value={mode} onValueChange={value => setMode(value as 'full' | 'short')} placeholder="Exam category" options={[{value:'full',label:`Full mocks (${fullQuestionCount} questions)`},{value:'short',label:'Short practice'}]}/>
+            <PMDropdown id="pmp-performance-range" aria-label="Performance history range" required value={String(limit)} onValueChange={value => setLimit(Number(value))} placeholder="History range" options={[{value:'5',label:'Last 5 completed'},{value:'10',label:'Last 10 completed'},{value:'20',label:'Last 20 completed'}]}/>
+        </div>
         <div className="pm-pmp-metric-grid">{stats.map(stat => <Panel key={stat.label} className="pm-pmp-metric"><small>{stat.label}</small><strong>{stat.value}</strong></Panel>)}</div>
         <div className="pm-pmp-analysis-grid"><Panel><h2>Score Trend</h2><ScoreTrend completed={group}/></Panel>
             <Panel><h2>Topic Accuracy</h2>{breakdown.length ? <div className="pm-pmp-table-scroll"><table className="pm-pmp-topic-table" aria-label="Topic accuracy"><thead><tr>
@@ -394,7 +393,6 @@ export function PmpHistory({ attempts, initialNextCursor, onStart, starting, can
             <PMDropdown id="pmp-history-type" aria-label="Exam type" required value={kind} onValueChange={setKind} placeholder="Exam type" options={[{value:'all',label:'All exam types'},{value:'full',label:'Full mocks'},{value:'short',label:'Short practice'}]}/>
             <PMDropdown id="pmp-history-status" aria-label="Exam status" required value={status} onValueChange={setStatus} placeholder="Exam status" options={[{value:'all',label:'All statuses'},{value:'completed',label:'Completed'},{value:'in_progress',label:'In progress'},{value:'expired',label:'Expired'}]}/>
             <PMDropdown id="pmp-history-period" aria-label="Exam date range" required value={period} onValueChange={setPeriod} placeholder="Date range" options={[{value:'all',label:'Date range'},{value:'7',label:'Last 7 days'},{value:'30',label:'Last 30 days'},{value:'90',label:'Last 90 days'}]}/>
-            <span className="pm-pmp-sample-tag"><Info size={14}/> Your exam records</span>
         </div>
         <div className="pm-pmp-table-scroll"><table className="pm-pmp-history-table" aria-label="Exam history"><thead><tr>
             <th scope="col">Exam</th><th scope="col">Date</th><th scope="col">Started</th><th scope="col">Finished</th><th scope="col">Time allowed</th><th scope="col">Time used</th><th scope="col">Time left</th><th scope="col">Score</th><th scope="col">Status</th><th scope="col">Action</th>
@@ -447,7 +445,7 @@ export function PmpAiUsage({ usage, planDetails, onRefresh, loading = false, err
     return <section className="pm-pmp-ai-grid" aria-label="AI usage and refills">
             <div className="pm-pmp-ai-main">
                 <Panel className="pm-pmp-ai-balance">
-                    <div className="pm-pmp-ai-lead"><IconTile><Sparkles/></IconTile><div>
+                    <div className="pm-pmp-ai-lead"><div>
                         <h1>AI usage and refills</h1>
                         <p>Track your AI token usage for question explanations, follow-up questions, and study insights, and review your current allocation.</p>
                     </div>{onRefresh && <button type="button" className="pm-pmp-ai-refresh" onClick={onRefresh} disabled={loading}

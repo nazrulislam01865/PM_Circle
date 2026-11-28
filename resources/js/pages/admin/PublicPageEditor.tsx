@@ -7,7 +7,7 @@ type Props = { page: Page; section: string; content: Record<string, string | boo
 const sections: Record<Page, string[][]> = {
     about: [['banner', 'Page banner'], ['intro', 'Introduction'], ['features', 'Feature cards'], ['company', 'Company information']],
     trends: [['banner', 'Page banner'], ['listing', 'Report listing'], ['detail', 'Report detail']],
-    'compare-plans': [['banner', 'Page banner'], ['comparison', 'Comparison headers'], ['community', 'Community & profile'], ['learning', 'Learn & practice'], ['career', 'Career & insights'], ['actions', 'Plan buttons'], ['notes', 'Supporting notes'], ['profile-import', 'Profile import & dialog']],
+    'compare-plans': [['banner', 'Page banner'], ['comparison', 'Comparison headers'], ['community', 'Community & profile'], ['learning', 'Courses & learning'], ['exams', 'Exam practice & challenges'], ['career', 'Career & events'], ['ai-support', 'AI tokens & support'], ['actions', 'Plan buttons'], ['notes', 'Supporting notes'], ['profile-import', 'Profile import & dialog']],
     'refund-policy': [['banner', 'Page banner'], ['navigation', 'Contents navigation'], ['monthly-plan-payments', 'Monthly plan payments'], ['cancel-your-plan', 'Cancellation'], ['payment-and-access-issues', 'Payment & access issues'], ['consumer-rights', 'Consumer rights']],
 };
 const pageInfo: Record<Page, {title: string; href: string}> = {
@@ -19,7 +19,7 @@ const bodyFields = new Set(['description', 'noticeText', 'sampleNoticeText', 'pr
 const icons = ['FileText', 'BookOpen', 'BrainCircuit', 'BriefcaseBusiness', 'ChartNoAxesColumnIncreasing', 'IdCard', 'Link2', 'MessageCircle', 'RefreshCw', 'Settings', 'Shield', 'Trophy', 'UserRound', 'UsersRound', 'Eye', 'Target'];
 const repeaters: Record<string, { title: string; fields: EditorField[]; max: number; min?: number; emptyMessage: string }> = {
     cards: {title:'Feature cards', max:12, fields:[{key:'title',label:'Title'},{key:'description',label:'Description',kind:'textarea'},{key:'linkLabel',label:'Link label'},{key:'href',label:'Link destination'}], emptyMessage:'No feature cards. Add a card to show it on About Us.'},
-    rows: {title:'Comparison rows', max:25, fields:[{key:'label',label:'Feature'},{key:'icon',label:'Icon',kind:'select',choices:icons.map(value => ({value,label:value}))},{key:'free',label:'Free'},{key:'plus',label:'Plus'},{key:'pro',label:'Pro'}], emptyMessage:'No comparison rows.'},
+    rows: {title:'Comparison rows', max:25, fields:[{key:'label',label:'Feature'},{key:'description',label:'Feature details'},{key:'icon',label:'Icon',kind:'select',choices:icons.map(value => ({value,label:value}))},{key:'free',label:'Free'},{key:'plus',label:'Plus'},{key:'pro',label:'Pro'}], emptyMessage:'No comparison rows.'},
     paragraphs: {title:'Policy paragraphs', max:12, min:1, fields:[{key:'text',label:'Paragraph text',kind:'textarea'},{key:'linkLabel',label:'Link text (optional, must occur in paragraph)'},{key:'href',label:'Link destination (optional)'}], emptyMessage:'Add a policy paragraph.'},
 };
 

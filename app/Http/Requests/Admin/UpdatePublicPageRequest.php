@@ -56,10 +56,10 @@ final class UpdatePublicPageRequest extends FormRequest
             'compare-plans:banner', 'compare-plans:comparison', 'compare-plans:actions', 'compare-plans:notes', 'compare-plans:profile-import', 'refund-policy:banner', 'refund-policy:navigation' => collect(PublicPageContent::defaults($page)[$section])->mapWithKeys(fn ($value, $key) => [
                 $key => is_bool($value) ? $enabled : (in_array($key, ['description', 'privacyNote', 'billingNote', 'note', 'dialogDescription', 'dialogBody'], true) ? $body : $text),
             ])->all(),
-            'compare-plans:community', 'compare-plans:learning', 'compare-plans:career' => [
+            'compare-plans:community', 'compare-plans:learning', 'compare-plans:career', 'compare-plans:exams', 'compare-plans:ai-support' => [
                 'enabled' => $enabled, 'title' => $text, 'rows' => ['present', 'array', 'list', 'max:25'],
-                'rows.*' => ['required', 'array:label,icon,free,plus,pro'],
-                'rows.*.label' => $text,
+                'rows.*' => ['required', 'array:label,description,icon,free,plus,pro'],
+                'rows.*.label' => $text, 'rows.*.description' => ['nullable', 'string', 'max:500'],
                 'rows.*.icon' => ['required', Rule::in(['BookOpen', 'BrainCircuit', 'BriefcaseBusiness', 'ChartNoAxesColumnIncreasing', 'FileText', 'IdCard', 'Link2', 'MessageCircle', 'RefreshCw', 'Settings', 'Shield', 'Trophy', 'UserRound', 'UsersRound', 'Eye', 'Target'])],
                 'rows.*.free' => $text, 'rows.*.plus' => $text, 'rows.*.pro' => $text,
             ],

@@ -21,7 +21,6 @@ export type DashboardData = {
         badgeCount: number;
         insights: { last30: number; thisWeek: number };
         contribution: { posts: number; replies: number; responses: number };
-        syllabus: { name: string; status: string };
     };
     postChecks: import('@/components/community/PostCheckCard').PostCheckFeedData;
     posts: DashboardPost[]; feedTab: DashboardTab;
@@ -29,11 +28,11 @@ export type DashboardData = {
     feedPage: { next_cursor: string | null; previous_cursor?: string | null; has_more: boolean };
     virtualFeedEnabled: boolean;
     boundedFeedEnabled?: boolean;
-    featureAccess?: { examSimulator: boolean; pmp: boolean; resume: boolean; resumeMinimum: string };
+    featureAccess?: { examSimulator: boolean; pmp: boolean; resume: boolean; resumeAi?: boolean; interview?: boolean; events?: boolean; achievements?: boolean; activity?: boolean; insights?: boolean; resumeMinimum: string };
 };
 
 /** Minimal authenticated chrome props for feature pages. */
-export type DashboardShellData = Pick<DashboardData, "plan" | "isDemo" | "member"> & { featureAccess?: { examSimulator: boolean; pmp: boolean; resume: boolean; resumeMinimum: string } };
+export type DashboardShellData = Pick<DashboardData, "plan" | "isDemo" | "member"> & { featureAccess?: { examSimulator: boolean; pmp: boolean; resume: boolean; resumeAi?: boolean; interview?: boolean; events?: boolean; achievements?: boolean; activity?: boolean; insights?: boolean; resumeMinimum: string } };
 
 export type DashboardFeedData = Pick<DashboardData, 'posts' | 'feedPage' | 'feedTab'>;
 export type DashboardStatistics = Pick<DashboardData, 'learning' | 'overview'>;

@@ -35,7 +35,7 @@ final class DashboardController extends Controller
                 'feed' => fn () => $overview->feed($user, $tab),
                 'postChecks' => fn () => $overview->checks($user),
                 'feedScopeCounts' => fn () => $overview->scopeCounts($user),
-                'statistics' => Inertia::defer(fn () => $this->displaySummary(fn () => $overview->statistics($user)), 'dashboard-summary'),
+                'statistics' => Inertia::defer(fn () => $this->displaySummary(fn () => $overview->statistics($user, $plan())), 'dashboard-summary'),
                 'planUsage' => Inertia::defer(fn () => $this->displaySummary(fn () => $overview->planUsage($user, $plan())), 'dashboard-summary'),
                 'flashStatus' => fn () => $request->session()->get('status'),
             ]);

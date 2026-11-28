@@ -85,7 +85,7 @@ function EditorCollection({ type, rows, errors, onChange, onAdd, onRemove }: {
 
 export function ProfileEditorPrototype({ profile, onImport, onCancel }: { profile: ProfileData & { completeness?: number }; onImport?: () => void; onCancel: () => void }) {
     const [basic, setBasic] = useState(() => alignedBasic(profile));
-    const [completion, setCompletion] = useState(profile.completeness ?? 0);
+    const completion = profile.completeness ?? 0;
     const [records, setRecords] = useState<Record<CollectionKey, RowData[]>>(() => alignedRecords(profile));
     const [removed, setRemoved] = useState<Record<string, number[]>>({});
     const [saving, setSaving] = useState(false);
@@ -158,8 +158,6 @@ export function ProfileEditorPrototype({ profile, onImport, onCancel }: { profil
             onSuccess: page => {
                 const updated = page.props.profileData as ProfileData | undefined;
                 if (updated) { setRecords(alignedRecords(updated)); setBasic(alignedBasic(updated)); }
-                const score = (page.props.profileData as (ProfileData & { completeness?: number }) | undefined)?.completeness;
-                if (typeof score === 'number') setCompletion(score);
                 setRemoved({});
             },
             onFinish: () => setSaving(false),

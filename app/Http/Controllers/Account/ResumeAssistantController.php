@@ -19,20 +19,21 @@ final class ResumeAssistantController extends Controller
     public function __invoke(Request $request, CurrentMemberPlan $plans, ResumeAssistantProfile $profiles)
     {
         $plan = $plans->code($request->user());
-        abort_unless(MemberFeatureAccess::allows($plan, AiFeatureCatalog::FEATURES['resume_analyze']['min_plan']), 403);
-        $allowedModels = config('pm-ai.enabled') ? app(AiRuntimeSettings::class)->allowedModels() : [];
-        $features = DB::table('ai_features')->whereIn('code', ['resume_analyze', 'resume_rewrite'])->where('enabled', true)
+        $allowedModels = MemberFeatureAccess::allows($plan, 'plus') && config('pm-ai.enabled') ? app(AiRuntimeSettings::class)->allowedModels() : [];
+        $features = $allowedModels === [] ? [] : DB::table('ai_features')->whereIn('code', ['resume_analyze', 'resume_rewrite'])->where('enabled', true)
             ->get(['code', 'min_plan', 'credit_tariff', 'model', 'max_input_chars'])->filter(fn ($row) => config('pm-ai.enabled') && MemberFeatureAccess::allowsAi($plan, $row->code, $row->min_plan) && in_array($row->model, $allowedModels, true))->values()->map(fn ($row) => ['code' => $row->code, 'credits' => (int) $row->credit_tariff, 'max_input_chars' => (int) $row->max_input_chars]);
         $snapshot = $profiles->snapshot($request->user());
         $draft = null;
         if ($encrypted = $request->session()->get('resume_assistant.'.$request->user()->id)) {
             try { $draft = json_decode(Crypt::decryptString($encrypted), true, flags: JSON_THROW_ON_ERROR); } catch (\Throwable) { $request->session()->forget('resume_assistant.'.$request->user()->id); }
         }
-        return Inertia::render('account/ResumeAssistant', ['profile' => $snapshot, 'draft' => $draft, 'resumes' => $request->user()->resumes()->latest('id')->limit(30)->get(['id', 'original_name']), 'features' => $features, 'aiExtractionEnabled' => app(\App\Domain\AI\Services\ResumeExtractionSettings::class)->enabled()]);
+        return Inertia::render('account/ResumeAssistant', ['profile' => $snapshot, 'draft' => $draft, 'resumes' => $request->user()->resumes()->latest('id')->limit(30)->get(['id', 'original_name']), 'features' => $features, 'aiExtractionEnabled' => MemberFeatureAccess::allows($plan, 'plus') && app(\App\Domain\AI\Services\ResumeExtractionSettings::class)->enabled()]);
     }
     public function extract(Request $request, \App\Services\Resume\ResumeTextExtractor $reader, \App\Services\Resume\ResumeTemplateParser $parser): \Illuminate\Http\JsonResponse
     {
-        abort_unless(MemberFeatureAccess::allows(app(CurrentMemberPlan::class)->code($request->user()), AiFeatureCatalog::FEATURES['resume_analyze']['min_plan']), 403);
+        if ($request->boolean('use_ai')) {
+            abort_unless(MemberFeatureAccess::allows(app(CurrentMemberPlan::class)->code($request->user()), 'plus'), 403);
+        }
         $request->validate(['resume' => ['required', 'file', 'mimes:pdf,docx', 'max:5120'], 'use_ai' => ['sometimes', 'boolean'], 'ai_consent' => ['required_if:use_ai,1', 'sometimes', 'accepted']]);
         if ($request->boolean('use_ai') && ! $request->boolean('ai_consent')) {
             throw \Illuminate\Validation\ValidationException::withMessages(['resume' => 'Consent is required before sending résumé text to AI.']);

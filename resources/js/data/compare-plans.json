@@ -24,51 +24,74 @@
     "title": "Community & profile",
     "rows": [
       {
-        "label": "Professional profile & photo upload",
+        "label": "Professional profile & photo",
+        "description": "Add work experience, education, skills, portfolio and photo.",
         "icon": "UserRound",
         "free": "Included",
         "plus": "Included",
         "pro": "Included"
       },
       {
-        "label": "Posts, comments, reactions & sharing",
-        "icon": "UsersRound",
-        "free": "Included",
-        "plus": "Included",
-        "pro": "Included"
-      },
-      {
-        "label": "Basic privacy & visibility controls",
-        "icon": "Shield",
-        "free": "Included",
-        "plus": "Included",
-        "pro": "Included"
-      },
-      {
-        "label": "Link your LinkedIn profile",
+        "label": "LinkedIn link & résumé import",
+        "description": "Import a LinkedIn PDF/export or supported CV file. Review changes before saving or re-importing.",
         "icon": "Link2",
         "free": "Included",
         "plus": "Included",
         "pro": "Included"
       },
       {
-        "label": "Import profile from LinkedIn PDF / export",
-        "icon": "FileText",
+        "label": "Profile privacy & sharing",
+        "description": "Choose section visibility and share your professional profile.",
+        "icon": "Shield",
         "free": "Included",
         "plus": "Included",
         "pro": "Included"
       },
       {
-        "label": "Re-import with review before updating",
-        "icon": "RefreshCw",
+        "label": "Learning goals & onboarding",
+        "description": "Share your current role and learning goals to get a suggested starting path.",
+        "icon": "Target",
         "free": "Included",
         "plus": "Included",
         "pro": "Included"
       },
       {
-        "label": "Achievements & learning record",
+        "label": "Account settings",
+        "description": "Manage preferences, notifications, and available account controls.",
+        "icon": "Settings",
+        "free": "Included",
+        "plus": "Included",
+        "pro": "Included"
+      },
+      {
+        "label": "Community feed",
+        "description": "Read, publish, comment, reply, react, share and follow members.",
+        "icon": "UsersRound",
+        "free": "Included",
+        "plus": "Included",
+        "pro": "Included"
+      },
+      {
+        "label": "Anonymous posting & moderation",
+        "description": "Choose anonymous mode, report posts, and track moderation status.",
+        "icon": "Shield",
+        "free": "Not Included",
+        "plus": "Included",
+        "pro": "Included"
+      },
+      {
+        "label": "Activity log, badges & learning record",
+        "description": "See recorded activity, earned badges and remaining milestones.",
         "icon": "Trophy",
-        "free": "Included",
+        "free": "Not Included",
+        "plus": "Included",
+        "pro": "Included"
+      },
+      {
+        "label": "Profile insights",
+        "description": "See aggregate profile views and trends.",
+        "icon": "Eye",
+        "free": "Not Included",
         "plus": "Included",
         "pro": "Included"
       }
@@ -76,96 +99,140 @@
   },
   "learning": {
     "enabled": true,
-    "title": "Learn & practice",
+    "title": "Courses & learning",
     "rows": [
       {
-        "label": "Short lessons & learning paths",
+        "label": "Browse courses & find your starting point",
+        "description": "Search and filter courses. Get a suggested starting course.",
         "icon": "BookOpen",
-        "free": "Samples",
-        "plus": "Full access",
-        "pro": "Full access"
-      },
-      {
-        "label": "PMP & Scrum practice questions",
-        "icon": "FileText",
-        "free": "Samples",
-        "plus": "Full access",
-        "pro": "Full access"
-      },
-      {
-        "label": "Standard project scenarios",
-        "icon": "Target",
-        "free": "Samples",
+        "free": "Included",
         "plus": "Included",
         "pro": "Included"
       },
       {
-        "label": "Advanced project simulations",
-        "icon": "ChartNoAxesColumnIncreasing",
-        "free": "Not included",
-        "plus": "Not included",
+        "label": "Course access",
+        "description": "Read lessons, practise with knowledge checks and watch video where available.",
+        "icon": "BookOpen",
+        "free": "Free courses & previews",
+        "plus": "Free + Plus courses",
+        "pro": "Free + Plus + Pro courses"
+      },
+      {
+        "label": "My Learning & progress",
+        "description": "Resume enrolled courses, track completed lessons and save notes.",
+        "icon": "BookOpen",
+        "free": "Included",
+        "plus": "Included",
         "pro": "Included"
       },
       {
-        "label": "AI feedback credits / month",
+        "label": "Learner Q&A",
+        "description": "Read and participate in Q&A for courses you can access.",
+        "icon": "MessageCircle",
+        "free": "Included",
+        "plus": "Included",
+        "pro": "Included"
+      },
+      {
+        "label": "Lesson PDF downloads",
+        "description": "Download materials for eligible enrolled courses.",
+        "icon": "FileText",
+        "free": "Included",
+        "plus": "Included",
+        "pro": "Included"
+      },
+      {
+        "label": "Course completion certificates",
+        "description": "Download a certificate after completing an eligible course.",
+        "icon": "Trophy",
+        "free": "Included",
+        "plus": "Included",
+        "pro": "Included"
+      },
+      {
+        "label": "AI lesson assistant",
+        "description": "Ask questions about a lesson you can access. Uses tokens.",
         "icon": "BrainCircuit",
-        "free": "Not included",
-        "plus": "50",
-        "pro": "150"
+        "free": "Not Included",
+        "plus": "Included",
+        "pro": "Included"
       }
     ]
   },
   "career": {
     "enabled": true,
-    "title": "Career & insights",
+    "title": "Career & events",
     "rows": [
       {
-        "label": "Browse jobs & save opportunities",
+        "label": "Career Trends",
+        "description": "Browse, read, save and share updates on PM, BA, technology and AI.",
         "icon": "BriefcaseBusiness",
         "free": "Included",
         "plus": "Included",
         "pro": "Included"
       },
       {
-        "label": "Share professional profile & portfolio",
-        "icon": "IdCard",
+        "label": "Event discovery & registration",
+        "description": "Browse and register for eligible events.",
+        "icon": "Target",
         "free": "Included",
         "plus": "Included",
         "pro": "Included"
       },
       {
-        "label": "Profile-view totals & trends",
-        "icon": "ChartNoAxesColumnIncreasing",
-        "free": "Not included",
+        "label": "Create community events",
+        "description": "Host events under the member plan rules.",
+        "icon": "UsersRound",
+        "free": "Not Included",
+        "plus": "1 event / month",
+        "pro": "1 event / month"
+      },
+      {
+        "label": "Event registrant management",
+        "description": "View and download registrants for events you host.",
+        "icon": "UsersRound",
+        "free": "Not Included",
         "plus": "Included",
         "pro": "Included"
       },
       {
-        "label": "Recent viewer details*",
-        "icon": "Eye",
-        "free": "Not included",
-        "plus": "Not included",
-        "pro": "Included"
-      },
-      {
-        "label": "AI resume builder & PDF export",
+        "label": "Résumé builder & PDF export",
+        "description": "Edit your résumé and export it as a PDF.",
         "icon": "FileText",
-        "free": "Not included",
-        "plus": "Not included",
+        "free": "Included",
+        "plus": "Included",
         "pro": "Included"
       },
       {
-        "label": "AI interview practice",
+        "label": "AI résumé assistant",
+        "description": "Get suggestions using your profile and résumé. Uses tokens.",
+        "icon": "BrainCircuit",
+        "free": "Not Included",
+        "plus": "Section-level suggestions",
+        "pro": "Advanced tailoring"
+      },
+      {
+        "label": "AI interview setup & question playback",
+        "description": "Practise PM, BA, Scrum Master and Product Management interviews. Uses tokens for generation.",
         "icon": "MessageCircle",
-        "free": "Not included",
-        "plus": "Not included",
-        "pro": "Included"
+        "free": "Not Included",
+        "plus": "5 or 10 questions",
+        "pro": "5, 10 or 20 questions"
       },
       {
-        "label": "Recruiter resume access controls",
-        "icon": "Settings",
-        "free": "Not included",
-        "plus": "Not included",
+        "label": "Voice dictation & interview feedback",
+        "description": "Dictate answers in supported browsers, then review evaluations and model answers. Uses tokens for evaluation.",
+        "icon": "MessageCircle",
+        "free": "Not Included",
+        "plus": "Available for eligible sets",
+        "pro": "Available for eligible sets"
+      },
+      {
+        "label": "Interview results & answer review",
+        "description": "Revisit completed sessions, scores and suggested answers.",
+        "icon": "ChartNoAxesColumnIncreasing",
+        "free": "Included",
+        "plus": "Included",
         "pro": "Included"
       }
     ]
@@ -180,8 +247,8 @@
   },
   "notes": {
     "enabled": true,
-    "privacyNote": "*Viewer names appear only when their privacy settings permit.",
-    "billingNote": "AI limits are illustrative. Cancel renewal anytime; access continues until the paid term ends."
+    "privacyNote": "Features depend on eligible content and availability. Scrum practice, AI lesson assistance, standalone scenario tiers and tier-specific exam analytics are not yet available. The displayed AI token allowances are proposed, not live credit limits.",
+    "billingNote": "AI token allowances are proposed; the current AI wallet uses credits. Cancel renewal anytime; access continues until the paid term ends."
   },
   "profile-import": {
     "enabled": true,
@@ -190,7 +257,123 @@
     "note": "File imports are snapshots, not automatic LinkedIn sync.",
     "linkLabel": "How profile import works",
     "dialogTitle": "How profile import works",
-    "dialogDescription": "Profile import is a planned feature, not yet available for upload.",
-    "dialogBody": "When available, you will be able to add your LinkedIn profile link or upload a PDF you exported yourself, review the extracted information, and choose what to save to your PM Circle profile. Files will not be synchronized automatically with LinkedIn."
+    "dialogDescription": "Import your own supported résumé or LinkedIn export and review before saving.",
+    "dialogBody": "Upload a supported file, review extracted details and choose what to save. Files are not synchronized automatically with LinkedIn."
+  },
+  "exams": {
+    "enabled": true,
+    "title": "Exam practice & challenges",
+    "rows": [
+      {
+        "label": "Browse Exam Simulators",
+        "description": "View simulator details and available practice formats.",
+        "icon": "FileText",
+        "free": "Included",
+        "plus": "Included",
+        "pro": "Included"
+      },
+      {
+        "label": "PMP & Scrum practice",
+        "description": "Practise questions in eligible simulators.",
+        "icon": "Target",
+        "free": "Sample sets",
+        "plus": "Standard sets",
+        "pro": "Standard + advanced sets"
+      },
+      {
+        "label": "Timed mock exams & exam controls",
+        "description": "Use review flags, highlighting and strike-through where supported.",
+        "icon": "FileText",
+        "free": "Sample practice",
+        "plus": "Standard mocks",
+        "pro": "Standard + advanced mocks"
+      },
+      {
+        "label": "Answer review & explanations",
+        "description": "See rationales for questions in a set you can access.",
+        "icon": "FileText",
+        "free": "Included",
+        "plus": "Included",
+        "pro": "Included"
+      },
+      {
+        "label": "Results & analytics",
+        "description": "Track scores, performance areas and attempt history.",
+        "icon": "ChartNoAxesColumnIncreasing",
+        "free": "Sample results",
+        "plus": "History & trends",
+        "pro": "Detailed analytics"
+      },
+      {
+        "label": "AI exam review coach",
+        "description": "Ask follow-up questions during eligible exam reviews. Uses tokens.",
+        "icon": "BrainCircuit",
+        "free": "Not Included",
+        "plus": "Eligible reviews",
+        "pro": "Eligible reviews"
+      },
+      {
+        "label": "Standard project scenarios",
+        "description": "Practise project decisions and review the reasoning behind different responses.",
+        "icon": "Target",
+        "free": "Sample scenarios",
+        "plus": "Standard library",
+        "pro": "Standard library"
+      },
+      {
+        "label": "Daily Challenge",
+        "description": "Browse, submit a response and discuss the scenario.",
+        "icon": "Target",
+        "free": "Included",
+        "plus": "Included",
+        "pro": "Included"
+      },
+      {
+        "label": "Daily Challenge history & feedback",
+        "description": "Review attempts and published explanations. Optional personal AI feedback uses tokens.",
+        "icon": "MessageCircle",
+        "free": "Included",
+        "plus": "Included",
+        "pro": "Included"
+      }
+    ]
+  },
+  "ai-support": {
+    "enabled": true,
+    "title": "AI tokens & support",
+    "rows": [
+      {
+        "label": "Included AI tokens",
+        "description": "Proposed starter balance and paid monthly allowances.",
+        "icon": "BrainCircuit",
+        "free": "8000 once",
+        "plus": "25000 / month",
+        "pro": "75000 / month"
+      },
+      {
+        "label": "AI token refills",
+        "description": "Buy extra tokens on an active paid Plus or Pro subscription when refill checkout is enabled. The current wallet uses credits.",
+        "icon": "BrainCircuit",
+        "free": "Not Included",
+        "plus": "Included",
+        "pro": "Included"
+      },
+      {
+        "label": "Token balance & usage history",
+        "description": "Review remaining tokens and usage for your AI tools.",
+        "icon": "ChartNoAxesColumnIncreasing",
+        "free": "Included",
+        "plus": "Included",
+        "pro": "Included"
+      },
+      {
+        "label": "Help Centre",
+        "description": "Find answers about learning, accounts, purchases, and community features.",
+        "icon": "MessageCircle",
+        "free": "Included",
+        "plus": "Included",
+        "pro": "Included"
+      }
+    ]
   }
 }

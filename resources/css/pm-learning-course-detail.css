@@ -24,12 +24,28 @@
 .pm-course-detail-tags { list-style: none; margin: 0; padding: 0; }
 .pm-course-detail-category, .pm-course-detail-tags li, .pm-course-detail-access-label { display: inline-block; max-width: 100%; overflow-wrap: anywhere; border-radius: var(--pm-guide-radius-pill); padding: var(--s1) var(--s2); background: var(--pm-guide-green-bg); color: var(--pm-guide-green); font: var(--pm-guide-weight-control) var(--pm-guide-text-meta)/var(--pm-guide-line-control) var(--pm-guide-font); }
 .pm-course-detail-category { display: inline-flex; align-items: center; min-height: var(--pm-guide-button-height); }
-.pm-course-detail-heading h1 { margin: 0 0 var(--s2); color: var(--pm-guide-ink); font: var(--pm-guide-static-h1-weight) var(--pm-guide-text-course-title)/var(--pm-guide-line-h1) var(--pm-guide-font); letter-spacing: var(--pm-guide-tracking-h1); overflow-wrap: anywhere; }
+/* The same course name must have the same type role in details and lessons. */
+.pm-course-detail-heading h1 { margin: 0 0 var(--s2); }
+.pm-course-detail-heading h1, .pm-course-workspace-heading h1.is-lesson-title { color: var(--pm-guide-ink); font: var(--pm-guide-static-h1-weight) var(--pm-guide-text-course-title)/var(--pm-guide-line-h1) var(--pm-guide-font); letter-spacing: var(--pm-guide-tracking-h1); overflow-wrap: anywhere; }
+.pm-course-detail-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s1); margin-block-end: var(--s2); }
+.pm-course-detail-actions .pm-home-action { min-width: var(--control-height); min-height: var(--control-height); padding: var(--s2); border-radius: var(--radius-control); }
+.pm-course-detail-actions .pm-home-action[aria-pressed="true"] { color: var(--primary); background: var(--primary-soft); }
+.pm-course-detail-actions .pm-home-action:disabled { cursor: wait; opacity: .65; }
+.pm-course-share-link { margin-block-end: var(--s2); min-width: 0; }
 .pm-course-detail-heading p { margin: 0 0 var(--s2); }
 .pm-course-detail-summary { font: var(--regular) var(--pm-guide-text-body)/var(--pm-guide-line-body) var(--pm-guide-font); color: var(--pm-guide-body-color); }
 .pm-course-detail-facts, .pm-course-detail-share-status, .pm-course-detail-meta { color: var(--pm-guide-muted); font-size: var(--pm-guide-text-meta); line-height: var(--pm-guide-line-body); }
-.pm-course-detail-share-status { overflow-wrap: anywhere; }
-.pm-course-detail-tabs { display: flex; gap: var(--s2); flex-wrap: wrap; min-width: 0; }
+.pm-course-share-action { display: inline-flex; align-items: center; min-width: 0; max-width: 100%; }
+.pm-course-share-action > button { flex: none; }
+.pm-course-share-action .pm-course-detail-share-status { color: var(--green); font-weight: var(--pm-guide-weight-control); min-width: 0; overflow-wrap: anywhere; }
+.pm-course-share-action .pm-course-detail-share-status:not(:empty) { margin-inline-start: var(--s2); }
+.pm-course-share-action .pm-course-detail-share-status.is-fallback { color: var(--pm-guide-muted); }
+/* Both section navigations use the same guide buttons, with a selected state only when applicable. */
+:is(.pm-course-detail-tabs, .pm-course-lesson-tabs) { display: flex; gap: var(--s2); flex-wrap: wrap; min-width: 0; }
+.pm-guide-public-shell :is(.pm-course-detail-tabs, .pm-course-lesson-tabs) > .pm-guide-button.is-active { background: var(--pm-guide-pale); color: var(--pm-guide-blue); }
+@container (max-width: 34rem) {
+    :is(.pm-course-detail-tabs, .pm-course-lesson-tabs) > .pm-guide-button { flex: 1 1 auto; }
+}
 .pm-course-detail .pm-guide-button { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 .pm-course-detail-card { background: var(--pm-guide-white); color: var(--pm-guide-body-color); padding: var(--pm-guide-card-padding); border-color: var(--pm-guide-line); border-radius: var(--pm-guide-radius-card); min-width: 0; overflow-wrap: anywhere; }
 .pm-course-detail-card[id] { scroll-margin-top: calc(var(--header-height) + var(--pm-member-offer-top, 0px) + var(--s4)); }
@@ -80,7 +96,6 @@
     .pm-course-detail-hero { grid-template-columns: minmax(0,1fr); }
     .pm-course-detail-cover { align-self: start; }
     .pm-course-resource-item { align-items: stretch; flex-direction: column; }
-    .pm-course-detail-tabs .pm-guide-button { flex: 1 1 auto; }
 }
 
 .pm-course-detail-review-form { display: grid; gap: var(--s2); min-width: 0; }

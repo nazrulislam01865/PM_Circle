@@ -22,14 +22,14 @@ final class DashboardOverview
         $preview = $isDemo && in_array($previewPlan, ['free', 'premium', 'pro'], true);
         $plan = $preview ? $previewPlan : ($actualPlan === 'plus' ? 'premium' : $actualPlan);
         $profile = $user->profile;
-        $completion = app(ProfileCompleteness::class)->percentage($user);
+        $scores = app(ProfileCompleteness::class)->scores($user);
 
         return [
             'plan' => $plan, 'isDemo' => $isDemo, 'isPreview' => $preview,
             'featureAccess' => app(MemberFeatureAccess::class)->forPlan($actualPlan),
             'member' => ['id' => $user->getKey(), 'name' => $user->name, 'role' => $profile?->role,
-                'avatar_path' => $profile?->avatar_path, 'completion' => $completion],
-            'reward' => app(ProfileCompletionRewardService::class)->forMember($user, $completion),
+                'avatar_path' => $profile?->avatar_path, 'completion' => $scores['profile']],
+            'reward' => app(ProfileCompletionRewardService::class)->forMember($user, $scores['core']),
             'scenario' => null,
             'virtualFeedEnabled' => (bool) config('pm-circle.virtual_feed_enabled', true),
             'boundedFeedEnabled' => (bool) config('community.bounded_feed_enabled'),
@@ -65,9 +65,9 @@ final class DashboardOverview
             'tokensRemaining' => $tokens['configured'] && ($tokens['allocated'] ?? 0) > 0 ? (int) $tokens['remaining'] : null];
     }
 
-    public function statistics(User $user): array
+    public function statistics(User $user, ?string $plan = null): array
     {
-        return app(MemberDashboardStats::class)->forMember($user);
+        return app(MemberDashboardStats::class)->forMember($user, $plan);
     }
 
     /** Compatibility path for phased rollout and existing callers. */
@@ -78,7 +78,7 @@ final class DashboardOverview
         return ['dashboard' => [
             ...$this->identity($user, $previewPlan, $actualPlan),
             ...$this->feed($user, $feedTab, $feed),
-            ...$this->statistics($user),
+            ...$this->statistics($user, $actualPlan),
             'planUsage' => $this->planUsage($user, $actualPlan),
             'postChecks' => $checks,
             'feedScopeCounts' => [...$this->scopeCounts($user), 'restricted' => $checks['restricted_count']],

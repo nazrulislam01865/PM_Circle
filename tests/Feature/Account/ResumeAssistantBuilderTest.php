@@ -35,12 +35,12 @@ final class ResumeAssistantBuilderTest extends TestCase
         $this->post('/dashboard/resume-assistant', [...$payload, 'action' => 'submit'])->assertSessionHasErrors('version');
     }
 
-    public function test_non_entitled_member_cannot_save_or_submit(): void
+    public function test_free_member_can_save_or_submit(): void
     {
-        $user = $this->member('plus');
+        $user = $this->member('free');
         $snapshot = app(ResumeAssistantProfile::class)->snapshot($user);
         foreach (['draft', 'submit'] as $action) {
-            $this->actingAs($user)->post('/dashboard/resume-assistant', [...$snapshot['fields'], 'version' => $snapshot['version'], 'action' => $action])->assertForbidden();
+            $this->actingAs($user)->post('/dashboard/resume-assistant', [...$snapshot['fields'], 'version' => $snapshot['version'], 'action' => $action])->assertRedirect()->assertSessionHasNoErrors();
         }
     }
 
@@ -122,9 +122,9 @@ final class ResumeAssistantBuilderTest extends TestCase
         $this->assertSame(1, $user->profileProjects()->count());
     }
 
-    public function test_profile_tab_does_not_bypass_entitlement(): void
+    public function test_free_member_can_open_resume_builder(): void
     {
-        $this->actingAs($this->member('plus'))->get('/settings/profile?tab=assistant')->assertForbidden();
+        $this->actingAs($this->member('free'))->get('/settings/profile?tab=assistant')->assertOk();
     }
     public function test_local_extraction_is_private_and_rate_limited_independently(): void
     {
@@ -144,9 +144,9 @@ final class ResumeAssistantBuilderTest extends TestCase
         $this->get('/settings/profile?tab=assistant')->assertOk();
     }
 
-    public function test_non_entitled_member_cannot_extract_resume(): void
+    public function test_free_member_cannot_request_ai_extraction(): void
     {
-        $this->actingAs($this->member('plus'))->postJson('/dashboard/resume-assistant/extract', ['resume' => \Illuminate\Http\UploadedFile::fake()->create('resume.pdf', 100, 'application/pdf')])->assertForbidden();
+        $this->actingAs($this->member('free'))->postJson('/dashboard/resume-assistant/extract', ['resume' => \Illuminate\Http\UploadedFile::fake()->create('resume.pdf', 100, 'application/pdf'), 'use_ai' => true, 'ai_consent' => true])->assertForbidden();
     }
 
     public function test_current_draft_exports_without_saving_or_replacing_profile(): void
@@ -173,9 +173,9 @@ final class ResumeAssistantBuilderTest extends TestCase
         $this->postJson('/dashboard/resume-assistant/export', ['format' => 'pdf'])->assertUnprocessable();
     }
 
-    public function test_current_draft_export_requires_entitlement(): void
+    public function test_current_draft_export_validates_document_for_free_member(): void
     {
-        $this->actingAs($this->member('plus'))->postJson('/dashboard/resume-assistant/export', ['format' => 'pdf'])->assertForbidden();
+        $this->actingAs($this->member('free'))->postJson('/dashboard/resume-assistant/export', ['format' => 'pdf'])->assertUnprocessable();
     }
 
     private function assertWordContains(string $bytes, string $text): void

@@ -38,6 +38,7 @@ final class AccountFeatureController extends Controller
             return Inertia::render('account/Notifications');
         }
         if ($feature === 'achievements') {
+            abort_unless(\App\Domain\Billing\Queries\MemberFeatureAccess::allows(app(\App\Domain\Billing\Queries\CurrentMemberPlan::class)->code($user), 'plus'), 403);
             if ($user->onboarding_step < 3) {
                 return to_route('join.profile');
             }
@@ -50,6 +51,7 @@ final class AccountFeatureController extends Controller
             ]);
         }
         if ($feature === 'insights') {
+            abort_unless(\App\Domain\Billing\Queries\MemberFeatureAccess::allows(app(\App\Domain\Billing\Queries\CurrentMemberPlan::class)->code($user), 'plus'), 403);
             $profileViews = DB::table('member_profile_views')->where('profile_user_id', $user->id)
                 ->where('viewed_on', '>=', now()->subDays(29)->toDateString())
                 ->selectRaw('COUNT(*) AS last_30')

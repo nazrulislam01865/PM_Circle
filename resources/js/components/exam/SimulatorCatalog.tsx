@@ -188,7 +188,7 @@ export function SimulatorCatalog({ promotion }: { promotion: RewardPromotionData
         </div></section></LegacyPageHeading>
         <div className="pm-sim-main">
             {promotion && <aside className="pm-sim-reward" aria-label="Profile completion offer"><span className="pm-sim-reward-icon"><Gift aria-hidden="true" size={20}/></span>
-                <div><strong>Complete your profile. Get {promotion.discountLabel} off.</strong><p>Reach 100% profile completion to receive a discount code for any PM Circle Exam Simulator.</p></div>
+                <div><strong>Complete your profile. Get {promotion.discountLabel} off.</strong><p>Complete the required profile fields to receive a discount code for any PM Circle Exam Simulator.</p></div>
                 <button type="button" className="pm-sim-action" onClick={() => openOffer?.()}>See how it works</button>
             </aside>}
             <div className="pm-sim-section-row pm-sim-catalog-heading"><h2>Exam simulators</h2><Link href="/pricing">Compare plans</Link></div>

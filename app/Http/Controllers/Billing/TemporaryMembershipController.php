@@ -21,6 +21,7 @@ final class TemporaryMembershipController extends Controller
         }
         return Inertia::render('billing/Membership', [
             'plans' => $onboarding->catalog(),
+            'content' => \App\Support\Admin\PublicPageContent::load('compare-plans'),
             'currentPlan' => $current->code($request->user()),
             'temporaryAccessEnabled' => SetTemporaryMembership::switchingEnabled(),
         ]);

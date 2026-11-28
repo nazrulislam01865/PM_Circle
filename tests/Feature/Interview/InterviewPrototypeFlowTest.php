@@ -20,7 +20,10 @@ final class InterviewPrototypeFlowTest extends TestCase
 
     private function member(): User
     {
-        return User::factory()->create(['is_admin' => false, 'status' => 'active', 'onboarding_step' => 3, 'email_verified_at' => now()]);
+        $user = User::factory()->create(['is_admin' => false, 'status' => 'active', 'onboarding_step' => 3, 'email_verified_at' => now()]);
+        config()->set('pm-circle.temporary_paid_access_enabled', true);
+        DB::table('temporary_memberships')->insert(['user_id' => $user->id, 'plan_code' => 'plus', 'created_at' => now(), 'updated_at' => now()]);
+        return $user;
     }
 
     private function payload(): array

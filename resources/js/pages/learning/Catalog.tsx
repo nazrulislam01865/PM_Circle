@@ -1,5 +1,6 @@
 import { LegacyPageHeading } from '@/components/pm/PublicPageBanner';
 import { Pagination } from '@/components/pm/Pagination';
+import { PMDropdown } from '@/components/pm/PMDropdown';
 import { MobileFilterPanel } from '@/components/pm/MobileFilterPanel';
 import { Head, router, usePage } from '@inertiajs/react';
 import { ChevronDown, GraduationCap, Grid2X2, Layers3, List, Search, SlidersHorizontal, Target, Trophy } from 'lucide-react';
@@ -77,7 +78,7 @@ function LegacyCatalog({ shell, paths, courses, practiceModules, isMember, membe
         category: course.category, level: course.level, minutes: course.minutes,
         thumbnail: course.thumbnail, coverUrl: course.coverUrl, accessTier: course.accessTier, progress: 0,
         enrolled: course.enrolled, saveType: 'course',
-        href: memberView ? `${catalogRoot}/courses/${encodeURIComponent(course.slug)}` : demoCourseHref(course.slug), action: course.enrolled && (course.accessTier === 'free' || memberTier !== 'free') ? 'Continue course' : course.enrolled ? 'Upgrade to continue' : 'View course',
+        href: memberView ? `${catalogRoot}/courses/${encodeURIComponent(course.slug)}` : demoCourseHref(course.slug), action: course.enrolled && (course.accessTier === 'free' || memberTier === 'pro' || (course.accessTier !== 'pro' && memberTier === 'plus')) ? 'Continue course' : course.enrolled ? 'Upgrade to continue' : 'View course',
     })), [courses, memberTier, memberView, catalogRoot]);
     const pathItems = useMemo<CatalogCard[]>(() => paths.map((path, index) => ({
         id: `path-${path.slug}`, slug: path.slug, title: path.title, description: path.summary,
@@ -152,7 +153,7 @@ function LegacyCatalog({ shell, paths, courses, practiceModules, isMember, membe
     });
 
     const pageContent = <><Head title="Learn & Practice" />
-        <div className="pm-course-catalog">
+        <div className="pm-course-catalog pm-member-legacy-catalog">
             <LegacyPageHeading><section className="pm-catalog-hero" aria-labelledby="learning-catalog-heading">
                 <h1 id="learning-catalog-heading">Learn &amp; Practice</h1>
                 <p>Project management courses, practice, and learning paths to grow your skills and career.</p>
@@ -180,16 +181,16 @@ function LegacyCatalog({ shell, paths, courses, practiceModules, isMember, membe
                 </MobileFilterPanel>
                 <section className="pm-catalog-results" aria-label="Learning results">
                     <div className="pm-catalog-toolbar">
-                        <label className="pm-catalog-search"><Search size={19} aria-hidden="true"/><span className="sr-only">Search learning content</span><input type="search" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} placeholder="Search courses (e.g., project, risk, stakeholder...)" /></label>
+                        <label className="pm-catalog-search"><Search size={19} aria-hidden="true"/><span className="sr-only">Search learning content</span><input className="pm-input" type="search" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} placeholder="Search courses (e.g., project, risk, stakeholder...)" /></label>
                         <div className="pm-catalog-toolbar-end">
-                            <label className="pm-catalog-sort"><span className="sr-only">Sort learning content</span><select value={sort} onChange={event => { setSort(event.target.value); setPage(1); }}><option value="recommended">Sort: Recommended</option><option value="title">Title A–Z</option><option value="shortest">Duration: Shortest</option><option value="longest">Duration: Longest</option></select><ChevronDown size={16} aria-hidden="true" /></label>
-                            <div className="pm-catalog-view-switch" role="group" aria-label="Display mode"><button type="button" title="Grid view" aria-label="Grid view" aria-pressed={display === 'grid'} className={display === 'grid' ? 'is-active' : ''} onClick={() => setDisplay('grid')}><Grid2X2 size={19}/></button><button type="button" title="List view" aria-label="List view" aria-pressed={display === 'list'} className={display === 'list' ? 'is-active' : ''} onClick={() => setDisplay('list')}><List size={20}/></button></div>
+                            <div className="pm-catalog-sort"><PMDropdown id="pm-legacy-learning-sort" aria-label="Sort learning content" value={sort} required placeholder="Sort learning content" onValueChange={value => { setSort(value); setPage(1); }} options={[{value: 'recommended', label: 'Sort: Recommended'}, {value: 'title', label: 'Title A–Z'}, {value: 'shortest', label: 'Duration: Shortest'}, {value: 'longest', label: 'Duration: Longest'}]} /></div>
+                            <div className="pm-catalog-view-switch" role="group" aria-label="Display mode"><button type="button" title="Grid view" aria-label="Grid view" aria-pressed={display === 'grid'} className={`pm-button${display === 'grid' ? ' is-active' : ' pm-button-outline'}`} onClick={() => setDisplay('grid')}><Grid2X2 size={19}/></button><button type="button" title="List view" aria-label="List view" aria-pressed={display === 'list'} className={`pm-button${display === 'list' ? ' is-active' : ' pm-button-outline'}`} onClick={() => setDisplay('list')}><List size={20}/></button></div>
                         </div>
                     </div>
                     <div className="pm-catalog-count" role="status">{filtered.length ? `Showing ${(activePage - 1) * perPage + 1}–${Math.min(activePage * perPage, filtered.length)} of ${filtered.length}` : 'Showing 0'} {tab === 'paths' ? 'learning paths' : tab === 'practice' ? 'practice sessions' : tab === 'exams' ? 'simulators' : 'courses'}</div>
                     {shown.length ? <div className={`pm-catalog-course-grid${display === 'list' ? ' is-list' : ''}`}>
-                        {shown.map(item => <CourseCard key={item.id} course={item} listView={display === 'list'} saved={!!item.slug && saved.includes(`${item.saveType === 'course' ? 'course' : 'path'}:${item.slug}`)} saving={saving === `${item.saveType === 'course' ? 'course' : 'path'}:${item.slug}`} onToggleSave={isMember ? toggleSave : undefined} onEnroll={item.saveType === 'course' && isMember && (item.accessTier === 'free' || memberTier !== 'free') ? enrollDemoCourse : undefined} enrolling={enrolling === item.slug} />)}
-                    </div> : <div className="pm-catalog-empty"><SlidersHorizontal size={28} aria-hidden="true" /><h2>No matching learning content</h2><p>Try adjusting your search or filters.</p><button type="button" className="pm-catalog-course-action" onClick={clear}>Clear filters</button></div>}
+                        {shown.map(item => <CourseCard key={item.id} course={item} listView={display === 'list'} saved={!!item.slug && saved.includes(`${item.saveType === 'course' ? 'course' : 'path'}:${item.slug}`)} saving={saving === `${item.saveType === 'course' ? 'course' : 'path'}:${item.slug}`} onToggleSave={isMember ? toggleSave : undefined} onEnroll={item.saveType === 'course' && isMember && (item.accessTier === 'free' || memberTier === 'pro' || (item.accessTier !== 'pro' && memberTier === 'plus')) ? enrollDemoCourse : undefined} enrolling={enrolling === item.slug} />)}
+                    </div> : <div className="pm-catalog-empty"><SlidersHorizontal size={28} aria-hidden="true" /><h2>No matching learning content</h2><p>Try adjusting your search or filters.</p><button type="button" className="pm-button pm-catalog-course-action" onClick={clear}>Clear filters</button></div>}
                     <Pagination current={activePage} last={pageCount} label="Learning results pagination" onPageChange={setPage}/>
                 </section>
             </div>

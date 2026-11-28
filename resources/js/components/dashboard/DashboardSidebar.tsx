@@ -14,7 +14,7 @@ import { memberSidebarActive, memberSidebarContains, memberSidebarGroups, member
 const icons = { home: Home, learning: CirclePlay, 'course-group': BookOpen, courses: LayoutGrid, certificates: Award, exams: ClipboardList, pmp: ClipboardCheck, scrum: FileCheck2,
     challenge: CalendarDays, profile: UserRound,
     resume: Sparkles, interview: Mic, badges: Award, community: MessagesSquare, members: UsersRound,
-    saved: Bookmark, plan: Crown, settings: Settings, activity: History, help: Info };
+    saved: Bookmark, 'saved-courses': Bookmark, plan: Crown, settings: Settings, activity: History, help: Info };
 
 function AiBadge() {
     return <span className="pm-member-ai-badge" aria-hidden="true"><Sparkle aria-hidden="true"/>AI</span>;
@@ -57,8 +57,8 @@ export function DashboardSidebar({ dashboard, open, close, collapsed, onToggle }
     };
     const renderItem = (item: MemberSidebarItem, support = false, nested = false) => {
         const Icon = icons[item.id];
-        const locked = Boolean(item.premium && !(item.id === 'resume' ? access?.resume : access?.examSimulator));
-        const requiredPlan = item.id === 'resume' ? 'Pro' : 'Plus or Pro';
+        const locked = Boolean(item.premium && !(item.id === 'interview' ? access?.interview : item.id === 'badges' ? access?.achievements : item.id === 'activity' ? access?.activity : access?.examSimulator));
+        const requiredPlan = 'Plus or Pro';
         const selected = active === item.id || (item.id === 'exams' && memberSidebarGroups[0].items.some(entry => entry.id === 'exams' && memberSidebarContains(entry, active)));
         const className = `pm-dash-nav-link${support ? ' pm-member-support-link' : ''}${nested ? ' pm-member-exam-child' : ''}${selected ? ' is-active' : ''}`;
         const content = <><Icon className="pm-member-nav-icon" size={20} strokeWidth={1.9} aria-hidden="true"/><SidebarLabel item={item}/>
@@ -67,7 +67,7 @@ export function DashboardSidebar({ dashboard, open, close, collapsed, onToggle }
             <DialogTrigger asChild><button type="button" className={className} aria-label={`${item.label} — ${requiredPlan} required`} aria-description={memberSidebarHasAi(item.id) ? 'Includes AI features' : undefined} title={`${requiredPlan} required`}>{content}</button></DialogTrigger>
             <DialogContent className="pm-member-policy-dialog">
                 <DialogHeader><DialogTitle>{item.label}</DialogTitle><DialogDescription>This feature requires {requiredPlan}. View Plan &amp; usage to compare access.</DialogDescription></DialogHeader>
-                <DialogFooter><DialogClose asChild><button type="button" className="pm-button pm-button-outline">Close</button></DialogClose><DialogClose asChild><Link href="/membership" onClick={close} className="pm-button">View Plan &amp; usage</Link></DialogClose></DialogFooter>
+                <DialogFooter>{item.id === 'interview' && <DialogClose asChild><Link href="/interview-preparation/results" onClick={close} className="pm-button pm-button-outline">Previous results</Link></DialogClose>}<DialogClose asChild><button type="button" className="pm-button pm-button-outline">Close</button></DialogClose><DialogClose asChild><Link href="/membership" onClick={close} className="pm-button">View Plan &amp; usage</Link></DialogClose></DialogFooter>
             </DialogContent>
         </Dialog>;
         return <Link key={item.id} href={item.href} onClick={close} className={className}
@@ -75,8 +75,8 @@ export function DashboardSidebar({ dashboard, open, close, collapsed, onToggle }
     };
     const renderEntry = (entry: MemberSidebarEntry) => {
         if (!('children' in entry)) return renderItem(entry);
-        // Courses are open to all members; the existing exam plan gate stays intact.
-        if (entry.premium && !access?.examSimulator) return renderItem({ id: entry.id, label: entry.label, href: '/membership', premium: true });
+        // Free members may browse simulators and use public samples; full exam APIs remain gated.
+        if (entry.id === 'exams' && !access?.examSimulator) return renderItem({ id: entry.id, label: entry.label, href: '/simulators' });
         const Icon = icons[entry.id];
         const expanded = Boolean(expandedSubmenus[entry.id]);
         const selected = memberSidebarContains(entry, active);

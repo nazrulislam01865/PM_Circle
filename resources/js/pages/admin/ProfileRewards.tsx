@@ -23,7 +23,7 @@ export default function ProfileRewards({ settings, stats }: { settings: Settings
         });
     }
 
-    return <AdminLayout active="/admin/profile-rewards" title="Profile completion rewards" subtitle="Set the discount and expiry for members who complete 100% of their profile.">
+    return <AdminLayout active="/admin/profile-rewards" title="Profile completion rewards" subtitle="Set the discount and expiry for members who complete the ten required reward profile fields.">
         <Head title="Profile completion rewards | PM Circle" />
         <div className="pm-admin-stats">
             <article className="pm-admin-panel pm-admin-stat"><span>Codes issued</span><strong className="pm-admin-stat-number">{stats.issued.toLocaleString()}</strong></article>

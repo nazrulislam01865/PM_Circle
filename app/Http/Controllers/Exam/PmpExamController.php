@@ -26,17 +26,16 @@ final class PmpExamController extends Controller
         // Resolve access only on navigation, not on every shared header render.
         return \App\Domain\Billing\Queries\MemberFeatureAccess::allowsExamSimulator($plans->code($request->user()))
             ? to_route('exams.pmp.index')
-            : to_route('pricing');
+            : to_route('exams.pmp.public');
     }
 
-    public function index(Request $request, CurrentMemberPlan $plans, LearningOverview $overview, PmpQuestionHelpService $ai, PmpExamSettings $examSettings, PmpAiUsageReadModel $usage): Response
+    public function index(Request $request, CurrentMemberPlan $plans, LearningOverview $overview, PmpQuestionHelpService $ai, PmpExamSettings $examSettings, PmpAiUsageReadModel $usage): Response|RedirectResponse
     {
         $plan = $plans->details($request->user());
-        abort_unless(\App\Domain\Billing\Queries\MemberFeatureAccess::allowsExamSimulator($plan['code']), 403,
-            'PMP simulator access requires an active Plus or Pro membership.');
+        if (! \App\Domain\Billing\Queries\MemberFeatureAccess::allowsExamSimulator($plan['code'])) return to_route('exams.pmp.public');
         $userId = (int) $request->user()->id;
         $rules = $examSettings->get();
-        $questions = DB::table('pmp_exam_questions')->where('is_active', true)->count();
+        $questions = DB::table('pmp_exam_questions')->where('is_active', true)->when($plan['code'] === 'plus', fn ($q) => $q->whereIn('difficulty', ['Easy', 'Moderate']))->count();
 
         // Capped history: exactly two batch queries for attempt/response summaries.
         $recentPage = DB::table('pmp_exam_attempts')->where('user_id', $userId)
@@ -191,12 +190,12 @@ final class PmpExamController extends Controller
     /** Lazy, member-scoped availability check: no extra queries on the dashboard render. */
     public function startOptions(Request $request, CurrentMemberPlan $plans, PmpExamSettings $examSettings, PmpQuestionPool $pool): JsonResponse
     {
-        $this->authorizeMember($request, $plans);
+        $plan = $this->authorizeMember($request, $plans);
         $rules = $examSettings->get();
         abort_unless($rules['enabled'], 409, 'New PMP attempts are temporarily disabled.');
 
-        $active = DB::table('pmp_exam_questions')->where('is_active', true)->count();
-        $used = $active > 0 ? count($pool->usedActiveIds((int) $request->user()->id)) : 0;
+        $active = DB::table('pmp_exam_questions')->where('is_active', true)->when($plan === 'plus', fn ($q) => $q->whereIn('difficulty', ['Easy', 'Moderate']))->count();
+        $used = $active > 0 ? count($pool->usedActiveIds((int) $request->user()->id, $plan)) : 0;
 
         return response()->json([
             'bankTotal' => $active,
@@ -210,7 +209,7 @@ final class PmpExamController extends Controller
 
     public function start(Request $request, CurrentMemberPlan $plans, PmpExamSettings $examSettings, PmpQuestionPool $pool): JsonResponse|RedirectResponse
     {
-        $this->authorizeMember($request, $plans);
+        $plan = $this->authorizeMember($request, $plans);
         $rules = $examSettings->get();
         abort_unless($rules['enabled'], 409, 'New PMP attempts are temporarily disabled by the administrator.');
         $data = $request->validate([
@@ -222,11 +221,11 @@ final class PmpExamController extends Controller
         $domain = $focused ? $data['domain'] : null;
         $selection = $focused ? 'random' : ($data['selection'] ?? 'random');
         $userId = $request->user()->id;
-        $id = DB::transaction(function () use ($userId, $focused, $domain, $rules, $selection, $pool) {
+        $id = DB::transaction(function () use ($userId, $focused, $domain, $rules, $selection, $pool, $plan) {
             // A new mock snapshots both question IDs and current rules. Completed attempts
             // never change when an administrator adjusts the live question bank or timer.
             DB::table('users')->where('id', $userId)->lockForUpdate()->first(['id']);
-            $query = DB::table('pmp_exam_questions')->where('is_active', true);
+            $query = DB::table('pmp_exam_questions')->where('is_active', true)->when($plan === 'plus', fn ($q) => $q->whereIn('difficulty', ['Easy', 'Moderate']));
             if ($focused) {
                 $query->where('domain', $domain);
             }
@@ -234,7 +233,7 @@ final class PmpExamController extends Controller
             if ($focused || $selection === 'random') {
                 $ids = $this->selectQuestionIds($query, $limit, $rules['shuffle_questions']);
             } else {
-                $used = $pool->usedActiveIds((int) $userId);
+                $used = $pool->usedActiveIds((int) $userId, $plan);
                 $fresh = $this->selectQuestionIds(
                     (clone $query)->whereNotIn('id', $used), $limit, $rules['shuffle_questions']
                 );

@@ -168,27 +168,27 @@ export default function SkillsCheck({ shell }: { shell: LearningShell }) {
         <LearningLayout shell={shell}>
             <Head title="Find my starting point · PM Circle" />
 
-            <div className="pm-container pm-page">
+            <div className="pm-container pm-page pm-starting-point">
                 {/* Breadcrumbs */}
                 <nav className="pm-crumbs" aria-label="Breadcrumb">
                     <Link href="/learning">Learn &amp; practise</Link> &nbsp;&gt;&nbsp;{' '}
                     <span>Find my starting point</span>
                 </nav>
 
-                <div style={{ marginBottom: '18px' }}>
-                    <Link href="/learning" className="pm-back" style={{ fontWeight: 'var(--type-weight-semibold)' }}>
+                <div className="pm-sp-back-row">
+                    <Link href="/learning" className="pm-back pm-sp-back-link">
                         ← Back to learning paths
                     </Link>
                 </div>
 
-                <div className="pm-skills-check-intro" style={{ marginBottom: '28px' }}>
-                    <h1 style={{ fontSize: 'var(--pm-guide-text-h1)', fontWeight: 'var(--pm-font-weight-800)', margin: '0 0 8px' }}>
+                <div className="pm-skills-check-intro pm-sp-intro">
+                    <h1 className="pm-sp-page-title">
                         Let's find a good place to start.
                     </h1>
-                    <p style={{ fontSize: 'var(--pm-guide-text-body)', color: 'var(--muted)', margin: '0 0 12px' }}>
+                    <p className="pm-sp-lead">
                         Tell us a little about your experience, then try a few project situations.
                     </p>
-                    <div style={{ display: 'flex', gap: '16px', fontSize: 'var(--pm-font-size-13px)', color: 'var(--muted)' }}>
+                    <div className="pm-sp-meta-row">
                         <span>📋 10 questions</span>
                         <span>⏱ About 5 minutes</span>
                         <span>ⓘ You can change your path later.</span>
@@ -198,53 +198,42 @@ export default function SkillsCheck({ shell }: { shell: LearningShell }) {
                 <div className="pm-two-column">
                     {/* Main questionnaire card */}
                     <div className="pm-skills-check-main">
-                        <div className="pm-panel" style={{ padding: '28px', borderRadius: 'var(--card-radius)' }}>
+                        <div className="pm-panel pm-sp-card">
                             {/* Question meta & progress */}
                             <div
-                                style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    marginBottom: '10px',
-                                }}
+                                className="pm-sp-question-meta"
                             >
-                                <span style={{ fontSize: 'var(--pm-font-size-13px)', fontWeight: 'var(--type-weight-bold)', color: 'var(--primary)' }}>
+                                <span className="pm-sp-question-label">
                                     Question {currentStep + 1} of 10 &nbsp;·&nbsp; {q.category}
                                 </span>
-                                <span style={{ fontSize: 'var(--pm-font-size-13px)', fontWeight: 'var(--type-weight-bold)', color: 'var(--muted)' }}>
+                                <span className="pm-sp-meta-strong">
                                     {progressPercent}%
                                 </span>
                             </div>
 
                             {/* Progress bar */}
                             <div
-                                style={{
-                                    height: '6px',
-                                    background: 'var(--pm-tone-e2e8f0)',
-                                    borderRadius: 'var(--pm-radius-3px)',
-                                    marginBottom: '28px',
-                                    overflow: 'hidden',
-                                }}
+                                className="pm-sp-progress"
+                                role="progressbar"
+                                aria-label="Starting-point check progress"
+                                aria-valuemin={0}
+                                aria-valuemax={100}
+                                aria-valuenow={progressPercent}
                             >
                                 <div
-                                    style={{
-                                        width: `${progressPercent}%`,
-                                        height: '100%',
-                                        background: 'var(--primary)',
-                                        transition: 'width 0.25s ease',
-                                    }}
+                                    className="pm-sp-progress-fill" style={{ width: `${progressPercent}%` }}
                                 />
                             </div>
 
-                            <h2 style={{ fontSize: 'var(--pm-guide-text-h2)', fontWeight: 'var(--pm-font-weight-800)', margin: '0 0 8px' }}>
+                            <h2 className="pm-sp-section-title">
                                 {q.question}
                             </h2>
-                            <p style={{ fontSize: 'var(--pm-guide-text-body)', color: 'var(--muted)', margin: '0 0 24px' }}>
+                            <p className="pm-sp-question-help">
                                 {q.help}
                             </p>
 
                             {/* Option list */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
+                            <div className="pm-sp-options">
                                 {q.options.map((opt, idx) => {
                                     const isChosen = selectedAnswers[currentStep] === idx;
                                     return (
@@ -252,40 +241,14 @@ export default function SkillsCheck({ shell }: { shell: LearningShell }) {
                                             key={idx}
                                             type="button"
                                             onClick={() => handleSelect(idx)}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '14px',
-                                                padding: '16px 20px',
-                                                border: `1px solid ${isChosen ? 'var(--primary)' : 'var(--divider)'}`,
-                                                borderRadius: 'var(--pm-radius-8px)',
-                                                background: isChosen ? 'var(--primary-soft)' : 'var(--surface)',
-                                                color: 'var(--text)',
-                                                fontSize: 'var(--pm-font-size-15px)',
-                                                textAlign: 'left',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.15s ease',
-                                            }}
+                                            className="pm-sp-option" aria-pressed={isChosen}
                                         >
                                             <div
-                                                style={{
-                                                    width: '20px',
-                                                    height: '20px',
-                                                    borderRadius: 'var(--radius-pill)',
-                                                    border: `2px solid ${isChosen ? 'var(--primary)' : 'var(--border)'}`,
-                                                    display: 'grid',
-                                                    placeItems: 'center',
-                                                    flexShrink: 0,
-                                                }}
+                                                className="pm-sp-radio"
                                             >
                                                 {isChosen && (
                                                     <div
-                                                        style={{
-                                                            width: '10px',
-                                                            height: '10px',
-                                                            borderRadius: 'var(--radius-pill)',
-                                                            background: 'var(--primary)',
-                                                        }}
+                                                        className="pm-sp-radio-dot"
                                                     />
                                                 )}
                                             </div>
@@ -297,22 +260,11 @@ export default function SkillsCheck({ shell }: { shell: LearningShell }) {
 
                             {/* Bottom action row */}
                             <div
-                                style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    borderTop: '1px solid var(--divider)',
-                                    paddingTop: '20px',
-                                }}
+                                className="pm-sp-actions"
                             >
                                 <Link
                                     href="/learning"
-                                    style={{
-                                        color: 'var(--primary)',
-                                        fontSize: 'var(--type-small)',
-                                        fontWeight: 'var(--type-weight-semibold)',
-                                        textDecoration: 'none',
-                                    }}
+                                    className="pm-sp-action-link"
                                 >
                                     Save &amp; exit
                                 </Link>
@@ -322,7 +274,6 @@ export default function SkillsCheck({ shell }: { shell: LearningShell }) {
                                     onClick={handleNext}
                                     disabled={!isAnswered}
                                     className="pm-button pm-button-sm"
-                                    style={{ minWidth: '110px' }}
                                 >
                                     {currentStep === questions.length - 1 ? 'View result →' : 'Next'}
                                 </button>
@@ -332,67 +283,60 @@ export default function SkillsCheck({ shell }: { shell: LearningShell }) {
 
                     {/* Right explanation sidebar */}
                     <aside className="pm-skills-check-sidebar">
-                        <section className="pm-panel" style={{ padding: '24px', borderRadius: 'var(--card-radius)', marginBottom: '20px' }}>
-                            <h3 style={{ fontSize: 'var(--pm-guide-text-h3)', fontWeight: 'var(--pm-font-weight-800)', margin: '0 0 16px' }}>
+                        <section className="pm-panel pm-sp-card pm-sp-card-spaced">
+                            <h3 className="pm-sp-card-title">
                                 How we recommend a path
                             </h3>
 
-                            <div style={{ display: 'flex', gap: '14px', marginBottom: '18px' }}>
-                                <User size={22} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                            <div className="pm-sp-reason">
+                                <User size={22} color="var(--blue)" className="pm-sp-reason-icon" />
                                 <div>
-                                    <strong style={{ display: 'block', fontSize: 'var(--type-small)', marginBottom: '3px' }}>
+                                    <strong className="pm-sp-item-title">
                                         Your experience
                                     </strong>
-                                    <p style={{ margin: 0, fontSize: 'var(--pm-guide-text-body)', color: 'var(--muted)', lineHeight: 'var(--pm-guide-line-body)' }}>
+                                    <p className="pm-sp-body">
                                         We look at your background and level of project experience.
                                     </p>
                                 </div>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '14px', marginBottom: '18px' }}>
-                                <Target size={22} color="var(--pm-tone-7c3aed)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                            <div className="pm-sp-reason">
+                                <Target size={22} color="var(--pm-guide-purple)" className="pm-sp-reason-icon" />
                                 <div>
-                                    <strong style={{ display: 'block', fontSize: 'var(--type-small)', marginBottom: '3px' }}>
+                                    <strong className="pm-sp-item-title">
                                         Your learning goals
                                     </strong>
-                                    <p style={{ margin: 0, fontSize: 'var(--pm-guide-text-body)', color: 'var(--muted)', lineHeight: 'var(--pm-guide-line-body)' }}>
+                                    <p className="pm-sp-body">
                                         We consider what you want to achieve and the skills you want to build.
                                     </p>
                                 </div>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '14px', marginBottom: '18px' }}>
-                                <Compass size={22} color="var(--pm-tone-0d9488)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                            <div className="pm-sp-reason">
+                                <Compass size={22} color="var(--green)" className="pm-sp-reason-icon" />
                                 <div>
-                                    <strong style={{ display: 'block', fontSize: 'var(--type-small)', marginBottom: '3px' }}>
+                                    <strong className="pm-sp-item-title">
                                         How you approach project situations
                                     </strong>
-                                    <p style={{ margin: 0, fontSize: 'var(--pm-guide-text-body)', color: 'var(--muted)', lineHeight: 'var(--pm-guide-line-body)' }}>
+                                    <p className="pm-sp-body">
                                         You'll try a few realistic project scenarios to show how you think and make decisions.
                                     </p>
                                 </div>
                             </div>
 
                             <small
-                                style={{
-                                    display: 'block',
-                                    borderTop: '1px solid var(--divider)',
-                                    paddingTop: '12px',
-                                    fontSize: 'var(--type-caption)',
-                                    color: 'var(--muted)',
-                                    lineHeight: 'var(--type-line-h4)',
-                                }}
+                                className="pm-sp-note"
                             >
                                 ⓘ Your answers guide a starting recommendation—not a professional rating.
                             </small>
                         </section>
 
-                        <section className="pm-panel" style={{ padding: '24px', borderRadius: 'var(--card-radius)' }}>
-                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '10px' }}>
-                                <Settings size={20} color="var(--primary)" />
-                                <h3 style={{ margin: 0, fontSize: 'var(--pm-guide-text-h3)', fontWeight: 'var(--pm-font-weight-800)' }}>You stay in control</h3>
+                        <section className="pm-panel pm-sp-card">
+                            <div className="pm-sp-icon-heading">
+                                <Settings size={20} color="var(--blue)" />
+                                <h3 className="pm-sp-card-title-inline">You stay in control</h3>
                             </div>
-                            <p style={{ margin: 0, fontSize: 'var(--pm-guide-text-body)', color: 'var(--muted)', lineHeight: 'var(--pm-guide-line-body)' }}>
+                            <p className="pm-sp-body">
                                 Review the recommendation, choose another path or retake the check anytime.
                             </p>
                         </section>

@@ -12,7 +12,7 @@ const defaultPresentation: Presentation = { type: 'Professional development', ta
 type ExistingCourse = {
     id: number; title: string; summary: string; overview: string; category: string;
     level: string; minutes: number;
-    thumbnail: number; coverUrl?: string | null; accessTier: 'free' | 'paid';
+    thumbnail: number; coverUrl?: string | null; accessTier: 'free' | 'paid' | 'pro';
     objectives: string[]; outline: Section[]; lessons: Lesson[]; isPublished: boolean; certificateEnabled: boolean; presentation: Presentation; sortOrder: number;
 };
 type CourseInput = {

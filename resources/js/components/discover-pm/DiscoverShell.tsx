@@ -1,8 +1,6 @@
 import type { ReactNode } from 'react';
-import { SiteHeader } from '@/components/pm/SiteHeader';
-import { HomeHeader } from '@/components/home/v2/HomeHeader';
-import { usePage } from '@inertiajs/react';
-import { SiteFooter } from '@/components/pm/SiteFooter';
+import { usePublicPageBanner } from '@/components/pm/PublicPageBanner';
+import { PublicLayout } from '@/layouts/pm/PublicLayout';
 
 export type DiscoverStage = 'intro' | 'about' | 'explore' | 'findings' | 'practice' | 'next'
     | 'career' | 'sample' | 'review' | 'platform' | 'decision';
@@ -10,9 +8,10 @@ export type DiscoverStage = 'intro' | 'about' | 'explore' | 'findings' | 'practi
 const reflectionSteps = ['About you', 'Explore', 'Findings', 'Your next step'];
 
 export function DiscoverCard({ eyebrow, title, description, children }: { eyebrow: string; title: string; description?: string; children: ReactNode }) {
+    const StageHeading = usePublicPageBanner() ? 'h2' : 'h1';
     return <section className="pm-discover-card" aria-labelledby="pm-discover-title">
         <p className="pm-discover-eyebrow">{eyebrow}</p>
-        <h1 id="pm-discover-title">{title}</h1>
+        <StageHeading id="pm-discover-title">{title}</StageHeading>
         {description && <p className="pm-discover-description">{description}</p>}
         {children}
     </section>;
@@ -24,18 +23,14 @@ export function DiscoverShell({ stage, questionIndex, careerIndex = 0, children 
     careerIndex?: number;
     children: ReactNode;
 }) {
-    const { auth } = usePage<{ auth?: { user?: { is_admin?: boolean; onboarding_step?: number } | null } }>().props;
-    const isGuest = !auth?.user;
-    const user = auth?.user;
     const isCareer = ['career', 'sample', 'review', 'platform', 'decision'].includes(stage);
     const active = stage === 'intro' || stage === 'about' ? 0 : stage === 'explore' ? 1 : stage === 'findings' || stage === 'practice' ? 2 : 3;
     const percentage = isCareer ? (stage === 'career' ? 61 + (careerIndex + 1) * 3 : stage === 'sample' ? 91 : stage === 'review' ? 94 : stage === 'platform' ? 97 : 100)
         : stage === 'intro' ? 0 : stage === 'about' ? 5 : stage === 'explore' ? 11 + questionIndex * 7 : stage === 'practice' ? 45 : stage === 'findings' ? 54 : 60;
 
-    return <div className={`pm-app pm-discover-page${isGuest ? ' pm-home-v2-shell' : ''}`}>
-        {isGuest ? <HomeHeader /> : <SiteHeader />}
-        <div className={`pm-discover${user && !user.is_admin && (user.onboarding_step ?? 0) >= 3 ? ' pm-discover-member-body' : ''}`}>
-            <main className="pm-discover-main" id="main">
+    return <PublicLayout siteLayout guideLayout banner={{title: 'Discover PM', description: 'Explore your career direction.'}}>
+        <div className="pm-discover pm-discover-page">
+            <div className="pm-discover-main">
                 <nav className="pm-discover-steps" aria-label="Discover PM progress">
                     {reflectionSteps.map((name, index) => <span key={name} className={`pm-discover-step${index === active ? ' is-current' : ''}`} aria-current={index === active ? 'step' : undefined}>
                         <span className="pm-discover-step-number">{index + 1}</span>{name}
@@ -45,10 +40,9 @@ export function DiscoverShell({ stage, questionIndex, careerIndex = 0, children 
                     <span style={{ width: `${percentage}%` }}/>
                 </div>
                 {children}
-            </main>
+            </div>
         </div>
-        <SiteFooter />
-    </div>;
+    </PublicLayout>;
 }
 
 export function DiscoverActions({ onBack, onNext, nextLabel, disabled = false }: {

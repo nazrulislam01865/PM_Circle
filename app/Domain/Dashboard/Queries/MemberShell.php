@@ -24,7 +24,7 @@ final class MemberShell
                 'name' => $user->name,
                 'role' => $user->profile?->role,
                 'avatar_path' => $user->profile?->avatar_path,
-                'completion' => app(ProfileCompleteness::class)->percentage($user),
+                'completion' => app(ProfileCompleteness::class)->profilePercentage($user),
             ],
             'isDemo' => app()->environment(['local', 'testing']) && config('pm-circle.demo_content_enabled'),
         ];

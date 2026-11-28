@@ -19,6 +19,7 @@ function EventRegistration({ event, viewer, canRegister, registered, calendarEna
         </> : <>
             <p>{event.openToEveryone ? 'Free registration. Open to everyone. A PM Circle account is optional.' : 'Free registration for PM Circle members.'}</p>
             <p className="pm-event-preview-note">Your registration details are private and available to PM Circle administrators.</p>
+            <p>Your registration contact details will be available to the event organizer and PM Circle administrators for event management.</p>
             <form className="pm-event-registration-form" onSubmit={e => { e.preventDefault(); form.post(`${eventHref(event.slug)}/register`, { preserveScroll: true, onSuccess: () => form.reset('phone', 'role') }); }}>
                 <label className="pm-guide-field-label" htmlFor="event-guest-name">Full name</label><input className="pm-guide-control" id="event-guest-name" autoComplete="name" maxLength={120} required readOnly={Boolean(viewer)} value={form.data.name} onChange={e => form.setData('name', e.target.value)}/>
                 <label className="pm-guide-field-label" htmlFor="event-guest-email">Email address</label><input className="pm-guide-control" id="event-guest-email" type="email" autoComplete="email" maxLength={254} required readOnly={Boolean(viewer)} value={form.data.email} onChange={e => form.setData('email', e.target.value)}/>

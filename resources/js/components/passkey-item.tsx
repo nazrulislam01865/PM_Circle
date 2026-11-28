@@ -26,14 +26,14 @@ export default function PasskeyItem({ passkey, onDelete }: Props) {
     };
 
     return (
-        <div className="flex items-center justify-between border-b p-4 last:border-b-0">
-            <div className="flex items-center gap-4">
+        <div className="pm-member-settings-passkey-row">
+            <div className="pm-member-settings-passkey-identity">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted">
                     <KeyRound className="h-5 w-5 text-muted-foreground" />
                 </div>
-                <div className="space-y-1">
-                    <div className="flex items-center gap-2.5">
-                        <p className="font-medium tracking-tight">
+                <div className="pm-member-settings-passkey-copy">
+                    <div className="pm-member-settings-actions">
+                        <p className="pm-member-settings-card-title">
                             {passkey.name}
                         </p>
                         {passkey.authenticator && (
@@ -60,7 +60,7 @@ export default function PasskeyItem({ passkey, onDelete }: Props) {
                 <DialogTrigger asChild>
                     <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon"
                         className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                     >
                         <Trash2 className="h-4 w-4" />

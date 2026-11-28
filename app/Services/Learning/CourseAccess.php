@@ -15,7 +15,7 @@ final class CourseAccess
         if (! $course->is_published || ! $user || $user->is_admin || $user->status !== 'active' || $user->onboarding_step < 3 || ! $user->hasVerifiedEmail()) {
             return false;
         }
-        if ($course->access_tier !== 'free' && ! in_array($plans->code($user), ['plus', 'pro'], true)) {
+        if ($course->access_tier !== 'free' && ! \App\Domain\Billing\Queries\MemberFeatureAccess::allowsCourse($plans->code($user), $course->access_tier)) {
             return false;
         }
         return DB::table('learning_demo_course_enrollments')->where('user_id', $user->id)

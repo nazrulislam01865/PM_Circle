@@ -23,7 +23,7 @@ final class CvExtractionService
 
     public function analyze(ProfileResume $resume, bool $consented): array
     {
-        if (! app(\App\Domain\AI\Services\ResumeExtractionSettings::class)->enabled()) {
+        if (! app(\App\Domain\AI\Services\ResumeExtractionSettings::class)->enabled() || ! \App\Domain\Billing\Queries\MemberFeatureAccess::allows(app(\App\Domain\Billing\Queries\CurrentMemberPlan::class)->code($resume->user()->firstOrFail()), 'plus')) {
             $result = $this->offline->analyze($this->textReader->extract($resume));
             $validated = $this->shape->normalize($result);
             $validated['warnings'] = [...$validated['warnings'], ...($result['warnings'] ?? [])];

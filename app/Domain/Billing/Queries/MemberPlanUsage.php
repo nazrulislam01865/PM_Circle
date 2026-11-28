@@ -30,7 +30,7 @@ final class MemberPlanUsage
             'usage' => $usage, 'periodStart' => $start->toISOString(), 'periodEnd' => $end->toISOString(),
             'credits' => ['available' => (int) $credits->available, 'reserved' => (int) $credits->reserved],
             'interviewSessions' => DB::table('interview_sessions')->where('user_id', $user->id)->where('status', 'completed')->count(),
-            'interviewEnabled' => (bool) config('pm-interview.enabled'),
+            'interviewEnabled' => $access['interview'] && (bool) config('pm-interview.enabled'),
             'examAttempts' => DB::table('pmp_exam_attempts')->where('user_id', $user->id)->where('status', 'completed')->count(),
         ];
     }

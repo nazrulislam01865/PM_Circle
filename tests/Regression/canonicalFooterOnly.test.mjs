@@ -19,8 +19,10 @@ test('home page, other public pages, member pages, auth pages and admin preview 
       'resources/js/layouts/pm/PublicLayout.tsx',
       'resources/js/layouts/pm/MemberDashboardLayout.tsx',
       'resources/js/layouts/pm/AuthPageFrame.tsx',
-      'resources/js/components/discover-pm/DiscoverShell.tsx',
     ]) assert.match(read(file), /<SiteFooter\b/, file);
+    const discover = read('resources/js/components/discover-pm/DiscoverShell.tsx');
+    assert.match(discover, /<PublicLayout\b/);
+    assert.doesNotMatch(discover, /<SiteFooter\b/);
 });
 
 test('footer has one set of prototype labels with no old mockup copy', () => {

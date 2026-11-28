@@ -1375,6 +1375,9 @@
     font-size: var(--pm-font-size-13px);
 }
 
+/* Shared validation message role for authentication and account security. */
+.pm-validation-error { color: var(--red); font: var(--regular) var(--text-ui)/var(--line-body) var(--font-ui); }
+
 .pm-error {
     color: var(--pm-tone-be123c) !important;
     margin-top: 6px;

@@ -44,8 +44,8 @@ final class MembershipValidityTest extends TestCase
         $this->travelTo(Carbon::parse('2026-04-30 10:00:00', 'UTC'));
         $this->assertSame('free', app(CurrentMemberPlan::class)->code($member));
         $this->assertSame('free', app(CurrentMemberPlan::class)->details($member)['code']);
-        $this->get('/exams/pmp/enter')->assertRedirect('/pricing');
-        $this->get('/exams/pmp')->assertForbidden();
+        $this->get('/exams/pmp/enter')->assertRedirect('/exam-simulator/pmp/details');
+        $this->get('/exams/pmp')->assertRedirect('/exam-simulator/pmp/details');
     }
 
     public function test_admin_publishes_pro_duration_and_can_disable_it_without_rewriting_membership(): void

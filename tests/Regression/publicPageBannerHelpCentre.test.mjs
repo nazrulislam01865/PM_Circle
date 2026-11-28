@@ -73,11 +73,13 @@ test('authentication and onboarding forms retain their original in-card headings
     }
 });
 
-test('Discover PM flow retains its original card title and progress navigation', () => {
+test('Discover PM uses the shared layout and public banner while retaining stage titles and progress', () => {
     const shell = read('resources/js/components/discover-pm/DiscoverShell.tsx');
-    assert.doesNotMatch(shell, /PublicPageBanner|LegacyPageHeading/);
-    assert.match(shell, /<h1 id="pm-discover-title">\{title\}<\/h1>/);
+    assert.match(shell, /<PublicLayout[^\n]*banner=\{\{/);
+    assert.match(shell, /usePublicPageBanner\(\) \? 'h2' : 'h1'/);
+    assert.match(shell, /<StageHeading id="pm-discover-title">\{title\}<\/StageHeading>/);
     assert.match(shell, /aria-label="Discover PM progress"/);
     assert.match(shell, /role="progressbar"/);
-    assert.match(read('resources/css/pm-discover.css'), /\.pm-discover-card > h1\s*\{/);
+    assert.doesNotMatch(shell, /<main\b/);
+    assert.match(read('resources/css/pm-discover.css'), /\.pm-discover-card > #pm-discover-title\s*\{/);
 });

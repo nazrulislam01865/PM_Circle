@@ -7,7 +7,7 @@ import { AdminLayout } from '@/layouts/admin/AdminLayout';
 
 type CourseRow = {
     id: number; slug: string; title: string; summary: string; category: string;
-    level: string; minutes: number; accessTier: 'free' | 'paid';
+    level: string; minutes: number; accessTier: 'free' | 'paid' | 'pro';
     thumbnail: number; coverUrl: string | null; isPublished: boolean; updatedAt: string;
 };
 type Pagination = {
@@ -67,7 +67,7 @@ export default function LearningCourses({ courses, filters, stats }: Props) {
                         </div></td>
                         <td><span>{course.category}</span><small>{course.level}</small></td>
                         <td><span className="pm-course-admin-duration"><Clock3 size={15}/>{course.minutes >= 60 ? `${Math.round(course.minutes / 6) / 10} h` : `${course.minutes} min`}</span></td>
-                        <td>{course.accessTier === 'free' ? 'Free' : 'Plus & Pro'}</td>
+                        <td>{course.accessTier === 'free' ? 'Free' : course.accessTier === 'pro' ? 'Pro' : 'Plus & Pro'}</td>
                         <td><span className={`pm-course-admin-status ${course.isPublished ? 'is-published' : ''}`}>{course.isPublished ? 'Published' : 'Draft'}</span></td>
                         <td><div className="pm-course-admin-row-actions">
                             <Link title={`Edit ${course.title}`} aria-label={`Edit ${course.title}`} className="pm-admin-button" href={`/admin/learning/courses/${course.id}/edit`}><Pencil size={15}/> Edit</Link>

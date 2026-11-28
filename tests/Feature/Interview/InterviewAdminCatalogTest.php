@@ -26,7 +26,10 @@ final class InterviewAdminCatalogTest extends TestCase
 
     private function member(): User
     {
-        return User::factory()->create(['is_admin' => false, 'status' => 'active', 'onboarding_step' => 3, 'email_verified_at' => now()]);
+        $user = User::factory()->create(['is_admin' => false, 'status' => 'active', 'onboarding_step' => 3, 'email_verified_at' => now()]);
+        config()->set('pm-circle.temporary_paid_access_enabled', true);
+        DB::table('temporary_memberships')->insert(['user_id' => $user->id, 'plan_code' => 'plus', 'created_at' => now(), 'updated_at' => now()]);
+        return $user;
     }
 
     private function startPayload(array $changes = []): array
@@ -214,7 +217,15 @@ final class InterviewAdminCatalogTest extends TestCase
             'is_active' => true, 'sort_order' => 1,
         ])->assertRedirect()->assertSessionHasNoErrors();
         $this->post('/admin/interview-preparation/options', ['group' => 'count', 'key' => '1', 'label' => 'One question', 'is_active' => true, 'sort_order' => 1])->assertRedirect()->assertSessionHasNoErrors();
-        $payload = $this->startPayload(['count' => 1, 'question_set' => $set, 'types' => ['General'], 'mix' => 'focus', 'focus' => ['capacity']]);
+        for ($i = 2; $i <= 5; $i++) {
+            $this->post('/admin/interview-preparation/questions', [
+                'set_id' => $set, 'type' => 'General', 'text' => 'How do you manage resource capacity in case '.$i.'?',
+                'topic' => 'Capacity planning', 'difficulty' => 'Hard', 'answer_guidance' => 'Discuss resource availability and capacity.',
+                'is_active' => true, 'sort_order' => $i,
+            ])->assertRedirect()->assertSessionHasNoErrors();
+        }
+        $payload = $this->startPayload(['count' => 5, 'question_set' => $set, 'types' => ['General'], 'mix' => 'focus', 'focus' => ['capacity']]);
+        $this->actingAs($member)->postJson('/interview-preparation/preview', array_replace($payload, ['count' => 1]))->assertUnprocessable()->assertJsonValidationErrors('count');
         $this->actingAs($member)->postJson('/interview-preparation/preview', array_replace($payload, ['focus' => ['unconfigured']]))->assertUnprocessable()->assertJsonValidationErrors('focus');
         $this->postJson('/interview-preparation/preview', $payload + ['jd' => 'Some job description'])->assertUnprocessable()->assertJsonValidationErrors('jd');
         $preview = $this->postJson('/interview-preparation/preview', $payload)->assertOk()->assertJsonPath('questions.0.topic', 'Capacity planning')->assertJsonPath('questions.0.difficulty', 'Hard')->assertJsonMissingPath('questions.0.answer_guidance')->json();

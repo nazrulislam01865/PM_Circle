@@ -212,7 +212,8 @@
 .pm-admin-login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-card);padding:var(--s8);display:grid;gap:var(--s3)}
 .pm-admin-login-emblem{display:grid;place-items:center;width:2.75rem;height:2.75rem;border-radius:var(--radius-control);color:var(--blue);background:var(--blue-soft)}
 .pm-admin-login-card h1{font:var(--bold) var(--text-h1)/var(--line-h1) var(--font-ui)}
-.pm-admin-login-description,.pm-admin-login-security,.pm-admin-login-back{color:var(--muted);font-size:var(--text-sm);line-height:var(--line-sm)}
+.pm-admin-login-description{color:var(--muted);font-size:var(--text-body);line-height:var(--line-body)}
+.pm-admin-login-security,.pm-admin-login-back{color:var(--muted);font-size:var(--text-sm);line-height:var(--line-sm)}
 .pm-admin-login-form{margin-top:var(--s3);display:grid;gap:var(--s4)}
 .pm-admin-login-password{position:relative}
 .pm-admin-login-password input{padding-right:3rem}

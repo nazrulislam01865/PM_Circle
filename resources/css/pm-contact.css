@@ -48,7 +48,7 @@
 .pm-contact-offline i,.pm-contact-chat-status i { display:block; background:var(--pm-footer-status-offline); border-radius:50%; width:7px; height:7px; }
 .pm-contact-chat-card-bottom { display:flex; align-items:center; gap:var(--s2); flex-wrap:wrap; font-size:var(--text-xs); color:var(--muted); }
 .pm-contact-chat-card-bottom svg { color:var(--blue); flex:none; }
-.pm-contact-chat-card-link { min-height:var(--control-compact); margin-left:auto; font-size:var(--text-xs); padding:var(--s1) var(--s3); }
+.pm-contact-chat-card-link { margin-left:auto; }
 .pm-contact-live-root { position:fixed; bottom:var(--s5); right:var(--s5); z-index:70; display:grid; justify-items:end; gap:var(--s3); pointer-events:none; }
 .pm-contact-live-root > * { pointer-events:auto; }
 .pm-contact-chat-launcher { display:flex;align-items:center;gap:var(--s2); border:0;border-radius:var(--radius-pill); background:var(--pm-action-blue);color:var(--pm-on-solid);font-size:var(--text-ui);font-weight:var(--semibold);padding:var(--s2) var(--s5);min-height:var(--control-touch);box-shadow:0 5px 14px var(--pm-tone-17284233); }

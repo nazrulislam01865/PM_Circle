@@ -52,8 +52,8 @@ final class PmpPersonalDashboardTest extends TestCase
         $this->get('/exam-simulator/pmp/details?preview=1')->assertRedirect('/exams/pmp/enter');
         $this->get('/exams/pmp/enter')->assertRedirect('/exams/pmp');
         $free = User::factory()->create(['onboarding_step' => 3]);
-        $this->actingAs($free)->get('/exam-simulator/pmp/details')->assertRedirect('/exams/pmp/enter');
-        $this->get('/exams/pmp/enter')->assertRedirect('/pricing');
+        $this->actingAs($free)->get('/exam-simulator/pmp/details')->assertOk();
+        $this->get('/exams/pmp/enter')->assertRedirect('/exam-simulator/pmp/details');
     }
 
     public function test_catalog_uses_the_existing_public_exam_url_while_pmp_details_remain_available(): void

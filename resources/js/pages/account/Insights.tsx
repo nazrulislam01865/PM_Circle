@@ -16,7 +16,7 @@ export default function Insights({ publicPosts, savedPosts, completedActivities,
         { label: 'Scenario responses', value: scenarioResponses, icon: MessageCircle },
         { label: 'Completed practice activities', value: completedActivities, icon: BookOpen },
     ];
-    return <ContentPage title="Profile insights" subtitle="Your recorded community and learning activity.">
+    return <ContentPage className="pm-profile-insights-page" title="Profile insights" subtitle="Your recorded community and learning activity.">
         <div className="pm-feature-progress-grid">{items.map(item => <div className="pm-panel pm-feature-progress-card" key={item.label}><item.icon size={24}/><strong>{item.value}</strong><small>{item.label}</small></div>)}</div>
         <section className="pm-panel pm-feature-section"><h2><Eye size={21} className="inline-block"/> Profile views</h2>
             <div className="pm-member-overview-metrics is-two"><div><strong>{profileViews.last30}</strong><span>Views in 30 days</span></div><div><strong>{profileViews.thisWeek}</strong><span>Views this week</span></div></div>

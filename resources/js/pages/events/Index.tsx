@@ -44,7 +44,7 @@ function HostPromotion({ content }: { content: EventPageContent }) {
 }
 type Filters = { search: string; format: string; sort: string };
 export default function CommunityEvents({ events, filters, content }: { events: EventPage<EventPreview>; filters: Filters; content: EventPageContent }) {
-    const { rewardPromotion, auth } = usePage<{ rewardPromotion?: RewardPromotionData | null; auth: { user: { is_admin: boolean } | null } }>().props;
+    const { rewardPromotion, auth, memberShell } = usePage<{ rewardPromotion?: RewardPromotionData | null; auth: { user: { is_admin: boolean } | null }; memberShell?: {featureAccess?: {events?: boolean}} }>().props;
     const [search, setSearch] = useState(filters.search);
     const [format, setFormat] = useState(filters.format);
     const [sort, setSort] = useState(filters.sort);
@@ -56,7 +56,7 @@ export default function CommunityEvents({ events, filters, content }: { events: 
             <LegacyPageHeading><EventBanner title={content.title} crumb="Community Events" description={content.description}/></LegacyPageHeading>
             <div className="pm-event-wrap pm-event-main">
                 <Advertisements advertisements={content.advertisements}/>
-                <section aria-labelledby="pm-events-heading" className="pm-event-list-section"><div className="pm-event-section-heading"><h2 id="pm-events-heading">Upcoming events</h2><EventAction href={auth.user?.is_admin ? "/admin/events/create" : "/events/create"}>Create event</EventAction></div>
+                <section aria-labelledby="pm-events-heading" className="pm-event-list-section"><div className="pm-event-section-heading"><h2 id="pm-events-heading">Upcoming events</h2><EventAction href={auth.user?.is_admin ? "/admin/events/create" : !auth.user ? "/register" : memberShell?.featureAccess?.events ? "/events/create" : "/membership"}>Create event</EventAction></div>
                     <form className="pm-event-filters" role="search" aria-label="Search and filter events" onSubmit={e => { e.preventDefault(); apply({ search, format, sort }); }}>
                         <label className="pm-guide-field-label">Search events<input className="pm-guide-control" type="search" placeholder="Search by title or topic" maxLength={120} value={search} onChange={e => setSearch(e.target.value)}/></label>
                         <div><label htmlFor="event-filter-format" className="pm-guide-field-label">Format</label><PMDropdown id="event-filter-format" value={format} required placeholder="All formats" options={[{value: 'all', label: 'All formats'}, {value: 'online', label: 'Online'}, {value: 'in-person', label: 'In person'}]} onValueChange={value => { setFormat(value); apply({ search, format: value, sort }); }}/></div>

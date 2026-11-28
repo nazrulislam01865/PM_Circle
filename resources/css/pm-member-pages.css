@@ -223,3 +223,9 @@
     .pm-dashboard .pm-member-public-content .pm-catalog-layout,
     .pm-dashboard .pm-member-public-content .pm-challenge-layout { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Profile Insights section title (not a shared metric card heading). */
+.pm-dashboard .pm-member-public-content .pm-profile-insights-page .pm-feature-section h2 {
+    font: var(--pm-guide-weight-h2) var(--text-h2)/var(--line-h2) var(--font-ui);
+    color: var(--ink);
+}

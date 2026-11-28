@@ -1,6 +1,6 @@
 import { AdminChoice } from '@/components/admin/AdminChoice';
 import { Link, router } from '@inertiajs/react';
-import { ClipboardCheck, Clock3, Layers3, LockKeyhole } from 'lucide-react';
+import { Bookmark, ClipboardCheck, Clock3, Layers3, LockKeyhole, Share2 } from 'lucide-react';
 import { useRef, useState, type ReactNode } from 'react';
 import type { CoursePracticeSettings, CourseResourceData, DemoCourseDetailData, CourseReview, OwnCourseReview } from '@/types/learning';
 import { courseDetailLabels, isExamCourse, isPmp } from './courseDetailLabels';
@@ -39,9 +39,9 @@ function Disclosure({ title, children, open }: { title: ReactNode; children: Rea
     return <details className="pm-course-detail-disclosure" open={open}><summary>{title}</summary><div className="pm-course-detail-disclosure-content">{children}</div></details>;
 }
 
-export function CourseDetailHero({ course, isMember, saved, saving, onSave, onShare, shareStatus, saveError }: {
+export function CourseDetailHero({ course, isMember, saved, saving, onSave, onShare, shareStatus, shareLink, saveError }: {
     course: DemoCourseDetailData; isMember: boolean; saved: boolean; saving: boolean;
-    onSave: () => void; onShare: () => void; shareStatus: string; saveError?: string;
+    onSave: () => void; onShare: () => void; shareStatus: string; shareLink?: string; saveError?: string;
 }) {
     const { type, topics } = courseDetailLabels(course);
     const fallback = `/images/learning/course-${course.thumbnail}.webp`;
@@ -53,14 +53,19 @@ export function CourseDetailHero({ course, isMember, saved, saving, onSave, onSh
         <div className="pm-course-detail-heading">
             <div className="pm-course-detail-heading-top">
                 <span className="pm-course-detail-category">{type}</span>
-                {isMember && <button type="button" className="pm-guide-button is-outline" onClick={onSave} aria-pressed={saved} disabled={saving} aria-label={saved ? 'Remove saved course' : 'Save course'}>{saving ? 'Saving…' : saved ? 'Saved' : 'Save'}</button>}
-                <button type="button" className="pm-guide-button is-outline" onClick={onShare}>Share</button>
             </div>
             <h1 id="pm-course-detail-title">{course.title}</h1>
+            <div className="pm-course-detail-actions" aria-label="Course actions">
+                {isMember && <button type="button" className="pm-home-action" onClick={onSave} aria-pressed={saved} disabled={saving} aria-label={saved ? 'Remove saved course' : 'Save course'} title={saved ? 'Remove saved course' : 'Save course'}><Bookmark size={19} fill={saved ? 'currentColor' : 'none'} aria-hidden="true" /></button>}
+                <div className="pm-course-share-action">
+                    <button type="button" className="pm-home-action" onClick={onShare} aria-label="Copy shareable course link" title="Share course"><Share2 size={19} aria-hidden="true" /></button>
+                    <span className={`pm-course-detail-share-status${shareLink ? ' is-fallback' : ''}`} role="status">{shareStatus}</span>
+                </div>
+            </div>
+            {shareLink && <label className="pm-guide-field-label pm-course-share-link">Shareable course link<input className="pm-guide-control" type="url" readOnly value={shareLink} onFocus={event => event.currentTarget.select()} /></label>}
             <p className="pm-course-detail-summary">{course.summary}</p>
             <p className="pm-course-detail-facts">{duration(course)} · {course.level} · {notesLabel(course)}</p>
             {topics.length > 0 && <ul className="pm-course-detail-tags" aria-label="Course topics">{topics.map(topic => <li key={topic}>{topic}</li>)}</ul>}
-            {shareStatus && <p className="pm-course-detail-share-status" role="status">{shareStatus}</p>}
             {saveError && <p className="pm-course-practice-error" role="alert">{saveError}</p>}
         </div>
     </header>;
@@ -141,7 +146,7 @@ export function CourseDetailExtraPanel({ active, course, reviews = [], ownReview
     if (active === 'questions') {
         const faq = [
             ['Is this a video course?', hasVideo(course) ? 'This course includes video and study notes.' : 'This self-paced course uses written study notes. No video is currently listed.'],
-            ['Who can enroll?', course.accessTier === 'paid' ? 'This course is included with eligible Plus and Pro memberships.' : 'PM Circle community members can enroll for free.'],
+            ['Who can enroll?', course.accessTier === 'pro' ? 'This course requires Pro membership.' : course.accessTier === 'paid' ? 'This course is included with eligible Plus and Pro memberships.' : 'PM Circle community members can enroll for free.'],
             ['Does the completion certificate grant PMP certification?', 'The certificate records completion in PM Circle. PMP certification is awarded separately through PMI.'],
             ['What does the study estimate mean?', `${duration(course)} is the catalog estimate, not a guarantee of study time or certification eligibility.`],
         ];
@@ -176,7 +181,8 @@ function CourseReviewForm({course, ownReview}: {course: DemoCourseDetailData; ow
 export function CourseAccessCard({ course, practice, resources, isMember, isAuthenticated, isAdmin = false, eligible, enrolled, memberTier, submitting, onEnroll, onViewCurriculum, lessonHref, error }: {
     course: DemoCourseDetailData; practice: CoursePracticeSettings; resources: CourseResourceData[]; isMember: boolean; isAuthenticated: boolean; isAdmin?: boolean; eligible: boolean; enrolled: boolean; memberTier: 'free' | 'plus' | 'pro'; submitting: boolean; onEnroll: () => void; onViewCurriculum: () => void; lessonHref?: string; error?: string;
 }) {
-    const paid = course.accessTier === 'paid';
+    const paid = course.accessTier !== 'free';
+    const requiredPlan = course.accessTier === 'pro' ? 'Pro' : 'Plus or Pro';
     const canRead = isMember && enrolled && eligible;
     let action: ReactNode;
     let description: string;
@@ -187,18 +193,18 @@ export function CourseAccessCard({ course, practice, resources, isMember, isAuth
         description = 'Preview the published course outline.';
         action = null;
     } else if (!isMember) {
-        description = paid ? 'Join PM Circle and choose Plus or Pro to access this course.' : 'Join the community for free to enroll in this course.';
+        description = paid ? `Join PM Circle and choose ${requiredPlan} to access this course.` : 'Join the community for free to enroll in this course.';
         action = <Link className="pm-guide-button" href={isAuthenticated ? '/join/step/2' : '/register'}>{isAuthenticated ? 'Finish joining' : 'Join to enroll'}</Link>;
     } else if (!eligible) {
-        description = 'This course is included with an active Plus or Pro membership. There is no separate course charge.';
+        description = `This course is included with an active ${requiredPlan} membership. There is no separate course charge.`;
         action = <Link className="pm-guide-button" href="/membership">Explore Plus &amp; Pro</Link>;
     } else {
         description = paid ? `Included with your ${memberTier === 'plus' ? 'Plus' : 'Pro'} membership.` : 'Free for PM Circle community members.';
         action = <button type="button" className="pm-guide-button" onClick={onEnroll} disabled={submitting} aria-busy={submitting}>{submitting ? 'Enrolling…' : 'Enroll now'}</button>;
     }
     return <section className="pm-system-card pm-course-detail-card pm-course-detail-access" aria-label="Course enrollment">
-        <span className="pm-course-detail-access-label">{canRead ? 'Enrolled' : paid ? 'Plus & Pro' : 'Free course'}</span>
-        <h2>{canRead ? 'Ready to study' : paid ? isMember && eligible ? 'Included with your membership' : 'Included with Plus & Pro' : 'Free for community members'}</h2>
+        <span className="pm-course-detail-access-label">{canRead ? 'Enrolled' : paid ? requiredPlan : 'Free course'}</span>
+        <h2>{canRead ? 'Ready to study' : paid ? isMember && eligible ? 'Included with your membership' : `Included with ${requiredPlan}` : 'Free for community members'}</h2>
         <p>{description}</p>
         <div className="pm-course-detail-access-buttons">{action}<button type="button" className="pm-guide-button is-outline" onClick={onViewCurriculum}>View course outline</button></div>
         {error && <p className="pm-course-practice-error" role="alert">{error}</p>}

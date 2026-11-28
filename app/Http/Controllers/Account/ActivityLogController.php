@@ -16,6 +16,7 @@ final class ActivityLogController extends Controller
 {
     public function index(Request $request, MemberActivityFeed $feed): Response
     {
+        abort_unless(\App\Domain\Billing\Queries\MemberFeatureAccess::allows(app(\App\Domain\Billing\Queries\CurrentMemberPlan::class)->code($request->user()), 'plus'), 403);
         $filters = $this->filters($request);
         return Inertia::render('account/ActivityLog', [
             'filters' => $filters,
@@ -25,6 +26,7 @@ final class ActivityLogController extends Controller
 
     public function entries(Request $request, MemberActivityFeed $feed): JsonResponse
     {
+        abort_unless(\App\Domain\Billing\Queries\MemberFeatureAccess::allows(app(\App\Domain\Billing\Queries\CurrentMemberPlan::class)->code($request->user()), 'plus'), 403);
         $filters = $this->filters($request);
         $request->validate(['cursor' => ['required', 'string', 'max:200']]);
         try {
@@ -37,6 +39,7 @@ final class ActivityLogController extends Controller
 
     public function clear(Request $request): JsonResponse
     {
+        abort_unless(\App\Domain\Billing\Queries\MemberFeatureAccess::allows(app(\App\Domain\Billing\Queries\CurrentMemberPlan::class)->code($request->user()), 'plus'), 403);
         // Hide items in this user's timeline only. Do not delete immutable exam,
         // moderation, achievement, billing, or other source-of-truth records.
         $now = now();

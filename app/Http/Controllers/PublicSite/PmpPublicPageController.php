@@ -15,12 +15,10 @@ final class PmpPublicPageController extends Controller
 {
     public function __invoke(Request $request, PmpExamSettings $examSettings): Response|RedirectResponse
     {
-        // The landing page is for guests only. Signed-in administrators return to
-        // administration; members enter the protected simulator or pricing flow.
-        if ($request->user()) {
-            return $request->user()->is_admin
-                ? to_route('admin.dashboard')
-                : to_route('exams.pmp.entry');
+        // Guests and Free members may use samples. Paid members enter the simulator.
+        if ($request->user()?->is_admin) return to_route('admin.dashboard');
+        if ($request->user() && \App\Domain\Billing\Queries\MemberFeatureAccess::allowsExamSimulator(app(\App\Domain\Billing\Queries\CurrentMemberPlan::class)->code($request->user()))) {
+            return to_route('exams.pmp.entry');
         }
 
         $settings = $examSettings->get();

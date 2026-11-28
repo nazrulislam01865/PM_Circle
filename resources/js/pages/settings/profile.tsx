@@ -1,6 +1,7 @@
 import { LatestBadgeCards } from '@/components/achievements/AchievementCards';
 import type { AchievementBadge } from '@/components/achievements/types';
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { rememberProfileCompletion } from '@/components/dashboard/profileCompletionSnapshot';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import { ProfileEditorPrototype, type ProfileEditorDetails } from '@/components/profile/ProfileEditorPrototype';
@@ -81,6 +82,7 @@ type ProfilePageProps = {
         location_label: string;
         status_label: string;
         completeness: number;
+        completion_missing?: string[];
         insights: {
             views: number;
             change: string;
@@ -104,6 +106,10 @@ type ProfilePageProps = {
 
 export default function Profile({ activeTab: initialTab = 'overview', profileData, profileReward, privacyFieldGroups = [], canUseAssistant }: ProfilePageProps) {
     const { memberShell, profileResumeImportsVisible } = usePage<{ memberShell?: DashboardShellData; profileResumeImportsVisible?: boolean }>().props;
+
+    useEffect(() => {
+        rememberProfileCompletion(profileData.id, profileData.completeness);
+    }, [profileData.id, profileData.completeness]);
 
     const dashboardShell: DashboardShellData = memberShell || {
         plan: 'free',
@@ -322,14 +328,14 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                                     <div className="pm-profile-completeness-track" role="progressbar" aria-labelledby="profile-completeness-title" aria-valuemin={0} aria-valuemax={100} aria-valuenow={profileData.completeness}>
                                         <span style={{ width: `${Math.min(100, Math.max(0, profileData.completeness))}%` }} />
                                     </div>
-                                    <p>{profileData.completeness === 100 ? 'Your profile is complete.' : 'Add your experience, skills and education to complete your profile.'}</p>
+                                    <p>{profileData.completeness === 100 ? 'Your profile is complete.' : profileData.completion_missing?.length ? `To complete your profile: ${profileData.completion_missing.join(', ')}.` : 'Fill in the remaining profile details and sections to increase your completion score.'}</p>
                                     {profileData.completeness < 100 && <button
                                         type="button"
                                         className="pm-btn pm-btn-primary pm-profile-completeness-action"
                                         onClick={() => changeTab(canUseAssistant ? 'assistant' : 'edit')}
                                     >
                                         {canUseAssistant && <Sparkles size={20} aria-hidden="true" />}
-                                        {canUseAssistant ? 'Complete profile with AI' : 'Complete profile'}
+                                        {canUseAssistant ? 'Complete profile with résumé' : 'Complete profile'}
                                     </button>}
                                 </div>
                             </section>
@@ -493,7 +499,7 @@ export default function Profile({ activeTab: initialTab = 'overview', profileDat
                         importData={profileData.import}
                         linkedInUrl={profileData.linkedin_url}
                         employerVisibility={profileData.resume_employer_visibility}
-                        canImportLinkedIn={dashboardShell.plan === 'premium' || dashboardShell.plan === 'pro'}
+                        canImportLinkedIn={true}
                     />
                 )}
 

@@ -7,7 +7,7 @@ const labels = (url, props, fallback) => memberBreadcrumbs(url, props, fallback)
 
 test('member navigation destinations have a consistent Home-rooted trail', () => {
     const routes = {
-        '/dashboard': ['Home'], '/learning': ['Home','Learn & Practice','Browse courses'],
+        '/learning': ['Home','Learn & Practice','Browse courses'],
         '/dashboard/learning?tab=my-learning': ['Home','Learn & Practice','My learning'],
         '/dashboard/learning/certificates': ['Home','Learn & Practice','Certificates'],
         '/exams/pmp': ['Home','Learn & Practice','Exam Simulator','PMP exams'],

@@ -1,13 +1,14 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import { Crown, ShieldCheck } from 'lucide-react';
-import { PricingComparisonContent, type PricingPlanCode } from '@/components/billing/PricingComparisonContent';
+import { PricingComparisonContent, type PricingPlanCode, type PricingContent } from '@/components/billing/PricingComparisonContent';
 import type { Plan } from '@/components/billing/PlanCard';
 import { MemberDashboardLayout } from '@/layouts/pm/MemberDashboardLayout';
 import type { DashboardShellData } from '@/types/dashboard';
 
-export default function Membership({ plans, currentPlan, temporaryAccessEnabled }: {
+export default function Membership({ plans, currentPlan, temporaryAccessEnabled, content }: {
     plans: Plan[];
+    content?: PricingContent;
     currentPlan: PricingPlanCode;
     temporaryAccessEnabled: boolean;
 }) {
@@ -38,7 +39,7 @@ export default function Membership({ plans, currentPlan, temporaryAccessEnabled 
         <div className="pm-membership-comparison">
             <Link href="/membership" className="pm-account-back">← Plan &amp; usage</Link>
             <PricingComparisonContent
-                plans={plans}
+                plans={plans} content={content} memberView
                 error={error}
                 billingFineprint={temporaryAccessEnabled
                     ? 'Demo access only. Selected durations determine access validity. Switching plans does not collect payment or schedule renewals.'

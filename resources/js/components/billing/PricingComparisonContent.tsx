@@ -17,13 +17,14 @@ function money(minor: number): string {
 }
 
 /** The single comparison experience for public pricing and authenticated membership management. */
-export function PricingComparisonContent({ plans, renderAction, notice, error, billingFineprint, content }: {
+export function PricingComparisonContent({ plans, renderAction, notice, error, billingFineprint, content, memberView = false }: {
     plans: Plan[];
     renderAction: (plan: PricingPlanCode, months?: number) => ReactNode;
     notice?: ReactNode;
     error?: string | null;
     billingFineprint?: string;
     content?: PricingContent;
+    memberView?: boolean;
 }) {
     const settings = content ?? defaults;
     const { banner, comparison, actions, notes } = settings;
@@ -69,7 +70,7 @@ export function PricingComparisonContent({ plans, renderAction, notice, error, b
                         {(proOptions.length > 1 || (selectedPro && selectedPro.months !== 1)) && <div className="pm-compare-duration"><PMDropdown id="pm-compare-pro-duration" aria-label="Pro duration" required value={String(selectedPro?.months ?? '')} onValueChange={value => setProDuration(Number(value))} options={proOptions.map(option => ({value: String(option.months), label: durationLabel(option.months)}))} placeholder={comparison.priceUnavailable}/></div>}
                     </th>
                 </tr></thead>
-                <PlanComparisonRows sections={[settings.community, settings.learning, settings.career]}/>
+                <PlanComparisonRows sections={[settings.community, settings.learning, settings.exams, settings.career, settings['ai-support']]}/>
                 <tfoot><tr>
                     <th scope="row">{actions.title}</th>
                     <td>{renderAction('free')}</td>
@@ -90,12 +91,12 @@ export function PricingComparisonContent({ plans, renderAction, notice, error, b
             </div>
             <Dialog>
                 <DialogTrigger asChild><button type="button" className="pm-button pm-button-outline pm-button-sm pm-compare-import-action">{profileImport.linkLabel}</button></DialogTrigger>
-                <DialogContent className={content ? 'pm-public-compare-dialog' : undefined}>
+                <DialogContent className={content || memberView ? 'pm-public-compare-dialog' : undefined}>
                     <DialogHeader>
                         <DialogTitle>{profileImport.dialogTitle}</DialogTitle>
                         <DialogDescription>{profileImport.dialogDescription}</DialogDescription>
                     </DialogHeader>
-                    <p className={content ? 'pm-compare-dialog-body' : 'text-sm leading-relaxed text-slate-700'}>{profileImport.dialogBody}</p>
+                    <p className={content || memberView ? 'pm-compare-dialog-body' : 'text-sm leading-relaxed text-slate-700'}>{profileImport.dialogBody}</p>
                 </DialogContent>
             </Dialog>
         </section>}

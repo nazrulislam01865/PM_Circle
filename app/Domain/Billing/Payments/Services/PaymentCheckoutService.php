@@ -27,8 +27,7 @@ final class PaymentCheckoutService
             throw new PaymentFailure('PURCHASES_DISABLED', 503);
         }
         $plan = $this->plans->details($user);
-        if (! in_array($plan['code'], ['plus', 'pro'], true)
-            || $plan['source'] !== 'subscription') {
+        if ($plan['source'] !== 'subscription' || ! in_array($plan['code'], ['plus', 'pro'], true)) {
             throw new PaymentFailure('NOT_ENTITLED', 403);
         }
         return $this->create($user, 'ai_credit', $packageId, $clientKey, $provider);
